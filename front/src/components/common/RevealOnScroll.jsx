@@ -29,9 +29,8 @@ const RevealOnScroll = ({
 
     const handleEntries = (entries, observerInstance) => {
       entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        setIsVisible(true);
-        // Don't disconnect - keep observing for scroll effects
+        // Show when entering viewport, hide when leaving
+        setIsVisible(entry.isIntersecting);
       });
     };
 

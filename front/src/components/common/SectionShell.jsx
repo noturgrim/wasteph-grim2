@@ -1,5 +1,7 @@
 import React from "react";
 import RevealOnScroll from "./RevealOnScroll";
+import TextReveal from "./TextReveal";
+import WordReveal from "./WordReveal";
 
 const getVariantClasses = (variant) => {
   if (variant === "accent") {
@@ -53,7 +55,9 @@ const SectionShell = ({
                     className="text-[clamp(2.5rem,8vw,6rem)] font-black uppercase leading-[0.95] tracking-tighter text-white"
                     style={{ letterSpacing: "-0.02em" }}
                   >
-                    {headline}
+                    <WordReveal delay={0.1} staggerDelay={0.05}>
+                      {headline}
+                    </WordReveal>
                   </h2>
                 </RevealOnScroll>
               )}
