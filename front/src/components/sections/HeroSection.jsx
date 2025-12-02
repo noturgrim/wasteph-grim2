@@ -109,21 +109,23 @@ const HeroSection = () => {
 
             <RevealOnScroll delayClass="delay-100">
               <h1 id="hero-title" className="mb-6">
-                <span
-                  className="block text-[clamp(4rem,15vw,12rem)] font-black uppercase leading-[0.85] tracking-tighter text-white"
-                  style={{ letterSpacing: "-0.03em" }}
-                >
-                  Waste
-                </span>
-                <span
-                  className="block text-[clamp(4rem,15vw,12rem)] font-black uppercase leading-[0.85] tracking-tighter text-transparent"
-                  style={{
-                    letterSpacing: "-0.03em",
-                    WebkitTextStroke: "2px #15803d",
-                    textStroke: "2px #15803d",
-                  }}
-                >
-                  PH
+                <span className="flex items-center gap-4">
+                  <span
+                    className="text-[clamp(4rem,15vw,12rem)] font-black uppercase leading-[0.85] tracking-tighter text-white"
+                    style={{ letterSpacing: "-0.03em" }}
+                  >
+                    Waste
+                  </span>
+                  <span
+                    className="text-[clamp(4rem,15vw,12rem)] font-black uppercase leading-[0.85] tracking-tighter text-transparent"
+                    style={{
+                      letterSpacing: "-0.03em",
+                      WebkitTextStroke: "2px #15803d",
+                      textStroke: "2px #15803d",
+                    }}
+                  >
+                    PH
+                  </span>
                 </span>
               </h1>
             </RevealOnScroll>
