@@ -13,6 +13,7 @@ const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("");
   const [indicatorStyle, setIndicatorStyle] = useState({});
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navRefs = useRef({});
 
   useEffect(() => {
@@ -56,6 +57,7 @@ const Header = () => {
   }, [activeSection]);
   const handleNavClick = (targetId) => {
     scrollToSection(targetId);
+    setMobileMenuOpen(false); // Close mobile menu on navigation
   };
 
   const handleNavKeyDown = (event, targetId) => {
@@ -181,10 +183,41 @@ const Header = () => {
           </div>
         </nav>
 
-        {/* 3D CTA button with pulse effect */}
+        {/* Mobile menu button */}
         <button
           type="button"
-          className="group/cta relative overflow-hidden rounded-full bg-gradient-to-r from-[#15803d] to-[#16a34a] px-8 py-4 text-xs font-black uppercase tracking-[0.35em] text-white shadow-[0_0_40px_rgba(21,128,61,0.5),0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-300 hover:scale-[1.08] hover:shadow-[0_0_60px_rgba(21,128,61,0.8),0_0_100px_rgba(22,163,74,0.4),0_6px_30px_rgba(0,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+          className="flex items-center justify-center rounded-xl bg-white/5 p-3 text-white backdrop-blur-xl transition-all duration-300 hover:bg-white/10 lg:hidden"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle mobile menu"
+          aria-expanded={mobileMenuOpen}
+        >
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            {mobileMenuOpen ? (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            ) : (
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            )}
+          </svg>
+        </button>
+
+        {/* 3D CTA button with pulse effect - Desktop */}
+        <button
+          type="button"
+          className="group/cta relative hidden overflow-hidden rounded-full bg-gradient-to-r from-[#15803d] to-[#16a34a] px-8 py-4 text-xs font-black uppercase tracking-[0.35em] text-white shadow-[0_0_40px_rgba(21,128,61,0.5),0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-300 hover:scale-[1.08] hover:shadow-[0_0_60px_rgba(21,128,61,0.8),0_0_100px_rgba(22,163,74,0.4),0_6px_30px_rgba(0,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black lg:block"
           onClick={() => handleNavClick("contact")}
           onKeyDown={(event) => handleNavKeyDown(event, "contact")}
           style={{ transform: "translateZ(0)" }}
@@ -215,6 +248,46 @@ const Header = () => {
             </svg>
           </span>
         </button>
+      </div>
+
+      {/* Mobile Menu */}
+      <div
+        className={`absolute left-0 right-0 top-full overflow-hidden border-b border-white/10 backdrop-blur-xl transition-all duration-300 lg:hidden ${
+          mobileMenuOpen
+            ? "max-h-screen bg-black/90"
+            : "max-h-0 border-transparent"
+        }`}
+      >
+        <nav className="flex flex-col gap-1 p-4">
+          {navItems.map((item) => {
+            const isActive = activeSection === item.targetId;
+            return (
+              <button
+                key={item.targetId}
+                type="button"
+                className={`rounded-xl px-6 py-4 text-left text-sm font-bold uppercase tracking-[0.2em] transition-all duration-300 ${
+                  isActive
+                    ? "bg-gradient-to-r from-[#15803d] to-[#16a34a] text-white shadow-[0_0_20px_rgba(21,128,61,0.4)]"
+                    : "text-white/60 hover:bg-white/5 hover:text-white"
+                }`}
+                onClick={() => handleNavClick(item.targetId)}
+                onKeyDown={(event) => handleNavKeyDown(event, item.targetId)}
+              >
+                {item.label}
+              </button>
+            );
+          })}
+
+          {/* Mobile Contact Button */}
+          <button
+            type="button"
+            className="mt-4 rounded-xl bg-gradient-to-r from-[#15803d] to-[#16a34a] px-6 py-4 text-center text-sm font-black uppercase tracking-[0.3em] text-white shadow-[0_0_30px_rgba(21,128,61,0.5)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(21,128,61,0.7)]"
+            onClick={() => handleNavClick("contact")}
+            onKeyDown={(event) => handleNavKeyDown(event, "contact")}
+          >
+            Contact Us
+          </button>
+        </nav>
       </div>
     </header>
   );
