@@ -19,12 +19,12 @@ const TopographicCanvas = () => {
     const noise2D = createNoise2D();
 
     // Configuration
-    const thresholdIncrement = 5;
+    const thresholdIncrement = 15; // Increased from 10 to 15 = even fewer lines
     const thickLineThresholdMultiple = 3;
-    const res = 8;
+    const res = 12; // Increased from 10 to 12 = smoother/less detail
     const baseZOffset = 0.0002;
-    const lineColor = "rgba(21, 128, 61, 0.4)";
-    const thickLineColor = "rgba(21, 128, 61, 0.6)";
+    const lineColor = "rgba(21, 128, 61, 0.2)"; // Reduced opacity from 0.3 to 0.2
+    const thickLineColor = "rgba(21, 128, 61, 0.4)"; // Reduced opacity from 0.5 to 0.4
 
     const setupCanvas = () => {
       const rect = canvas.getBoundingClientRect();
@@ -296,7 +296,8 @@ const TopographicCanvas = () => {
       ctx.fillStyle = "#0a1f0f";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      zOffsetRef.current += baseZOffset;
+      // Use sine wave for oscillating animation (no panning)
+      zOffsetRef.current = Math.sin(Date.now() * 0.0001) * 0.5;
       const { noiseMin, noiseMax } = generateNoise();
 
       const roundedNoiseMin =
