@@ -120,8 +120,8 @@ const HeroSection = () => {
                     className="text-[clamp(4rem,15vw,12rem)] font-black uppercase leading-[0.85] tracking-tighter text-transparent"
                     style={{
                       letterSpacing: "-0.03em",
-                      WebkitTextStroke: "2px #15803d",
-                      textStroke: "2px #15803d",
+                      WebkitTextStroke: "4px #15803d",
+                      textStroke: "4px #15803d",
                     }}
                   >
                     PH
