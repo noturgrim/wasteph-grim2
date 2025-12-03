@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { scrollToSection } from "../utils/scrollToSection";
+import AnimatedText from "./common/AnimatedText";
 
 const navItems = [
   { label: "About Us", targetId: "hero" },
@@ -170,7 +171,9 @@ const Header = () => {
                   {!isActive && (
                     <div className="absolute inset-0 rounded-full bg-white/5 opacity-0 transition-opacity duration-300 group-hover/item:opacity-100" />
                   )}
-                  <span className="relative">{item.label}</span>
+                  <span className="relative">
+                    <AnimatedText center>{item.label}</AnimatedText>
+                  </span>
                 </button>
               );
             })}
@@ -239,7 +242,7 @@ const Header = () => {
                 d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
               />
             </svg>
-            Contact
+            <AnimatedText>Contact</AnimatedText>
             <svg
               className="h-3.5 w-3.5 transition-transform duration-300 group-hover/cta:translate-x-1"
               fill="none"
@@ -280,7 +283,7 @@ const Header = () => {
                 onClick={() => handleNavClick(item.targetId)}
                 onKeyDown={(event) => handleNavKeyDown(event, item.targetId)}
               >
-                {item.label}
+                <AnimatedText>{item.label}</AnimatedText>
               </button>
             );
           })}
