@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { scrollToSection } from "../utils/scrollToSection";
 import AnimatedText from "./common/AnimatedText";
+import ContactButton from "./common/ContactButton";
 
 const navItems = [
   { label: "About Us", targetId: "hero" },
@@ -214,50 +215,13 @@ const Header = () => {
         </button>
 
         {/* CTA button - Floating Island */}
-        <button
-          type="button"
-          className={`group/cta relative hidden overflow-hidden rounded-full border border-[#15803d]/30 bg-gradient-to-r from-[#15803d] to-[#16a34a] px-7 py-3.5 text-xs font-black uppercase tracking-[0.3em] text-white shadow-[0_8px_32px_rgba(21,128,61,0.3)] backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:border-[#15803d] hover:shadow-[0_12px_48px_rgba(21,128,61,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#15803d] focus-visible:ring-offset-2 focus-visible:ring-offset-black lg:block ${
+        <ContactButton
+          className={`hidden lg:block ${
             scrolled ? "shadow-[0_8px_32px_rgba(21,128,61,0.4)]" : ""
           }`}
           onClick={() => handleNavClick("contact")}
           onKeyDown={(event) => handleNavKeyDown(event, "contact")}
-        >
-          {/* Subtle glow on hover */}
-          <div className="pointer-events-none absolute -inset-1 rounded-xl bg-[#15803d] opacity-0 blur-lg transition-opacity duration-300 group-hover/cta:opacity-50" />
-
-          {/* Shimmer effect */}
-          <div className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover/cta:translate-x-full" />
-
-          <span className="relative z-10 flex items-center gap-2.5">
-            <svg
-              className="h-4 w-4 transition-transform duration-300 group-hover/cta:scale-110"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
-            </svg>
-            <AnimatedText>Contact</AnimatedText>
-            <svg
-              className="h-3.5 w-3.5 transition-transform duration-300 group-hover/cta:translate-x-1"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={3}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13 7l5 5m0 0l-5 5m5-5H6"
-              />
-            </svg>
-          </span>
-        </button>
+        />
       </div>
 
       {/* Mobile Menu - Floating Island Style */}
@@ -289,14 +253,11 @@ const Header = () => {
           })}
 
           {/* Mobile Contact Button */}
-          <button
-            type="button"
-            className="mt-4 rounded-xl bg-gradient-to-r from-[#15803d] to-[#16a34a] px-6 py-4 text-center text-sm font-black uppercase tracking-[0.3em] text-white shadow-[0_0_30px_rgba(21,128,61,0.5)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(21,128,61,0.7)]"
+          <ContactButton
+            className="mt-4 w-full"
             onClick={() => handleNavClick("contact")}
             onKeyDown={(event) => handleNavKeyDown(event, "contact")}
-          >
-            Contact Us
-          </button>
+          />
         </nav>
       </div>
     </header>
