@@ -40,7 +40,7 @@ const WasteStreamsShowcase = () => {
   return (
     <section
       id="waste-streams"
-      className="relative flex min-h-screen snap-start items-center border-y border-white/10 py-16 md:py-20 xl:py-24"
+      className="relative flex min-h-screen snap-start items-center border-y border-white/10 py-8 md:py-12 lg:py-16 xl:py-20"
       aria-labelledby="waste-streams-title"
       style={{
         background:
@@ -55,10 +55,10 @@ const WasteStreamsShowcase = () => {
         speed={-0.15}
         className="pointer-events-none absolute left-10 top-20 -z-10 h-[400px] w-[400px] rounded-full bg-[#16a34a]/20 blur-[100px]"
       />
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 md:gap-10 lg:gap-12 lg:px-12">
-        <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:items-start md:gap-10 lg:gap-12">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-6 md:gap-6 lg:gap-8 lg:px-12 xl:gap-10">
+        <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] md:items-start md:gap-8 lg:gap-10">
           {/* Left: Header Content */}
-          <div className="space-y-4 md:space-y-5 lg:space-y-6">
+          <div className="space-y-3 md:space-y-4 lg:space-y-5">
             <RevealOnScroll>
               <div className="flex items-center gap-3">
                 <span className="h-px w-12 bg-gradient-to-r from-[#15803d] to-transparent sm:w-16" />
@@ -85,7 +85,7 @@ const WasteStreamsShowcase = () => {
             </RevealOnScroll>
 
             <RevealOnScroll delayClass="delay-200">
-              <p className="max-w-md text-sm leading-relaxed text-white/70 sm:text-base">
+              <p className="max-w-md text-xs leading-snug text-white/70 sm:text-sm md:text-base md:leading-relaxed">
                 Managing materials with{" "}
                 <strong className="font-bold text-white">
                   responsible, traceable handling

@@ -63,7 +63,7 @@ const HeroSection = () => {
     <section
       ref={heroRef}
       id="hero"
-      className="relative flex min-h-screen snap-start items-center overflow-visible py-24 md:py-32 lg:py-20"
+      className="relative flex min-h-screen snap-start items-center overflow-visible py-16 md:py-20 lg:py-24 xl:py-32"
       aria-labelledby="hero-title"
     >
       {/* Premium ambient lighting */}
@@ -99,12 +99,12 @@ const HeroSection = () => {
         }}
       >
         {/* Main Hero Grid - Reversed for Image Prominence */}
-        <div className="grid w-full gap-8 sm:gap-10 md:gap-12 lg:grid-cols-2 lg:gap-12 xl:gap-16">
+        <div className="grid w-full gap-6 sm:gap-8 md:gap-10 lg:grid-cols-2 lg:gap-10 xl:gap-12">
           {/* Left: Large Featured Image */}
           <div className="relative order-2 lg:order-1">
             <RevealOnScroll delayClass="delay-100">
               {/* Main Feature Card - Larger, More Prominent */}
-              <div className="group relative h-[400px] overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.02] backdrop-blur-2xl sm:h-[450px] md:h-[500px] lg:h-[550px] xl:h-[600px]">
+              <div className="group relative h-[350px] overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.02] backdrop-blur-2xl sm:h-[400px] md:h-[450px] lg:h-[500px] xl:h-[550px]">
                 {/* Image Container */}
                 <div className="relative h-full overflow-hidden">
                   <img
@@ -171,7 +171,7 @@ const HeroSection = () => {
           </div>
 
           {/* Right: Content - More Compact */}
-          <div className="order-1 flex flex-col justify-center space-y-6 sm:space-y-8 lg:order-2">
+          <div className="order-1 flex flex-col justify-center space-y-4 sm:space-y-6 md:space-y-8 lg:order-2">
             {/* Badge */}
             <RevealOnScroll>
               <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-gradient-to-r from-white/5 to-white/[0.02] px-3 py-1.5 backdrop-blur-xl sm:gap-3 sm:px-4 sm:py-2">

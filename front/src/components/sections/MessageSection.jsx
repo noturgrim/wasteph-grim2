@@ -13,11 +13,11 @@ const MessageSection = () => {
       variant="muted"
     >
       <RevealOnScroll delayClass="delay-300">
-        <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr] xl:gap-8">
+        <div className="grid gap-4 md:gap-5 lg:grid-cols-[1.5fr_1fr] lg:gap-6 xl:gap-8">
           {/* Left: Story Content - More Compact */}
-          <div className="space-y-5">
+          <div className="space-y-3 md:space-y-4">
             {/* Main Story - Condensed */}
-            <div className="space-y-3 text-sm leading-relaxed text-white/80 sm:text-base">
+            <div className="space-y-2 text-xs leading-snug text-white/80 sm:text-sm md:text-base md:leading-relaxed">
               <p>
                 Since our first truck rolled out,{" "}
                 <strong className="font-bold text-white">

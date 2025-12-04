@@ -34,15 +34,15 @@ const SectionShell = ({
       className={`snap-start ${sectionHeight} ${variantClasses} flex items-center`}
       aria-labelledby={titleId}
     >
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-6 py-12 md:gap-8 md:py-16 lg:gap-10 lg:px-12 xl:py-20">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-6 py-8 md:gap-6 md:py-12 lg:gap-8 lg:px-12 xl:gap-10 xl:py-16">
         {(label || headline || subheadline) && (
-          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-6 lg:gap-8">
             <div className="max-w-4xl">
               {label && (
                 <RevealOnScroll>
-                  <div className="mb-4 flex items-center gap-3 md:mb-6 md:gap-4">
-                    <span className="h-px w-12 bg-gradient-to-r from-[#15803d] to-transparent md:w-16" />
-                    <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-white/60 md:text-xs md:tracking-[0.35em]">
+                  <div className="mb-3 flex items-center gap-2 md:mb-4 md:gap-3">
+                    <span className="h-px w-10 bg-gradient-to-r from-[#15803d] to-transparent md:w-12 lg:w-16" />
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/60 md:text-[10px] md:tracking-[0.25em] lg:text-xs lg:tracking-[0.35em]">
                       {label}
                     </p>
                   </div>
@@ -52,7 +52,7 @@ const SectionShell = ({
                 <RevealOnScroll delayClass="delay-100">
                   <h2
                     id={titleId}
-                    className="text-[clamp(2rem,6vw,5rem)] font-black uppercase leading-[0.95] tracking-tighter text-white md:text-[clamp(2.5rem,7vw,6rem)]"
+                    className="text-[clamp(1.75rem,5vw,3.5rem)] font-black uppercase leading-[0.9] tracking-tighter text-white md:text-[clamp(2rem,5.5vw,4.5rem)] lg:text-[clamp(2.5rem,6vw,5rem)]"
                     style={{ letterSpacing: "-0.02em" }}
                   >
                     <WordReveal delay={0.1} staggerDelay={0.05}>
@@ -63,7 +63,7 @@ const SectionShell = ({
               )}
               {subheadline && (
                 <RevealOnScroll delayClass="delay-200">
-                  <p className="mt-4 max-w-2xl text-base leading-relaxed text-white/70 md:mt-6 md:text-lg lg:mt-8 lg:text-xl">
+                  <p className="mt-3 max-w-2xl text-sm leading-snug text-white/70 md:mt-4 md:text-base md:leading-relaxed lg:mt-6 lg:text-lg xl:text-xl">
                     {subheadline}
                   </p>
                 </RevealOnScroll>
