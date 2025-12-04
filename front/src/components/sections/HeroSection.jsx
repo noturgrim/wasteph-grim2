@@ -127,49 +127,35 @@ const HeroSection = () => {
                 </div>
 
                 {/* Content Overlay - Positioned at bottom */}
-                <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 md:p-8">
-                  {/* Bottom: Info */}
-                  <div className="space-y-4 sm:space-y-6">
-                    <div className="space-y-2 sm:space-y-3">
-                      <h3 className="text-2xl font-black leading-tight text-white sm:text-3xl md:text-4xl lg:text-5xl">
-                        City-Wide
-                        <br />
-                        <span className="bg-gradient-to-r from-[#15803d] to-[#22c55e] bg-clip-text text-transparent">
-                          Coverage
-                        </span>
-                      </h3>
-                      <p className="max-w-md text-sm leading-relaxed text-white/90 sm:text-base">
-                        Precision routing for businesses and communities across
-                        the Philippines.
-                      </p>
-                    </div>
-
-                    {/* Stats - Horizontal, responsive */}
-                    <div className="flex flex-wrap items-center gap-4 sm:gap-6 md:gap-8">
+                <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4 md:p-5">
+                  {/* Bottom: Compact Info */}
+                  <div className="space-y-2 sm:space-y-3">
+                    {/* Stats - Horizontal, compact */}
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 md:gap-5">
                       <div>
-                        <p className="text-2xl font-black text-white sm:text-3xl">
+                        <p className="text-xl font-black text-white sm:text-2xl">
                           24/7
                         </p>
-                        <p className="text-[10px] font-medium uppercase tracking-wider text-white/70 sm:text-xs">
+                        <p className="text-[9px] font-medium uppercase tracking-wider text-white/70 sm:text-[10px]">
                           Available
                         </p>
                       </div>
-                      <div className="h-10 w-px bg-white/20 sm:h-14" />
+                      <div className="h-8 w-px bg-white/20 sm:h-10" />
                       <div>
-                        <p className="text-2xl font-black text-white sm:text-3xl">
+                        <p className="text-xl font-black text-white sm:text-2xl">
                           100%
                         </p>
-                        <p className="text-[10px] font-medium uppercase tracking-wider text-white/70 sm:text-xs">
+                        <p className="text-[9px] font-medium uppercase tracking-wider text-white/70 sm:text-[10px]">
                           Compliant
                         </p>
                       </div>
-                      <div className="h-10 w-px bg-white/20 sm:h-14" />
+                      <div className="h-8 w-px bg-white/20 sm:h-10" />
                       <div>
-                        <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-black/40 px-2.5 py-1 backdrop-blur-xl sm:px-3 sm:py-1.5">
-                          <div className="h-1.5 w-1.5 rounded-full bg-[#15803d]">
-                            <div className="absolute h-1.5 w-1.5 animate-ping rounded-full bg-[#15803d]" />
+                        <div className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/40 px-2 py-0.5 backdrop-blur-xl sm:gap-2 sm:px-2.5 sm:py-1">
+                          <div className="h-1 w-1 rounded-full bg-[#15803d] sm:h-1.5 sm:w-1.5">
+                            <div className="absolute h-1 w-1 animate-ping rounded-full bg-[#15803d] sm:h-1.5 sm:w-1.5" />
                           </div>
-                          <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-white/90 sm:text-[9px] sm:tracking-[0.25em]">
+                          <span className="text-[8px] font-bold uppercase tracking-[0.15em] text-white/90 sm:text-[9px] sm:tracking-[0.2em]">
                             Active Fleet
                           </span>
                         </div>
@@ -203,13 +189,13 @@ const HeroSection = () => {
             <RevealOnScroll delayClass="delay-100">
               <h1 id="hero-title" className="space-y-1 sm:space-y-2">
                 <div className="relative inline-block">
-                  <span className="bg-gradient-to-br from-[#15803d] via-[#16a34a] to-[#22c55e] bg-clip-text text-[clamp(3rem,12vw,8rem)] font-black uppercase leading-[0.85] tracking-[-0.05em] text-transparent">
+                  <span className="bg-gradient-to-br from-[#15803d] via-[#16a34a] to-[#22c55e] bg-clip-text text-[clamp(2.5rem,10vw,8rem)] font-black uppercase leading-[0.85] tracking-[-0.05em] text-transparent">
                     WASTEPH
                   </span>
                   {/* Subtle underline accent */}
-                  <div className="absolute -bottom-1 left-0 h-1 w-24 bg-gradient-to-r from-[#15803d] to-transparent sm:-bottom-2 sm:h-1.5 sm:w-40" />
+                  <div className="absolute -bottom-1 left-0 h-0.5 w-16 bg-gradient-to-r from-[#15803d] to-transparent sm:-bottom-2 sm:h-1 sm:w-24 lg:h-1.5 lg:w-40" />
                 </div>
-                <div className="text-[clamp(1rem,3vw,2rem)] font-bold uppercase tracking-wide text-white/60">
+                <div className="text-[clamp(0.875rem,2.5vw,2rem)] font-bold uppercase tracking-wide text-white/60">
                   Philippines
                 </div>
               </h1>

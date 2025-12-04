@@ -71,7 +71,7 @@ const WasteStreamsShowcase = () => {
             <RevealOnScroll delayClass="delay-100">
               <h2
                 id="waste-streams-title"
-                className="text-[clamp(2rem,8vw,4rem)] font-black uppercase leading-[0.9] tracking-tighter text-white"
+                className="text-[clamp(1.75rem,6vw,4rem)] font-black uppercase leading-[0.9] tracking-tighter text-white md:text-[clamp(2rem,7vw,4rem)]"
                 style={{ letterSpacing: "-0.02em" }}
               >
                 <WordReveal delay={0.1} staggerDelay={0.05}>
