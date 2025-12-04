@@ -230,7 +230,13 @@ const Header = () => {
         {/* Expandable Navigation - Desktop */}
         <nav className="pointer-events-auto hidden lg:block">
           <div
-            className="group/nav relative overflow-hidden rounded-full border border-white/10 bg-black/60 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-700 ease-in-out hover:border-white/20 hover:bg-black/70"
+            className={`group/nav relative overflow-hidden rounded-full border shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-700 ease-in-out ${
+              scrolled ? "shadow-[0_8px_32px_rgba(0,0,0,0.5)]" : ""
+            } ${
+              navExpanded
+                ? "border-white/10 bg-black/60 hover:border-white/20 hover:bg-black/70"
+                : "border-[#15803d]/30 bg-gradient-to-r from-[#15803d]/10 to-[#16a34a]/10"
+            }`}
             style={{
               width: navExpanded ? "750px" : `${collapsedWidth}px`,
             }}
