@@ -7,6 +7,7 @@ import truckImage from "../../assets/trucks/truck.png";
 const HeroSection = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [scrollY, setScrollY] = useState(0);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const heroRef = useRef(null);
 
   useEffect(() => {
@@ -107,10 +108,18 @@ const HeroSection = () => {
               <div className="group relative h-[350px] overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.02] backdrop-blur-2xl sm:h-[400px] md:h-[450px] lg:h-[500px] xl:h-[550px]">
                 {/* Image Container */}
                 <div className="relative h-full overflow-hidden">
+                  {!imageLoaded && (
+                    <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-white/10 to-white/5" />
+                  )}
                   <img
                     src={truckImage}
                     alt="Waste management truck"
-                    className="h-full w-full object-cover transition-all duration-[1500ms] group-hover:scale-110"
+                    className={`h-full w-full object-cover transition-all duration-[1500ms] group-hover:scale-110 ${
+                      imageLoaded ? "opacity-100" : "opacity-0"
+                    }`}
+                    onLoad={() => setImageLoaded(true)}
+                    loading="eager"
+                    fetchPriority="high"
                   />
 
                   {/* Premium gradient overlay - Less intense to show image better */}

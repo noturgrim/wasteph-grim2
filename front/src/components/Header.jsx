@@ -16,6 +16,7 @@ const Header = () => {
   const [activeSection, setActiveSection] = useState("hero");
   const [navExpanded, setNavExpanded] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [logoLoaded, setLogoLoaded] = useState(false);
   const [collapsedWidth, setCollapsedWidth] = useState(200);
   const collapsedRef = useRef(null);
   const expandedRef = useRef(null);
@@ -232,10 +233,18 @@ const Header = () => {
           onClick={handleLogoClick}
           onKeyDown={handleLogoKeyDown}
         >
+          {!logoLoaded && (
+            <div className="h-12 w-12 animate-pulse rounded-lg bg-white/10 sm:h-14 sm:w-14" />
+          )}
           <img
             src={logoImage}
             alt="Waste PH Logo"
-            className="h-12 w-auto scale-125 object-contain transition-all duration-500 group-hover:scale-[1.375] sm:h-14"
+            className={`h-12 w-auto scale-125 object-contain transition-all duration-500 group-hover:scale-[1.375] sm:h-14 ${
+              logoLoaded ? "opacity-100" : "opacity-0"
+            }`}
+            onLoad={() => setLogoLoaded(true)}
+            loading="eager"
+            fetchPriority="high"
           />
           <div className="flex flex-col leading-none">
             <span className="bg-gradient-to-r from-white to-white/80 bg-clip-text text-xl font-black uppercase tracking-tight text-transparent transition-all duration-500 group-hover:from-[#15803d] group-hover:to-[#16a34a] sm:text-2xl">
