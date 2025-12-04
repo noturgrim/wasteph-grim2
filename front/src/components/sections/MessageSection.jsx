@@ -10,7 +10,7 @@ const MessageSection = () => {
       label="Our Story"
       headline="Redefining Waste Management"
       subheadline="Reducing landfill, maximizing recyclables, keeping communities clean."
-      variant="muted"
+      variant="default"
     >
       <RevealOnScroll delayClass="delay-300">
         <div className="grid gap-4 md:gap-5 lg:grid-cols-[1.5fr_1fr] lg:gap-6 xl:gap-8">
