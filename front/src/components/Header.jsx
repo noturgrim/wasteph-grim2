@@ -1,22 +1,23 @@
 import React, { useEffect, useState, useRef } from "react";
 import { scrollToSection } from "../utils/scrollToSection";
-import AnimatedText from "./common/AnimatedText";
 import ContactButton from "./common/ContactButton";
 
 const navItems = [
-  { label: "About Us", targetId: "hero" },
-  { label: "Services", targetId: "services" },
-  { label: "Waste Streams", targetId: "waste-streams" },
-  { label: "Process", targetId: "process" },
-  { label: "Contact", targetId: "contact" },
+  { label: "About Us", targetId: "hero", icon: "home" },
+  { label: "Services", targetId: "services", icon: "services" },
+  { label: "Waste Streams", targetId: "waste-streams", icon: "streams" },
+  { label: "Process", targetId: "process", icon: "process" },
+  { label: "Contact", targetId: "contact", icon: "contact" },
 ];
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
-  const [activeSection, setActiveSection] = useState("");
-  const [indicatorStyle, setIndicatorStyle] = useState({});
+  const [activeSection, setActiveSection] = useState("hero");
+  const [navExpanded, setNavExpanded] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const navRefs = useRef({});
+  const [collapsedWidth, setCollapsedWidth] = useState(200);
+  const collapsedRef = useRef(null);
+  const expandedRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,11 +31,20 @@ const Header = () => {
         "contact",
       ];
 
-      // Get header height for better detection
-      const headerHeight = 120; // Approximate header height
-      const triggerPoint = headerHeight + 100; // Point where we consider a section "active"
+      const headerHeight = 120;
+      const triggerPoint = headerHeight + 100;
 
-      // Find the section closest to the trigger point
+      // Check if we're at the bottom of the page
+      const isAtBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 100;
+
+      if (isAtBottom) {
+        // Force to last section when at bottom
+        setActiveSection("contact");
+        return;
+      }
+
       let closestSection = "hero";
       let closestDistance = Infinity;
 
@@ -45,7 +55,6 @@ const Header = () => {
         const rect = element.getBoundingClientRect();
         const distance = Math.abs(rect.top - triggerPoint);
 
-        // Check if this section is in view and closer to trigger point
         if (
           rect.top <= triggerPoint &&
           rect.bottom >= 0 &&
@@ -64,23 +73,17 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Measure collapsed width dynamically based on active section
   useEffect(() => {
-    if (activeSection && navRefs.current[activeSection]) {
-      const button = navRefs.current[activeSection];
-      const container = button.parentElement;
-      const containerRect = container.getBoundingClientRect();
-      const buttonRect = button.getBoundingClientRect();
-
-      setIndicatorStyle({
-        left: buttonRect.left - containerRect.left,
-        width: buttonRect.width,
-      });
+    if (collapsedRef.current) {
+      const width = collapsedRef.current.scrollWidth;
+      setCollapsedWidth(width); // Use exact width, padding is already included
     }
   }, [activeSection]);
 
   const handleNavClick = (targetId) => {
     scrollToSection(targetId);
-    setMobileMenuOpen(false); // Close mobile menu on navigation
+    setMobileMenuOpen(false);
   };
 
   const handleNavKeyDown = (event, targetId) => {
@@ -99,12 +102,91 @@ const Header = () => {
     scrollToSection("hero");
   };
 
+  // Get icon SVG based on type
+  const getIcon = (iconType) => {
+    switch (iconType) {
+      case "home":
+        return (
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+        );
+      case "services":
+        return (
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <rect x="2" y="7" width="20" height="14" rx="2" />
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+          </svg>
+        );
+      case "streams":
+        return (
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <line x1="8" y1="6" x2="21" y2="6" />
+            <line x1="8" y1="12" x2="21" y2="12" />
+            <line x1="8" y1="18" x2="21" y2="18" />
+            <line x1="3" y1="6" x2="3.01" y2="6" />
+            <line x1="3" y1="12" x2="3.01" y2="12" />
+            <line x1="3" y1="18" x2="3.01" y2="18" />
+          </svg>
+        );
+      case "process":
+        return (
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+          </svg>
+        );
+      case "contact":
+        return (
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // Get active item
+  const activeItem = navItems.find((item) => item.targetId === activeSection);
+  const activeLabel = activeItem ? activeItem.label : "About Us";
+
   return (
-    <header className="fixed inset-x-0 top-0 z-50 transition-all duration-500">
+    <header className="pointer-events-none fixed inset-x-0 top-0 z-50 transition-all duration-500">
       <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-8 px-6 py-4 lg:px-12">
-        {/* Logo - Floating Island */}
+        {/* Logo - Left Side */}
         <div
-          className={`group relative flex cursor-pointer items-center gap-4 rounded-full border border-white/10 bg-black/60 px-4 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-500 hover:scale-105 hover:border-white/20 hover:bg-black/70 hover:shadow-[0_12px_48px_rgba(21,128,61,0.3)] ${
+          className={`pointer-events-auto group relative flex cursor-pointer items-center gap-3 rounded-full border border-white/10 bg-black/60 px-4 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-500 hover:scale-105 hover:border-white/20 hover:bg-black/70 ${
             scrolled ? "shadow-[0_8px_32px_rgba(0,0,0,0.5)]" : ""
           }`}
           role="button"
@@ -113,16 +195,11 @@ const Header = () => {
           onClick={handleLogoClick}
           onKeyDown={handleLogoKeyDown}
         >
-          {/* Glow effect behind logo */}
-          <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-[#15803d]/20 to-[#16a34a]/20 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100" />
-
-          <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#15803d] to-[#16a34a] shadow-[0_0_20px_rgba(21,128,61,0.4),inset_0_1px_0_rgba(255,255,255,0.2)] transition-all duration-500 group-hover:shadow-[0_0_30px_rgba(21,128,61,0.7),inset_0_1px_0_rgba(255,255,255,0.3)]">
-            {/* Animated shine effect */}
+          <div className="relative flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-[#15803d] to-[#16a34a] shadow-[0_0_20px_rgba(21,128,61,0.4)]">
             <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
-
             <svg
               aria-hidden="true"
-              className="relative z-10 h-6 w-6 text-white drop-shadow-lg transition-transform duration-500 group-hover:scale-110"
+              className="relative z-10 h-5 w-5 text-white drop-shadow-lg"
               viewBox="0 0 24 24"
               fill="none"
             >
@@ -144,67 +221,82 @@ const Header = () => {
           </div>
 
           <div className="flex flex-col leading-tight">
-            <span className="text-xs font-black uppercase tracking-[0.3em] text-white transition-all duration-300 group-hover:tracking-[0.35em] sm:text-sm sm:tracking-[0.35em] sm:group-hover:tracking-[0.4em]">
+            <span className="text-xs font-black uppercase tracking-[0.25em] text-white sm:text-sm">
               Waste PH
-            </span>
-            <span className="hidden text-[9px] font-bold uppercase tracking-[0.3em] text-white/70 sm:block">
-              Waste Management
             </span>
           </div>
         </div>
 
-        {/* Navigation - Floating Island */}
-        <nav className="hidden items-center gap-3 lg:flex">
+        {/* Expandable Navigation - Desktop */}
+        <nav className="pointer-events-auto hidden lg:block">
           <div
-            className={`group/nav relative flex items-center gap-1 rounded-full border border-white/10 bg-black/60 p-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-500 hover:border-white/20 hover:bg-black/70 hover:shadow-[0_12px_48px_rgba(21,128,61,0.2)] ${
-              scrolled ? "shadow-[0_8px_32px_rgba(0,0,0,0.5)]" : ""
-            }`}
+            className="group/nav relative overflow-hidden rounded-full border border-white/10 bg-black/60 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-700 ease-in-out hover:border-white/20 hover:bg-black/70"
+            style={{
+              width: navExpanded ? "750px" : `${collapsedWidth}px`,
+            }}
+            onMouseEnter={() => setNavExpanded(true)}
+            onMouseLeave={() => setNavExpanded(false)}
           >
-            {/* Sliding active indicator - only show when section is active */}
-            {activeSection && indicatorStyle.width && (
+            <div className="flex items-center gap-2">
+              {/* Collapsed State - Shows active section */}
               <div
-                className="pointer-events-none absolute rounded-full bg-gradient-to-r from-[#15803d] to-[#16a34a] shadow-[0_0_20px_rgba(21,128,61,0.6),inset_0_1px_0_rgba(255,255,255,0.2)] transition-all duration-500 ease-out"
-                style={{
-                  left: `${indicatorStyle.left}px`,
-                  width: `${indicatorStyle.width}px`,
-                  height: "calc(100% - 20px)",
-                  top: "10px",
-                }}
-              />
-            )}
+                ref={collapsedRef}
+                className={`flex items-center justify-center gap-3 whitespace-nowrap px-5 py-3 transition-all duration-700 ease-in-out ${
+                  navExpanded ? "opacity-0" : "opacity-100"
+                }`}
+              >
+                <span className="text-white/60">
+                  {activeItem && getIcon(activeItem.icon)}
+                </span>
+                <span className="text-xs font-bold uppercase tracking-[0.2em] text-white">
+                  {activeLabel}
+                </span>
+              </div>
 
-            {navItems.map((item) => {
-              const isActive = activeSection === item.targetId;
-              return (
-                <button
-                  key={item.targetId}
-                  ref={(el) => (navRefs.current[item.targetId] = el)}
-                  type="button"
-                  className={`group/item relative z-10 flex items-center justify-center whitespace-nowrap rounded-full px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.2em] transition-all duration-300 focus-visible:outline-none ${
-                    isActive
-                      ? "text-white"
-                      : "text-white/60 hover:scale-105 hover:text-white/90"
-                  }`}
-                  onClick={() => handleNavClick(item.targetId)}
-                  onKeyDown={(event) => handleNavKeyDown(event, item.targetId)}
-                >
-                  {/* Hover glow effect */}
-                  {!isActive && (
-                    <div className="absolute inset-0 rounded-full bg-white/5 opacity-0 transition-opacity duration-300 group-hover/item:opacity-100" />
-                  )}
-                  <span className="relative">
-                    <AnimatedText center>{item.label}</AnimatedText>
-                  </span>
-                </button>
-              );
-            })}
+              {/* Expanded State - Shows all menu items */}
+              <div
+                className={`absolute inset-0 flex items-center gap-2 px-3 py-2 transition-all duration-700 ease-in-out ${
+                  navExpanded ? "opacity-100" : "pointer-events-none opacity-0"
+                }`}
+              >
+                {navItems.map((item) => {
+                  const isActive = activeSection === item.targetId;
+                  return (
+                    <button
+                      key={item.targetId}
+                      type="button"
+                      className={`group/item relative flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-all duration-500 ease-in-out focus-visible:outline-none ${
+                        isActive
+                          ? "bg-gradient-to-r from-[#15803d] to-[#16a34a] text-white shadow-sm"
+                          : "text-white/60 hover:bg-white/5 hover:text-white/90"
+                      }`}
+                      onClick={() => handleNavClick(item.targetId)}
+                      onKeyDown={(event) =>
+                        handleNavKeyDown(event, item.targetId)
+                      }
+                    >
+                      <span
+                        className={`transition-all duration-500 ${
+                          isActive ? "scale-110" : ""
+                        }`}
+                      >
+                        {getIcon(item.icon)}
+                      </span>
+                      <span className="relative whitespace-nowrap">
+                        {item.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </nav>
 
-        {/* Mobile menu button - Floating Island */}
+        {/* Mobile Menu Button */}
         <button
           type="button"
-          className={`flex items-center justify-center rounded-full border border-white/10 bg-black/60 p-3 text-white shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-500 hover:scale-105 hover:border-white/20 hover:bg-black/70 hover:shadow-[0_12px_48px_rgba(21,128,61,0.2)] lg:hidden ${
+          className={`pointer-events-auto flex items-center justify-center rounded-full border border-white/10 bg-black/60 p-3 text-white shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-500 hover:scale-105 hover:border-white/20 hover:bg-black/70 lg:hidden ${
             scrolled ? "shadow-[0_8px_32px_rgba(0,0,0,0.5)]" : ""
           }`}
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -233,20 +325,11 @@ const Header = () => {
             )}
           </svg>
         </button>
-
-        {/* CTA button - Floating Island */}
-        <ContactButton
-          className={`hidden lg:block ${
-            scrolled ? "shadow-[0_8px_32px_rgba(21,128,61,0.4)]" : ""
-          }`}
-          onClick={() => handleNavClick("contact")}
-          onKeyDown={(event) => handleNavKeyDown(event, "contact")}
-        />
       </div>
 
-      {/* Mobile Menu - Floating Island Style */}
+      {/* Mobile Menu */}
       <div
-        className={`absolute left-6 right-6 top-full mt-2 overflow-hidden rounded-3xl backdrop-blur-xl transition-all duration-300 lg:hidden ${
+        className={`pointer-events-auto absolute left-6 right-6 top-full mt-2 overflow-hidden rounded-3xl backdrop-blur-xl transition-all duration-300 lg:hidden ${
           mobileMenuOpen
             ? "max-h-screen border border-white/10 bg-black/90 shadow-[0_12px_48px_rgba(0,0,0,0.5)]"
             : "max-h-0 border-0"
@@ -259,15 +342,16 @@ const Header = () => {
               <button
                 key={item.targetId}
                 type="button"
-                className={`rounded-xl px-6 py-4 text-left text-sm font-bold uppercase tracking-[0.2em] transition-all duration-300 ${
+                className={`flex items-center gap-3 rounded-xl px-6 py-4 text-left text-sm font-bold uppercase tracking-[0.2em] transition-all duration-500 ease-in-out ${
                   isActive
-                    ? "bg-gradient-to-r from-[#15803d] to-[#16a34a] text-white shadow-[0_0_20px_rgba(21,128,61,0.4)]"
+                    ? "bg-gradient-to-r from-[#15803d] to-[#16a34a] text-white shadow-sm"
                     : "text-white/60 hover:bg-white/5 hover:text-white"
                 }`}
                 onClick={() => handleNavClick(item.targetId)}
                 onKeyDown={(event) => handleNavKeyDown(event, item.targetId)}
               >
-                <AnimatedText>{item.label}</AnimatedText>
+                {getIcon(item.icon)}
+                <span>{item.label}</span>
               </button>
             );
           })}
