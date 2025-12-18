@@ -32,10 +32,12 @@ const ProcessSection = () => {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [videoError, setVideoError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const videoRef = useRef(null);
   const sectionRef = useRef(null);
 
-  // Video loading progress tracking
+  // Video loading progress tracking with error handling
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -54,16 +56,46 @@ const ProcessSection = () => {
     const handleCanPlay = () => {
       setVideoLoaded(true);
       setLoadingProgress(100);
+      setVideoError(false);
+    };
+
+    const handleError = (e) => {
+      console.error("Video loading error:", e);
+      setVideoError(true);
+
+      // Auto-retry up to 3 times
+      if (retryCount < 3) {
+        setTimeout(() => {
+          setRetryCount((prev) => prev + 1);
+          setVideoError(false);
+          setLoadingProgress(0);
+          if (video) {
+            video.load(); // Retry loading
+          }
+        }, 2000); // Wait 2 seconds before retry
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      // Video metadata loaded successfully
+      setVideoError(false);
     };
 
     video.addEventListener("progress", handleProgress);
     video.addEventListener("canplay", handleCanPlay);
+    video.addEventListener("error", handleError);
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
+
+    // Force load
+    video.load();
 
     return () => {
       video.removeEventListener("progress", handleProgress);
       video.removeEventListener("canplay", handleCanPlay);
+      video.removeEventListener("error", handleError);
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
-  }, []);
+  }, [retryCount]);
 
   // Autoplay when video is in viewport
   useEffect(() => {
@@ -171,7 +203,7 @@ const ProcessSection = () => {
                   {/* Inner video frame */}
                   <div className="relative overflow-hidden rounded-[1.5rem] bg-black">
                     {/* Loading State */}
-                    {!videoLoaded && (
+                    {!videoLoaded && !videoError && (
                       <div className="absolute inset-0 z-20 flex items-center justify-center bg-gradient-to-br from-[#15803d]/10 to-[#051008]">
                         <div className="text-center">
                           <div className="mb-2 h-1.5 w-40 overflow-hidden rounded-full bg-white/10 sm:mb-3 sm:h-2 sm:w-48">
@@ -181,8 +213,45 @@ const ProcessSection = () => {
                             />
                           </div>
                           <p className="text-xs font-semibold text-white sm:text-sm">
-                            {Math.round(loadingProgress)}%
+                            {retryCount > 0
+                              ? `Retrying... (${retryCount}/3)`
+                              : `${Math.round(loadingProgress)}%`}
                           </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Error State */}
+                    {videoError && retryCount >= 3 && (
+                      <div className="absolute inset-0 z-20 flex items-center justify-center bg-gradient-to-br from-[#15803d]/10 to-[#051008]">
+                        <div className="text-center px-4">
+                          <svg
+                            className="mx-auto mb-3 h-10 w-10 text-white/60 sm:h-12 sm:w-12"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                            />
+                          </svg>
+                          <p className="text-xs font-semibold text-white/80 sm:text-sm">
+                            Video unavailable
+                          </p>
+                          <button
+                            onClick={() => {
+                              setRetryCount(0);
+                              setVideoError(false);
+                              setLoadingProgress(0);
+                              if (videoRef.current) videoRef.current.load();
+                            }}
+                            className="mt-3 rounded-full bg-[#15803d] px-4 py-1.5 text-xs font-bold text-white transition-all hover:bg-[#16a34a]"
+                          >
+                            Retry
+                          </button>
                         </div>
                       </div>
                     )}
