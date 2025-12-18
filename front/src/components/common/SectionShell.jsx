@@ -22,6 +22,7 @@ const SectionShell = ({
   subheadline,
   variant = "default",
   fullHeight = false,
+
   children,
 }) => {
   const sectionHeight = fullHeight ? "min-h-screen" : "min-h-screen";
@@ -38,27 +39,37 @@ const SectionShell = ({
         {(label || headline || subheadline) && (
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-6 lg:gap-8">
             <div className="max-w-4xl">
-              {label && (
-                <RevealOnScroll>
-                  <div className="mb-3 flex items-center gap-2 md:mb-4 md:gap-3">
-                    <span className="h-px w-10 bg-gradient-to-r from-[#15803d] to-transparent md:w-12 lg:w-16" />
-                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/60 md:text-[10px] md:tracking-[0.25em] lg:text-xs lg:tracking-[0.35em]">
-                      {label}
-                    </p>
-                  </div>
-                </RevealOnScroll>
-              )}
+              {/* Label is now vertical on all screen sizes */}
               {headline && (
                 <RevealOnScroll delayClass="delay-100">
-                  <h2
-                    id={titleId}
-                    className="text-[clamp(1.75rem,5vw,3.5rem)] font-black uppercase leading-[0.9] tracking-tighter text-white md:text-[clamp(2rem,5.5vw,4.5rem)] lg:text-[clamp(2.5rem,6vw,5rem)]"
-                    style={{ letterSpacing: "-0.02em" }}
-                  >
-                    <WordReveal delay={0.1} staggerDelay={0.05}>
-                      {headline}
-                    </WordReveal>
-                  </h2>
+                  <div className="relative">
+                    {/* Vertical label on left side */}
+                    {label && (
+                      <div className="absolute -left-4 top-1/2 -translate-y-1/2 sm:-left-6 md:-left-8 lg:-left-10 xl:-left-12 2xl:-left-15">
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <p
+                            className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#15803d] lg:text-xs lg:tracking-[0.35em]"
+                            style={{
+                              writingMode: "vertical-rl",
+                              transform: "rotate(180deg)",
+                            }}
+                          >
+                            {label}
+                          </p>
+                          <span className="h-px w-6 bg-gradient-to-r from-[#15803d] to-transparent sm:w-8 md:w-10 lg:w-12 xl:w-16" />
+                        </div>
+                      </div>
+                    )}
+                    <h2
+                      id={titleId}
+                      className="text-[clamp(1.75rem,5vw,3.5rem)] font-black uppercase leading-[0.9] tracking-tighter text-white md:text-[clamp(2rem,5.5vw,4.5rem)] lg:text-[clamp(2.5rem,6vw,5rem)]"
+                      style={{ letterSpacing: "-0.02em" }}
+                    >
+                      <WordReveal delay={0.1} staggerDelay={0.05}>
+                        {headline}
+                      </WordReveal>
+                    </h2>
+                  </div>
                 </RevealOnScroll>
               )}
               {subheadline && (

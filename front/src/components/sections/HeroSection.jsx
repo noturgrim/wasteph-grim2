@@ -103,7 +103,7 @@ const HeroSection = () => {
         }}
       >
         {/* Main Hero Grid - Reversed for Image Prominence */}
-        <div className="grid w-full gap-6 sm:gap-8 md:gap-10 lg:grid-cols-2 lg:gap-10 xl:gap-12">
+        <div className="grid w-full gap-4 sm:gap-6 md:gap-8 lg:grid-cols-2 lg:gap-10 xl:gap-12">
           {/* Left: Large Featured Image */}
           <div className="relative order-2 lg:order-1">
             <ScaleIn delay={0.2} duration={1}>
@@ -217,9 +217,12 @@ const HeroSection = () => {
 
             {/* Hero Title - Bold & Compact */}
             <div>
-              <h1 id="hero-title" className="space-y-3 sm:space-y-4">
-                <div className="relative inline-block">
-                  <span className="inline-flex items-center gap-[0.15em] text-[clamp(2.5rem,10vw,8rem)] font-black uppercase leading-[0.85] tracking-[-0.05em]">
+              <h1
+                id="hero-title"
+                className="space-y-2 sm:space-y-3 md:space-y-4"
+              >
+                <div className="relative block w-full">
+                  <span className="inline-flex flex-wrap items-center gap-[0.15em] text-[clamp(1.8rem,8vw,8rem)] font-black uppercase leading-[0.85] tracking-[-0.05em] sm:flex-nowrap">
                     <StaggerText
                       delay={0.3}
                       staggerDelay={0.05}
@@ -229,7 +232,7 @@ const HeroSection = () => {
                     </StaggerText>
                     <FadeInUp
                       delay={0.6}
-                      className="text-[0.4em] text-white/40"
+                      className="hidden text-[0.4em] text-white/40 sm:inline-block"
                     >
                       ·
                     </FadeInUp>
@@ -243,7 +246,7 @@ const HeroSection = () => {
                   </span>
                 </div>
                 <FadeInUp delay={0.9} distance={15}>
-                  <div className="text-[clamp(0.875rem,2.5vw,2rem)] font-light italic tracking-wide text-white/60">
+                  <div className="text-[clamp(0.75rem,2vw,2rem)] font-light italic tracking-wide text-white/60 sm:text-[clamp(0.875rem,2.5vw,2rem)]">
                     For a better, cleaner Cebu.
                   </div>
                 </FadeInUp>
