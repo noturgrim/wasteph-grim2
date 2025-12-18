@@ -8,7 +8,6 @@ import {
   SlideShowImage,
   useSlideShowContext,
 } from "../common/AnimatedSlideshow";
-import oct10Image from "../../assets/showcase/oct10.png";
 import sept26Image from "../../assets/showcase/sept26.png";
 import sept10Image from "../../assets/showcase/sept10.png";
 import sept5Image from "../../assets/showcase/sept5.png";
@@ -16,17 +15,6 @@ import aug13Image from "../../assets/showcase/aug13.png";
 import june6Image from "../../assets/showcase/june6.png";
 
 const showcaseEvents = [
-  {
-    id: 1,
-    title: "Flood-Free Cebu Event",
-    date: "October 10, 2025",
-    tagline: "Flood-free starts with waste-free.",
-    description:
-      "Our Waste PH team joined the Flood-Free Cebu event to share how proper waste management plays a vital role in preventing flooding. We truly appreciate everyone who stopped by our booth to learn more about what we do!",
-    callToAction:
-      "Together, let's build a cleaner, safer, and more resilient Cebu.",
-    image: oct10Image,
-  },
   {
     id: 2,
     title: "VisMin Hospitality Summit",
@@ -102,114 +90,89 @@ const DateBadge = () => {
   );
 };
 
-// Event Card Component that triggers slide change on hover/click
-const EventCard = ({ event, index, activeIndex, onToggle }) => {
-  const { changeSlide } = useSlideShowContext();
-  const isExpanded = activeIndex === index;
-  const [isMobile, setIsMobile] = React.useState(false);
+// Simple Event Card Component - Clean and professional
+const EventCard = ({ event, index }) => {
+  const { changeSlide, activeSlide } = useSlideShowContext();
+  const isActive = activeSlide === index;
 
-  // Detect if device is mobile
-  React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024); // lg breakpoint
-    };
-
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  const handleMouseEnter = () => {
+  const handleInteraction = () => {
     changeSlide(index);
   };
 
-  const handleClick = () => {
-    // Only handle clicks on mobile devices
-    if (isMobile) {
-      changeSlide(index);
-      onToggle(index);
-    }
-  };
-
   return (
-    <div
-      onMouseEnter={handleMouseEnter}
-      onClick={handleClick}
-      className={`group relative cursor-pointer overflow-hidden rounded-lg border border-white/10 bg-black/20 backdrop-blur-sm transition-all duration-300 hover:border-[#15803d]/50 hover:bg-black/40 ${
-        isExpanded ? "border-[#15803d]/50 bg-black/40" : ""
+    <button
+      type="button"
+      onClick={handleInteraction}
+      onMouseEnter={handleInteraction}
+      className={`group relative w-full cursor-pointer overflow-hidden rounded-lg border text-left transition-all duration-300 lg:rounded-xl ${
+        isActive
+          ? "border-[#15803d] bg-[#15803d]/10 shadow-lg shadow-[#15803d]/20"
+          : "border-white/10 bg-black/20 hover:border-[#15803d]/50 hover:bg-[#15803d]/5"
       }`}
     >
-      {/* Collapsed View - Always Visible */}
-      <div className="flex items-center justify-between gap-2 p-2.5 sm:gap-3 sm:p-3 md:p-3.5 lg:p-4">
-        {/* Number & Title */}
-        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-          <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#15803d]/20 text-[10px] font-black text-[#15803d] transition-all group-hover:bg-[#15803d] group-hover:text-white sm:h-7 sm:w-7 sm:text-xs md:h-8 md:w-8 md:text-sm">
-            {index + 1}
-          </span>
-          <h3 className="flex min-w-0 flex-1 items-center text-sm font-bold leading-tight text-white sm:text-base md:text-lg lg:text-xl">
-            <SlideShowText text={event.title} index={index} />
-          </h3>
+      <div className="flex items-start gap-2 p-2.5 sm:gap-3 sm:p-3 lg:p-3.5">
+        {/* Number Badge */}
+        <div
+          className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-sm font-bold transition-all sm:h-9 sm:w-9 lg:h-10 lg:w-10 lg:text-base ${
+            isActive
+              ? "bg-[#15803d] text-white shadow-lg shadow-[#15803d]/30"
+              : "bg-[#15803d]/20 text-[#15803d] group-hover:bg-[#15803d]/30"
+          }`}
+        >
+          {index + 1}
         </div>
 
-        {/* Expand Icon */}
-        <svg
-          className={`h-3.5 w-3.5 flex-shrink-0 text-[#15803d]/70 transition-transform duration-300 group-hover:rotate-90 group-hover:text-[#15803d] sm:h-4 sm:w-4 md:h-5 md:w-5 ${
-            isExpanded ? "rotate-90 text-[#15803d]" : ""
-          }`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2.5}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
-      </div>
+        {/* Content */}
+        <div className="flex-1 space-y-0.5 sm:space-y-1">
+          {/* Title */}
+          <h3
+            className={`text-sm font-bold leading-tight transition-colors sm:text-base lg:text-lg ${
+              isActive ? "text-white" : "text-white/90 group-hover:text-white"
+            }`}
+          >
+            <SlideShowText text={event.title} index={index} />
+          </h3>
 
-      {/* Expanded Details - Show on Hover/Click */}
-      <div
-        className={`grid transition-all duration-300 ${
-          isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-        } group-hover:grid-rows-[1fr]`}
-      >
-        <div className="overflow-hidden">
-          <div className="border-t border-white/10 px-2.5 pb-2.5 pt-1.5 sm:px-3 sm:pb-3 sm:pt-2 md:px-3.5 md:pb-3.5 lg:px-4 lg:pb-4">
-            {/* Date */}
-            <p className="mb-1.5 text-[9px] font-bold uppercase tracking-wider text-white/40 sm:mb-2 sm:text-[10px] md:text-xs">
-              {event.date}
-            </p>
+          {/* Date */}
+          <p className="text-[10px] font-medium uppercase tracking-wide text-white/50 sm:text-xs">
+            {event.date}
+          </p>
 
-            {/* Tagline */}
-            <p className="mb-1.5 text-[11px] font-semibold italic text-[#15803d] sm:mb-2 sm:text-xs md:text-sm">
+          {/* Tagline - Show on active */}
+          <div
+            className={`overflow-hidden transition-all duration-300 ${
+              isActive ? "max-h-16 opacity-100" : "max-h-0 opacity-0"
+            }`}
+          >
+            <p className="pt-1 text-xs italic text-[#15803d] sm:pt-1.5 sm:text-sm">
               {event.tagline}
             </p>
+          </div>
+        </div>
 
-            {/* Description */}
-            <p className="mb-1.5 text-[11px] leading-relaxed text-white/70 sm:mb-2 sm:text-xs md:text-sm">
-              {event.description}
-            </p>
-
-            {/* Call to Action */}
-            <div className="rounded-md border border-[#15803d]/20 bg-[#15803d]/5 p-1.5 sm:rounded-lg sm:p-2 md:p-2.5">
-              <p className="text-[11px] font-semibold leading-relaxed text-white/90 sm:text-xs md:text-sm">
-                {event.callToAction}
-              </p>
-            </div>
+        {/* Active Indicator */}
+        <div
+          className={`flex-shrink-0 transition-all ${
+            isActive ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          <div className="relative h-2 w-2 rounded-full bg-[#15803d] shadow-lg shadow-[#15803d]/50">
+            <div className="absolute h-2 w-2 animate-ping rounded-full bg-[#15803d]" />
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Bottom Border Accent */}
+      <div
+        className={`h-0.5 w-full bg-gradient-to-r from-transparent via-[#15803d] to-transparent transition-opacity ${
+          isActive ? "opacity-100" : "opacity-0"
+        }`}
+      />
+    </button>
   );
 };
 
 const ServicesSlideshow = () => {
-  const [activeCardIndex, setActiveCardIndex] = React.useState(null);
-
-  const handleCardToggle = (index) => {
-    // If clicking the same card, close it; otherwise open the new one
-    setActiveCardIndex(activeCardIndex === index ? null : index);
-  };
-
   // Preload all images for better performance
   React.useEffect(() => {
     showcaseEvents.forEach((event) => {
@@ -225,43 +188,18 @@ const ServicesSlideshow = () => {
       headline="Building a Resilient Cebu"
       variant="default"
       fullHeight
+      compactSpacing
     >
-      <style>{`
-        #community-showcase > div {
-          gap: 0.75rem !important;
-        }
-        #community-showcase .flex.flex-col > div {
-          max-width: 100% !important;
-        }
-      `}</style>
-      <div className="flex h-full items-center py-2 md:py-3 lg:py-0">
+      <div className="flex h-full items-center py-2 sm:py-3 lg:py-4">
         <SlideShow
           defaultSlide={0}
-          className="grid w-full gap-3 md:gap-4 lg:grid-cols-[1fr_1fr] lg:gap-6"
+          className="grid w-full gap-3 sm:gap-4 lg:grid-cols-[1.3fr_0.7fr] lg:gap-6"
         >
-          {/* Left Side - Event List */}
-          <div className="order-2 flex h-full flex-col justify-center gap-1.5 md:gap-2 lg:order-1 lg:gap-2">
-            {showcaseEvents.map((event, index) => (
-              <RevealOnScroll
-                key={event.id}
-                delayClass={`delay-[${(index + 1) * 100}ms]`}
-                variant="fade-right"
-              >
-                <EventCard
-                  event={event}
-                  index={index}
-                  activeIndex={activeCardIndex}
-                  onToggle={handleCardToggle}
-                />
-              </RevealOnScroll>
-            ))}
-          </div>
-
-          {/* Right Side - Image Display */}
-          <RevealOnScroll delayClass="delay-100" variant="fade-left">
-            <div className="order-1 flex items-center lg:order-2">
-              <div className="relative w-full overflow-hidden rounded-lg border border-white/20 bg-black/40 backdrop-blur-xl sm:rounded-xl lg:max-h-[85%]">
-                <SlideShowImageWrap className="aspect-[4/3] h-auto sm:aspect-[3/2] lg:aspect-auto lg:h-full">
+          {/* Left Side - Large Image Display */}
+          <RevealOnScroll delayClass="delay-100" variant="fade-right">
+            <div className="order-1 flex h-full items-center lg:order-1">
+              <div className="relative w-full overflow-hidden rounded-xl border border-white/10 bg-black/20 shadow-2xl lg:rounded-2xl">
+                <SlideShowImageWrap className="aspect-[4/3] sm:aspect-[16/9] lg:aspect-[4/3]">
                   {showcaseEvents.map((event, index) => (
                     <SlideShowImage
                       key={event.id}
@@ -273,14 +211,27 @@ const ServicesSlideshow = () => {
                   ))}
                 </SlideShowImageWrap>
 
-                {/* Gradient Overlay */}
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                {/* Subtle Gradient Overlay */}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
                 {/* Active Event Date Badge */}
                 <DateBadge />
               </div>
             </div>
           </RevealOnScroll>
+
+          {/* Right Side - Event List */}
+          <div className="order-2 flex h-full flex-col justify-center gap-1.5 sm:gap-2 lg:order-2 lg:gap-2">
+            {showcaseEvents.map((event, index) => (
+              <RevealOnScroll
+                key={event.id}
+                delayClass={`delay-[${(index + 2) * 100}ms]`}
+                variant="fade-left"
+              >
+                <EventCard event={event} index={index} />
+              </RevealOnScroll>
+            ))}
+          </div>
         </SlideShow>
       </div>
     </SectionShell>

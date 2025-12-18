@@ -23,12 +23,16 @@ const SectionShell = ({
   subheadline,
   variant = "default",
   fullHeight = false,
-
+  compactSpacing = false,
   children,
 }) => {
   const sectionHeight = fullHeight ? "min-h-screen" : "min-h-screen";
   const variantClasses = getVariantClasses(variant);
   const titleId = id ? `${id}-title` : undefined;
+
+  const gapClasses = compactSpacing
+    ? "gap-3 md:gap-4 lg:gap-5"
+    : "gap-4 md:gap-6 lg:gap-8 xl:gap-10";
 
   return (
     <section
@@ -36,7 +40,9 @@ const SectionShell = ({
       className={`snap-start ${sectionHeight} ${variantClasses} flex items-center`}
       aria-labelledby={titleId}
     >
-      <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-4 px-8 py-8 sm:px-10 md:gap-6 md:px-12 md:py-12 lg:gap-8 lg:px-16 xl:gap-10 xl:px-20 xl:py-16">
+      <div
+        className={`relative mx-auto flex w-full max-w-7xl flex-col ${gapClasses} px-8 py-16 sm:px-10 sm:py-20 md:px-12 md:py-24 lg:px-16 lg:py-28 xl:px-20 xl:py-32`}
+      >
         {/* Vertical label - positioned relative to entire container */}
         {label && headline && (
           <div className="absolute left-1 top-1/2 z-10 -translate-y-1/2 sm:left-2 md:-left-2 lg:-left-4 xl:-left-8 2xl:-left-12">
@@ -60,7 +66,7 @@ const SectionShell = ({
         )}
 
         {(label || headline || subheadline) && (
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-6 lg:gap-8">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between md:gap-4 lg:gap-6">
             <div className="max-w-4xl">
               {headline && (
                 <RevealOnScroll delayClass="delay-100">
@@ -86,7 +92,7 @@ const SectionShell = ({
           </div>
         )}
 
-        <div className="flex-1">{children}</div>
+        {children}
       </div>
     </section>
   );

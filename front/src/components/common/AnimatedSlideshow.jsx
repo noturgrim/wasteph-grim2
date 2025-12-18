@@ -116,19 +116,21 @@ export const SlideShowImageWrap = ({ className, children }) => {
 };
 
 /**
- * Clip path variants for image reveal animation
+ * Smooth crossfade variants for image transitions
  */
-const clipPathVariants = {
+const fadeVariants = {
   visible: {
-    clipPath: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
+    opacity: 1,
+    scale: 1,
   },
   hidden: {
-    clipPath: "polygon(0% 0%, 100% 0%, 100% 0%, 0% 0px)",
+    opacity: 0,
+    scale: 1.02,
   },
 };
 
 /**
- * Animated image component with clip path reveal and loading state
+ * Animated image component with smooth crossfade and loading state
  */
 export const SlideShowImage = ({ index, imageUrl, alt, className }) => {
   const { activeSlide } = useSlideShowContext();
@@ -184,7 +186,7 @@ export const SlideShowImage = ({ index, imageUrl, alt, className }) => {
         </div>
       )}
 
-      {/* Actual Image */}
+      {/* Actual Image with Smooth Crossfade */}
       <motion.img
         src={imageUrl}
         alt={alt}
@@ -193,12 +195,16 @@ export const SlideShowImage = ({ index, imageUrl, alt, className }) => {
         loading="lazy"
         decoding="async"
         className={cn(
-          "inline-block align-middle h-full w-full object-cover transition-opacity duration-500",
+          "inline-block align-middle h-full w-full object-cover",
           isLoaded && !hasError ? "opacity-100" : "opacity-0",
           className
         )}
-        transition={{ ease: [0.33, 1, 0.68, 1], duration: 0.8 }}
-        variants={clipPathVariants}
+        transition={{
+          duration: 0.6,
+          ease: [0.4, 0, 0.2, 1],
+        }}
+        variants={fadeVariants}
+        initial="hidden"
         animate={activeSlide === index ? "visible" : "hidden"}
       />
     </>
