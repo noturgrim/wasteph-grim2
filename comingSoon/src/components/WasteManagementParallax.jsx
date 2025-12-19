@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 
 // Data Configuration
 const layersData = [
@@ -61,8 +61,13 @@ const layersData = [
 ];
 
 const WasteManagementParallax = ({ title = "", subtitle = "" }) => {
-  // Garbage truck SVG as data URL
-  const truckSvg = `data:image/svg+xml,${encodeURIComponent(`
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+
+  // Garbage truck SVG as data URL (memoized for performance)
+  const truckSvg = useMemo(
+    () =>
+      `data:image/svg+xml,${encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" fill="none">
       <!-- Main truck body -->
       <rect x="40" y="35" width="120" height="45" fill="#15803d" rx="3"/>
@@ -83,7 +88,60 @@ const WasteManagementParallax = ({ title = "", subtitle = "" }) => {
       <!-- Front lights -->
       <circle cx="157" cy="70" r="3" fill="#fbbf24" opacity="0.8"/>
     </svg>
-  `)}`;
+  `)}`,
+    []
+  );
+
+  // Preload images for better performance
+  useEffect(() => {
+    const imagesToPreload = layersData
+      .filter((layer) => layer.image !== "bike")
+      .map(
+        (layer) =>
+          `https://s3-us-west-2.amazonaws.com/s.cdpn.io/24650/${layer.image}.png`
+      );
+
+    let loadedCount = 0;
+    const totalImages = imagesToPreload.length;
+
+    if (totalImages === 0) {
+      setImagesLoaded(true);
+      return;
+    }
+
+    const handleImageLoad = () => {
+      loadedCount++;
+      if (loadedCount === totalImages) {
+        setImagesLoaded(true);
+      }
+    };
+
+    const handleImageError = () => {
+      loadedCount++;
+      setLoadError(true);
+      if (loadedCount === totalImages) {
+        setImagesLoaded(true);
+      }
+    };
+
+    // Preload each image
+    imagesToPreload.forEach((src) => {
+      const img = new Image();
+      img.onload = handleImageLoad;
+      img.onerror = handleImageError;
+      img.src = src;
+    });
+
+    // Timeout fallback for slow connections
+    const timeout = setTimeout(() => {
+      if (!imagesLoaded) {
+        setImagesLoaded(true);
+        setLoadError(true);
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   // Generate dynamic CSS for each layer
   const dynamicStyles = useMemo(() => {
@@ -113,24 +171,52 @@ const WasteManagementParallax = ({ title = "", subtitle = "" }) => {
   return (
     <section
       className="hero-container"
-      aria-label="An animated parallax landscape of mountains and cyclists."
+      aria-label="An animated parallax landscape with waste management vehicles."
     >
       {/* Inject dynamic layer styles */}
       <style>{dynamicStyles}</style>
 
-      {/* Render each parallax layer */}
-      {layersData.map((layer) => (
-        <div
-          key={layer.className}
-          className={`parallax-layer ${layer.className}`}
-        />
-      ))}
+      {/* Loading indicator for slow connections */}
+      {!imagesLoaded && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-[#0a0f0d]">
+          <div className="text-center">
+            <div className="mb-2 h-1 w-32 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full w-1/2 animate-pulse bg-[#15803d]" />
+            </div>
+            <p className="text-xs text-white/40">Loading background...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Render each parallax layer with fade-in */}
+      <div
+        className={`transition-opacity duration-1000 ${
+          imagesLoaded ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        {layersData.map((layer) => (
+          <div
+            key={layer.className}
+            className={`parallax-layer ${layer.className}`}
+            style={{
+              willChange: imagesLoaded ? "auto" : "transform",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Error fallback for failed images */}
+      {loadError && imagesLoaded && (
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0a0f0d] via-[#0d1410] to-[#0a0f0d]" />
+      )}
 
       {/* Hero text */}
-      <div className="hero-content">
-        <h1 className="hero-title">{title}</h1>
-        <p className="hero-subtitle">{subtitle}</p>
-      </div>
+      {title && subtitle && (
+        <div className="hero-content">
+          <h1 className="hero-title">{title}</h1>
+          <p className="hero-subtitle">{subtitle}</p>
+        </div>
+      )}
     </section>
   );
 };
