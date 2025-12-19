@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { scrollToSection } from "../utils/scrollToSection";
 import ContactButton from "./common/ContactButton";
-import logoImage from "../assets/logo/wasteNoBG.png";
 
 const navItems = [
   { label: "About Us", targetId: "hero", icon: "home" },
@@ -17,7 +16,6 @@ const Header = () => {
   const [activeSection, setActiveSection] = useState("hero");
   const [navExpanded, setNavExpanded] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [logoLoaded, setLogoLoaded] = useState(false);
   const [collapsedWidth, setCollapsedWidth] = useState(200);
   const collapsedRef = useRef(null);
   const expandedRef = useRef(null);
@@ -239,41 +237,24 @@ const Header = () => {
 
   return (
     <header className="pointer-events-none fixed inset-x-0 top-0 z-50 transition-all duration-500">
-      <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-8 px-6 py-4 lg:px-12">
+      <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-8 px-0 py-4 sm:px-6 lg:px-12">
         {/* Logo - Left Side */}
         <div
-          className="pointer-events-auto group flex cursor-pointer items-center gap-2 rounded-full border border-white/5 bg-black/40 py-1.5 pl-3 pr-5 shadow-[0_2px_12px_rgba(0,0,0,0.2)] backdrop-blur-xl transition-all duration-500 hover:border-white/10 hover:bg-black/50 hover:shadow-[0_2px_12px_rgba(0,0,0,0.3)]"
+          className="pointer-events-auto group flex cursor-pointer items-center rounded-r-full border border-l-0 border-white/5 bg-black/40 py-3 pl-3 pr-6 shadow-[0_2px_12px_rgba(0,0,0,0.2)] backdrop-blur-xl transition-all duration-500 hover:border-white/10 hover:bg-black/50 hover:shadow-[0_2px_12px_rgba(0,0,0,0.3)] sm:pl-4 md:rounded-full md:border-l md:pl-6"
           role="button"
           tabIndex={0}
           aria-label="Scroll to Waste PH hero section"
           onClick={handleLogoClick}
           onKeyDown={handleLogoKeyDown}
         >
-          {!logoLoaded && (
-            <div className="h-12 w-12 animate-pulse rounded-lg bg-white/10 sm:h-14 sm:w-14" />
-          )}
-          <img
-            src={logoImage}
-            alt="Waste PH Logo"
-            className={`-ml-1 h-12 w-auto scale-125 object-contain transition-all duration-500 group-hover:scale-[1.375] sm:h-14 ${
-              logoLoaded ? "opacity-100" : "opacity-0"
-            }`}
-            onLoad={() => setLogoLoaded(true)}
-            loading="eager"
-            fetchPriority="high"
-          />
           <div className="flex flex-col leading-none">
-            <span className="inline-flex items-center gap-[0.15em] text-xl font-black uppercase tracking-tight transition-all duration-500 sm:text-2xl">
-              <span className="bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent group-hover:from-white group-hover:to-white/90">
-                WASTE
-              </span>
-              <span className="text-[0.4em] text-white/40">·</span>
-              <span className="bg-gradient-to-r from-[#15803d] to-[#16a34a] bg-clip-text text-transparent group-hover:from-[#22c55e] group-hover:to-[#16a34a]">
-                PH
+            <span className="text-xl font-black uppercase tracking-tight transition-all duration-500 sm:text-2xl">
+              <span className="bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent group-hover:from-white group-hover:to-white/95">
+                WASTEPH
               </span>
             </span>
-            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/50 sm:text-xs">
-              est 2023
+            <span className="text-[9px] font-medium uppercase tracking-[0.25em] text-white/50 transition-all duration-500 group-hover:text-white/60 sm:text-[10px]">
+              Private Waste Management
             </span>
           </div>
         </div>
@@ -386,7 +367,7 @@ const Header = () => {
 
       {/* Mobile Menu */}
       <div
-        className={`pointer-events-auto absolute left-6 right-6 top-full mt-2 overflow-hidden rounded-3xl backdrop-blur-xl transition-all duration-300 lg:hidden ${
+        className={`pointer-events-auto absolute left-0 right-6 top-full mt-2 overflow-hidden rounded-3xl backdrop-blur-xl transition-all duration-300 sm:left-6 lg:hidden ${
           mobileMenuOpen
             ? "max-h-screen border border-white/10 bg-black/90 shadow-[0_12px_48px_rgba(0,0,0,0.5)]"
             : "max-h-0 border-0"
