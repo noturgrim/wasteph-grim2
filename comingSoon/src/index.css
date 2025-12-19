@@ -1,1 +1,106 @@
 @import "tailwindcss";
+
+* {
+  font-family: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+::selection {
+  background-color: #15803d;
+  color: #ffffff;
+}
+
+::-moz-selection {
+  background-color: #15803d;
+  color: #ffffff;
+}
+
+/* Minimal animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Parallax animations */
+@keyframes parallax_fg {
+  0% {
+    background-position: 2765px 100%;
+  }
+  100% {
+    background-position: 550px 100%;
+  }
+}
+
+@keyframes parallax_bike {
+  0% {
+    background-position: -300px 100%;
+  }
+  100% {
+    background-position: 2000px 100%;
+  }
+}
+
+/* Hero container */
+.hero-container {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(to bottom, #0a0f0d 0%, #0d1410 50%, #0a0f0d 100%);
+}
+
+.parallax-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background-repeat: repeat-x;
+  background-position: 0 100%;
+  animation: parallax_fg linear infinite;
+  animation-timing-function: linear;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 100;
+  pointer-events: auto;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 800;
+  color: white;
+}
+
+.hero-subtitle {
+  font-size: 1.5rem;
+  color: rgba(255, 255, 255, 0.7);
+}
