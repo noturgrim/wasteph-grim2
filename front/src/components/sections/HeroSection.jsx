@@ -232,7 +232,7 @@ const HeroSection = () => {
                 </div>
                 <FadeInUp delay={0.9} distance={15}>
                   <div className="text-[clamp(0.75rem,2vw,2rem)] font-light italic tracking-wide text-white/60 sm:text-[clamp(0.875rem,2.5vw,2rem)]">
-                    For a better, cleaner Cebu.
+                    Private Waste Management
                   </div>
                 </FadeInUp>
               </h1>
