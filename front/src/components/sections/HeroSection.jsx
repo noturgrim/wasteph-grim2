@@ -20,6 +20,8 @@ const HeroSection = () => {
   const [isHoveringStat, setIsHoveringStat] = useState(false);
   const [showLegalInfo, setShowLegalInfo] = useState(false);
   const [isHoveringLegal, setIsHoveringLegal] = useState(false);
+  const [showFleetInfo, setShowFleetInfo] = useState(false);
+  const [isHoveringFleet, setIsHoveringFleet] = useState(false);
 
   // Update map visibility based on hover states
   useEffect(() => {
@@ -41,6 +43,16 @@ const HeroSection = () => {
       return () => clearTimeout(timeout);
     }
   }, [isHoveringLegal]);
+
+  // Update fleet info visibility based on hover state
+  useEffect(() => {
+    if (isHoveringFleet) {
+      setShowFleetInfo(true);
+    } else {
+      const timeout = setTimeout(() => setShowFleetInfo(false), 100);
+      return () => clearTimeout(timeout);
+    }
+  }, [isHoveringFleet]);
   const heroRef = useRef(null);
   const videoRef = useRef(null);
 
@@ -301,10 +313,45 @@ const HeroSection = () => {
               </div>
             </div>
 
-            {/* Original Content - Fades out when map or legal info shows */}
+            {/* Fleet Info Overlay - Shows when hovering Fleet Operating stats */}
+            <div
+              className={`absolute inset-0 z-20 flex items-center justify-center will-change-transform transition-all duration-500 ease-in-out ${
+                showFleetInfo
+                  ? "opacity-100 visible scale-100"
+                  : "opacity-0 invisible scale-95 pointer-events-none"
+              }`}
+              onMouseEnter={() => setIsHoveringFleet(true)}
+              onMouseLeave={() => setIsHoveringFleet(false)}
+            >
+              <div className="relative h-full w-full max-w-3xl overflow-hidden rounded-2xl border border-white/20 shadow-2xl">
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="h-full w-full object-cover object-[center_60%]"
+                >
+                  <source
+                    src="/src/assets/trucks/trucks2.mp4"
+                    type="video/mp4"
+                  />
+                </video>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <div className="text-[clamp(2rem,6vw,4rem)] font-black uppercase leading-[0.85] tracking-[-0.05em] text-white">
+                    ACTIVE FLEET
+                  </div>
+                  <div className="mt-2 text-[clamp(0.875rem,2vw,1.25rem)] font-medium text-white/80">
+                    10 Trucks Operating 24/7
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Original Content - Fades out when map, legal info, or fleet info shows */}
             <div
               className={`relative z-10 space-y-4 py-4 will-change-transform transition-all duration-500 ease-in-out sm:space-y-5 sm:py-6 md:space-y-6 lg:space-y-8 lg:py-8 ${
-                showMap || showLegalInfo
+                showMap || showLegalInfo || showFleetInfo
                   ? "opacity-0 scale-95 pointer-events-none"
                   : "opacity-100 scale-100"
               }`}
@@ -563,7 +610,12 @@ const HeroSection = () => {
                 </FadeInUp>
 
                 <FadeInUp delay={1.4}>
-                  <div className="group rounded-xl border border-white/10 bg-white/[0.08] p-4 backdrop-blur-xl transition-all duration-300 hover:border-white/20 hover:bg-white/[0.12] sm:p-5">
+                  <div
+                    className="group rounded-xl border border-white/10 bg-white/[0.08] p-4 backdrop-blur-xl transition-colors duration-200 ease-out hover:border-[#15803d]/50 hover:bg-white/[0.12] sm:p-5"
+                    onMouseEnter={() => setIsHoveringFleet(true)}
+                    onMouseLeave={() => setIsHoveringFleet(false)}
+                    role="presentation"
+                  >
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="text-3xl font-black text-white sm:text-4xl">
@@ -587,6 +639,14 @@ const HeroSection = () => {
                             d="M13 10V3L4 14h7v7l9-11h-7z"
                           />
                         </svg>
+                      </div>
+                    </div>
+
+                    {/* Hover Hint */}
+                    <div className="mt-3 opacity-0 transition-opacity duration-200 ease-out group-hover:opacity-100">
+                      <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-[#22c55e]">
+                        <div className="h-1 w-1 rounded-full bg-[#22c55e] animate-pulse" />
+                        <span>View Active Fleet</span>
                       </div>
                     </div>
                   </div>
