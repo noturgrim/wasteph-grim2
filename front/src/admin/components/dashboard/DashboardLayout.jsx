@@ -23,20 +23,20 @@ import {
   SidebarProvider,
   SidebarTrigger,
   SidebarInset,
-} from "../ui/sidebar";
-import { Avatar, AvatarFallback } from "../ui/avatar";
-import { Separator } from "../ui/separator";
+} from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
 
   const navigationItems = [
-    { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-    { name: "Inquiries", path: "/inquiries", icon: UserPlus },
-    { name: "Leads", path: "/leads", icon: TrendingUp },
-    { name: "Potentials", path: "/potentials", icon: FileText },
-    { name: "Contracted Clients", path: "/clients", icon: Users },
+    { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
+    { name: "Inquiries", path: "/admin/inquiries", icon: UserPlus },
+    { name: "Leads", path: "/admin/leads", icon: TrendingUp },
+    { name: "Potentials", path: "/admin/potentials", icon: FileText },
+    { name: "Contracted Clients", path: "/admin/clients", icon: Users },
   ];
 
   const getPageTitle = () => {

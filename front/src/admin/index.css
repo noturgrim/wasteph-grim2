@@ -117,8 +117,15 @@
   * {
     @apply border-border outline-ring/50;
   }
+  
+  /* Override public site font with Inter for admin */
+  html,
+  body,
+  * {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  }
+  
   body {
     @apply bg-background text-foreground;
-    font-family: "Inter", sans-serif;
   }
 }

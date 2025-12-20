@@ -35,6 +35,14 @@ const Footer = () => {
             >
               Terms
             </button>
+            <span className="text-white/20">•</span>
+            <a
+              href="/admin"
+              className="font-semibold uppercase tracking-widest text-white/40 transition-colors hover:text-white/70 focus-visible:text-white/70 focus-visible:outline-none"
+              aria-label="Admin Portal"
+            >
+              Admin
+            </a>
           </div>
         </div>
       </div>

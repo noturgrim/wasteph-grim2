@@ -333,27 +333,6 @@ const Header = () => {
 
         {/* Mobile Menu Button */}
         <div className="pointer-events-auto flex items-center gap-2 lg:hidden">
-          {/* Admin Login Button - Mobile */}
-          <a
-            href="/admin"
-            className="flex items-center justify-center gap-2 rounded-full border border-emerald-500/30 bg-gradient-to-r from-emerald-600/20 to-emerald-500/20 px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-white shadow-lg backdrop-blur-xl transition-all duration-300 hover:border-emerald-400/50 hover:from-emerald-600/30 hover:to-emerald-500/30 hover:shadow-emerald-500/20"
-            aria-label="Admin Login"
-          >
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
-          </a>
-
           <button
             type="button"
             className={`flex items-center justify-center rounded-full border border-white/10 bg-black/60 p-3 text-white shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-500 hover:scale-105 hover:border-white/20 hover:bg-black/70 ${
@@ -386,28 +365,6 @@ const Header = () => {
             </svg>
           </button>
         </div>
-
-        {/* Admin Login Button - Desktop */}
-        <a
-          href="/admin"
-          className="pointer-events-auto hidden items-center gap-2 rounded-full border border-emerald-500/30 bg-gradient-to-r from-emerald-600/20 to-emerald-500/20 px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] text-white shadow-lg backdrop-blur-xl transition-all duration-300 hover:scale-105 hover:border-emerald-400/50 hover:from-emerald-600/30 hover:to-emerald-500/30 hover:shadow-emerald-500/20 lg:flex"
-          aria-label="Admin Login"
-        >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-            />
-          </svg>
-          <span>Admin</span>
-        </a>
       </div>
 
       {/* Mobile Menu */}

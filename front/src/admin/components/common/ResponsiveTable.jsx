@@ -1,4 +1,4 @@
-import { Card, CardContent } from "../ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 /**
  * ResponsiveTable - A wrapper that provides different views for mobile and desktop

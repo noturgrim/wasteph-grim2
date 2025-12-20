@@ -1,4 +1,5 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import ScrollableLayout from "./components/layout/ScrollableLayout";
@@ -27,7 +28,10 @@ const ServicesSlideshow = lazy(() =>
 );
 const CTASection = lazy(() => import("./components/sections/CTASection"));
 
-const App = () => {
+// Lazy load admin app
+const AdminApp = lazy(() => import("./admin/index"));
+
+const PublicApp = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const handleLoadingComplete = () => {
@@ -78,6 +82,34 @@ const App = () => {
         </div>
       </div>
     </>
+  );
+};
+
+const App = () => {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
+  return (
+    <Routes>
+      {/* Admin routes */}
+      <Route
+        path="/admin/*"
+        element={
+          <Suspense
+            fallback={
+              <div className="flex h-screen w-full items-center justify-center">
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
+              </div>
+            }
+          >
+            <AdminApp />
+          </Suspense>
+        }
+      />
+
+      {/* Public routes */}
+      <Route path="*" element={<PublicApp />} />
+    </Routes>
   );
 };
 

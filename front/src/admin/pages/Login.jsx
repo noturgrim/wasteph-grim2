@@ -1,22 +1,28 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Trash2, Lock, Mail } from 'lucide-react';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Trash2, Lock, Mail } from "lucide-react";
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
 
     // Simulate login - replace with actual API call
@@ -25,12 +31,12 @@ const Login = () => {
         login({
           id: 1,
           email: email,
-          full_name: 'Sales Representative',
-          role: 'sales'
+          full_name: "Sales Representative",
+          role: "sales",
         });
-        navigate('/dashboard');
+        navigate("/admin/dashboard");
       } else {
-        setError('Please enter valid credentials');
+        setError("Please enter valid credentials");
       }
       setIsLoading(false);
     }, 1000);
@@ -44,7 +50,9 @@ const Login = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-600 text-white mb-4 shadow-lg shadow-emerald-200">
             <Trash2 className="w-8 h-8" />
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">WastePH Admin</h1>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">
+            WastePH Admin
+          </h1>
           <p className="text-slate-600">Waste Management CRM System</p>
         </div>
 
@@ -109,7 +117,7 @@ const Login = () => {
                     Signing in...
                   </div>
                 ) : (
-                  'Sign in'
+                  "Sign in"
                 )}
               </Button>
             </form>
@@ -129,4 +137,3 @@ const Login = () => {
 };
 
 export default Login;
-
