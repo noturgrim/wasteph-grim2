@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Trash2, Lock, Mail } from "lucide-react";
+import { Lock, Mail } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -67,10 +67,6 @@ const Login = () => {
         <div className="w-full max-w-md">
           {/* Logo & Brand */}
           <div className="mb-8 text-center">
-            <div className="group mx-auto mb-6 inline-flex h-20 w-20 items-center justify-center rounded-2xl border border-[#15803d]/30 bg-gradient-to-br from-[#15803d]/20 to-[#16a34a]/10 shadow-[0_0_40px_rgba(21,128,61,0.15)] backdrop-blur-xl transition-all duration-500 hover:scale-105 hover:shadow-[0_0_60px_rgba(21,128,61,0.25)]">
-              <Trash2 className="h-10 w-10 text-[#15803d] transition-transform duration-500 group-hover:rotate-12" />
-            </div>
-
             <h1 className="mb-3 text-4xl font-black uppercase tracking-tight text-white">
               WastePH CRM
             </h1>
@@ -81,7 +77,7 @@ const Login = () => {
 
           {/* Login Card */}
           <Card className="border-[#15803d]/20 bg-black/40 shadow-[0_0_80px_rgba(21,128,61,0.1)] backdrop-blur-2xl">
-            <CardHeader className="space-y-2 pb-6">
+            <CardHeader className="space-y-2 pb-4">
               <CardTitle className="text-2xl font-bold text-white">
                 Welcome back
               </CardTitle>

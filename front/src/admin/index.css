@@ -172,6 +172,26 @@
     transition: background-color 0.3s ease;
   }
 
+  /* Fix autofill input colors for dark mode */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: #ffffff !important;
+    transition: background-color 5000s ease-in-out 0s;
+    box-shadow: inset 0 0 20px 20px rgba(255, 255, 255, 0.05) !important;
+  }
+
+  /* Fix autofill input colors for light mode */
+  html.light input:-webkit-autofill,
+  html.light input:-webkit-autofill:hover,
+  html.light input:-webkit-autofill:focus,
+  html.light input:-webkit-autofill:active {
+    -webkit-text-fill-color: #0f172a !important;
+    box-shadow: inset 0 0 20px 20px #f1f5f9 !important;
+  }
+
   /* Dark mode background */
   body.dark,
   html.dark body {
