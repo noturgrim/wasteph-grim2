@@ -1,17 +1,31 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { scrollToSection } from "../utils/scrollToSection";
 import ContactButton from "./common/ContactButton";
 
 const navItems = [
-  { label: "About Us", targetId: "hero", icon: "home" },
-  { label: "Services", targetId: "services", icon: "services" },
-  { label: "Waste Streams", targetId: "waste-streams", icon: "streams" },
-  { label: "Process", targetId: "process", icon: "process" },
-  { label: "Showcase", targetId: "community-showcase", icon: "showcase" },
-  { label: "Contact", targetId: "contact", icon: "contact" },
+  { label: "About Us", targetId: "hero", icon: "home", type: "scroll" },
+  { label: "Services", targetId: "services", icon: "services", type: "scroll" },
+  {
+    label: "Waste Streams",
+    targetId: "waste-streams",
+    icon: "streams",
+    type: "scroll",
+  },
+  { label: "Process", targetId: "process", icon: "process", type: "scroll" },
+  {
+    label: "Showcase",
+    targetId: "community-showcase",
+    icon: "showcase",
+    type: "scroll",
+  },
+  { label: "Blog", targetId: "/blog", icon: "blog", type: "link" },
+  { label: "Contact", targetId: "contact", icon: "contact", type: "scroll" },
 ];
 
 const Header = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("hero");
   const [navExpanded, setNavExpanded] = useState(false);
@@ -19,6 +33,8 @@ const Header = () => {
   const [collapsedWidth, setCollapsedWidth] = useState(200);
   const collapsedRef = useRef(null);
   const expandedRef = useRef(null);
+
+  const isHomePage = location.pathname === "/";
 
   useEffect(() => {
     let scrollTimeout = null;
@@ -121,12 +137,27 @@ const Header = () => {
     return () => clearTimeout(timer);
   }, [activeSection]);
 
-  const handleNavClick = (targetId) => {
-    // Immediately update active section on click
-    setActiveSection(targetId);
-    // Then scroll to section
-    scrollToSection(targetId);
-    setMobileMenuOpen(false);
+  const handleNavClick = (item) => {
+    if (item.type === "link") {
+      // Navigate to route
+      navigate(item.targetId);
+      setMobileMenuOpen(false);
+    } else {
+      // Scroll to section
+      if (!isHomePage) {
+        // If not on home page, navigate to home first
+        navigate("/");
+        setTimeout(() => {
+          scrollToSection(item.targetId);
+        }, 100);
+      } else {
+        // Immediately update active section on click
+        setActiveSection(item.targetId);
+        // Then scroll to section
+        scrollToSection(item.targetId);
+      }
+      setMobileMenuOpen(false);
+    }
   };
 
   const handleNavKeyDown = (event, targetId) => {
@@ -136,7 +167,11 @@ const Header = () => {
   };
 
   const handleLogoClick = () => {
-    scrollToSection("hero");
+    if (!isHomePage) {
+      navigate("/");
+    } else {
+      scrollToSection("hero");
+    }
   };
 
   const handleLogoKeyDown = (event) => {
@@ -217,6 +252,18 @@ const Header = () => {
             <line x1="12" y1="17" x2="12" y2="21" />
           </svg>
         );
+      case "blog":
+        return (
+          <svg
+            className="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+          </svg>
+        );
       case "contact":
         return (
           <svg
@@ -282,7 +329,7 @@ const Header = () => {
             } ${
               navExpanded
                 ? "border-white/10 bg-black/60 hover:border-white/20 hover:bg-black/70"
-                : "border-[#15803d]/50 bg-gradient-to-r from-[#15803d]/20 to-[#16a34a]/20"
+                : "border-[#15803d]/50 bg-linear-to-r from-[#15803d]/20 to-[#16a34a]/20"
             }`}
             style={{
               width: navExpanded ? "850px" : `${collapsedWidth}px`,
@@ -313,17 +360,20 @@ const Header = () => {
                 }`}
               >
                 {navItems.map((item) => {
-                  const isActive = activeSection === item.targetId;
+                  const isActive =
+                    item.type === "link"
+                      ? location.pathname === item.targetId
+                      : activeSection === item.targetId;
                   return (
                     <button
                       key={item.targetId}
                       type="button"
                       className={`group/item relative flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-all duration-500 ease-in-out focus-visible:outline-none ${
                         isActive
-                          ? "bg-gradient-to-r from-[#15803d] to-[#16a34a] text-white shadow-sm"
+                          ? "bg-linear-to-r from-[#15803d] to-[#16a34a] text-white shadow-sm"
                           : "text-white/60 hover:bg-white/5 hover:text-white/90"
                       }`}
-                      onClick={() => handleNavClick(item.targetId)}
+                      onClick={() => handleNavClick(item)}
                       onKeyDown={(event) =>
                         handleNavKeyDown(event, item.targetId)
                       }
@@ -396,17 +446,20 @@ const Header = () => {
       >
         <nav className="flex flex-col gap-1 p-4">
           {navItems.map((item) => {
-            const isActive = activeSection === item.targetId;
+            const isActive =
+              item.type === "link"
+                ? location.pathname === item.targetId
+                : activeSection === item.targetId;
             return (
               <button
                 key={item.targetId}
                 type="button"
                 className={`flex items-center gap-3 rounded-xl px-6 py-4 text-left text-sm font-bold uppercase tracking-[0.2em] transition-all duration-500 ease-in-out ${
                   isActive
-                    ? "bg-gradient-to-r from-[#15803d] to-[#16a34a] text-white shadow-sm"
+                    ? "bg-linear-to-r from-[#15803d] to-[#16a34a] text-white shadow-sm"
                     : "text-white/60 hover:bg-white/5 hover:text-white"
                 }`}
-                onClick={() => handleNavClick(item.targetId)}
+                onClick={() => handleNavClick(item)}
                 onKeyDown={(event) => handleNavKeyDown(event, item.targetId)}
               >
                 {getIcon(item.icon)}

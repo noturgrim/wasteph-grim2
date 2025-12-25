@@ -28,11 +28,34 @@ const ServicesSlideshow = lazy(() =>
 );
 const CTASection = lazy(() => import("./components/sections/CTASection"));
 
+// Lazy load blog pages
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+
 // Lazy load CRM app
 const CRMApp = lazy(() => import("./admin/index"));
 
+const HomeContent = () => {
+  return (
+    <>
+      <HeroSection />
+      <Suspense fallback={<div className="min-h-screen" />}>
+        <MessageSection />
+        <ServicesSection />
+        <WasteStreamsShowcase />
+        <ProcessSection />
+        <ServicesSlideshow />
+        <ClientsSection />
+        <CTASection />
+      </Suspense>
+    </>
+  );
+};
+
 const PublicApp = () => {
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
+  const isHomePage = location.pathname === "/";
 
   const handleLoadingComplete = () => {
     setIsLoading(false);
@@ -40,7 +63,7 @@ const PublicApp = () => {
 
   // Prevent scroll while loading
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading && isHomePage) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
@@ -49,11 +72,13 @@ const PublicApp = () => {
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [isLoading]);
+  }, [isLoading, isHomePage]);
 
   return (
     <>
-      {isLoading && <LoadingScreen onLoadingComplete={handleLoadingComplete} />}
+      {isLoading && isHomePage && (
+        <LoadingScreen onLoadingComplete={handleLoadingComplete} />
+      )}
 
       <div className="relative">
         {/* Global topographic background - receives all mouse events */}
@@ -66,15 +91,12 @@ const PublicApp = () => {
           <ScrollableLayout>
             <Header />
             <main className="pt-20">
-              <HeroSection />
               <Suspense fallback={<div className="min-h-screen" />}>
-                <MessageSection />
-                <ServicesSection />
-                <WasteStreamsShowcase />
-                <ProcessSection />
-                <ServicesSlideshow />
-                <ClientsSection />
-                <CTASection />
+                <Routes>
+                  <Route path="/" element={<HomeContent />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:id" element={<BlogPost />} />
+                </Routes>
               </Suspense>
             </main>
             <Footer />
@@ -86,9 +108,6 @@ const PublicApp = () => {
 };
 
 const App = () => {
-  const location = useLocation();
-  const isCRMRoute = location.pathname.startsWith("/admin");
-
   return (
     <Routes>
       {/* CRM routes (Admin/Sales/Marketing) */}
