@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const LoadingScreen = ({ onLoadingComplete }) => {
+const LoadingScreen = ({ onLoadingComplete, assetsLoaded = false }) => {
   const [progress, setProgress] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
 
@@ -8,21 +8,35 @@ const LoadingScreen = ({ onLoadingComplete }) => {
     // Simulate loading progress
     const timer = setInterval(() => {
       setProgress((prevProgress) => {
-        if (prevProgress >= 100) {
-          clearInterval(timer);
-          setTimeout(() => {
-            setIsExiting(true);
-            setTimeout(onLoadingComplete, 800); // Wait for exit animation
-          }, 300);
-          return 100;
+        // If assets aren't loaded yet, cap at 90%
+        const maxProgress = assetsLoaded ? 100 : 90;
+
+        if (prevProgress >= maxProgress) {
+          if (maxProgress === 100) {
+            clearInterval(timer);
+            setTimeout(() => {
+              setIsExiting(true);
+              setTimeout(onLoadingComplete, 800); // Wait for exit animation
+            }, 300);
+          }
+          return maxProgress;
         }
+
         // Increment progress with some randomness for realism
-        return prevProgress + Math.random() * 15;
+        const increment = Math.random() * 15;
+        return Math.min(prevProgress + increment, maxProgress);
       });
     }, 150);
 
     return () => clearInterval(timer);
-  }, [onLoadingComplete]);
+  }, [onLoadingComplete, assetsLoaded]);
+
+  // When assets are loaded, complete the progress
+  useEffect(() => {
+    if (assetsLoaded && progress >= 90) {
+      setProgress(100);
+    }
+  }, [assetsLoaded, progress]);
 
   return (
     <div

@@ -92,6 +92,15 @@ const HeroSection = () => {
     const video = videoRef.current;
     if (!video) return;
 
+    // Timeout fallback - if video doesn't load in 10 seconds, show it anyway
+    const loadTimeout = setTimeout(() => {
+      if (!videoLoaded) {
+        console.warn("Video loading timeout - displaying video anyway");
+        setVideoLoaded(true);
+        setLoadingProgress(100);
+      }
+    }, 10000);
+
     const handleProgress = () => {
       if (video.buffered.length > 0) {
         const bufferedEnd = video.buffered.end(video.buffered.length - 1);
@@ -103,26 +112,55 @@ const HeroSection = () => {
       }
     };
 
+    const handleLoadedMetadata = () => {
+      // Video metadata loaded, start showing progress
+      setLoadingProgress(10);
+    };
+
+    const handleLoadedData = () => {
+      // Enough data loaded to start playing
+      setLoadingProgress(50);
+    };
+
     const handleCanPlay = () => {
       setVideoLoaded(true);
       setLoadingProgress(100);
+      clearTimeout(loadTimeout);
+    };
+
+    const handleCanPlayThrough = () => {
+      // Can play through without buffering
+      setVideoLoaded(true);
+      setLoadingProgress(100);
+      clearTimeout(loadTimeout);
     };
 
     const handleError = () => {
       setVideoError(true);
+      clearTimeout(loadTimeout);
       console.error("Video failed to load");
     };
 
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
+    video.addEventListener("loadeddata", handleLoadedData);
     video.addEventListener("progress", handleProgress);
     video.addEventListener("canplay", handleCanPlay);
+    video.addEventListener("canplaythrough", handleCanPlayThrough);
     video.addEventListener("error", handleError);
 
+    // Try to load the video
+    video.load();
+
     return () => {
+      clearTimeout(loadTimeout);
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      video.removeEventListener("loadeddata", handleLoadedData);
       video.removeEventListener("progress", handleProgress);
       video.removeEventListener("canplay", handleCanPlay);
+      video.removeEventListener("canplaythrough", handleCanPlayThrough);
       video.removeEventListener("error", handleError);
     };
-  }, []);
+  }, [videoLoaded]);
 
   const handlePrimaryClick = () => {
     scrollToSection("contact");
