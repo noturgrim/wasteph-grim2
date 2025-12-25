@@ -9,6 +9,7 @@ import Inquiries from "./pages/Inquiries";
 import Leads from "./pages/Leads";
 import Potentials from "./pages/Potentials";
 import Clients from "./pages/Clients";
+import BlogPosts from "./pages/BlogPosts";
 
 const CRMApp = () => {
   return (
@@ -28,6 +29,7 @@ const CRMApp = () => {
               <Route path="leads" element={<Leads />} />
               <Route path="potentials" element={<Potentials />} />
               <Route path="clients" element={<Clients />} />
+              <Route path="blog" element={<BlogPosts />} />
             </Route>
           </Route>
 

@@ -1,17 +1,30 @@
 import React, { useEffect, useState, useRef } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { scrollToSection } from "../utils/scrollToSection";
 import ContactButton from "./common/ContactButton";
 
 const navItems = [
-  { label: "About Us", targetId: "hero", icon: "home" },
-  { label: "Services", targetId: "services", icon: "services" },
-  { label: "Waste Streams", targetId: "waste-streams", icon: "streams" },
-  { label: "Process", targetId: "process", icon: "process" },
-  { label: "Showcase", targetId: "community-showcase", icon: "showcase" },
-  { label: "Contact", targetId: "contact", icon: "contact" },
+  { label: "About Us", targetId: "hero", icon: "home", type: "scroll" },
+  { label: "Services", targetId: "services", icon: "services", type: "scroll" },
+  {
+    label: "Waste Streams",
+    targetId: "waste-streams",
+    icon: "streams",
+    type: "scroll",
+  },
+  { label: "Process", targetId: "process", icon: "process", type: "scroll" },
+  {
+    label: "Showcase",
+    targetId: "community-showcase",
+    icon: "showcase",
+    type: "scroll",
+  },
+  { label: "Contact", targetId: "contact", icon: "contact", type: "scroll" },
 ];
 
 const Header = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("hero");
   const [navExpanded, setNavExpanded] = useState(false);
@@ -19,6 +32,8 @@ const Header = () => {
   const [collapsedWidth, setCollapsedWidth] = useState(200);
   const collapsedRef = useRef(null);
   const expandedRef = useRef(null);
+
+  const isHomePage = location.pathname === "/";
 
   useEffect(() => {
     let scrollTimeout = null;
@@ -121,11 +136,20 @@ const Header = () => {
     return () => clearTimeout(timer);
   }, [activeSection]);
 
-  const handleNavClick = (targetId) => {
-    // Immediately update active section on click
-    setActiveSection(targetId);
-    // Then scroll to section
-    scrollToSection(targetId);
+  const handleNavClick = (item) => {
+    // Scroll to section
+    if (!isHomePage) {
+      // If not on home page, navigate to home first
+      navigate("/");
+      setTimeout(() => {
+        scrollToSection(item.targetId);
+      }, 100);
+    } else {
+      // Immediately update active section on click
+      setActiveSection(item.targetId);
+      // Then scroll to section
+      scrollToSection(item.targetId);
+    }
     setMobileMenuOpen(false);
   };
 
@@ -136,7 +160,11 @@ const Header = () => {
   };
 
   const handleLogoClick = () => {
-    scrollToSection("hero");
+    if (!isHomePage) {
+      navigate("/");
+    } else {
+      scrollToSection("hero");
+    }
   };
 
   const handleLogoKeyDown = (event) => {
@@ -260,7 +288,7 @@ const Header = () => {
         >
           <div className="flex flex-col leading-none">
             <span className="text-xl font-black uppercase tracking-tight transition-all duration-500 sm:text-2xl">
-              <span className="bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent group-hover:from-white group-hover:to-white/95">
+              <span className="bg-linear-to-r from-white to-white/90 bg-clip-text text-transparent group-hover:from-white group-hover:to-white/95">
                 WASTEPH
               </span>
             </span>
@@ -270,84 +298,171 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Expandable Navigation - Desktop */}
-        <nav
-          className={`pointer-events-auto hidden transition-all duration-1000 ease-in-out lg:block ${
-            scrolled ? "lg:mr-4 xl:mr-6" : ""
-          }`}
-        >
-          <div
-            className={`group/nav relative overflow-hidden rounded-full border shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-700 ease-in-out ${
-              scrolled ? "shadow-[0_8px_32px_rgba(0,0,0,0.5)]" : ""
-            } ${
-              navExpanded
-                ? "border-white/10 bg-black/60 hover:border-white/20 hover:bg-black/70"
-                : "border-[#15803d]/50 bg-gradient-to-r from-[#15803d]/20 to-[#16a34a]/20"
-            }`}
-            style={{
-              width: navExpanded ? "850px" : `${collapsedWidth}px`,
-            }}
-            onMouseEnter={() => setNavExpanded(true)}
-            onMouseLeave={() => setNavExpanded(false)}
-          >
-            <div className="flex items-center gap-2">
-              {/* Collapsed State - Shows active section */}
-              <div
-                ref={collapsedRef}
-                className={`flex items-center justify-center gap-3 whitespace-nowrap px-5 py-3 transition-all duration-700 ease-in-out ${
-                  navExpanded ? "opacity-0" : "opacity-100"
-                }`}
+        {/* Navigation Group - Desktop */}
+        <div className="pointer-events-auto hidden items-center gap-3 lg:flex">
+          {/* Conditional Navigation - Show Home button on blog pages, otherwise show normal nav */}
+          {location.pathname.startsWith("/blog") ? (
+            /* Home Button - When on blog pages */
+            <Link
+              to="/"
+              className="flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-5 py-3 text-xs font-bold uppercase tracking-[0.2em] text-white/80 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-500 hover:scale-105 hover:border-[#15803d]/50 hover:text-white"
+            >
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
               >
-                <span className="text-white/60">
-                  {activeItem && getIcon(activeItem.icon)}
-                </span>
-                <span className="text-xs font-bold uppercase tracking-[0.2em] text-white">
-                  {activeLabel}
-                </span>
-              </div>
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              Home
+            </Link>
+          ) : (
+            <>
+              {/* Blog Button */}
+              <Link
+                to="/blog"
+                className="flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-5 py-3 text-xs font-bold uppercase tracking-[0.2em] text-white/80 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-500 hover:scale-105 hover:border-[#15803d]/50 hover:text-white"
+              >
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                </svg>
+                Blog
+              </Link>
 
-              {/* Expanded State - Shows all menu items */}
-              <div
-                className={`absolute inset-0 flex items-center gap-2 px-3 py-2 transition-all duration-700 ease-in-out ${
-                  navExpanded ? "opacity-100" : "pointer-events-none opacity-0"
+              {/* Expandable Navigation */}
+              <nav
+                className={`transition-all duration-1000 ease-in-out ${
+                  scrolled ? "lg:mr-4 xl:mr-6" : ""
                 }`}
               >
-                {navItems.map((item) => {
-                  const isActive = activeSection === item.targetId;
-                  return (
-                    <button
-                      key={item.targetId}
-                      type="button"
-                      className={`group/item relative flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-all duration-500 ease-in-out focus-visible:outline-none ${
-                        isActive
-                          ? "bg-gradient-to-r from-[#15803d] to-[#16a34a] text-white shadow-sm"
-                          : "text-white/60 hover:bg-white/5 hover:text-white/90"
+                <div
+                  className={`group/nav relative overflow-hidden rounded-full border shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-700 ease-in-out ${
+                    scrolled ? "shadow-[0_8px_32px_rgba(0,0,0,0.5)]" : ""
+                  } ${
+                    navExpanded
+                      ? "border-white/10 bg-black/60 hover:border-white/20 hover:bg-black/70"
+                      : "border-[#15803d]/50 bg-linear-to-r from-[#15803d]/20 to-[#16a34a]/20"
+                  }`}
+                  style={{
+                    width: navExpanded ? "850px" : `${collapsedWidth}px`,
+                  }}
+                  onMouseEnter={() => setNavExpanded(true)}
+                  onMouseLeave={() => setNavExpanded(false)}
+                >
+                  <div className="flex items-center gap-2">
+                    {/* Collapsed State - Shows active section */}
+                    <div
+                      ref={collapsedRef}
+                      className={`flex items-center justify-center gap-3 whitespace-nowrap px-5 py-3 transition-all duration-700 ease-in-out ${
+                        navExpanded ? "opacity-0" : "opacity-100"
                       }`}
-                      onClick={() => handleNavClick(item.targetId)}
-                      onKeyDown={(event) =>
-                        handleNavKeyDown(event, item.targetId)
-                      }
                     >
-                      <span
-                        className={`transition-all duration-500 ${
-                          isActive ? "scale-110" : ""
-                        }`}
-                      >
-                        {getIcon(item.icon)}
+                      <span className="text-white/60">
+                        {activeItem && getIcon(activeItem.icon)}
                       </span>
-                      <span className="relative whitespace-nowrap">
-                        {item.label}
+                      <span className="text-xs font-bold uppercase tracking-[0.2em] text-white">
+                        {activeLabel}
                       </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </nav>
+                    </div>
 
-        {/* Mobile Menu Button */}
+                    {/* Expanded State - Shows all menu items */}
+                    <div
+                      className={`absolute inset-0 flex items-center gap-2 px-3 py-2 transition-all duration-700 ease-in-out ${
+                        navExpanded
+                          ? "opacity-100"
+                          : "pointer-events-none opacity-0"
+                      }`}
+                    >
+                      {navItems.map((item) => {
+                        const isActive = activeSection === item.targetId;
+                        return (
+                          <button
+                            key={item.targetId}
+                            type="button"
+                            className={`group/item relative flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2.5 text-[10px] font-bold uppercase tracking-[0.15em] transition-all duration-500 ease-in-out focus-visible:outline-none ${
+                              isActive
+                                ? "bg-linear-to-r from-[#15803d] to-[#16a34a] text-white shadow-sm"
+                                : "text-white/60 hover:bg-white/5 hover:text-white/90"
+                            }`}
+                            onClick={() => handleNavClick(item)}
+                            onKeyDown={(event) =>
+                              handleNavKeyDown(event, item.targetId)
+                            }
+                          >
+                            <span
+                              className={`transition-all duration-500 ${
+                                isActive ? "scale-110" : ""
+                              }`}
+                            >
+                              {getIcon(item.icon)}
+                            </span>
+                            <span className="relative whitespace-nowrap">
+                              {item.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </nav>
+            </>
+          )}
+        </div>
+
+        {/* Mobile Menu Button & Blog/Home Button */}
         <div className="pointer-events-auto flex items-center gap-2 transition-all duration-1000 ease-in-out lg:hidden">
+          {/* Conditional Button - Home on blog pages, Blog on other pages */}
+          {location.pathname.startsWith("/blog") ? (
+            /* Home Button - Mobile */
+            <Link
+              to="/"
+              className={`flex items-center justify-center rounded-full border border-white/10 bg-black/60 p-3 text-white shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-500 hover:scale-105 hover:border-[#15803d]/50 ${
+                scrolled ? "shadow-[0_8px_32px_rgba(0,0,0,0.5)]" : ""
+              }`}
+              aria-label="Go to home"
+            >
+              <svg
+                className="h-6 w-6"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+            </Link>
+          ) : (
+            /* Blog Button - Mobile */
+            <Link
+              to="/blog"
+              className={`flex items-center justify-center rounded-full border border-white/10 bg-black/60 p-3 text-white shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-500 hover:scale-105 hover:border-[#15803d]/50 ${
+                scrolled ? "shadow-[0_8px_32px_rgba(0,0,0,0.5)]" : ""
+              }`}
+              aria-label="Go to blog"
+            >
+              <svg
+                className="h-6 w-6"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+              </svg>
+            </Link>
+          )}
+
           <button
             type="button"
             className={`flex items-center justify-center rounded-full border border-white/10 bg-black/60 p-3 text-white shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-500 hover:scale-105 hover:border-white/20 hover:bg-black/70 ${
@@ -403,10 +518,10 @@ const Header = () => {
                 type="button"
                 className={`flex items-center gap-3 rounded-xl px-6 py-4 text-left text-sm font-bold uppercase tracking-[0.2em] transition-all duration-500 ease-in-out ${
                   isActive
-                    ? "bg-gradient-to-r from-[#15803d] to-[#16a34a] text-white shadow-sm"
+                    ? "bg-linear-to-r from-[#15803d] to-[#16a34a] text-white shadow-sm"
                     : "text-white/60 hover:bg-white/5 hover:text-white"
                 }`}
-                onClick={() => handleNavClick(item.targetId)}
+                onClick={() => handleNavClick(item)}
                 onKeyDown={(event) => handleNavKeyDown(event, item.targetId)}
               >
                 {getIcon(item.icon)}

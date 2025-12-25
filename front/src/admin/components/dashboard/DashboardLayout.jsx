@@ -10,6 +10,7 @@ import {
   Trash2,
   Sun,
   Moon,
+  BookOpen,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -43,6 +44,7 @@ const DashboardLayout = () => {
     { name: "Leads", path: "/admin/leads", icon: TrendingUp },
     { name: "Potentials", path: "/admin/potentials", icon: FileText },
     { name: "Contracted Clients", path: "/admin/clients", icon: Users },
+    { name: "Blog Posts", path: "/admin/blog", icon: BookOpen },
   ];
 
   const getPageTitle = () => {
@@ -68,7 +70,7 @@ const DashboardLayout = () => {
           }`}
         >
           <div className="flex items-center gap-3 px-4 py-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#15803d] to-[#16a34a] shadow-lg">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-[#15803d] to-[#16a34a] shadow-lg">
               <Trash2 className="h-6 w-6 text-white" />
             </div>
             <div>
@@ -110,7 +112,7 @@ const DashboardLayout = () => {
                       tooltip={item.name}
                       className={`group relative overflow-hidden rounded-lg transition-all duration-200 ${
                         location.pathname === item.path
-                          ? "bg-gradient-to-r from-[#15803d] to-[#16a34a] text-white shadow-lg"
+                          ? "bg-linear-to-r from-[#15803d] to-[#16a34a] text-white shadow-lg"
                           : theme === "dark"
                           ? "text-white/60 hover:bg-white/5 hover:text-white"
                           : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -174,7 +176,7 @@ const DashboardLayout = () => {
                 }`}
               >
                 <Avatar className="h-9 w-9 border-2 border-[#15803d]">
-                  <AvatarFallback className="bg-gradient-to-br from-[#15803d] to-[#16a34a] text-sm font-bold text-white">
+                  <AvatarFallback className="bg-linear-to-br from-[#15803d] to-[#16a34a] text-sm font-bold text-white">
                     {user?.firstName?.charAt(0) ||
                       user?.email?.charAt(0) ||
                       "U"}

@@ -1,8 +1,12 @@
 import React from "react";
 
-const ScrollableLayout = ({ children }) => {
+const ScrollableLayout = ({ children, disableSnap = false }) => {
   return (
-    <div className="h-screen w-full snap-y snap-mandatory overflow-y-scroll overflow-x-hidden text-white scroll-smooth">
+    <div
+      className={`h-screen w-full overflow-y-scroll overflow-x-hidden text-white scroll-smooth ${
+        disableSnap ? "" : "snap-y snap-mandatory"
+      }`}
+    >
       <div className="relative">{children}</div>
     </div>
   );
