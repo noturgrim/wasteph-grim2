@@ -1,52 +1,19 @@
-import { db } from "../db/index.js";
-import { potentialTable, activityLogTable } from "../db/schema.js";
-import { eq, desc } from "drizzle-orm";
-import { AppError } from "../middleware/errorHandler.js";
+import PotentialService from "../services/potentialService.js";
 
+// Initialize service
+const potentialService = new PotentialService();
+
+/**
+ * Controller: Create potential client
+ * Route: POST /api/potentials
+ * Access: Protected (all authenticated users)
+ */
 export const createPotential = async (req, res, next) => {
   try {
-    const {
-      companyName,
-      contactPerson,
-      email,
-      phone,
-      address,
-      city,
-      province,
-      industry,
-      wasteType,
-      estimatedVolume,
-      source,
-      priority,
-      notes,
-    } = req.body;
+    const potentialData = req.body;
+    const userId = req.user.id;
 
-    const [potential] = await db
-      .insert(potentialTable)
-      .values({
-        companyName,
-        contactPerson,
-        email,
-        phone,
-        address,
-        city,
-        province,
-        industry,
-        wasteType,
-        estimatedVolume,
-        source,
-        priority,
-        notes,
-        assignedTo: req.user.id,
-      })
-      .returning();
-
-    // Log activity
-    await db.insert(activityLogTable).values({
-      userId: req.user.id,
-      action: "potential_created",
-      entityType: "potential",
-      entityId: potential.id,
+    const potential = await potentialService.createPotential(potentialData, userId, {
       ipAddress: req.ip,
       userAgent: req.get("user-agent"),
     });
@@ -61,12 +28,14 @@ export const createPotential = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Get all potentials
+ * Route: GET /api/potentials
+ * Access: Protected (all authenticated users)
+ */
 export const getAllPotentials = async (req, res, next) => {
   try {
-    const potentials = await db
-      .select()
-      .from(potentialTable)
-      .orderBy(desc(potentialTable.createdAt));
+    const potentials = await potentialService.getAllPotentials();
 
     res.json({
       success: true,
@@ -77,19 +46,16 @@ export const getAllPotentials = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Get potential by ID
+ * Route: GET /api/potentials/:id
+ * Access: Protected (all authenticated users)
+ */
 export const getPotentialById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const [potential] = await db
-      .select()
-      .from(potentialTable)
-      .where(eq(potentialTable.id, id))
-      .limit(1);
-
-    if (!potential) {
-      throw new AppError("Potential client not found", 404);
-    }
+    const potential = await potentialService.getPotentialById(id);
 
     res.json({
       success: true,
@@ -100,31 +66,18 @@ export const getPotentialById = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Update potential
+ * Route: PATCH /api/potentials/:id
+ * Access: Protected (all authenticated users)
+ */
 export const updatePotential = async (req, res, next) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
+    const userId = req.user.id;
 
-    const [potential] = await db
-      .update(potentialTable)
-      .set({
-        ...updateData,
-        updatedAt: new Date(),
-      })
-      .where(eq(potentialTable.id, id))
-      .returning();
-
-    if (!potential) {
-      throw new AppError("Potential client not found", 404);
-    }
-
-    // Log activity
-    await db.insert(activityLogTable).values({
-      userId: req.user.id,
-      action: "potential_updated",
-      entityType: "potential",
-      entityId: potential.id,
-      details: JSON.stringify(updateData),
+    const potential = await potentialService.updatePotential(id, updateData, userId, {
       ipAddress: req.ip,
       userAgent: req.get("user-agent"),
     });
@@ -139,25 +92,17 @@ export const updatePotential = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Delete potential
+ * Route: DELETE /api/potentials/:id
+ * Access: Protected (admin, manager only)
+ */
 export const deletePotential = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
 
-    const [potential] = await db
-      .delete(potentialTable)
-      .where(eq(potentialTable.id, id))
-      .returning();
-
-    if (!potential) {
-      throw new AppError("Potential client not found", 404);
-    }
-
-    // Log activity
-    await db.insert(activityLogTable).values({
-      userId: req.user.id,
-      action: "potential_deleted",
-      entityType: "potential",
-      entityId: potential.id,
+    await potentialService.deletePotential(id, userId, {
       ipAddress: req.ip,
       userAgent: req.get("user-agent"),
     });

@@ -1,965 +1,814 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { api } from "../services/api";
+import { toast } from "sonner";
+import { Plus, Loader2, SlidersHorizontal } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  Search,
-  Plus,
-  Filter,
-  Phone,
-  Mail,
-  MessageSquare,
-  Eye,
-  Edit,
-  MoreVertical,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import ResponsiveTable, {
-  MobileCard,
-  MobileCardRow,
-} from "../components/common/ResponsiveTable";
-import { useTheme } from "../contexts/ThemeContext";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
-const Inquiries = () => {
-  const { theme } = useTheme();
+import { DataTable } from "../components/DataTable";
+import { FacetedFilter } from "../components/FacetedFilter";
+import { SearchInput } from "../components/SearchInput";
+import { StatusBadge } from "../components/StatusBadge";
+import { DeleteConfirmationModal } from "../components/modals";
+import { createColumns } from "./inquiries/columns";
+import { format } from "date-fns";
+
+export default function Inquiries() {
+  const { user } = useAuth();
+  const [inquiries, setInquiries] = useState([]);
+  const [allInquiries, setAllInquiries] = useState([]); // Store all inquiries for counting
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Filters
+  const [statusFilter, setStatusFilter] = useState([]);
+  const [sourceFilter, setSourceFilter] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Dialogs
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState(null);
 
-  // Mock data - replace with API call
-  const inquiries = [
-    {
-      id: 1,
-      companyName: "ABC Corporation",
-      contactPerson: "John Doe",
-      position: "Facilities Manager",
-      email: "john@abc.com",
-      phone: "+63 912 345 6789",
-      source: "Facebook",
-      serviceType: "Garbage Collection",
-      status: "new",
-      dateFirstContact: "2024-12-20",
-      salesRep: "Maria Santos",
-      notes: "Looking for weekly collection service for their office building.",
-    },
-    {
-      id: 2,
-      companyName: "XYZ Industries",
-      contactPerson: "Jane Smith",
-      position: "Operations Director",
-      email: "jane@xyz.com",
-      phone: "+63 923 456 7890",
-      source: "Email",
-      serviceType: "Septic Siphoning",
-      status: "contacted",
-      dateFirstContact: "2024-12-19",
-      salesRep: "Juan Cruz",
-      notes: "Urgent need for septic tank maintenance.",
-    },
-    {
-      id: 3,
-      companyName: "Tech Solutions Inc",
-      contactPerson: "Mike Johnson",
-      position: "Admin Manager",
-      email: "mike@techsol.com",
-      phone: "+63 934 567 8901",
-      source: "Phone",
-      serviceType: "Hazardous Waste",
-      status: "qualified",
-      dateFirstContact: "2024-12-18",
-      salesRep: "Maria Santos",
-      notes: "Chemical waste disposal from laboratory.",
-    },
-    {
-      id: 4,
-      companyName: "Green Plaza Condominiums",
-      contactPerson: "Sarah Lee",
-      position: "Property Manager",
-      email: "sarah@greenplaza.com",
-      phone: "+63 945 678 9012",
-      source: "Facebook",
-      serviceType: "Garbage Collection",
-      status: "proposal",
-      dateFirstContact: "2024-12-17",
-      salesRep: "Juan Cruz",
-      notes: "Residential building with 200 units.",
-    },
-    {
-      id: 5,
-      companyName: "Metro Restaurant Group",
-      contactPerson: "Robert Chen",
-      position: "General Manager",
-      email: "robert@metrorest.com",
-      phone: "+63 956 789 0123",
-      source: "Cold Approach",
-      serviceType: "One Time Hauling",
-      status: "new",
-      dateFirstContact: "2024-12-16",
-      salesRep: "Maria Santos",
-      notes: "Renovation debris removal needed.",
-    },
-  ];
+  // Form data
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+    message: "",
+    source: "phone",
+  });
 
-  const getStatusBadge = (status) => {
-    const variantsDark = {
-      new: {
-        label: "New",
-        className:
-          "bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30",
-      },
-      contacted: {
-        label: "Contacted",
-        className:
-          "bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30",
-      },
-      qualified: {
-        label: "Qualified",
-        className:
-          "bg-[#15803d]/20 text-[#15803d] border border-[#15803d]/30 hover:bg-[#15803d]/30",
-      },
-      proposal: {
-        label: "Proposal Sent",
-        className:
-          "bg-violet-500/20 text-violet-400 border border-violet-500/30 hover:bg-violet-500/30",
-      },
-      won: {
-        label: "Won",
-        className:
-          "bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30",
-      },
-      lost: {
-        label: "Lost",
-        className:
-          "bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30",
-      },
-    };
+  // Submission states
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
 
-    const variantsLight = {
-      new: {
-        label: "New",
-        className:
-          "bg-blue-100 text-blue-700 border border-blue-200 hover:bg-blue-200",
-      },
-      contacted: {
-        label: "Contacted",
-        className:
-          "bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200",
-      },
-      qualified: {
-        label: "Qualified",
-        className:
-          "bg-emerald-100 text-emerald-700 border border-emerald-200 hover:bg-emerald-200",
-      },
-      proposal: {
-        label: "Proposal Sent",
-        className:
-          "bg-violet-100 text-violet-700 border border-violet-200 hover:bg-violet-200",
-      },
-      won: {
-        label: "Won",
-        className:
-          "bg-green-100 text-green-700 border border-green-200 hover:bg-green-200",
-      },
-      lost: {
-        label: "Lost",
-        className:
-          "bg-red-100 text-red-700 border border-red-200 hover:bg-red-200",
-      },
-    };
+  // Fetch all inquiries (for counts)
+  useEffect(() => {
+    fetchAllInquiries();
+  }, []);
 
-    const variants = theme === "dark" ? variantsDark : variantsLight;
-    const variant = variants[status] || variants.new;
-    return <Badge className={variant.className}>{variant.label}</Badge>;
+  // Fetch filtered inquiries
+  useEffect(() => {
+    fetchInquiries();
+  }, [statusFilter, sourceFilter, searchTerm]);
+
+  const fetchAllInquiries = async () => {
+    try {
+      const response = await api.getInquiries({});
+      setAllInquiries(response.data || response);
+    } catch (error) {
+      console.error("Failed to fetch all inquiries:", error);
+    }
   };
 
-  const getSourceIcon = (source) => {
-    const iconsDark = {
-      Facebook: <MessageSquare className="h-4 w-4 text-blue-400" />,
-      Email: <Mail className="h-4 w-4 text-white/60" />,
-      Phone: <Phone className="h-4 w-4 text-[#15803d]" />,
-      "Cold Approach": <Phone className="h-4 w-4 text-violet-400" />,
-    };
-
-    const iconsLight = {
-      Facebook: <MessageSquare className="h-4 w-4 text-blue-600" />,
-      Email: <Mail className="h-4 w-4 text-slate-600" />,
-      Phone: <Phone className="h-4 w-4 text-emerald-600" />,
-      "Cold Approach": <Phone className="h-4 w-4 text-violet-600" />,
-    };
-
-    const icons = theme === "dark" ? iconsDark : iconsLight;
-    return icons[source] || <MessageSquare className="h-4 w-4" />;
+  const fetchInquiries = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.getInquiries({
+        status: statusFilter.length > 0 ? statusFilter.join(",") : undefined,
+        source: sourceFilter.length > 0 ? sourceFilter.join(",") : undefined,
+        search: searchTerm || undefined,
+      });
+      setInquiries(response.data || response);
+    } catch (error) {
+      toast.error(error.message || "Failed to fetch inquiries");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const filteredInquiries = inquiries.filter(
-    (inquiry) =>
-      inquiry.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      inquiry.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      inquiry.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Get count for each status from all inquiries
+  const getStatusCount = (status) => {
+    return allInquiries.filter((inquiry) => inquiry.status === status).length;
+  };
+
+  // Get count for each source from all inquiries
+  const getSourceCount = (source) => {
+    return allInquiries.filter((inquiry) => inquiry.source === source).length;
+  };
+
+  // Form validation
+  const validateForm = () => {
+    const errors = {};
+
+    if (!formData.name?.trim()) {
+      errors.name = "Name is required.";
+    }
+
+    if (!formData.email?.trim()) {
+      errors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = "Please enter a valid email address.";
+    }
+
+    if (!formData.message?.trim()) {
+      errors.message = "Message is required.";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // CRUD Handlers
+  const handleCreateInquiry = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await api.createInquiry(formData);
+      toast.success("Inquiry created successfully");
+      setIsCreateDialogOpen(false);
+      resetFormData();
+      setFormErrors({});
+      fetchAllInquiries();
+      fetchInquiries();
+    } catch (error) {
+      toast.error(error.message || "Failed to create inquiry");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateInquiry = async (e) => {
+    e.preventDefault();
+
+    // Validate required fields
+    const errors = {};
+    if (!formData.name.trim()) {
+      errors.name = "Name is required";
+    }
+    if (!formData.email.trim()) {
+      errors.email = "Email is required";
+    }
+    if (!formData.message.trim()) {
+      errors.message = "Message is required";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await api.updateInquiry(selectedInquiry.id, {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        company: formData.company,
+        message: formData.message,
+        source: formData.source,
+        status: formData.status,
+        notes: formData.notes,
+      });
+      toast.success("Inquiry updated successfully");
+      setIsEditDialogOpen(false);
+      setFormErrors({});
+      fetchAllInquiries();
+      fetchInquiries();
+    } catch (error) {
+      toast.error(error.message || "Failed to update inquiry");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConvertToLead = async () => {
+    setIsSubmitting(true);
+    try {
+      await api.convertInquiryToLead(selectedInquiry.id);
+      toast.success("Inquiry converted to lead successfully");
+      setIsConvertDialogOpen(false);
+      fetchAllInquiries();
+      fetchInquiries();
+    } catch (error) {
+      toast.error(error.message || "Failed to convert inquiry");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteInquiry = (inquiry) => {
+    setSelectedInquiry(inquiry);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await api.deleteInquiry(selectedInquiry.id);
+      toast.success("Inquiry deleted successfully");
+      fetchAllInquiries();
+      fetchInquiries();
+    } catch (error) {
+      toast.error(error.message || "Failed to delete inquiry");
+      throw error;
+    }
+  };
+
+  const resetFormData = () => {
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      message: "",
+      source: "phone",
+    });
+  };
+
+  // Table columns setup
+  const columns = createColumns({
+    onView: (inquiry) => {
+      setSelectedInquiry(inquiry);
+      setIsViewDialogOpen(true);
+    },
+    onEdit: (inquiry) => {
+      setSelectedInquiry(inquiry);
+      setFormData({
+        name: inquiry.name,
+        email: inquiry.email,
+        phone: inquiry.phone || "",
+        company: inquiry.company || "",
+        message: inquiry.message,
+        source: inquiry.source || "phone",
+        status: inquiry.status,
+        notes: inquiry.notes || "",
+      });
+      setIsEditDialogOpen(true);
+    },
+    onConvert: (inquiry) => {
+      setSelectedInquiry(inquiry);
+      setIsConvertDialogOpen(true);
+    },
+    onDelete: handleDeleteInquiry,
+    userRole: user?.role,
+  });
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header Actions */}
-      <div className="flex flex-col gap-4 justify-between sm:flex-row">
-        <div className="relative max-w-md flex-1">
-          <Search
-            className={`absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 ${
-              theme === "dark" ? "text-white/40" : "text-slate-400"
-            }`}
-          />
-          <Input
-            placeholder="Search inquiries..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={`h-11 pl-10 ${
-              theme === "dark"
-                ? "border-white/10 bg-white/5 text-white placeholder:text-white/40 focus:border-[#15803d]/50 focus:bg-white/10"
-                : "border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-emerald-500"
-            }`}
-          />
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Inquiries</h1>
+          <p className="text-muted-foreground">Manage inquiry leads</p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className={`flex-1 gap-2 sm:flex-initial ${
-              theme === "dark"
-                ? "border-white/10 bg-white/5 text-white hover:bg-white/10"
-                : "border-slate-300 bg-white text-slate-900 hover:bg-slate-100"
-            }`}
-          >
-            <Filter className="h-4 w-4" />
-            <span className="sm:inline">Filter</span>
-          </Button>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="flex-1 gap-2 bg-gradient-to-r from-[#15803d] to-[#16a34a] text-white hover:shadow-[0_0_30px_rgba(21,128,61,0.4)] sm:flex-initial">
-                <Plus className="h-4 w-4" />
-                <span className="sm:inline">Add Inquiry</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent
-              className={`max-w-2xl backdrop-blur-xl ${
-                theme === "dark"
-                  ? "border-white/10 bg-black/95 text-white"
-                  : "border-slate-200 bg-white text-slate-900"
-              }`}
-            >
-              <DialogHeader>
-                <DialogTitle
-                  className={theme === "dark" ? "text-white" : "text-slate-900"}
-                >
-                  Add New Inquiry
-                </DialogTitle>
-                <DialogDescription
-                  className={
-                    theme === "dark" ? "text-white/60" : "text-slate-600"
-                  }
-                >
-                  Enter the details of the new inquiry below.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid grid-cols-1 gap-4 py-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label
-                    className={`text-sm font-semibold uppercase tracking-wide ${
-                      theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                    }`}
-                  >
-                    Company Name
-                  </label>
-                  <Input
-                    placeholder="ABC Corporation"
-                    className={
-                      theme === "dark"
-                        ? "border-white/10 bg-white/5 text-white placeholder:text-white/40"
-                        : "border-slate-300 bg-white text-slate-900 placeholder:text-slate-400"
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label
-                    className={`text-sm font-semibold uppercase tracking-wide ${
-                      theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                    }`}
-                  >
-                    Contact Person
-                  </label>
-                  <Input
-                    placeholder="John Doe"
-                    className={
-                      theme === "dark"
-                        ? "border-white/10 bg-white/5 text-white placeholder:text-white/40"
-                        : "border-slate-300 bg-white text-slate-900 placeholder:text-slate-400"
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label
-                    className={`text-sm font-semibold uppercase tracking-wide ${
-                      theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                    }`}
-                  >
-                    Position
-                  </label>
-                  <Input
-                    placeholder="Facilities Manager"
-                    className={
-                      theme === "dark"
-                        ? "border-white/10 bg-white/5 text-white placeholder:text-white/40"
-                        : "border-slate-300 bg-white text-slate-900 placeholder:text-slate-400"
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label
-                    className={`text-sm font-semibold uppercase tracking-wide ${
-                      theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                    }`}
-                  >
-                    Email
-                  </label>
-                  <Input
-                    type="email"
-                    placeholder="john@abc.com"
-                    className={
-                      theme === "dark"
-                        ? "border-white/10 bg-white/5 text-white placeholder:text-white/40"
-                        : "border-slate-300 bg-white text-slate-900 placeholder:text-slate-400"
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label
-                    className={`text-sm font-semibold uppercase tracking-wide ${
-                      theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                    }`}
-                  >
-                    Phone
-                  </label>
-                  <Input
-                    placeholder="+63 912 345 6789"
-                    className={
-                      theme === "dark"
-                        ? "border-white/10 bg-white/5 text-white placeholder:text-white/40"
-                        : "border-slate-300 bg-white text-slate-900 placeholder:text-slate-400"
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label
-                    className={`text-sm font-semibold uppercase tracking-wide ${
-                      theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                    }`}
-                  >
-                    Service Type
-                  </label>
-                  <Input
-                    placeholder="Garbage Collection"
-                    className={
-                      theme === "dark"
-                        ? "border-white/10 bg-white/5 text-white placeholder:text-white/40"
-                        : "border-slate-300 bg-white text-slate-900 placeholder:text-slate-400"
-                    }
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label
-                    className={`text-sm font-semibold uppercase tracking-wide ${
-                      theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                    }`}
-                  >
-                    Notes
-                  </label>
-                  <Input
-                    placeholder="Additional notes..."
-                    className={
-                      theme === "dark"
-                        ? "border-white/10 bg-white/5 text-white placeholder:text-white/40"
-                        : "border-slate-300 bg-white text-slate-900 placeholder:text-slate-400"
-                    }
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  className={
-                    theme === "dark"
-                      ? "border-white/10 bg-white/5 text-white hover:bg-white/10"
-                      : "border-slate-300 bg-white text-slate-900 hover:bg-slate-100"
-                  }
-                >
-                  Cancel
-                </Button>
-                <Button className="bg-gradient-to-r from-[#15803d] to-[#16a34a] text-white hover:shadow-[0_0_30px_rgba(21,128,61,0.4)]">
-                  Save Inquiry
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+        <Button onClick={() => {
+          resetFormData();
+          setFormErrors({});
+          setIsCreateDialogOpen(true);
+        }}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Inquiry
+        </Button>
       </div>
 
-      {/* Inquiries Table */}
-      <Card
-        className={
-          theme === "dark"
-            ? "border-white/10 bg-black/40 backdrop-blur-xl"
-            : "border-slate-200 bg-white"
-        }
-      >
-        <CardHeader className="px-4 sm:px-6">
-          <CardTitle className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
-            <span
-              className={`text-base font-bold sm:text-lg ${
-                theme === "dark" ? "text-white" : "text-slate-900"
-              }`}
-            >
-              All Inquiries ({filteredInquiries.length})
-            </span>
-            <span
-              className={`text-xs font-normal sm:text-sm ${
-                theme === "dark" ? "text-white/50" : "text-slate-500"
-              }`}
-            >
-              Showing {filteredInquiries.length} of {inquiries.length}
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-4 sm:px-6">
-          <ResponsiveTable
-            mobileCards={filteredInquiries.map((inquiry) => (
-              <MobileCard key={inquiry.id}>
-                <div className="space-y-3">
-                  <div
-                    className={`flex items-start justify-between gap-3 pb-3 border-b ${
-                      theme === "dark" ? "border-white/10" : "border-slate-200"
-                    }`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <h3
-                        className={`font-semibold truncate mb-1 ${
-                          theme === "dark" ? "text-white" : "text-slate-900"
-                        }`}
-                      >
-                        {inquiry.companyName}
-                      </h3>
-                      <p
-                        className={`text-sm truncate ${
-                          theme === "dark" ? "text-white/70" : "text-slate-600"
-                        }`}
-                      >
-                        {inquiry.contactPerson}
-                      </p>
-                      <p
-                        className={`text-xs truncate ${
-                          theme === "dark" ? "text-white/50" : "text-slate-500"
-                        }`}
-                      >
-                        {inquiry.position}
-                      </p>
-                    </div>
-                    {getStatusBadge(inquiry.status)}
-                  </div>
+      {/* Filters */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <SearchInput
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="Search inquiries..."
+          />
 
-                  <div className="space-y-2 text-sm">
-                    <MobileCardRow label="Email" value={inquiry.email} />
-                    <MobileCardRow label="Phone" value={inquiry.phone} />
-                    <MobileCardRow
-                      label="Service"
-                      value={
-                        <span
-                          className={`px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap ${
-                            theme === "dark"
-                              ? "bg-white/10 text-white/70"
-                              : "bg-slate-100 text-slate-700"
-                          }`}
-                        >
-                          {inquiry.serviceType}
-                        </span>
-                      }
-                    />
-                    <MobileCardRow
-                      label="Source"
-                      value={
-                        <span className="flex items-center gap-1.5">
-                          {getSourceIcon(inquiry.source)}
-                          {inquiry.source}
-                        </span>
-                      }
-                    />
-                    <MobileCardRow label="Sales Rep" value={inquiry.salesRep} />
-                    <MobileCardRow
-                      label="Date"
-                      value={new Date(
-                        inquiry.dateFirstContact
-                      ).toLocaleDateString()}
-                    />
-                  </div>
+          <FacetedFilter
+            title="Status"
+            options={["new", "contacted", "qualified", "converted", "closed"]}
+            selectedValues={statusFilter}
+            onSelectionChange={setStatusFilter}
+            getCount={getStatusCount}
+          />
 
-                  <div
-                    className={`flex gap-2 pt-2 border-t ${
-                      theme === "dark" ? "border-white/10" : "border-slate-200"
-                    }`}
+          <FacetedFilter
+            title="Source"
+            options={["website", "facebook", "email", "phone", "walk-in", "cold-approach"]}
+            selectedValues={sourceFilter}
+            onSelectionChange={setSourceFilter}
+            getCount={getSourceCount}
+          />
+        </div>
+
+        {/* View Options */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <SlidersHorizontal className="mr-2 h-4 w-4" />
+              View
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[150px]">
+            <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {columns
+              .filter((column) => column.accessorKey)
+              .map((column) => {
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.accessorKey}
+                    className="capitalize"
+                    checked={true}
                   >
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={`flex-1 text-xs ${
-                        theme === "dark"
-                          ? "border-white/10 bg-white/5 text-white hover:bg-white/10"
-                          : "border-slate-300 text-slate-900 hover:bg-slate-100"
-                      }`}
-                      onClick={() => setSelectedInquiry(inquiry)}
-                    >
-                      <Eye className="w-3 h-3 mr-1" />
-                      View
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={`flex-1 text-xs ${
-                        theme === "dark"
-                          ? "border-white/10 bg-white/5 text-white hover:bg-white/10"
-                          : "border-slate-300 text-slate-900 hover:bg-slate-100"
-                      }`}
-                    >
-                      <Edit className="w-3 h-3 mr-1" />
-                      Edit
-                    </Button>
-                  </div>
-                </div>
-              </MobileCard>
-            ))}
-          >
-            <Table>
-              <TableHeader>
-                <TableRow
-                  className={
-                    theme === "dark"
-                      ? "border-white/10 hover:bg-white/5"
-                      : "border-slate-200"
+                    {column.accessorKey}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Table */}
+      <DataTable
+        columns={columns}
+        data={inquiries}
+        isLoading={isLoading}
+        emptyMessage="No inquiries found"
+        pageSize={10}
+        showViewOptions={false}
+      />
+
+      {/* Create Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Inquiry</DialogTitle>
+            <DialogDescription>
+              Create a new inquiry from phone, email, or other sources
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreateInquiry} className="space-y-4">
+            <div>
+              <Label htmlFor="name">Name *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value });
+                  if (formErrors.name) {
+                    setFormErrors({ ...formErrors, name: null });
                   }
-                >
-                  <TableHead
-                    className={
-                      theme === "dark" ? "text-white/70" : "text-slate-600"
-                    }
-                  >
-                    Company
-                  </TableHead>
-                  <TableHead
-                    className={
-                      theme === "dark" ? "text-white/70" : "text-slate-600"
-                    }
-                  >
-                    Contact
-                  </TableHead>
-                  <TableHead
-                    className={
-                      theme === "dark" ? "text-white/70" : "text-slate-600"
-                    }
-                  >
-                    Email
-                  </TableHead>
-                  <TableHead
-                    className={
-                      theme === "dark" ? "text-white/70" : "text-slate-600"
-                    }
-                  >
-                    Phone
-                  </TableHead>
-                  <TableHead
-                    className={`hidden 2xl:table-cell ${
-                      theme === "dark" ? "text-white/70" : "text-slate-600"
-                    }`}
-                  >
-                    Service
-                  </TableHead>
-                  <TableHead
-                    className={`hidden 2xl:table-cell ${
-                      theme === "dark" ? "text-white/70" : "text-slate-600"
-                    }`}
-                  >
-                    Source
-                  </TableHead>
-                  <TableHead
-                    className={
-                      theme === "dark" ? "text-white/70" : "text-slate-600"
-                    }
-                  >
-                    Status
-                  </TableHead>
-                  <TableHead
-                    className={`hidden 2xl:table-cell ${
-                      theme === "dark" ? "text-white/70" : "text-slate-600"
-                    }`}
-                  >
-                    Sales Rep
-                  </TableHead>
-                  <TableHead
-                    className={`hidden 2xl:table-cell ${
-                      theme === "dark" ? "text-white/70" : "text-slate-600"
-                    }`}
-                  >
-                    Date
-                  </TableHead>
-                  <TableHead
-                    className={`text-right ${
-                      theme === "dark" ? "text-white/70" : "text-slate-600"
-                    }`}
-                  >
-                    Actions
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredInquiries.map((inquiry) => (
-                  <TableRow
-                    key={inquiry.id}
-                    className={
-                      theme === "dark"
-                        ? "border-white/10 transition-colors hover:bg-white/5"
-                        : "border-slate-100 transition-colors hover:bg-slate-50"
-                    }
-                  >
-                    <TableCell
-                      className={`max-w-[150px] truncate font-medium ${
-                        theme === "dark" ? "text-white" : "text-slate-900"
-                      }`}
-                    >
-                      {inquiry.companyName}
-                    </TableCell>
-                    <TableCell>
-                      <div className="max-w-[120px]">
-                        <div
-                          className={`truncate font-medium ${
-                            theme === "dark" ? "text-white" : "text-slate-900"
-                          }`}
-                        >
-                          {inquiry.contactPerson}
-                        </div>
-                        <div
-                          className={`truncate text-xs ${
-                            theme === "dark"
-                              ? "text-white/50"
-                              : "text-slate-500"
-                          }`}
-                        >
-                          {inquiry.position}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell
-                      className={`max-w-[140px] truncate text-sm ${
-                        theme === "dark" ? "text-white/60" : "text-slate-600"
-                      }`}
-                    >
-                      {inquiry.email}
-                    </TableCell>
-                    <TableCell
-                      className={`max-w-[110px] truncate text-sm ${
-                        theme === "dark" ? "text-white/60" : "text-slate-600"
-                      }`}
-                    >
-                      {inquiry.phone}
-                    </TableCell>
-                    <TableCell className="hidden 2xl:table-cell">
-                      <span
-                        className={`whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium ${
-                          theme === "dark"
-                            ? "bg-white/10 text-white"
-                            : "bg-slate-100 text-slate-700"
-                        }`}
-                      >
-                        {inquiry.serviceType}
-                      </span>
-                    </TableCell>
-                    <TableCell className="hidden 2xl:table-cell">
-                      <div className="flex items-center gap-2 whitespace-nowrap">
-                        {getSourceIcon(inquiry.source)}
-                        <span
-                          className={`text-sm ${
-                            theme === "dark"
-                              ? "text-white/70"
-                              : "text-slate-600"
-                          }`}
-                        >
-                          {inquiry.source}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(inquiry.status)}</TableCell>
-                    <TableCell
-                      className={`hidden max-w-[100px] truncate 2xl:table-cell ${
-                        theme === "dark" ? "text-white/60" : "text-slate-600"
-                      }`}
-                    >
-                      {inquiry.salesRep}
-                    </TableCell>
-                    <TableCell
-                      className={`hidden whitespace-nowrap text-sm 2xl:table-cell ${
-                        theme === "dark" ? "text-white/60" : "text-slate-600"
-                      }`}
-                    >
-                      {new Date(inquiry.dateFirstContact).toLocaleDateString(
-                        "en-US",
-                        { month: "short", day: "numeric" }
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className={
-                              theme === "dark"
-                                ? "text-white/60 hover:bg-white/10 hover:text-white"
-                                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                            }
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="end"
-                          className={
-                            theme === "dark"
-                              ? "border-white/10 bg-black/95 text-white backdrop-blur-xl"
-                              : "border-slate-200 bg-white text-slate-900"
-                          }
-                        >
-                          <DropdownMenuItem
-                            onClick={() => setSelectedInquiry(inquiry)}
-                            className={
-                              theme === "dark"
-                                ? "hover:bg-white/10 focus:bg-white/10"
-                                : "hover:bg-slate-100 focus:bg-slate-100"
-                            }
-                          >
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className={
-                              theme === "dark"
-                                ? "hover:bg-white/10 focus:bg-white/10"
-                                : "hover:bg-slate-100 focus:bg-slate-100"
-                            }
-                          >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </ResponsiveTable>
-        </CardContent>
-      </Card>
+                }}
+                className={formErrors.name ? "border-red-500" : ""}
+              />
+              {formErrors.name && (
+                <p className="text-sm text-red-500 mt-1">{formErrors.name}</p>
+              )}
+            </div>
 
-      {/* View Details Dialog */}
-      {selectedInquiry && (
-        <Dialog
-          open={!!selectedInquiry}
-          onOpenChange={() => setSelectedInquiry(null)}
-        >
-          <DialogContent
-            className={`max-w-2xl backdrop-blur-xl ${
-              theme === "dark"
-                ? "border-white/10 bg-black/95 text-white"
-                : "border-slate-200 bg-white text-slate-900"
-            }`}
-          >
-            <DialogHeader>
-              <DialogTitle
-                className={theme === "dark" ? "text-white" : "text-slate-900"}
-              >
-                {selectedInquiry.companyName}
-              </DialogTitle>
-              <DialogDescription
-                className={
-                  theme === "dark" ? "text-white/60" : "text-slate-600"
+            <div>
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => {
+                  setFormData({ ...formData, email: e.target.value });
+                  if (formErrors.email) {
+                    setFormErrors({ ...formErrors, email: null });
+                  }
+                }}
+                className={formErrors.email ? "border-red-500" : ""}
+              />
+              {formErrors.email && (
+                <p className="text-sm text-red-500 mt-1">{formErrors.email}</p>
+              )}
+            </div>
+
+            <div>
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="company">Company</Label>
+              <Input
+                id="company"
+                value={formData.company}
+                onChange={(e) =>
+                  setFormData({ ...formData, company: e.target.value })
+                }
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="source">Source</Label>
+              <Select
+                value={formData.source}
+                onValueChange={(val) =>
+                  setFormData({ ...formData, source: val })
                 }
               >
-                Inquiry Details
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    className={`text-sm font-semibold uppercase tracking-wide ${
-                      theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                    }`}
-                  >
-                    Contact Person
-                  </label>
-                  <p
-                    className={
-                      theme === "dark" ? "text-white" : "text-slate-900"
+                <SelectTrigger id="source">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="phone">Phone</SelectItem>
+                  <SelectItem value="facebook">Facebook</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="walk-in">Walk-in</SelectItem>
+                  <SelectItem value="cold-approach">Cold Approach</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="message">Message *</Label>
+              <Textarea
+                id="message"
+                rows={4}
+                value={formData.message}
+                onChange={(e) => {
+                  setFormData({ ...formData, message: e.target.value });
+                  if (formErrors.message) {
+                    setFormErrors({ ...formErrors, message: null });
+                  }
+                }}
+                className={formErrors.message ? "border-red-500" : ""}
+              />
+              {formErrors.message && (
+                <p className="text-sm text-red-500 mt-1">{formErrors.message}</p>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsCreateDialogOpen(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Create Inquiry
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Inquiry</DialogTitle>
+            <DialogDescription>
+              Update the inquiry here. Click save changes when you're done.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdateInquiry} className="space-y-4 mt-4">
+            <div className="grid grid-cols-[120px_1fr] items-start gap-4">
+              <Label htmlFor="edit-name" className="text-right pt-2">Name</Label>
+              <div className="flex-1">
+                <Input
+                  id="edit-name"
+                  value={formData.name}
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: e.target.value });
+                    if (formErrors.name) {
+                      setFormErrors({ ...formErrors, name: null });
                     }
-                  >
-                    {selectedInquiry.contactPerson}
-                  </p>
-                </div>
-                <div>
-                  <label
-                    className={`text-sm font-semibold uppercase tracking-wide ${
-                      theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                    }`}
-                  >
-                    Position
-                  </label>
-                  <p
-                    className={
-                      theme === "dark" ? "text-white" : "text-slate-900"
-                    }
-                  >
-                    {selectedInquiry.position}
-                  </p>
-                </div>
-                <div>
-                  <label
-                    className={`text-sm font-semibold uppercase tracking-wide ${
-                      theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                    }`}
-                  >
-                    Email
-                  </label>
-                  <p
-                    className={
-                      theme === "dark" ? "text-white" : "text-slate-900"
-                    }
-                  >
-                    {selectedInquiry.email}
-                  </p>
-                </div>
-                <div>
-                  <label
-                    className={`text-sm font-semibold uppercase tracking-wide ${
-                      theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                    }`}
-                  >
-                    Phone
-                  </label>
-                  <p
-                    className={
-                      theme === "dark" ? "text-white" : "text-slate-900"
-                    }
-                  >
-                    {selectedInquiry.phone}
-                  </p>
-                </div>
-                <div>
-                  <label
-                    className={`text-sm font-semibold uppercase tracking-wide ${
-                      theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                    }`}
-                  >
-                    Service Type
-                  </label>
-                  <p
-                    className={
-                      theme === "dark" ? "text-white" : "text-slate-900"
-                    }
-                  >
-                    {selectedInquiry.serviceType}
-                  </p>
-                </div>
-                <div>
-                  <label
-                    className={`text-sm font-semibold uppercase tracking-wide ${
-                      theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                    }`}
-                  >
-                    Source
-                  </label>
-                  <p
-                    className={
-                      theme === "dark" ? "text-white" : "text-slate-900"
-                    }
-                  >
-                    {selectedInquiry.source}
-                  </p>
-                </div>
-                <div>
-                  <label
-                    className={`text-sm font-semibold uppercase tracking-wide ${
-                      theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                    }`}
-                  >
-                    Status
-                  </label>
-                  <div className="mt-1">
-                    {getStatusBadge(selectedInquiry.status)}
-                  </div>
-                </div>
-                <div>
-                  <label
-                    className={`text-sm font-semibold uppercase tracking-wide ${
-                      theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                    }`}
-                  >
-                    Sales Rep
-                  </label>
-                  <p
-                    className={
-                      theme === "dark" ? "text-white" : "text-slate-900"
-                    }
-                  >
-                    {selectedInquiry.salesRep}
-                  </p>
-                </div>
-              </div>
-              <div>
-                <label
-                  className={`text-sm font-semibold uppercase tracking-wide ${
-                    theme === "dark" ? "text-[#15803d]" : "text-emerald-700"
-                  }`}
-                >
-                  Notes
-                </label>
-                <p
-                  className={`mt-1 ${
-                    theme === "dark" ? "text-white" : "text-slate-900"
-                  }`}
-                >
-                  {selectedInquiry.notes}
-                </p>
+                  }}
+                  className={formErrors.name ? "border-red-500" : ""}
+                />
+                {formErrors.name && (
+                  <p className="text-sm text-red-500 mt-1">{formErrors.name}</p>
+                )}
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      )}
+
+            <div className="grid grid-cols-[120px_1fr] items-start gap-4">
+              <Label htmlFor="edit-email" className="text-right pt-2">Email</Label>
+              <div className="flex-1">
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                    if (formErrors.email) {
+                      setFormErrors({ ...formErrors, email: null });
+                    }
+                  }}
+                  className={formErrors.email ? "border-red-500" : ""}
+                />
+                {formErrors.email && (
+                  <p className="text-sm text-red-500 mt-1">{formErrors.email}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+              <Label htmlFor="edit-phone" className="text-right">Phone Number</Label>
+              <Input
+                id="edit-phone"
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+              <Label htmlFor="edit-company" className="text-right">Company</Label>
+              <Input
+                id="edit-company"
+                value={formData.company}
+                onChange={(e) =>
+                  setFormData({ ...formData, company: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+              <Label htmlFor="edit-source" className="text-right">Source</Label>
+              <Select
+                value={formData.source}
+                onValueChange={(val) =>
+                  setFormData({ ...formData, source: val })
+                }
+              >
+                <SelectTrigger id="edit-source">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="website">Website</SelectItem>
+                  <SelectItem value="phone">Phone</SelectItem>
+                  <SelectItem value="facebook">Facebook</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="walk-in">Walk-in</SelectItem>
+                  <SelectItem value="cold-approach">Cold Approach</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+              <Label htmlFor="edit-status" className="text-right">Status</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(val) =>
+                  setFormData({ ...formData, status: val })
+                }
+              >
+                <SelectTrigger id="edit-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">New</SelectItem>
+                  <SelectItem value="contacted">Contacted</SelectItem>
+                  <SelectItem value="qualified">Qualified</SelectItem>
+                  <SelectItem value="closed">Closed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-[120px_1fr] items-start gap-4">
+              <Label htmlFor="edit-message" className="text-right pt-2">Message</Label>
+              <div className="flex-1">
+                <Textarea
+                  id="edit-message"
+                  rows={4}
+                  value={formData.message}
+                  onChange={(e) => {
+                    setFormData({ ...formData, message: e.target.value });
+                    if (formErrors.message) {
+                      setFormErrors({ ...formErrors, message: null });
+                    }
+                  }}
+                  className={formErrors.message ? "border-red-500" : ""}
+                />
+                {formErrors.message && (
+                  <p className="text-sm text-red-500 mt-1">{formErrors.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-[120px_1fr] items-start gap-4">
+              <Label htmlFor="edit-notes" className="text-right pt-2">Notes</Label>
+              <Textarea
+                id="edit-notes"
+                rows={3}
+                value={formData.notes}
+                onChange={(e) =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
+                placeholder="Add internal notes"
+              />
+            </div>
+
+            <DialogFooter className="mt-6">
+              <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+                {isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Save changes
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Convert to Lead Dialog */}
+      <Dialog open={isConvertDialogOpen} onOpenChange={setIsConvertDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convert to Lead</DialogTitle>
+            <DialogDescription>
+              This will create a new lead from this inquiry. You can add service
+              details later in the Leads page.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedInquiry && (
+            <div className="space-y-3">
+              <div className="rounded-lg border p-4 space-y-2">
+                <p>
+                  <strong>Name:</strong> {selectedInquiry.name}
+                </p>
+                <p>
+                  <strong>Email:</strong> {selectedInquiry.email}
+                </p>
+                <p>
+                  <strong>Phone:</strong> {selectedInquiry.phone || "N/A"}
+                </p>
+                <p>
+                  <strong>Company:</strong> {selectedInquiry.company || "N/A"}
+                </p>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                The inquiry message will be added as a note in the lead. Service
+                requirement fields (address, waste type, volume) can be filled
+                in the Leads page.
+              </p>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsConvertDialogOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleConvertToLead} disabled={isSubmitting}>
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Convert to Lead
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Details Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Inquiry Details</DialogTitle>
+            <DialogDescription>
+              View complete inquiry information
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedInquiry && (
+            <div className="space-y-6">
+              {/* Contact Information */}
+              <div>
+                <h3 className="text-sm font-semibold mb-3 text-foreground">Contact Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Name</p>
+                    <p className="text-sm font-medium">{selectedInquiry.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="text-sm font-medium">{selectedInquiry.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Phone</p>
+                    <p className="text-sm font-medium">{selectedInquiry.phone || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Company</p>
+                    <p className="text-sm font-medium">{selectedInquiry.company || "N/A"}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-semibold mb-3 text-foreground">Inquiry Details</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Source</p>
+                    <p className="text-sm font-medium capitalize">{selectedInquiry.source?.replace("-", " ")}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Status</p>
+                    <div className="mt-1">
+                      <StatusBadge status={selectedInquiry.status} />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Created</p>
+                    <p className="text-sm font-medium">
+                      {format(new Date(selectedInquiry.createdAt), "MMM dd, yyyy 'at' hh:mm a")}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Last Updated</p>
+                    <p className="text-sm font-medium">
+                      {format(new Date(selectedInquiry.updatedAt), "MMM dd, yyyy 'at' hh:mm a")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-semibold mb-2 text-foreground">Message</h3>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                  {selectedInquiry.message}
+                </p>
+              </div>
+
+              {selectedInquiry.notes && (
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-semibold mb-2 text-foreground">Internal Notes</h3>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {selectedInquiry.notes}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        title="Delete"
+        itemName={selectedInquiry?.name || selectedInquiry?.email}
+        itemType="inquiry"
+        actionsList={[
+          "Permanently delete this inquiry",
+          "Remove all associated data",
+          "This cannot be undone"
+        ]}
+        warningMessage="This action cannot be undone."
+      />
     </div>
   );
-};
-
-export default Inquiries;
+}

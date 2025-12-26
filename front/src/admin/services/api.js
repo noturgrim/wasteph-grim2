@@ -77,8 +77,22 @@ class ApiClient {
   }
 
   // Inquiry endpoints
-  async getInquiries() {
-    return this.request("/inquiries");
+  async getInquiries(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.status) params.append("status", filters.status);
+    if (filters.assignedTo) params.append("assignedTo", filters.assignedTo);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.source) params.append("source", filters.source);
+
+    const queryString = params.toString();
+    return this.request(`/inquiries${queryString ? `?${queryString}` : ""}`);
+  }
+
+  async createInquiry(inquiryData) {
+    return this.request("/inquiries/manual", {
+      method: "POST",
+      body: JSON.stringify(inquiryData),
+    });
   }
 
   async getInquiryById(id) {
@@ -89,6 +103,12 @@ class ApiClient {
     return this.request(`/inquiries/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
+    });
+  }
+
+  async convertInquiryToLead(inquiryId) {
+    return this.request(`/inquiries/${inquiryId}/convert-to-lead`, {
+      method: "POST",
     });
   }
 

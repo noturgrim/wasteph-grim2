@@ -1,23 +1,20 @@
-import { db } from "../db/index.js";
-import { inquiryTable, activityLogTable } from "../db/schema.js";
-import { eq, desc } from "drizzle-orm";
-import { AppError } from "../middleware/errorHandler.js";
+import InquiryService from "../services/inquiryService.js";
 
+// Initialize service
+const inquiryService = new InquiryService();
+
+/**
+ * Controller: Create inquiry (public endpoint for website forms)
+ * Route: POST /api/inquiries
+ * Access: Public
+ */
 export const createInquiry = async (req, res, next) => {
   try {
-    const { name, email, phone, company, message } = req.body;
+    const inquiryData = req.body;
 
-    const [inquiry] = await db
-      .insert(inquiryTable)
-      .values({
-        name,
-        email,
-        phone,
-        company,
-        message,
-        source: "website",
-      })
-      .returning();
+    const inquiry = await inquiryService.createInquiry(inquiryData, {
+      source: "website",
+    });
 
     res.status(201).json({
       success: true,
@@ -29,12 +26,46 @@ export const createInquiry = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Create inquiry manually (by Sales/Admin)
+ * Route: POST /api/inquiries/manual
+ * Access: Protected (authenticated users)
+ */
+export const createInquiryManual = async (req, res, next) => {
+  try {
+    const inquiryData = req.body;
+    const userId = req.user.id;
+
+    const inquiry = await inquiryService.createInquiryManual(inquiryData, userId, {
+      ipAddress: req.ip,
+      userAgent: req.get("user-agent"),
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Inquiry created successfully",
+      data: inquiry,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Controller: Get all inquiries (with optional filters)
+ * Route: GET /api/inquiries
+ * Access: Protected (all authenticated users)
+ */
 export const getAllInquiries = async (req, res, next) => {
   try {
-    const inquiries = await db
-      .select()
-      .from(inquiryTable)
-      .orderBy(desc(inquiryTable.createdAt));
+    const { status, assignedTo, search, source } = req.query;
+
+    // Check if any filters are provided
+    const hasFilters = status || assignedTo || search || source;
+
+    const inquiries = hasFilters
+      ? await inquiryService.getAllInquiriesFiltered({ status, assignedTo, search, source })
+      : await inquiryService.getAllInquiries();
 
     res.json({
       success: true,
@@ -45,19 +76,16 @@ export const getAllInquiries = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Get inquiry by ID
+ * Route: GET /api/inquiries/:id
+ * Access: Protected (all authenticated users)
+ */
 export const getInquiryById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const [inquiry] = await db
-      .select()
-      .from(inquiryTable)
-      .where(eq(inquiryTable.id, id))
-      .limit(1);
-
-    if (!inquiry) {
-      throw new AppError("Inquiry not found", 404);
-    }
+    const inquiry = await inquiryService.getInquiryById(id);
 
     res.json({
       success: true,
@@ -68,33 +96,18 @@ export const getInquiryById = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Update inquiry
+ * Route: PATCH /api/inquiries/:id
+ * Access: Protected (all authenticated users)
+ */
 export const updateInquiry = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status, assignedTo, notes } = req.body;
+    const updateData = req.body;
+    const userId = req.user.id;
 
-    const [inquiry] = await db
-      .update(inquiryTable)
-      .set({
-        ...(status && { status }),
-        ...(assignedTo !== undefined && { assignedTo }),
-        ...(notes !== undefined && { notes }),
-        updatedAt: new Date(),
-      })
-      .where(eq(inquiryTable.id, id))
-      .returning();
-
-    if (!inquiry) {
-      throw new AppError("Inquiry not found", 404);
-    }
-
-    // Log activity
-    await db.insert(activityLogTable).values({
-      userId: req.user.id,
-      action: "inquiry_updated",
-      entityType: "inquiry",
-      entityId: inquiry.id,
-      details: JSON.stringify({ status, assignedTo, notes }),
+    const inquiry = await inquiryService.updateInquiry(id, updateData, userId, {
       ipAddress: req.ip,
       userAgent: req.get("user-agent"),
     });
@@ -109,25 +122,42 @@ export const updateInquiry = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Convert inquiry to lead
+ * Route: POST /api/inquiries/:id/convert-to-lead
+ * Access: Protected (authenticated users)
+ */
+export const convertInquiryToLead = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const lead = await inquiryService.convertInquiryToLead(id, userId, {
+      ipAddress: req.ip,
+      userAgent: req.get("user-agent"),
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Inquiry converted to lead successfully",
+      data: lead,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Controller: Delete inquiry
+ * Route: DELETE /api/inquiries/:id
+ * Access: Protected (admin, manager only)
+ */
 export const deleteInquiry = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
 
-    const [inquiry] = await db
-      .delete(inquiryTable)
-      .where(eq(inquiryTable.id, id))
-      .returning();
-
-    if (!inquiry) {
-      throw new AppError("Inquiry not found", 404);
-    }
-
-    // Log activity
-    await db.insert(activityLogTable).values({
-      userId: req.user.id,
-      action: "inquiry_deleted",
-      entityType: "inquiry",
-      entityId: inquiry.id,
+    await inquiryService.deleteInquiry(id, userId, {
       ipAddress: req.ip,
       userAgent: req.get("user-agent"),
     });

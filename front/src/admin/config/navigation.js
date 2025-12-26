@@ -1,0 +1,130 @@
+import {
+  LayoutDashboard,
+  Users,
+  UserPlus,
+  FileText,
+  TrendingUp,
+  Settings,
+  UserCog,
+  BookOpen,
+} from "lucide-react";
+
+/**
+ * Navigation configuration for different user roles
+ *
+ * Roles:
+ * - admin: Full access to everything including user management
+ * - sales: Access to sales pipeline only
+ */
+
+// Sales Pipeline items (accessible by both roles)
+const salesPipelineItems = [
+  {
+    title: "Inquiries",
+    url: "/admin/inquiries",
+    icon: UserPlus,
+    description: "New inquiry leads",
+  },
+  {
+    title: "Leads",
+    url: "/admin/leads",
+    icon: TrendingUp,
+    description: "Active leads in pipeline",
+  },
+  {
+    title: "Potentials",
+    url: "/admin/potentials",
+    icon: FileText,
+    description: "Potential client prospects",
+  },
+  {
+    title: "Clients",
+    url: "/admin/clients",
+    icon: Users,
+    description: "Contracted clients",
+  },
+];
+
+/**
+ * Get navigation items based on user role
+ * @param {string} role - User role (admin or staff for sales)
+ * @returns {Array} Navigation groups
+ */
+export const getNavigationByRole = (role) => {
+  const baseNavigation = [
+    {
+      label: "General",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/admin/dashboard",
+          icon: LayoutDashboard,
+          description: "Overview and statistics",
+        },
+      ],
+    },
+    {
+      label: "Sales Pipeline",
+      items: salesPipelineItems,
+    },
+  ];
+
+  // Admin gets additional management section
+  if (role === "admin") {
+    return [
+      ...baseNavigation,
+      {
+        label: "Content",
+        items: [
+          {
+            title: "Blog Posts",
+            url: "/admin/blog",
+            icon: BookOpen,
+            description: "Manage blog content",
+          },
+        ],
+      },
+      {
+        label: "Administration",
+        items: [
+          {
+            title: "User Management",
+            url: "/admin/users",
+            icon: UserCog,
+            description: "Manage system users",
+          },
+          {
+            title: "Settings",
+            url: "/admin/settings",
+            icon: Settings,
+            description: "System configuration",
+          },
+        ],
+      },
+    ];
+  }
+
+  // Sales role (staff) gets only sales pipeline
+  return baseNavigation;
+};
+
+/**
+ * Check if user has access to a specific route
+ * @param {string} role - User role
+ * @param {string} path - Route path
+ * @returns {boolean} Whether user has access
+ */
+export const hasAccess = (role, path) => {
+  const navigation = getNavigationByRole(role);
+  const allItems = navigation.flatMap(group => group.items);
+  return allItems.some(item => path.startsWith(item.url));
+};
+
+/**
+ * Get default route for a role
+ * @param {string} role - User role
+ * @returns {string} Default route
+ */
+export const getDefaultRoute = (role) => {
+  return "/admin/dashboard";
+};

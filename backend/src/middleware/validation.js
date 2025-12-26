@@ -40,7 +40,13 @@ export const inquiryValidation = [
     .isEmail()
     .normalizeEmail()
     .withMessage("Valid email is required"),
+  body("phone").optional().trim(),
+  body("company").optional().trim(),
   body("message").trim().notEmpty().withMessage("Message is required"),
+  body("source")
+    .optional()
+    .isIn(["website", "facebook", "email", "phone", "walk-in", "cold-approach"])
+    .withMessage("Invalid source value"),
 ];
 
 // Lead validation

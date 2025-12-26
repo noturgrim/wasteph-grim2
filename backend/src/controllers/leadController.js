@@ -1,50 +1,19 @@
-import { db } from "../db/index.js";
-import { leadTable, activityLogTable } from "../db/schema.js";
-import { eq, desc } from "drizzle-orm";
-import { AppError } from "../middleware/errorHandler.js";
+import LeadService from "../services/leadService.js";
 
+// Initialize service
+const leadService = new LeadService();
+
+/**
+ * Controller: Create lead
+ * Route: POST /api/leads
+ * Access: Protected (all authenticated users)
+ */
 export const createLead = async (req, res, next) => {
   try {
-    const {
-      companyName,
-      contactPerson,
-      email,
-      phone,
-      address,
-      city,
-      province,
-      wasteType,
-      estimatedVolume,
-      priority,
-      estimatedValue,
-      notes,
-    } = req.body;
+    const leadData = req.body;
+    const userId = req.user.id;
 
-    const [lead] = await db
-      .insert(leadTable)
-      .values({
-        companyName,
-        contactPerson,
-        email,
-        phone,
-        address,
-        city,
-        province,
-        wasteType,
-        estimatedVolume,
-        priority,
-        estimatedValue,
-        notes,
-        assignedTo: req.user.id,
-      })
-      .returning();
-
-    // Log activity
-    await db.insert(activityLogTable).values({
-      userId: req.user.id,
-      action: "lead_created",
-      entityType: "lead",
-      entityId: lead.id,
+    const lead = await leadService.createLead(leadData, userId, {
       ipAddress: req.ip,
       userAgent: req.get("user-agent"),
     });
@@ -59,12 +28,14 @@ export const createLead = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Get all leads
+ * Route: GET /api/leads
+ * Access: Protected (all authenticated users)
+ */
 export const getAllLeads = async (req, res, next) => {
   try {
-    const leads = await db
-      .select()
-      .from(leadTable)
-      .orderBy(desc(leadTable.createdAt));
+    const leads = await leadService.getAllLeads();
 
     res.json({
       success: true,
@@ -75,19 +46,16 @@ export const getAllLeads = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Get lead by ID
+ * Route: GET /api/leads/:id
+ * Access: Protected (all authenticated users)
+ */
 export const getLeadById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const [lead] = await db
-      .select()
-      .from(leadTable)
-      .where(eq(leadTable.id, id))
-      .limit(1);
-
-    if (!lead) {
-      throw new AppError("Lead not found", 404);
-    }
+    const lead = await leadService.getLeadById(id);
 
     res.json({
       success: true,
@@ -98,31 +66,18 @@ export const getLeadById = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Update lead
+ * Route: PATCH /api/leads/:id
+ * Access: Protected (all authenticated users)
+ */
 export const updateLead = async (req, res, next) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
+    const userId = req.user.id;
 
-    const [lead] = await db
-      .update(leadTable)
-      .set({
-        ...updateData,
-        updatedAt: new Date(),
-      })
-      .where(eq(leadTable.id, id))
-      .returning();
-
-    if (!lead) {
-      throw new AppError("Lead not found", 404);
-    }
-
-    // Log activity
-    await db.insert(activityLogTable).values({
-      userId: req.user.id,
-      action: "lead_updated",
-      entityType: "lead",
-      entityId: lead.id,
-      details: JSON.stringify(updateData),
+    const lead = await leadService.updateLead(id, updateData, userId, {
       ipAddress: req.ip,
       userAgent: req.get("user-agent"),
     });
@@ -137,25 +92,17 @@ export const updateLead = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Delete lead
+ * Route: DELETE /api/leads/:id
+ * Access: Protected (admin, manager only)
+ */
 export const deleteLead = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
 
-    const [lead] = await db
-      .delete(leadTable)
-      .where(eq(leadTable.id, id))
-      .returning();
-
-    if (!lead) {
-      throw new AppError("Lead not found", 404);
-    }
-
-    // Log activity
-    await db.insert(activityLogTable).values({
-      userId: req.user.id,
-      action: "lead_deleted",
-      entityType: "lead",
-      entityId: lead.id,
+    await leadService.deleteLead(id, userId, {
       ipAddress: req.ip,
       userAgent: req.get("user-agent"),
     });

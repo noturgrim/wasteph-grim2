@@ -1,52 +1,19 @@
-import { db } from "../db/index.js";
-import { clientTable, activityLogTable } from "../db/schema.js";
-import { eq, desc } from "drizzle-orm";
-import { AppError } from "../middleware/errorHandler.js";
+import ClientService from "../services/clientService.js";
 
+// Initialize service
+const clientService = new ClientService();
+
+/**
+ * Controller: Create contracted client
+ * Route: POST /api/clients
+ * Access: Protected (all authenticated users)
+ */
 export const createClient = async (req, res, next) => {
   try {
-    const {
-      companyName,
-      contactPerson,
-      email,
-      phone,
-      address,
-      city,
-      province,
-      industry,
-      wasteTypes,
-      contractStartDate,
-      contractEndDate,
-      notes,
-    } = req.body;
+    const clientData = req.body;
+    const userId = req.user.id;
 
-    const [client] = await db
-      .insert(clientTable)
-      .values({
-        companyName,
-        contactPerson,
-        email,
-        phone,
-        address,
-        city,
-        province,
-        industry,
-        wasteTypes,
-        contractStartDate: contractStartDate
-          ? new Date(contractStartDate)
-          : null,
-        contractEndDate: contractEndDate ? new Date(contractEndDate) : null,
-        notes,
-        accountManager: req.user.id,
-      })
-      .returning();
-
-    // Log activity
-    await db.insert(activityLogTable).values({
-      userId: req.user.id,
-      action: "client_created",
-      entityType: "client",
-      entityId: client.id,
+    const client = await clientService.createClient(clientData, userId, {
       ipAddress: req.ip,
       userAgent: req.get("user-agent"),
     });
@@ -61,12 +28,14 @@ export const createClient = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Get all clients
+ * Route: GET /api/clients
+ * Access: Protected (all authenticated users)
+ */
 export const getAllClients = async (req, res, next) => {
   try {
-    const clients = await db
-      .select()
-      .from(clientTable)
-      .orderBy(desc(clientTable.createdAt));
+    const clients = await clientService.getAllClients();
 
     res.json({
       success: true,
@@ -77,19 +46,16 @@ export const getAllClients = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Get client by ID
+ * Route: GET /api/clients/:id
+ * Access: Protected (all authenticated users)
+ */
 export const getClientById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const [client] = await db
-      .select()
-      .from(clientTable)
-      .where(eq(clientTable.id, id))
-      .limit(1);
-
-    if (!client) {
-      throw new AppError("Client not found", 404);
-    }
+    const client = await clientService.getClientById(id);
 
     res.json({
       success: true,
@@ -100,39 +66,18 @@ export const getClientById = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Update client
+ * Route: PATCH /api/clients/:id
+ * Access: Protected (all authenticated users)
+ */
 export const updateClient = async (req, res, next) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
+    const userId = req.user.id;
 
-    // Convert date strings to Date objects if present
-    if (updateData.contractStartDate) {
-      updateData.contractStartDate = new Date(updateData.contractStartDate);
-    }
-    if (updateData.contractEndDate) {
-      updateData.contractEndDate = new Date(updateData.contractEndDate);
-    }
-
-    const [client] = await db
-      .update(clientTable)
-      .set({
-        ...updateData,
-        updatedAt: new Date(),
-      })
-      .where(eq(clientTable.id, id))
-      .returning();
-
-    if (!client) {
-      throw new AppError("Client not found", 404);
-    }
-
-    // Log activity
-    await db.insert(activityLogTable).values({
-      userId: req.user.id,
-      action: "client_updated",
-      entityType: "client",
-      entityId: client.id,
-      details: JSON.stringify(updateData),
+    const client = await clientService.updateClient(id, updateData, userId, {
       ipAddress: req.ip,
       userAgent: req.get("user-agent"),
     });
@@ -147,25 +92,17 @@ export const updateClient = async (req, res, next) => {
   }
 };
 
+/**
+ * Controller: Delete client
+ * Route: DELETE /api/clients/:id
+ * Access: Protected (admin, manager only)
+ */
 export const deleteClient = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
 
-    const [client] = await db
-      .delete(clientTable)
-      .where(eq(clientTable.id, id))
-      .returning();
-
-    if (!client) {
-      throw new AppError("Client not found", 404);
-    }
-
-    // Log activity
-    await db.insert(activityLogTable).values({
-      userId: req.user.id,
-      action: "client_deleted",
-      entityType: "client",
-      entityId: client.id,
+    await clientService.deleteClient(id, userId, {
       ipAddress: req.ip,
       userAgent: req.get("user-agent"),
     });
