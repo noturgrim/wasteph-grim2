@@ -9,6 +9,7 @@ import Inquiries from "./pages/Inquiries";
 import Leads from "./pages/Leads";
 import Potentials from "./pages/Potentials";
 import Clients from "./pages/Clients";
+import BlogPosts from "./pages/BlogPosts";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 
@@ -37,6 +38,14 @@ const CRMApp = () => {
             <Route path="clients" element={<Clients />} />
 
             {/* Admin only routes */}
+            <Route
+              path="blog"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <BlogPosts />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="users"
               element={

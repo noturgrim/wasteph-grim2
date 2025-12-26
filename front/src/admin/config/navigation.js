@@ -6,6 +6,7 @@ import {
   TrendingUp,
   Settings,
   UserCog,
+  BookOpen,
 } from "lucide-react";
 
 /**
@@ -72,6 +73,17 @@ export const getNavigationByRole = (role) => {
   if (role === "admin") {
     return [
       ...baseNavigation,
+      {
+        label: "Content",
+        items: [
+          {
+            title: "Blog Posts",
+            url: "/admin/blog",
+            icon: BookOpen,
+            description: "Manage blog content",
+          },
+        ],
+      },
       {
         label: "Administration",
         items: [

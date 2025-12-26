@@ -28,7 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import PageTransition from "../common/PageTransition";
 import { AppSidebar } from "./AppSidebar";
 
-export default function AppLayout() {
+const SalesLayout = () => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
@@ -222,4 +222,6 @@ export default function AppLayout() {
       </SidebarInset>
     </SidebarProvider>
   );
-}
+};
+
+export default SalesLayout;
