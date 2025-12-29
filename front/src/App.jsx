@@ -36,6 +36,9 @@ const BlogPost = lazy(() => import("./pages/BlogPost"));
 // Lazy load clients page
 const Clients = lazy(() => import("./pages/Clients"));
 
+// Lazy load 404 page
+const NotFound = lazy(() => import("./pages/NotFound"));
+
 // Lazy load CRM app
 const CRMApp = lazy(() => import("./admin/index"));
 
@@ -63,6 +66,7 @@ const PublicApp = () => {
   const isHomePage = location.pathname === "/";
   const isBlogPage = location.pathname.startsWith("/blog");
   const isClientsPage = location.pathname === "/clients";
+  const isNotFoundPage = !isHomePage && !isBlogPage && !isClientsPage;
 
   // Scroll to top on route change
   useEffect(() => {
@@ -213,7 +217,9 @@ const PublicApp = () => {
 
         {/* Content layer - pointer-events-none except for interactive elements */}
         <div className="pointer-events-none relative" style={{ zIndex: 1 }}>
-          <ScrollableLayout disableSnap={isBlogPage || isClientsPage}>
+          <ScrollableLayout
+            disableSnap={isBlogPage || isClientsPage || isNotFoundPage}
+          >
             <Header />
             <main className="pt-20">
               <Suspense fallback={<div className="min-h-screen" />}>
@@ -222,6 +228,7 @@ const PublicApp = () => {
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/blog/:id" element={<BlogPost />} />
                   <Route path="/clients" element={<Clients />} />
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
             </main>
