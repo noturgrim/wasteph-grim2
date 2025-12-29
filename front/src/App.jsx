@@ -8,6 +8,33 @@ import LoadingScreen from "./components/common/LoadingScreen";
 import TopographicCanvas from "./components/common/TopographicCanvas";
 import ScrollToTop from "./components/common/ScrollToTop";
 
+// Import assets for proper bundling
+import wasteNoBG from "./assets/logo/wasteNoBG.png";
+import truck from "./assets/trucks/truck.png";
+import truck2 from "./assets/trucks/truck2.png";
+
+// Client logos
+import oakridge from "./assets/clients/oakridge.png";
+import chicken from "./assets/clients/24chicken.png";
+import sanson32 from "./assets/clients/sanson32.png";
+import philam from "./assets/clients/philam.png";
+import ayalamallscbloc from "./assets/clients/ayalamallscbloc.png";
+import depofag from "./assets/clients/depofag.png";
+import ilcorso from "./assets/clients/ilcorso.png";
+import mandani from "./assets/clients/mandani.png";
+
+// Showcase images
+import sept26Image from "./assets/showcase/sept26.png";
+import sept10Image from "./assets/showcase/sept10.png";
+import sept5Image from "./assets/showcase/sept5.png";
+import aug13Image from "./assets/showcase/aug13.png";
+import june6Image from "./assets/showcase/june6.png";
+
+// Videos
+import montageVideo from "./assets/video/montage.mp4";
+import montage2Video from "./assets/video/montage2.mp4";
+import reviewVideo from "./assets/video/review.mp4";
+
 // Lazy load sections that are below the fold for faster initial load
 const ClientsSection = lazy(() =>
   import("./components/sections/ClientsSection")
@@ -100,32 +127,28 @@ const PublicApp = () => {
 
     const preloadAssets = async () => {
       try {
-        // List of critical assets to preload
-        const videoSources = [
-          "/src/assets/video/montage.mp4",
-          "/src/assets/video/montage2.mp4",
-          "/src/assets/video/review.mp4",
-        ];
+        // List of critical assets to preload (using imported modules for production)
+        const videoSources = [montageVideo, montage2Video, reviewVideo];
 
         const imageSources = [
-          "/src/assets/logo/wasteNoBG.png",
-          "/src/assets/trucks/truck.png",
-          "/src/assets/trucks/truck2.png",
+          wasteNoBG,
+          truck,
+          truck2,
           // Client logos
-          "/src/assets/clients/oakridge.png",
-          "/src/assets/clients/24chicken.png",
-          "/src/assets/clients/sanson32.png",
-          "/src/assets/clients/philam.png",
-          "/src/assets/clients/ayalamallscbloc.png",
-          "/src/assets/clients/depofag.png",
-          "/src/assets/clients/ilcorso.png",
-          "/src/assets/clients/mandani.png",
+          oakridge,
+          chicken,
+          sanson32,
+          philam,
+          ayalamallscbloc,
+          depofag,
+          ilcorso,
+          mandani,
           // Showcase event images
-          "/src/assets/showcase/sept26.png",
-          "/src/assets/showcase/sept10.png",
-          "/src/assets/showcase/sept5.png",
-          "/src/assets/showcase/aug13.png",
-          "/src/assets/showcase/june6.png",
+          sept26Image,
+          sept10Image,
+          sept5Image,
+          aug13Image,
+          june6Image,
         ];
 
         // Preload videos
