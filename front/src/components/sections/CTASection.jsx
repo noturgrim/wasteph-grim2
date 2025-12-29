@@ -54,16 +54,28 @@ const services = [
 ];
 
 const CTASection = () => {
-  const [company, setCompany] = useState("");
-  const [wasteType, setWasteType] = useState("");
-  const [location, setLocation] = useState("");
+  const [formData, setFormData] = useState({
+    company: "",
+    email: "",
+    wasteType: "",
+    location: "",
+  });
   const [focusedField, setFocusedField] = useState(null);
+
+  const handleChange = (field) => (e) => {
+    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+  };
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    setCompany("");
-    setWasteType("");
-    setLocation("");
+    // Handle form submission here
+    console.log("Form submitted:", formData);
+    setFormData({
+      company: "",
+      email: "",
+      wasteType: "",
+      location: "",
+    });
   };
 
   return (
@@ -81,15 +93,15 @@ const CTASection = () => {
             {services.map((service, index) => (
               <div
                 key={service.title}
-                className="group relative overflow-hidden rounded-xl border-2 border-[#15803d]/30 bg-gradient-to-br from-[#15803d]/15 via-[#15803d]/5 to-transparent p-3 backdrop-blur-sm transition-all duration-300 hover:border-[#15803d] hover:shadow-[0_0_20px_rgba(21,128,61,0.3)] sm:p-3.5"
+                className="group relative overflow-hidden rounded-xl border-2 border-[#15803d]/30 bg-linear-to-br from-[#15803d]/15 via-[#15803d]/5 to-transparent p-3 backdrop-blur-sm transition-all duration-300 hover:border-[#15803d] hover:shadow-[0_0_20px_rgba(21,128,61,0.3)] sm:p-3.5"
               >
                 {/* Hover glow */}
                 <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                  <div className="absolute right-0 top-0 h-full w-full rounded-xl bg-gradient-to-br from-[#15803d]/20 to-transparent" />
+                  <div className="absolute right-0 top-0 h-full w-full rounded-xl bg-linear-to-br from-[#15803d]/20 to-transparent" />
                 </div>
 
                 <div className="relative flex items-start gap-2.5">
-                  <div className="flex-shrink-0 rounded-lg bg-[#15803d] p-2 text-white shadow-[0_0_12px_rgba(21,128,61,0.4)] transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_18px_rgba(21,128,61,0.6)]">
+                  <div className="shrink-0 rounded-lg bg-[#15803d] p-2 text-white shadow-[0_0_12px_rgba(21,128,61,0.4)] transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_18px_rgba(21,128,61,0.6)]">
                     {service.icon}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -109,101 +121,133 @@ const CTASection = () => {
         {/* Compact Form */}
         <RevealOnScroll delayClass="delay-300">
           <form
-            className="relative overflow-hidden rounded-xl border-2 border-[#15803d]/50 bg-gradient-to-br from-[#15803d]/20 via-[#0a1f0f]/95 to-[#051008]/90 p-5 shadow-[0_0_40px_rgba(21,128,61,0.3)] backdrop-blur-xl sm:p-6 md:p-7"
+            className="relative overflow-hidden rounded-xl border-2 border-[#15803d]/50 bg-linear-to-br from-[#15803d]/20 via-[#0a1f0f]/95 to-[#051008]/90 p-5 shadow-[0_0_40px_rgba(21,128,61,0.3)] backdrop-blur-xl sm:p-6 md:p-7"
             onSubmit={handleSubmit}
           >
             {/* Decorative gradient - brighter */}
             <div className="pointer-events-none absolute right-0 top-0 h-80 w-80 -translate-y-32 translate-x-32 rounded-full bg-[#15803d]/25 blur-3xl" />
 
-            <div className="relative space-y-3.5 sm:space-y-4">
-              {/* Form fields - compact */}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="group relative space-y-1.5">
-                  <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wide text-[#15803d] sm:text-sm">
+            <div className="relative space-y-4">
+              {/* Form fields */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                {/* Company Name */}
+                <label className="group relative space-y-2">
+                  <span className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-[#15803d] sm:text-sm">
                     <svg
-                      className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+                      className="h-4 w-4"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2.5"
                     >
-                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                      <polyline points="9 22 9 12 15 12 15 22" />
                     </svg>
                     Company / Site
                   </span>
                   <input
                     type="text"
-                    className="w-full rounded-lg border-2 border-white/30 bg-white/[0.08] px-3 py-2 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)] sm:text-base"
-                    placeholder="Enter business name"
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
+                    className="w-full rounded-lg border-2 border-white/30 bg-white/8 px-4 py-3 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)] sm:text-base"
+                    placeholder="Your business name"
+                    value={formData.company}
+                    onChange={handleChange("company")}
                     onFocus={() => setFocusedField("company")}
                     onBlur={() => setFocusedField(null)}
+                    required
                   />
                 </label>
 
-                <label className="group relative space-y-1.5">
-                  <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wide text-[#15803d] sm:text-sm">
+                {/* Email */}
+                <label className="group relative space-y-2">
+                  <span className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-[#15803d] sm:text-sm">
                     <svg
-                      className="h-3.5 w-3.5 sm:h-4 sm:w-4"
+                      className="h-4 w-4"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2.5"
                     >
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                      <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                    Email Address
+                  </span>
+                  <input
+                    type="email"
+                    className="w-full rounded-lg border-2 border-white/30 bg-white/8 px-4 py-3 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)] sm:text-base"
+                    placeholder="your@email.com"
+                    value={formData.email}
+                    onChange={handleChange("email")}
+                    onFocus={() => setFocusedField("email")}
+                    onBlur={() => setFocusedField(null)}
+                    required
+                  />
+                </label>
+
+                {/* Waste Type */}
+                <label className="group relative space-y-2">
+                  <span className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-[#15803d] sm:text-sm">
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                     </svg>
                     Waste Type
                   </span>
                   <input
                     type="text"
-                    className="w-full rounded-lg border-2 border-white/30 bg-white/[0.08] px-3 py-2 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)] sm:text-base"
+                    className="w-full rounded-lg border-2 border-white/30 bg-white/8 px-4 py-3 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)] sm:text-base"
                     placeholder="Mixed, food, residual..."
-                    value={wasteType}
-                    onChange={(e) => setWasteType(e.target.value)}
+                    value={formData.wasteType}
+                    onChange={handleChange("wasteType")}
                     onFocus={() => setFocusedField("wasteType")}
                     onBlur={() => setFocusedField(null)}
+                    required
+                  />
+                </label>
+
+                {/* Location */}
+                <label className="group relative space-y-2">
+                  <span className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-[#15803d] sm:text-sm">
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    Location
+                  </span>
+                  <input
+                    type="text"
+                    className="w-full rounded-lg border-2 border-white/30 bg-white/8 px-4 py-3 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)] sm:text-base"
+                    placeholder="City or site address"
+                    value={formData.location}
+                    onChange={handleChange("location")}
+                    onFocus={() => setFocusedField("location")}
+                    onBlur={() => setFocusedField(null)}
+                    required
                   />
                 </label>
               </div>
 
-              <label className="group relative space-y-1.5">
-                <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wide text-[#15803d] sm:text-sm">
-                  <svg
-                    className="h-3.5 w-3.5 sm:h-4 sm:w-4"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  Location
-                </span>
-                <input
-                  type="text"
-                  className="w-full rounded-lg border-2 border-white/30 bg-white/[0.08] px-3 py-2 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)] sm:text-base"
-                  placeholder="City or site address"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  onFocus={() => setFocusedField("location")}
-                  onBlur={() => setFocusedField(null)}
-                />
-              </label>
-
-              {/* Compact Submit button */}
-              <div className="flex flex-col gap-2.5 pt-2 sm:flex-row sm:items-center sm:justify-between">
+              {/* Submit Button */}
+              <div className="pt-2">
                 <button
                   type="submit"
-                  className="group relative overflow-hidden rounded-full bg-gradient-to-r from-[#15803d] to-[#16a34a] px-8 py-3 text-sm font-black uppercase tracking-wide text-white shadow-[0_6px_25px_rgba(21,128,61,0.4)] transition-all duration-300 hover:scale-105 hover:shadow-[0_10px_35px_rgba(21,128,61,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#15803d] focus-visible:ring-offset-2 focus-visible:ring-offset-black sm:px-10 sm:text-base"
+                  className="group relative w-full overflow-hidden rounded-xl bg-linear-to-r from-[#15803d] to-[#16a34a] px-8 py-4 text-base font-black uppercase tracking-wide text-white shadow-[0_8px_30px_rgba(21,128,61,0.4)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(21,128,61,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#15803d] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">
-                    Contact Us
+                    Send Request
                     <svg
-                      className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1.5"
+                      className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -213,18 +257,46 @@ const CTASection = () => {
                     </svg>
                   </span>
                   {/* Shimmer effect */}
-                  <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                  <div className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 </button>
+              </div>
 
-                <div className="flex flex-col items-center gap-0.5 text-center sm:items-start sm:text-left">
-                  <span className="text-[10px] font-medium text-white/50 sm:text-xs">
-                    or email us
-                  </span>
-                  <a
-                    href="mailto:info@wasteph.com"
-                    className="text-sm font-bold text-[#15803d] transition-colors hover:text-[#16a34a] sm:text-base"
+              {/* Contact Info */}
+              <div className="flex flex-col items-center gap-3 border-t border-white/10 pt-4 text-center sm:flex-row sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <svg
+                    className="h-4 w-4 text-[#15803d]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
                   >
-                    info@wasteph.com
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  <a
+                    href="tel:+639562461503"
+                    className="text-sm font-bold text-white transition-colors hover:text-[#16a34a]"
+                  >
+                    0956 246 1503
+                  </a>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <svg
+                    className="h-4 w-4 text-[#15803d]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
+                  <a
+                    href="mailto:sales@waste.ph"
+                    className="text-sm font-bold text-white transition-colors hover:text-[#16a34a]"
+                  >
+                    sales@waste.ph
                   </a>
                 </div>
               </div>

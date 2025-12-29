@@ -47,8 +47,14 @@ const LoadingScreen = ({ onLoadingComplete, assetsLoaded = false }) => {
       <div className="text-center">
         {/* Logo/Brand */}
         <div className="mb-8">
-          <h1 className="mb-2 text-5xl font-extrabold uppercase tracking-tighter text-white md:text-6xl">
-            WASTEPH
+          <h1 className="mb-2 inline-flex items-center gap-2 text-5xl font-extrabold uppercase tracking-tighter md:text-6xl">
+            <span className="bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
+              WASTE
+            </span>
+            <span className="text-[0.4em] text-white/40">·</span>
+            <span className="bg-gradient-to-br from-[#15803d] via-[#16a34a] to-[#22c55e] bg-clip-text text-transparent">
+              PH
+            </span>
           </h1>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#15803d]">
             Private Waste Management

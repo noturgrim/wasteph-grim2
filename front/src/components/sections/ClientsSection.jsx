@@ -1,19 +1,28 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import flickrLogo from "../../assets/clients/flickr.svg";
-import metaLogo from "../../assets/clients/meta.svg";
-import tiktokLogo from "../../assets/clients/tiktok.svg";
-import youtubeLogo from "../../assets/clients/youtube.svg";
+import oakridge from "../../assets/clients/oakridge.png";
+import chicken from "../../assets/clients/24chicken.png";
+import sanson32 from "../../assets/clients/sanson32.png";
+import philam from "../../assets/clients/philam.png";
+import ayalamallscbloc from "../../assets/clients/ayalamallscbloc.png";
+import depofag from "../../assets/clients/depofag.png";
+import ilcorso from "../../assets/clients/ilcorso.png";
+import mandani from "../../assets/clients/mandani.png";
+
 import reviewVideo from "../../assets/video/review.mp4";
 import RevealOnScroll from "../common/RevealOnScroll";
 import FadeInUp from "../common/FadeInUp";
 
 // Client data with imported SVG logos
 const clients = [
-  { name: "Flickr", logo: flickrLogo },
-  { name: "Meta", logo: metaLogo },
-  { name: "TikTok", logo: tiktokLogo },
-  { name: "YouTube", logo: youtubeLogo },
+  { name: "Oakridge", logo: oakridge },
+  { name: "24 Chicken", logo: chicken },
+  { name: "32 Sanson", logo: sanson32 },
+  { name: "AIA PhilAm Life", logo: philam },
+  { name: "Ayala Malls Central Bloc", logo: ayalamallscbloc },
+  { name: "Department of Agriculture", logo: depofag },
+  { name: "IL Corso", logo: ilcorso },
+  { name: "Mandani Bay", logo: mandani },
 ];
 
 const ClientsSection = () => {
@@ -381,18 +390,18 @@ const ClientsSection = () => {
               <Link
                 key={`${client.name}-${index}`}
                 to="/clients"
-                className="pointer-events-auto group flex min-w-[120px] cursor-pointer items-center justify-center rounded-xl border border-white/5 bg-white/2 px-4 py-3 backdrop-blur-sm transition-all duration-300 hover:border-[#15803d]/30 hover:bg-white/5 hover:shadow-[0_4px_20px_rgba(21,128,61,0.2)] sm:min-w-[140px] sm:px-5 sm:py-3.5 md:min-w-[160px]"
+                className="pointer-events-auto group flex min-w-[140px] max-w-[180px] cursor-pointer items-center justify-center rounded-xl border border-white/5 bg-white/2 px-4 py-3 backdrop-blur-sm transition-all duration-300 hover:border-[#15803d]/30 hover:bg-white/5 hover:shadow-[0_4px_20px_rgba(21,128,61,0.2)] sm:min-w-[160px] sm:max-w-[200px] sm:px-5 sm:py-3.5 md:min-w-[180px] md:max-w-[220px]"
                 aria-label={`View ${client.name} and other clients`}
               >
-                <div className="flex flex-col items-center gap-1.5">
-                  <div className="flex h-7 items-center justify-center transition-all duration-300 group-hover:scale-110 sm:h-8">
+                <div className="flex w-full flex-col items-center gap-1.5">
+                  <div className="flex h-7 items-center justify-center transition-all duration-300 group-hover:scale-110 sm:h-8 md:h-9">
                     <img
                       src={client.logo}
                       alt={`${client.name} logo`}
-                      className="h-4 w-auto opacity-50 brightness-0 invert transition-all duration-300 group-hover:opacity-80 sm:h-5 md:h-6"
+                      className="h-4 w-auto max-w-full object-contain opacity-70 transition-all duration-300 group-hover:opacity-100 sm:h-5 md:h-6"
                     />
                   </div>
-                  <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-white/50 transition-colors duration-300 group-hover:text-white/80 sm:text-[9px]">
+                  <span className="line-clamp-2 w-full text-center text-[8px] font-bold uppercase leading-tight tracking-[0.15em] text-white/50 transition-colors duration-300 group-hover:text-white/80 sm:text-[9px] sm:tracking-[0.2em]">
                     {client.name}
                   </span>
                 </div>

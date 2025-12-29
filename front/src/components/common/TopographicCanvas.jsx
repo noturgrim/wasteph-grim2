@@ -10,6 +10,7 @@ const TopographicCanvas = () => {
   const inputValuesRef = useRef([]);
   const colsRef = useRef(0);
   const rowsRef = useRef(0);
+  const frameCountRef = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -78,32 +79,8 @@ const TopographicCanvas = () => {
     };
 
     const mouseOffset = () => {
-      const x = Math.floor(mousePosRef.current.x / res);
-      const y = Math.floor(mousePosRef.current.y / res);
-
-      if (
-        inputValuesRef.current[y] === undefined ||
-        inputValuesRef.current[y][x] === undefined
-      )
-        return;
-
-      const incrementValue = 0.008; // Increased for more visible effect
-      const radius = 8; // Larger radius for bigger area of effect
-
-      for (let i = -radius; i <= radius; i++) {
-        for (let j = -radius; j <= radius; j++) {
-          const distanceSquared = i * i + j * j;
-          const radiusSquared = radius * radius;
-
-          if (
-            distanceSquared <= radiusSquared &&
-            zBoostValuesRef.current[y + i]?.[x + j] !== undefined
-          ) {
-            zBoostValuesRef.current[y + i][x + j] +=
-              incrementValue * (1 - distanceSquared / radiusSquared);
-          }
-        }
-      }
+      // Mouse interaction disabled for performance
+      return;
     };
 
     const linInterpolate = (x0, x1, currentThreshold) => {
@@ -292,27 +269,32 @@ const TopographicCanvas = () => {
 
     const animate = () => {
       mouseOffset();
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      frameCountRef.current++;
 
-      // Draw dark background
-      ctx.fillStyle = "#0a1f0f";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Only update every 3rd frame (20fps instead of 60fps for better performance)
+      if (frameCountRef.current % 3 === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Use sine wave for oscillating animation (no panning) - increased amplitude
-      zOffsetRef.current = Math.sin(Date.now() * 0.0003) * 2;
-      const { noiseMin, noiseMax } = generateNoise();
+        // Draw dark background
+        ctx.fillStyle = "#0a1f0f";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const roundedNoiseMin =
-        Math.floor(noiseMin / thresholdIncrement) * thresholdIncrement;
-      const roundedNoiseMax =
-        Math.ceil(noiseMax / thresholdIncrement) * thresholdIncrement;
+        // Use sine wave for oscillating animation (no panning) - increased amplitude
+        zOffsetRef.current = Math.sin(Date.now() * 0.0003) * 2;
+        const { noiseMin, noiseMax } = generateNoise();
 
-      for (
-        let threshold = roundedNoiseMin;
-        threshold < roundedNoiseMax;
-        threshold += thresholdIncrement
-      ) {
-        renderAtThreshold(threshold);
+        const roundedNoiseMin =
+          Math.floor(noiseMin / thresholdIncrement) * thresholdIncrement;
+        const roundedNoiseMax =
+          Math.ceil(noiseMax / thresholdIncrement) * thresholdIncrement;
+
+        for (
+          let threshold = roundedNoiseMin;
+          threshold < roundedNoiseMax;
+          threshold += thresholdIncrement
+        ) {
+          renderAtThreshold(threshold);
+        }
       }
 
       animationFrameRef.current = requestAnimationFrame(animate);
@@ -321,24 +303,14 @@ const TopographicCanvas = () => {
     setupCanvas();
     animate();
 
-    const handleMouseMove = (e) => {
-      // Use clientX/Y directly since we're listening on window
-      mousePosRef.current = {
-        x: e.clientX,
-        y: e.clientY,
-      };
-    };
-
     const handleResize = () => {
       setupCanvas();
     };
 
-    // Listen on window instead of canvas to capture all mouse movements
-    window.addEventListener("mousemove", handleMouseMove);
+    // Mouse movement listener removed for performance
     window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("resize", handleResize);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);

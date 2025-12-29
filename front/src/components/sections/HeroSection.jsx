@@ -58,31 +58,14 @@ const HeroSection = () => {
   const videoRef = useRef(null);
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!heroRef.current) return;
-
-      const rect = heroRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left - rect.width / 2) / rect.width;
-      const y = (e.clientY - rect.top - rect.height / 2) / rect.height;
-
-      setMousePosition({ x, y });
-    };
-
     const handleScroll = () => {
       setScrollY(window.scrollY);
     };
 
-    const heroElement = heroRef.current;
-    if (heroElement) {
-      heroElement.addEventListener("mousemove", handleMouseMove);
-    }
-
+    // Mouse movement listener removed for performance
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
-      if (heroElement) {
-        heroElement.removeEventListener("mousemove", handleMouseMove);
-      }
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
@@ -380,7 +363,7 @@ const HeroSection = () => {
                     ACTIVE FLEET
                   </div>
                   <div className="mt-2 text-[clamp(0.875rem,2vw,1.25rem)] font-medium text-white/80">
-                    10 Trucks Operating 24/7
+                    5 Trucks Operating 24/7
                   </div>
                 </div>
               </div>

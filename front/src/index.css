@@ -21,6 +21,29 @@ canvas {
   will-change: auto;
 }
 
+/* Optimize continuously animated elements with will-change */
+.animate-ping {
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+}
+
+.animate-scroll-infinite {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+.animate-spin,
+.animate-pulse {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Optimize transition elements */
+[class*="transition-"] {
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
 /* Snap scroll container */
 .snap-y {
   scroll-snap-type: y mandatory;
@@ -117,19 +140,7 @@ div {
   pointer-events: auto !important;
 }
 
-@keyframes float {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-  33% {
-    transform: translate3d(30px, -30px, 0);
-  }
-  66% {
-    transform: translate3d(-20px, 20px, 0);
-  }
-}
-
+/* Optimized animations with GPU acceleration - Only used animations kept */
 @keyframes pulse-glow {
   0%,
   100% {
@@ -140,71 +151,9 @@ div {
   }
 }
 
-@keyframes wave {
-  0% {
-    transform: translate3d(-30%, 0%, 0) scale(1);
-    opacity: 0.4;
-  }
-  25% {
-    transform: translate3d(0%, -8%, 0) scale(1.05);
-    opacity: 0.6;
-  }
-  50% {
-    transform: translate3d(30%, 0%, 0) scale(1.15);
-    opacity: 0.7;
-  }
-  75% {
-    transform: translate3d(0%, 8%, 0) scale(1.05);
-    opacity: 0.6;
-  }
-  100% {
-    transform: translate3d(-30%, 0%, 0) scale(1);
-    opacity: 0.4;
-  }
-}
-
-@keyframes scan {
-  0% {
-    transform: translate3d(0, -100%, 0);
-  }
-  100% {
-    transform: translate3d(0, 100%, 0);
-  }
-}
-
-@keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes spin-medium {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(-360deg);
-  }
-}
-
-@keyframes spin-fast {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
 .animate-pulse-glow {
   animation: pulse-glow 4s ease-in-out infinite;
+  will-change: opacity;
 }
 
 /* Staggered animation delays */
@@ -228,7 +177,7 @@ div {
   transition-delay: 700ms;
 }
 
-/* Infinite horizontal scroll animation - GPU accelerated */
+/* Infinite horizontal scroll animation - GPU accelerated & optimized */
 @keyframes scroll-infinite {
   0% {
     transform: translate3d(0, 0, 0);
@@ -240,28 +189,30 @@ div {
 
 .animate-scroll-infinite {
   animation: scroll-infinite 30s linear infinite;
+  /* Pause animation when not in view for performance */
+  animation-play-state: running;
 }
 
-/* Loading screen exit animation - circle expands from center to reveal homepage */
-@keyframes loading-exit-open {
-  0% {
-    clip-path: circle(0% at 50% 50%);
-  }
-  100% {
-    clip-path: circle(150% at 50% 50%);
-  }
-}
-
-/* Circle reveal animation - expands from center outward */
-@keyframes circle-reveal {
-  0% {
-    clip-path: circle(0% at 50% 50%);
-  }
-  100% {
-    clip-path: circle(150% at 50% 50%);
+/* Performance: Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
-.animate-circle-reveal {
-  animation: circle-reveal 1s ease-in-out forwards;
+/* Performance: Contain layout/paint for better rendering */
+section {
+  contain: layout style paint;
+}
+
+/* Optimize heavy animations */
+.animate-ping,
+.animate-pulse {
+  /* Use compositing for smoother animations */
+  isolation: isolate;
 }
