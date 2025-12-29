@@ -18,13 +18,31 @@ const seedAdmin = async () => {
         firstName: "Admin",
         lastName: "User",
         role: "admin",
+        isMasterSales: false,
       },
       {
         email: "sales@wasteph.com",
         password: "Sales@123456",
-        firstName: "Sales",
-        lastName: "Rep",
+        firstName: "Master",
+        lastName: "Sales",
         role: "sales",
+        isMasterSales: true, // Master Sales - can add leads to pool
+      },
+      {
+        email: "sales1@wasteph.com",
+        password: "Sales@123456",
+        firstName: "John",
+        lastName: "Doe",
+        role: "sales",
+        isMasterSales: false, // Normal Sales - can claim leads
+      },
+      {
+        email: "sales2@wasteph.com",
+        password: "Sales@123456",
+        firstName: "Jane",
+        lastName: "Smith",
+        role: "sales",
+        isMasterSales: false, // Normal Sales - can claim leads
       },
     ];
 
@@ -57,6 +75,7 @@ const seedAdmin = async () => {
           firstName: userData.firstName,
           lastName: userData.lastName,
           role: userData.role,
+          isMasterSales: userData.isMasterSales || false,
           isActive: true,
         })
         .returning();

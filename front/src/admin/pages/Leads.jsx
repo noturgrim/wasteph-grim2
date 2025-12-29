@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Plus, SlidersHorizontal, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -20,9 +21,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { DataTable } from "../components/DataTable";
-import { FacetedFilter } from "../components/FacetedFilter";
 import { SearchInput } from "../components/SearchInput";
 import { DeleteConfirmationModal } from "../components/modals";
 import { AddLeadDialog } from "../components/leads/AddLeadDialog";
@@ -32,6 +42,8 @@ import { createColumns } from "../components/leads/columns";
 
 export default function Leads() {
   const { user } = useAuth();
+  const isMasterSales = user?.isMasterSales || false;
+
   const [leads, setLeads] = useState([]);
   const [allLeads, setAllLeads] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,52 +55,41 @@ export default function Leads() {
     totalPages: 1,
   });
 
-  const [statusFilter, setStatusFilter] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all"); // 'all', 'unclaimed', or 'claimed'
 
   const [columnVisibility, setColumnVisibility] = useState({
-    companyName: true,
-    contactPerson: true,
+    clientName: true,
+    company: true,
     email: true,
     phone: true,
-    wasteType: true,
-    status: true,
-    priority: true,
-    assignedTo: true,
+    location: true,
+    isClaimed: true,
+    claimedByUser: true,
     createdAt: true,
   });
 
-  const [users, setUsers] = useState([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isClaimDialogOpen, setIsClaimDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchUsers();
     fetchAllLeads();
   }, []);
 
   useEffect(() => {
     setPagination(prev => ({ ...prev, page: 1 }));
     fetchLeads(1);
-  }, [statusFilter, searchTerm]);
-
-  const fetchUsers = async () => {
-    try {
-      const response = await api.getUsers();
-      const userData = response.data || response;
-      setUsers(userData);
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
-    }
-  };
+  }, [searchTerm, statusFilter]);
 
   const fetchAllLeads = async () => {
     try {
-      const response = await api.getLeads({});
+      // For counts, we want to fetch unclaimed leads
+      const response = await api.getLeads({ isClaimed: false });
       setAllLeads(response.data || []);
     } catch (error) {
       console.error("Failed to fetch all leads:", error);
@@ -98,12 +99,18 @@ export default function Leads() {
   const fetchLeads = async (page = pagination.page, limit = pagination.limit) => {
     try {
       setIsLoading(true);
-      const response = await api.getLeads({
-        status: statusFilter.length > 0 ? statusFilter.join(",") : undefined,
+      const params = {
         search: searchTerm || undefined,
         page,
         limit,
-      });
+      };
+
+      // Only add isClaimed filter if not showing all
+      if (statusFilter !== "all") {
+        params.isClaimed = statusFilter === "claimed";
+      }
+
+      const response = await api.getLeads(params);
 
       setLeads(response.data || []);
       setPagination(response.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 });
@@ -114,15 +121,11 @@ export default function Leads() {
     }
   };
 
-  const getStatusCount = (status) => {
-    return allLeads.filter((lead) => lead.status === status).length;
-  };
-
   const handleCreateLead = async (formData) => {
     setIsSubmitting(true);
     try {
       await api.createLead(formData);
-      toast.success("Lead created successfully");
+      toast.success("Lead added to pool successfully");
       setIsCreateDialogOpen(false);
       fetchAllLeads();
       fetchLeads();
@@ -131,6 +134,11 @@ export default function Leads() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEditLead = (lead) => {
+    setSelectedLead(lead);
+    setIsEditDialogOpen(true);
   };
 
   const handleUpdateLead = async (formData) => {
@@ -145,6 +153,23 @@ export default function Leads() {
       toast.error(error.message || "Failed to update lead");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleClaimLead = (lead) => {
+    setSelectedLead(lead);
+    setIsClaimDialogOpen(true);
+  };
+
+  const confirmClaim = async () => {
+    try {
+      await api.claimLead(selectedLead.id);
+      toast.success("Lead claimed successfully! Check Inquiries page to manage it.");
+      setIsClaimDialogOpen(false);
+      fetchAllLeads();
+      fetchLeads();
+    } catch (error) {
+      toast.error(error.message || "Failed to claim lead");
     }
   };
 
@@ -166,16 +191,14 @@ export default function Leads() {
   };
 
   const allColumns = createColumns({
-    users,
     onView: (lead) => {
       setSelectedLead(lead);
       setIsViewDialogOpen(true);
     },
-    onEdit: (lead) => {
-      setSelectedLead(lead);
-      setIsEditDialogOpen(true);
-    },
+    onEdit: handleEditLead,
+    onClaim: handleClaimLead,
     onDelete: handleDeleteLead,
+    isMasterSales,
   });
 
   const columns = allColumns.filter(column => {
@@ -187,13 +210,19 @@ export default function Leads() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Leads</h1>
-          <p className="text-muted-foreground">Track active leads in your pipeline</p>
+          <h1 className="text-3xl font-bold tracking-tight">Lead Pool</h1>
+          <p className="text-muted-foreground">
+            {isMasterSales
+              ? "Manage potential clients for your sales team"
+              : "Claim leads to start the inquiry process"}
+          </p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Lead
-        </Button>
+        {isMasterSales && (
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Lead
+          </Button>
+        )}
       </div>
 
       <div className="flex items-center justify-between">
@@ -201,25 +230,14 @@ export default function Leads() {
           <SearchInput
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="Search leads..."
+            placeholder="Search by client name, company, or email..."
           />
 
-          <FacetedFilter
-            title="Status"
-            options={["new", "contacted", "proposal_sent", "negotiating", "won", "lost"]}
-            selectedValues={statusFilter}
-            onSelectionChange={setStatusFilter}
-            getCount={getStatusCount}
-          />
-
-          {(statusFilter.length > 0 || searchTerm) && (
+          {searchTerm && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                setStatusFilter([]);
-                setSearchTerm("");
-              }}
+              onClick={() => setSearchTerm("")}
               className="h-8 px-2 lg:px-3"
             >
               Reset
@@ -240,30 +258,56 @@ export default function Leads() {
             <DropdownMenuSeparator />
             {allColumns
               .filter((column) => column.accessorKey)
-              .map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.accessorKey}
-                  className="capitalize"
-                  checked={columnVisibility[column.accessorKey]}
-                  onCheckedChange={(value) =>
-                    setColumnVisibility((prev) => ({
-                      ...prev,
-                      [column.accessorKey]: value,
-                    }))
-                  }
-                >
-                  {column.accessorKey === "companyName" ? "Company" : column.accessorKey}
-                </DropdownMenuCheckboxItem>
-              ))}
+              .map((column) => {
+                const labels = {
+                  clientName: "Client Name",
+                  company: "Company",
+                  email: "Email",
+                  phone: "Phone",
+                  location: "Location",
+                  isClaimed: "Status",
+                  claimedByUser: "Claimed By",
+                  createdAt: "Time in Pool",
+                };
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.accessorKey}
+                    className="capitalize"
+                    checked={columnVisibility[column.accessorKey]}
+                    onCheckedChange={(value) =>
+                      setColumnVisibility((prev) => ({
+                        ...prev,
+                        [column.accessorKey]: value,
+                      }))
+                    }
+                  >
+                    {labels[column.accessorKey] || column.accessorKey}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-full">
+        <TabsList>
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="unclaimed">Available</TabsTrigger>
+          <TabsTrigger value="claimed">Claimed</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <DataTable
         columns={columns}
         data={leads}
         isLoading={isLoading}
-        emptyMessage="No leads found"
+        emptyMessage={
+          statusFilter === "all"
+            ? "No leads in pool"
+            : statusFilter === "unclaimed"
+            ? "No available leads in pool"
+            : "No claimed leads"
+        }
         showViewOptions={false}
       />
 
@@ -344,18 +388,39 @@ export default function Leads() {
         open={isViewDialogOpen}
         onOpenChange={setIsViewDialogOpen}
         lead={selectedLead}
-        users={users}
       />
+
+      <AlertDialog open={isClaimDialogOpen} onOpenChange={setIsClaimDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Claim this lead?</AlertDialogTitle>
+            <AlertDialogDescription>
+              By claiming this lead, it will be converted to an inquiry and assigned to you.
+              You'll be able to manage it in the Inquiries page. This action cannot be undone.
+              <div className="mt-4 p-3 bg-muted rounded-md">
+                <p className="font-semibold">{selectedLead?.clientName}</p>
+                <p className="text-sm text-muted-foreground">{selectedLead?.contactPerson}</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmClaim}>
+              Claim Lead
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <DeleteConfirmationModal
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         onConfirm={confirmDelete}
         title="Delete Lead"
-        itemName={selectedLead?.companyName}
+        itemName={selectedLead?.clientName}
         itemType="lead"
         actionsList={[
-          "Permanently delete this lead",
+          "Permanently delete this lead from the pool",
           "Remove all associated data",
           "This cannot be undone"
         ]}

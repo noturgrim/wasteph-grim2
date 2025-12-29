@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,20 +7,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-import { format } from "date-fns";
-import { StatusBadge } from "../StatusBadge";
+import { MoreHorizontal, Eye, Pencil, Trash2, UserPlus, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
 
-export const createColumns = ({ users = [], onView, onEdit, onDelete }) => [
+export const createColumns = ({ onView, onEdit, onClaim, onDelete, isMasterSales }) => [
   {
-    accessorKey: "contactPerson",
+    accessorKey: "clientName",
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm">
-              Contact Person
+              Client Name
               {isSorted === "asc" ? (
                 <ArrowUp className="ml-2 h-4 w-4" />
               ) : isSorted === "desc" ? (
@@ -49,64 +49,54 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete }) => [
           onClick={() => onView(lead)}
           className="font-bold underline hover:text-primary cursor-pointer text-left"
         >
-          {lead.contactPerson}
+          {lead.clientName}
         </button>
       );
     },
   },
   {
-    accessorKey: "companyName",
+    accessorKey: "company",
     header: "Company",
+    cell: ({ row }) => row.original.company || "-",
   },
   {
     accessorKey: "email",
     header: "Email",
+    cell: ({ row }) => row.original.email || "-",
   },
   {
     accessorKey: "phone",
     header: "Phone",
+    cell: ({ row }) => row.original.phone || "-",
   },
   {
-    accessorKey: "wasteType",
-    header: "Waste Type",
-    cell: ({ row }) => row.original.wasteType || "-",
+    accessorKey: "location",
+    header: "Location",
+    cell: ({ row }) => row.original.location || "-",
   },
   {
-    accessorKey: "status",
+    accessorKey: "isClaimed",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.original.status;
-      return <StatusBadge status={status} />;
-    },
-  },
-  {
-    accessorKey: "priority",
-    header: "Priority",
-    cell: ({ row }) => {
-      const priority = row.original.priority;
-      const colors = {
-        1: "text-gray-600",
-        2: "text-blue-600",
-        3: "text-yellow-600",
-        4: "text-orange-600",
-        5: "text-red-600",
-      };
-      return (
-        <span className={`font-medium ${colors[priority] || "text-gray-600"}`}>
-          {priority}
-        </span>
+      const isClaimed = row.original.isClaimed;
+      return isClaimed ? (
+        <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+          Claimed
+        </Badge>
+      ) : (
+        <Badge variant="default" className="bg-green-100 text-green-700">
+          Available
+        </Badge>
       );
     },
   },
   {
-    accessorKey: "assignedTo",
-    header: "Assigned To",
+    accessorKey: "claimedByUser",
+    header: "Claimed By",
     cell: ({ row }) => {
-      const assignedTo = row.original.assignedTo;
-      if (!assignedTo) return "-";
-
-      const user = users.find(u => u.id === assignedTo);
-      return user ? `${user.firstName} ${user.lastName}` : "Unknown User";
+      const claimedByUser = row.original.claimedByUser;
+      if (!row.original.isClaimed || !claimedByUser) return "-";
+      return `${claimedByUser.firstName} ${claimedByUser.lastName}`;
     },
   },
   {
@@ -117,7 +107,7 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete }) => [
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm">
-              Date
+              Time in Pool
               {isSorted === "asc" ? (
                 <ArrowUp className="ml-2 h-4 w-4" />
               ) : isSorted === "desc" ? (
@@ -141,44 +131,80 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete }) => [
       );
     },
     cell: ({ row }) => {
-      return format(new Date(row.original.createdAt), "MMM dd, yyyy");
+      const createdAt = new Date(row.original.createdAt);
+      return (
+        <div className="flex flex-col">
+          <span className="text-sm">{format(createdAt, "MMM dd, yyyy")}</span>
+          <span className="text-xs text-muted-foreground">
+            {formatDistanceToNow(createdAt, { addSuffix: true })}
+          </span>
+        </div>
+      );
     },
   },
   {
     id: "actions",
     cell: ({ row }) => {
       const lead = row.original;
+      const isUnclaimed = !lead.isClaimed;
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={() => onView(lead)} className="cursor-pointer">
-              <span className="flex-1">View Detail</span>
-              <Eye className="h-4 w-4" />
-            </DropdownMenuItem>
-
-            <DropdownMenuItem onClick={() => onEdit(lead)} className="cursor-pointer">
-              <span className="flex-1">Edit</span>
-              <Pencil className="h-4 w-4" />
-            </DropdownMenuItem>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuItem
-              onClick={() => onDelete(lead)}
-              className="text-destructive cursor-pointer"
+        <div className="flex items-center gap-2">
+          {isUnclaimed && !isMasterSales && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onClaim(lead)}
+              className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
             >
-              <span className="flex-1">Delete</span>
-              <Trash2 className="h-4 w-4 text-destructive" />
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <UserPlus className="h-4 w-4 mr-1" />
+              Claim
+            </Button>
+          )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => onView(lead)} className="cursor-pointer">
+                <span className="flex-1">View Detail</span>
+                <Eye className="h-4 w-4" />
+              </DropdownMenuItem>
+
+              {isMasterSales && (
+                <>
+                  <DropdownMenuItem onClick={() => onEdit(lead)} className="cursor-pointer">
+                    <span className="flex-1">Edit</span>
+                    <Pencil className="h-4 w-4" />
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    onClick={() => onDelete(lead)}
+                    className="text-destructive cursor-pointer"
+                  >
+                    <span className="flex-1">Delete</span>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </DropdownMenuItem>
+                </>
+              )}
+
+              {isUnclaimed && !isMasterSales && (
+                <>
+                  <DropdownMenuItem onClick={() => onClaim(lead)} className="cursor-pointer">
+                    <span className="flex-1">Claim Lead</span>
+                    <UserPlus className="h-4 w-4" />
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       );
     },
   },

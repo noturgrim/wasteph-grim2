@@ -34,12 +34,7 @@ export const clientStatusEnum = pgEnum("client_status", [
   "inactive",
   "suspended",
 ]);
-export const serviceTypeEnum = pgEnum("service_type", [
-  "garbage_collection",
-  "septic_siphoning",
-  "hazardous_waste",
-  "onetime_hauling",
-]);
+// Removed serviceTypeEnum - now using service table instead
 export const serviceModeEnum = pgEnum("service_mode", [
   "one_time",
   "contract_based",
@@ -68,6 +63,7 @@ export const userTable = pgTable("user", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   role: userRoleEnum("role").notNull().default("sales"),
+  isMasterSales: boolean("is_master_sales").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -96,7 +92,7 @@ export const inquiryTable = pgTable("inquiry", {
   phone: text("phone"),
   company: text("company"),
   message: text("message").notNull(),
-  serviceType: serviceTypeEnum("service_type"), // New field for service type
+  serviceId: uuid("service_id").references(() => serviceTable.id),
   status: inquiryStatusEnum("status").notNull().default("initial_comms"),
   source: text("source").default("website"),
   assignedTo: text("assigned_to").references(() => userTable.id),
@@ -111,21 +107,15 @@ export const inquiryTable = pgTable("inquiry", {
 
 export const leadTable = pgTable("lead", {
   id: uuid("id").primaryKey().defaultRandom(),
-  companyName: text("company_name").notNull(),
-  contactPerson: text("contact_person").notNull(),
-  email: text("email").notNull(),
-  phone: text("phone").notNull(),
-  address: text("address"),
-  city: text("city"),
-  province: text("province"),
-  wasteType: text("waste_type"),
-  estimatedVolume: text("estimated_volume"),
-  status: leadStatusEnum("status").notNull().default("new"),
-  priority: integer("priority").default(3),
-  estimatedValue: integer("estimated_value"),
-  assignedTo: text("assigned_to").references(() => userTable.id),
+  clientName: text("client_name").notNull(),
+  company: text("company"),
+  email: text("email"),
+  phone: text("phone"),
+  location: text("location"),
   notes: text("notes"),
-  nextFollowUp: timestamp("next_follow_up", { withTimezone: true }),
+  isClaimed: boolean("is_claimed").notNull().default(false),
+  claimedBy: text("claimed_by").references(() => userTable.id),
+  claimedAt: timestamp("claimed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -192,7 +182,7 @@ export const serviceRequestTable = pgTable("service_request", {
     .references(() => leadTable.id, { onDelete: "cascade" }),
 
   // Common fields for all service types
-  serviceType: serviceTypeEnum("service_type").notNull(),
+  serviceId: uuid("service_id").notNull().references(() => serviceTable.id),
   serviceMode: serviceModeEnum("service_mode").notNull(),
   serviceLocation: text("service_location").notNull(),
   city: text("city"),
@@ -238,6 +228,16 @@ export const serviceRequestTable = pgTable("service_request", {
 });
 
 // Reference Data Tables
+export const serviceTable = pgTable("service", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export const wasteTypeTable = pgTable("waste_type", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),

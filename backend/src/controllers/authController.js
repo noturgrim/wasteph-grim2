@@ -86,6 +86,7 @@ export const register = async (req, res, next) => {
         firstName: newUser.firstName,
         lastName: newUser.lastName,
         role: newUser.role,
+        isMasterSales: newUser.isMasterSales || false,
       },
     });
   } catch (error) {
@@ -158,6 +159,7 @@ export const login = async (req, res, next) => {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        isMasterSales: user.isMasterSales || false,
       },
     });
   } catch (error) {
@@ -223,6 +225,7 @@ export const getCurrentUser = async (req, res, next) => {
         firstName: req.user.firstName,
         lastName: req.user.lastName,
         role: req.user.role,
+        isMasterSales: req.user.isMasterSales || false,
       },
     });
   } catch (error) {

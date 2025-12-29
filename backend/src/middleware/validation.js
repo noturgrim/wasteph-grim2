@@ -51,16 +51,12 @@ export const inquiryValidation = [
 
 // Lead validation
 export const leadValidation = [
-  body("companyName").trim().notEmpty().withMessage("Company name is required"),
-  body("contactPerson")
-    .trim()
-    .notEmpty()
-    .withMessage("Contact person is required"),
-  body("email")
-    .isEmail()
-    .normalizeEmail()
-    .withMessage("Valid email is required"),
-  body("phone").trim().notEmpty().withMessage("Phone is required"),
+  body("clientName").trim().notEmpty().withMessage("Client name is required"),
+  body("company").optional().trim(),
+  body("email").optional().isEmail().normalizeEmail().withMessage("Valid email is required"),
+  body("phone").optional().trim(),
+  body("location").optional().trim(),
+  body("notes").optional().trim(),
 ];
 
 // Client validation

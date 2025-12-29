@@ -13,7 +13,8 @@
     "db:studio": "drizzle-kit studio",
     "db:clear": "node src/scripts/clearDatabase.js",
     "db:reset": "node src/scripts/resetDatabase.js",
-    "seed:admin": "node src/scripts/seedAdmin.js"
+    "seed:admin": "node src/scripts/seedAdmin.js",
+    "seed:services": "node src/scripts/seedServices.js"
   },
   "keywords": [],
   "author": "",

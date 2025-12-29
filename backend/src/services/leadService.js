@@ -1,6 +1,6 @@
 import { db } from "../db/index.js";
-import { leadTable, activityLogTable } from "../db/schema.js";
-import { eq, desc, and, or, like, inArray, count } from "drizzle-orm";
+import { leadTable, activityLogTable, inquiryTable } from "../db/schema.js";
+import { eq, desc, and, or, like, count } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 
 /**
@@ -17,36 +17,24 @@ class LeadService {
    */
   async createLead(leadData, userId, metadata = {}) {
     const {
-      companyName,
-      contactPerson,
+      clientName,
+      company,
       email,
       phone,
-      address,
-      city,
-      province,
-      wasteType,
-      estimatedVolume,
-      priority,
-      estimatedValue,
+      location,
       notes,
     } = leadData;
 
     const [lead] = await db
       .insert(leadTable)
       .values({
-        companyName,
-        contactPerson,
+        clientName,
+        company,
         email,
         phone,
-        address,
-        city,
-        province,
-        wasteType,
-        estimatedVolume,
-        priority,
-        estimatedValue,
+        location,
         notes,
-        assignedTo: userId, // Auto-assign to creator
+        isClaimed: false,
       })
       .returning();
 
@@ -69,37 +57,56 @@ class LeadService {
    * @returns {Promise<Object>} Object with data and pagination info
    */
   async getAllLeads(options = {}) {
-    const { status, assignedTo, search, page = 1, limit = 10 } = options;
+    const { isClaimed, claimedBy, search, page = 1, limit = 10 } = options;
 
     // Calculate offset
     const offset = (page - 1) * limit;
 
-    // Build base query
-    let query = db.select().from(leadTable);
+    // Import userTable for join
+    const { userTable } = await import("../db/schema.js");
+
+    // Build base query with user join for claimedBy
+    let query = db
+      .select({
+        id: leadTable.id,
+        clientName: leadTable.clientName,
+        company: leadTable.company,
+        email: leadTable.email,
+        phone: leadTable.phone,
+        location: leadTable.location,
+        notes: leadTable.notes,
+        isClaimed: leadTable.isClaimed,
+        claimedBy: leadTable.claimedBy,
+        claimedAt: leadTable.claimedAt,
+        createdAt: leadTable.createdAt,
+        updatedAt: leadTable.updatedAt,
+        claimedByUser: {
+          firstName: userTable.firstName,
+          lastName: userTable.lastName,
+          email: userTable.email,
+        },
+      })
+      .from(leadTable)
+      .leftJoin(userTable, eq(leadTable.claimedBy, userTable.id));
     const conditions = [];
 
-    // Status filter - support multiple statuses (comma-separated)
-    if (status) {
-      const statuses = status.split(',').map(s => s.trim());
-      if (statuses.length === 1) {
-        conditions.push(eq(leadTable.status, statuses[0]));
-      } else {
-        conditions.push(inArray(leadTable.status, statuses));
-      }
+    // Filter by claimed status
+    if (isClaimed !== undefined) {
+      conditions.push(eq(leadTable.isClaimed, isClaimed === 'true' || isClaimed === true));
     }
 
-    // Assigned to filter
-    if (assignedTo) {
-      conditions.push(eq(leadTable.assignedTo, assignedTo));
+    // Claimed by filter
+    if (claimedBy) {
+      conditions.push(eq(leadTable.claimedBy, claimedBy));
     }
 
-    // Search filter (companyName, contactPerson, email)
+    // Search filter (clientName, company, email)
     if (search) {
       const searchTerm = `%${search}%`;
       conditions.push(
         or(
-          like(leadTable.companyName, searchTerm),
-          like(leadTable.contactPerson, searchTerm),
+          like(leadTable.clientName, searchTerm),
+          like(leadTable.company, searchTerm),
           like(leadTable.email, searchTerm)
         )
       );
@@ -189,6 +196,78 @@ class LeadService {
     });
 
     return lead;
+  }
+
+  /**
+   * Claim a lead and convert to inquiry
+   * @param {string} leadId - Lead UUID
+   * @param {string} userId - User claiming the lead
+   * @param {Object} metadata - Request metadata (ip, userAgent)
+   * @returns {Promise<Object>} Created inquiry
+   * @throws {AppError} If lead not found or already claimed
+   */
+  async claimLead(leadId, userId, metadata = {}) {
+    // First check if lead exists and is not claimed
+    const existingLead = await this.getLeadById(leadId);
+
+    if (existingLead.isClaimed) {
+      throw new AppError("Lead has already been claimed", 400);
+    }
+
+    // Create inquiry from lead data
+    const [inquiry] = await db
+      .insert(inquiryTable)
+      .values({
+        name: existingLead.clientName,
+        email: existingLead.email || "noemail@wasteph.com", // Required field fallback
+        phone: existingLead.phone,
+        company: existingLead.company,
+        message: existingLead.notes || `Lead from pool: ${existingLead.clientName}`,
+        status: "initial_comms",
+        source: "lead_pool",
+        assignedTo: userId,
+        notes: existingLead.location ? `Location: ${existingLead.location}` : null,
+      })
+      .returning();
+
+    // Mark lead as claimed
+    const [lead] = await db
+      .update(leadTable)
+      .set({
+        isClaimed: true,
+        claimedBy: userId,
+        claimedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(leadTable.id, leadId))
+      .returning();
+
+    if (!lead) {
+      throw new AppError("Lead not found", 404);
+    }
+
+    // Log lead claimed activity
+    await this.logActivity({
+      userId,
+      action: "lead_claimed",
+      entityType: "lead",
+      entityId: lead.id,
+      ipAddress: metadata.ipAddress,
+      userAgent: metadata.userAgent,
+    });
+
+    // Log inquiry created activity
+    await this.logActivity({
+      userId,
+      action: "inquiry_created",
+      entityType: "inquiry",
+      entityId: inquiry.id,
+      details: { source: "lead_pool", leadId: lead.id },
+      ipAddress: metadata.ipAddress,
+      userAgent: metadata.userAgent,
+    });
+
+    return inquiry;
   }
 
   /**

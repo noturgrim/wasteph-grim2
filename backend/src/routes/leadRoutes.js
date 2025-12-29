@@ -4,6 +4,7 @@ import {
   getAllLeads,
   getLeadById,
   updateLead,
+  claimLead,
   deleteLead,
 } from "../controllers/leadController.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
@@ -18,6 +19,7 @@ router.post("/", leadValidation, validate, createLead);
 router.get("/", getAllLeads);
 router.get("/:id", getLeadById);
 router.patch("/:id", updateLead);
+router.post("/:id/claim", claimLead);
 router.delete("/:id", requireRole("admin", "manager"), deleteLead);
 
 export default router;

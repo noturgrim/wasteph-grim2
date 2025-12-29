@@ -131,8 +131,9 @@ class ApiClient {
   // Lead endpoints
   async getLeads(filters = {}) {
     const params = new URLSearchParams();
-    if (filters.status) params.append("status", filters.status);
-    if (filters.assignedTo) params.append("assignedTo", filters.assignedTo);
+    if (filters.isClaimed !== undefined) params.append("isClaimed", filters.isClaimed);
+    if (filters.claimedBy) params.append("claimedBy", filters.claimedBy);
+    if (filters.serviceType) params.append("serviceType", filters.serviceType);
     if (filters.search) params.append("search", filters.search);
     if (filters.page) params.append("page", filters.page);
     if (filters.limit) params.append("limit", filters.limit);
@@ -156,6 +157,12 @@ class ApiClient {
     return this.request(`/leads/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
+    });
+  }
+
+  async claimLead(id) {
+    return this.request(`/leads/${id}/claim`, {
+      method: "POST",
     });
   }
 

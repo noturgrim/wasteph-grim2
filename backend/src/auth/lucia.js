@@ -23,6 +23,7 @@ export const lucia = new Lucia(adapter, {
       lastName: attributes.last_name,
       role: attributes.role,
       isActive: attributes.is_active,
+      isMasterSales: attributes.is_master_sales,
     };
   },
 });

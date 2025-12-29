@@ -11,61 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
-
-const WASTE_TYPES = [
-  "Industrial Waste",
-  "Medical Waste",
-  "Hazardous Waste",
-  "Recyclable Waste",
-  "Electronic Waste",
-  "Construction Waste",
-  "Organic Waste",
-  "Other",
-];
-
-const PH_PROVINCES = [
-  "Metro Manila (NCR)",
-  "Abra", "Agusan del Norte", "Agusan del Sur", "Aklan", "Albay",
-  "Antique", "Apayao", "Aurora", "Basilan", "Bataan", "Batanes",
-  "Batangas", "Benguet", "Biliran", "Bohol", "Bukidnon", "Bulacan",
-  "Cagayan", "Camarines Norte", "Camarines Sur", "Camiguin", "Capiz",
-  "Catanduanes", "Cavite", "Cebu", "Cotabato", "Davao de Oro",
-  "Davao del Norte", "Davao del Sur", "Davao Occidental", "Davao Oriental",
-  "Dinagat Islands", "Eastern Samar", "Guimaras", "Ifugao",
-  "Ilocos Norte", "Ilocos Sur", "Iloilo", "Isabela", "Kalinga",
-  "La Union", "Laguna", "Lanao del Norte", "Lanao del Sur", "Leyte",
-  "Maguindanao", "Marinduque", "Masbate", "Misamis Occidental",
-  "Misamis Oriental", "Mountain Province", "Negros Occidental",
-  "Negros Oriental", "Northern Samar", "Nueva Ecija", "Nueva Vizcaya",
-  "Occidental Mindoro", "Oriental Mindoro", "Palawan", "Pampanga",
-  "Pangasinan", "Quezon", "Quirino", "Rizal", "Romblon", "Samar",
-  "Sarangani", "Siquijor", "Sorsogon", "South Cotabato", "Southern Leyte",
-  "Sultan Kudarat", "Sulu", "Surigao del Norte", "Surigao del Sur",
-  "Tarlac", "Tawi-Tawi", "Zambales", "Zamboanga del Norte",
-  "Zamboanga del Sur", "Zamboanga Sibugay",
-];
 
 export function AddLeadDialog({ open, onOpenChange, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState({
-    companyName: "",
-    contactPerson: "",
+    clientName: "",
+    company: "",
     email: "",
     phone: "",
-    address: "",
-    city: "",
-    province: "",
-    wasteType: "",
-    estimatedVolume: "",
-    priority: "3",
-    estimatedValue: "",
+    location: "",
     notes: "",
   });
 
@@ -73,14 +27,8 @@ export function AddLeadDialog({ open, onOpenChange, onSubmit, isSubmitting }) {
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.companyName?.trim()) errors.companyName = "Company name is required.";
-    if (!formData.contactPerson?.trim()) errors.contactPerson = "Contact person is required.";
-    if (!formData.email?.trim()) {
-      errors.email = "Email is required.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = "Please enter a valid email address.";
-    }
-    if (!formData.phone?.trim()) errors.phone = "Phone is required.";
+    if (!formData.clientName?.trim()) errors.clientName = "Client name is required.";
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -93,17 +41,11 @@ export function AddLeadDialog({ open, onOpenChange, onSubmit, isSubmitting }) {
 
   const resetForm = () => {
     setFormData({
-      companyName: "",
-      contactPerson: "",
+      clientName: "",
+      company: "",
       email: "",
       phone: "",
-      address: "",
-      city: "",
-      province: "",
-      wasteType: "",
-      estimatedVolume: "",
-      priority: "3",
-      estimatedValue: "",
+      location: "",
       notes: "",
     });
     setFormErrors({});
@@ -122,49 +64,49 @@ export function AddLeadDialog({ open, onOpenChange, onSubmit, isSubmitting }) {
         <DialogHeader>
           <DialogTitle>Add New Lead</DialogTitle>
           <DialogDescription>
-            Create a new lead in your sales pipeline
+            Add a potential client to the lead pool for sales reps to claim
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="companyName">Company Name *</Label>
+              <Label htmlFor="clientName">Client Name *</Label>
               <Input
-                id="companyName"
-                value={formData.companyName}
+                id="clientName"
+                value={formData.clientName}
                 onChange={(e) => {
-                  setFormData({ ...formData, companyName: e.target.value });
-                  if (formErrors.companyName) {
-                    setFormErrors({ ...formErrors, companyName: null });
+                  setFormData({ ...formData, clientName: e.target.value });
+                  if (formErrors.clientName) {
+                    setFormErrors({ ...formErrors, clientName: null });
                   }
                 }}
-                className={formErrors.companyName ? "border-red-500" : ""}
+                className={formErrors.clientName ? "border-red-500" : ""}
               />
-              {formErrors.companyName && (
-                <p className="text-sm text-red-500 mt-1">{formErrors.companyName}</p>
+              {formErrors.clientName && (
+                <p className="text-sm text-red-500 mt-1">{formErrors.clientName}</p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="contactPerson">Contact Person *</Label>
+              <Label htmlFor="company">Company</Label>
               <Input
-                id="contactPerson"
-                value={formData.contactPerson}
+                id="company"
+                value={formData.company}
                 onChange={(e) => {
-                  setFormData({ ...formData, contactPerson: e.target.value });
-                  if (formErrors.contactPerson) {
-                    setFormErrors({ ...formErrors, contactPerson: null });
+                  setFormData({ ...formData, company: e.target.value });
+                  if (formErrors.company) {
+                    setFormErrors({ ...formErrors, company: null });
                   }
                 }}
-                className={formErrors.contactPerson ? "border-red-500" : ""}
+                className={formErrors.company ? "border-red-500" : ""}
               />
-              {formErrors.contactPerson && (
-                <p className="text-sm text-red-500 mt-1">{formErrors.contactPerson}</p>
+              {formErrors.company && (
+                <p className="text-sm text-red-500 mt-1">{formErrors.company}</p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -183,7 +125,7 @@ export function AddLeadDialog({ open, onOpenChange, onSubmit, isSubmitting }) {
             </div>
 
             <div>
-              <Label htmlFor="phone">Phone *</Label>
+              <Label htmlFor="phone">Phone</Label>
               <Input
                 id="phone"
                 value={formData.phone}
@@ -201,112 +143,14 @@ export function AddLeadDialog({ open, onOpenChange, onSubmit, isSubmitting }) {
             </div>
 
             <div className="col-span-2">
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor="location">Location</Label>
               <Input
-                id="address"
-                value={formData.address}
+                id="location"
+                value={formData.location}
                 onChange={(e) =>
-                  setFormData({ ...formData, address: e.target.value })
+                  setFormData({ ...formData, location: e.target.value })
                 }
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="city">City</Label>
-              <Input
-                id="city"
-                value={formData.city}
-                onChange={(e) =>
-                  setFormData({ ...formData, city: e.target.value })
-                }
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="province">Province</Label>
-              <Select
-                value={formData.province}
-                onValueChange={(val) =>
-                  setFormData({ ...formData, province: val })
-                }
-              >
-                <SelectTrigger id="province">
-                  <SelectValue placeholder="Select province" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PH_PROVINCES.map((prov) => (
-                    <SelectItem key={prov} value={prov}>
-                      {prov}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="wasteType">Waste Type</Label>
-              <Select
-                value={formData.wasteType}
-                onValueChange={(val) =>
-                  setFormData({ ...formData, wasteType: val })
-                }
-              >
-                <SelectTrigger id="wasteType">
-                  <SelectValue placeholder="Select waste type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {WASTE_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="estimatedVolume">Estimated Volume</Label>
-              <Input
-                id="estimatedVolume"
-                placeholder="e.g., 10 tons/month"
-                value={formData.estimatedVolume}
-                onChange={(e) =>
-                  setFormData({ ...formData, estimatedVolume: e.target.value })
-                }
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="priority">Priority</Label>
-              <Select
-                value={formData.priority}
-                onValueChange={(val) =>
-                  setFormData({ ...formData, priority: val })
-                }
-              >
-                <SelectTrigger id="priority">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 - Lowest</SelectItem>
-                  <SelectItem value="2">2</SelectItem>
-                  <SelectItem value="3">3 - Medium</SelectItem>
-                  <SelectItem value="4">4</SelectItem>
-                  <SelectItem value="5">5 - Highest</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="estimatedValue">Est. Value (PHP)</Label>
-              <Input
-                id="estimatedValue"
-                type="number"
-                placeholder="0"
-                value={formData.estimatedValue}
-                onChange={(e) =>
-                  setFormData({ ...formData, estimatedValue: e.target.value })
-                }
+                placeholder="City, Province"
               />
             </div>
 
@@ -319,7 +163,7 @@ export function AddLeadDialog({ open, onOpenChange, onSubmit, isSubmitting }) {
                 onChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
                 }
-                placeholder="Any additional information..."
+                placeholder="Any additional information about this potential client..."
               />
             </div>
           </div>
@@ -337,7 +181,7 @@ export function AddLeadDialog({ open, onOpenChange, onSubmit, isSubmitting }) {
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Create Lead
+              Add to Lead Pool
             </Button>
           </DialogFooter>
         </form>

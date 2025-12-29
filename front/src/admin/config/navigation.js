@@ -18,18 +18,19 @@ import {
  */
 
 // Sales Pipeline items (accessible by both roles)
+// Order: Leads (pool) → Inquiries (claimed) → Potentials → Clients
 const salesPipelineItems = [
-  {
-    title: "Inquiries",
-    url: "/admin/inquiries",
-    icon: UserPlus,
-    description: "New inquiry leads",
-  },
   {
     title: "Leads",
     url: "/admin/leads",
     icon: TrendingUp,
-    description: "Active leads in pipeline",
+    description: "Lead pool for claiming",
+  },
+  {
+    title: "Inquiries",
+    url: "/admin/inquiries",
+    icon: UserPlus,
+    description: "Claimed leads and inquiries",
   },
   {
     title: "Potentials",

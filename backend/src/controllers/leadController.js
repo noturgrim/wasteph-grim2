@@ -35,12 +35,13 @@ export const createLead = async (req, res, next) => {
  */
 export const getAllLeads = async (req, res, next) => {
   try {
-    const { status, assignedTo, search, page, limit } = req.query;
+    const { isClaimed, claimedBy, search, serviceType, page, limit } = req.query;
 
     const result = await leadService.getAllLeads({
-      status,
-      assignedTo,
+      isClaimed,
+      claimedBy,
       search,
+      serviceType,
       page: page ? parseInt(page) : 1,
       limit: limit ? parseInt(limit) : 10,
     });
@@ -94,6 +95,31 @@ export const updateLead = async (req, res, next) => {
     res.json({
       success: true,
       message: "Lead updated successfully",
+      data: lead,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Controller: Claim lead
+ * Route: POST /api/leads/:id/claim
+ * Access: Protected (all authenticated users)
+ */
+export const claimLead = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const lead = await leadService.claimLead(id, userId, {
+      ipAddress: req.ip,
+      userAgent: req.get("user-agent"),
+    });
+
+    res.json({
+      success: true,
+      message: "Lead claimed successfully",
       data: lead,
     });
   } catch (error) {

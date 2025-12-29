@@ -33,6 +33,7 @@ import { createColumns } from "../components/inquiries/columns";
 
 export default function Inquiries() {
   const { user } = useAuth();
+  const isMasterSales = user?.isMasterSales || false;
   const [inquiries, setInquiries] = useState([]);
   const [allInquiries, setAllInquiries] = useState([]); // Store all inquiries for counting
   const [isLoading, setIsLoading] = useState(true);
@@ -101,7 +102,12 @@ export default function Inquiries() {
 
   const fetchAllInquiries = async () => {
     try {
-      const response = await api.getInquiries({});
+      const filters = {};
+      // For normal sales, only show inquiries assigned to them
+      if (!isMasterSales && user?.id) {
+        filters.assignedTo = user.id;
+      }
+      const response = await api.getInquiries(filters);
       // Backend returns { data, pagination } so we need response.data
       setAllInquiries(response.data || []);
     } catch (error) {
@@ -112,14 +118,21 @@ export default function Inquiries() {
   const fetchInquiries = async (page = pagination.page, limit = pagination.limit) => {
     try {
       setIsLoading(true);
-      const response = await api.getInquiries({
+      const filters = {
         status: statusFilter.length > 0 ? statusFilter.join(",") : undefined,
         source: sourceFilter.length > 0 ? sourceFilter.join(",") : undefined,
         serviceType: serviceTypeFilter.length > 0 ? serviceTypeFilter.join(",") : undefined,
         search: searchTerm || undefined,
         page,
         limit,
-      });
+      };
+
+      // For normal sales, only show inquiries assigned to them
+      if (!isMasterSales && user?.id) {
+        filters.assignedTo = user.id;
+      }
+
+      const response = await api.getInquiries(filters);
 
       // Backend now returns { data, pagination }
       setInquiries(response.data || []);
