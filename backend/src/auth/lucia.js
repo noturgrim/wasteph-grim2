@@ -13,11 +13,7 @@ export const lucia = new Lucia(adapter, {
   sessionCookie: {
     attributes: {
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      domain:
-        process.env.NODE_ENV === "production"
-          ? process.env.COOKIE_DOMAIN
-          : undefined,
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     },
   },
   getUserAttributes: (attributes) => {
