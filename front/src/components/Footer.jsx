@@ -17,10 +17,10 @@ const Footer = () => {
         </div>
         <div className="flex flex-wrap items-center gap-6">
           <a
-            href="mailto:info@wasteph.com"
+            href="mailto:sales@waste.ph"
             className="text-xs font-bold uppercase tracking-[0.2em] text-white transition-colors hover:text-[#15803d] focus-visible:text-[#15803d] focus-visible:outline-none"
           >
-            info@wasteph.com
+            sales@waste.ph
           </a>
           <div className="flex items-center gap-4 text-xs text-white/60">
             <button
