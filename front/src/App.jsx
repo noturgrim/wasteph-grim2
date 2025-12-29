@@ -6,6 +6,7 @@ import ScrollableLayout from "./components/layout/ScrollableLayout";
 import HeroSection from "./components/sections/HeroSection";
 import LoadingScreen from "./components/common/LoadingScreen";
 import TopographicCanvas from "./components/common/TopographicCanvas";
+import ScrollToTop from "./components/common/ScrollToTop";
 
 // Lazy load sections that are below the fold for faster initial load
 const ClientsSection = lazy(() =>
@@ -62,6 +63,26 @@ const PublicApp = () => {
   const isHomePage = location.pathname === "/";
   const isBlogPage = location.pathname.startsWith("/blog");
   const isClientsPage = location.pathname === "/clients";
+
+  // Scroll to top on route change
+  useEffect(() => {
+    // Use requestAnimationFrame to ensure DOM is updated
+    requestAnimationFrame(() => {
+      // Find any scrollable container (with or without snap)
+      const scrollContainer = document.querySelector(".overflow-y-scroll");
+
+      if (scrollContainer) {
+        scrollContainer.scrollTop = 0;
+      }
+
+      // Also scroll window as fallback
+      window.scrollTo(0, 0);
+
+      // Force scroll on document elements
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    });
+  }, [location.pathname]);
 
   // Preload critical assets
   useEffect(() => {

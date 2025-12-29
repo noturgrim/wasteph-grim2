@@ -378,9 +378,11 @@ const ClientsSection = () => {
         <div className="flex overflow-x-clip">
           <div className="flex animate-scroll-infinite gap-6 sm:gap-8 md:gap-10">
             {duplicatedClients.map((client, index) => (
-              <div
+              <Link
                 key={`${client.name}-${index}`}
-                className="group flex min-w-[120px] items-center justify-center rounded-xl border border-white/5 bg-white/2 px-4 py-3 backdrop-blur-sm transition-all duration-300 hover:border-[#15803d]/30 hover:bg-white/5 sm:min-w-[140px] sm:px-5 sm:py-3.5 md:min-w-[160px]"
+                to="/clients"
+                className="pointer-events-auto group flex min-w-[120px] cursor-pointer items-center justify-center rounded-xl border border-white/5 bg-white/2 px-4 py-3 backdrop-blur-sm transition-all duration-300 hover:border-[#15803d]/30 hover:bg-white/5 hover:shadow-[0_4px_20px_rgba(21,128,61,0.2)] sm:min-w-[140px] sm:px-5 sm:py-3.5 md:min-w-[160px]"
+                aria-label={`View ${client.name} and other clients`}
               >
                 <div className="flex flex-col items-center gap-1.5">
                   <div className="flex h-7 items-center justify-center transition-all duration-300 group-hover:scale-110 sm:h-8">
@@ -394,7 +396,7 @@ const ClientsSection = () => {
                     {client.name}
                   </span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
