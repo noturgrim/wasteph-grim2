@@ -78,32 +78,8 @@ const TopographicCanvas = () => {
     };
 
     const mouseOffset = () => {
-      const x = Math.floor(mousePosRef.current.x / res);
-      const y = Math.floor(mousePosRef.current.y / res);
-
-      if (
-        inputValuesRef.current[y] === undefined ||
-        inputValuesRef.current[y][x] === undefined
-      )
-        return;
-
-      const incrementValue = 0.008; // Increased for more visible effect
-      const radius = 8; // Larger radius for bigger area of effect
-
-      for (let i = -radius; i <= radius; i++) {
-        for (let j = -radius; j <= radius; j++) {
-          const distanceSquared = i * i + j * j;
-          const radiusSquared = radius * radius;
-
-          if (
-            distanceSquared <= radiusSquared &&
-            zBoostValuesRef.current[y + i]?.[x + j] !== undefined
-          ) {
-            zBoostValuesRef.current[y + i][x + j] +=
-              incrementValue * (1 - distanceSquared / radiusSquared);
-          }
-        }
-      }
+      // Mouse interaction disabled for performance
+      return;
     };
 
     const linInterpolate = (x0, x1, currentThreshold) => {
@@ -321,24 +297,14 @@ const TopographicCanvas = () => {
     setupCanvas();
     animate();
 
-    const handleMouseMove = (e) => {
-      // Use clientX/Y directly since we're listening on window
-      mousePosRef.current = {
-        x: e.clientX,
-        y: e.clientY,
-      };
-    };
-
     const handleResize = () => {
       setupCanvas();
     };
 
-    // Listen on window instead of canvas to capture all mouse movements
-    window.addEventListener("mousemove", handleMouseMove);
+    // Mouse movement listener removed for performance
     window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("resize", handleResize);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);

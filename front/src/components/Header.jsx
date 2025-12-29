@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { scrollToSection } from "../utils/scrollToSection";
 import ContactButton from "./common/ContactButton";
+import TopBar from "./common/TopBar";
 
 const navItems = [
   { label: "About Us", targetId: "hero", icon: "home", type: "scroll" },
@@ -270,6 +271,9 @@ const Header = () => {
 
   return (
     <header className="pointer-events-none fixed inset-x-0 top-0 z-50 transition-all duration-700 ease-out">
+      {/* Top Bar with Contact Info */}
+      <TopBar scrolled={scrolled} />
+
       <div
         className={`relative mx-auto flex max-w-7xl items-center justify-between gap-8 px-4 py-4 sm:px-6 transition-all duration-1000 ease-in-out ${
           scrolled ? "lg:max-w-none lg:px-0" : "lg:px-12"
@@ -289,9 +293,13 @@ const Header = () => {
           onKeyDown={handleLogoKeyDown}
         >
           <div className="flex flex-col leading-none">
-            <span className="text-xl font-black uppercase tracking-tight transition-all duration-500 sm:text-2xl">
+            <span className="inline-flex items-center gap-1 text-xl font-black uppercase tracking-tight transition-all duration-500 sm:text-2xl">
               <span className="bg-linear-to-r from-white to-white/90 bg-clip-text text-transparent group-hover:from-white group-hover:to-white/95">
-                WASTEPH
+                WASTE
+              </span>
+              <span className="text-[0.4em] text-white/40">·</span>
+              <span className="bg-linear-to-br from-[#15803d] via-[#16a34a] to-[#22c55e] bg-clip-text text-transparent">
+                PH
               </span>
             </span>
             <span className="text-[9px] font-medium uppercase tracking-[0.25em] text-white/50 transition-all duration-500 group-hover:text-white/60 sm:text-[10px]">
