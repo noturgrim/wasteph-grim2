@@ -101,12 +101,28 @@ const PublicApp = () => {
         const videoSources = [
           "/src/assets/video/montage.mp4",
           "/src/assets/video/montage2.mp4",
+          "/src/assets/video/review.mp4",
         ];
 
         const imageSources = [
           "/src/assets/logo/wasteNoBG.png",
           "/src/assets/trucks/truck.png",
           "/src/assets/trucks/truck2.png",
+          // Client logos
+          "/src/assets/clients/oakridge.png",
+          "/src/assets/clients/24chicken.png",
+          "/src/assets/clients/sanson32.png",
+          "/src/assets/clients/philam.png",
+          "/src/assets/clients/ayalamallscbloc.png",
+          "/src/assets/clients/depofag.png",
+          "/src/assets/clients/ilcorso.png",
+          "/src/assets/clients/mandani.png",
+          // Showcase event images
+          "/src/assets/showcase/sept26.png",
+          "/src/assets/showcase/sept10.png",
+          "/src/assets/showcase/sept5.png",
+          "/src/assets/showcase/aug13.png",
+          "/src/assets/showcase/june6.png",
         ];
 
         // Preload videos
