@@ -1,6 +1,6 @@
 import { db } from "../db/index.js";
-import { inquiryTable, activityLogTable, leadTable } from "../db/schema.js";
-import { eq, desc, and, or, like, inArray, count } from "drizzle-orm";
+import { inquiryTable, activityLogTable, leadTable, proposalTable } from "../db/schema.js";
+import { eq, desc, and, or, like, inArray, count, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 
 /**
@@ -114,8 +114,49 @@ class InquiryService {
       .limit(limit)
       .offset(offset);
 
+    // Fetch proposal status for each inquiry
+    const inquiryIds = inquiries.map(inq => inq.id);
+    let proposalStatuses = [];
+
+    if (inquiryIds.length > 0) {
+      // Get the most recent proposal for each inquiry
+      proposalStatuses = await db
+        .select({
+          inquiryId: proposalTable.inquiryId,
+          proposalId: proposalTable.id,
+          status: proposalTable.status,
+          createdAt: proposalTable.createdAt,
+          rejectionReason: proposalTable.rejectionReason,
+        })
+        .from(proposalTable)
+        .where(inArray(proposalTable.inquiryId, inquiryIds))
+        .orderBy(desc(proposalTable.createdAt));
+    }
+
+    // Create a map of inquiry ID to proposal status (most recent)
+    const proposalMap = {};
+    proposalStatuses.forEach(p => {
+      if (!proposalMap[p.inquiryId]) {
+        proposalMap[p.inquiryId] = {
+          proposalId: p.proposalId,
+          proposalStatus: p.status,
+          proposalCreatedAt: p.createdAt,
+          proposalRejectionReason: p.rejectionReason,
+        };
+      }
+    });
+
+    // Attach proposal data to inquiries
+    const inquiriesWithProposals = inquiries.map(inquiry => ({
+      ...inquiry,
+      proposalId: proposalMap[inquiry.id]?.proposalId || null,
+      proposalStatus: proposalMap[inquiry.id]?.proposalStatus || null,
+      proposalCreatedAt: proposalMap[inquiry.id]?.proposalCreatedAt || null,
+      proposalRejectionReason: proposalMap[inquiry.id]?.proposalRejectionReason || null,
+    }));
+
     return {
-      data: inquiries,
+      data: inquiriesWithProposals,
       pagination: {
         total,
         page,
@@ -142,7 +183,26 @@ class InquiryService {
       throw new AppError("Inquiry not found", 404);
     }
 
-    return inquiry;
+    // Get most recent proposal for this inquiry
+    const [proposal] = await db
+      .select({
+        proposalId: proposalTable.id,
+        status: proposalTable.status,
+        createdAt: proposalTable.createdAt,
+        rejectionReason: proposalTable.rejectionReason,
+      })
+      .from(proposalTable)
+      .where(eq(proposalTable.inquiryId, inquiryId))
+      .orderBy(desc(proposalTable.createdAt))
+      .limit(1);
+
+    return {
+      ...inquiry,
+      proposalId: proposal?.proposalId || null,
+      proposalStatus: proposal?.status || null,
+      proposalCreatedAt: proposal?.createdAt || null,
+      proposalRejectionReason: proposal?.rejectionReason || null,
+    };
   }
 
   /**
@@ -414,4 +474,4 @@ class InquiryService {
   }
 }
 
-export default InquiryService;
+export default new InquiryService();

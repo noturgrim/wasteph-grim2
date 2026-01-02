@@ -14,6 +14,7 @@ import BlogPosts from "./pages/BlogPosts";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import ProposalTemplates from "./pages/ProposalTemplates";
+import Proposals from "./pages/Proposals";
 
 const CRMApp = () => {
   return (
@@ -44,6 +45,14 @@ const CRMApp = () => {
             <Route path="proposal-templates" element={<ProposalTemplates />} />
 
             {/* Admin only routes */}
+            <Route
+              path="proposals"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <Proposals />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="blog"
               element={

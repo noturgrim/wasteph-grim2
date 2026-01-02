@@ -8,6 +8,7 @@ import {
   UserCog,
   BookOpen,
   FileEdit,
+  ScrollText,
 } from "lucide-react";
 
 /**
@@ -87,10 +88,31 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
     });
   }
 
-  // Admin gets additional management section
+  // Admin gets admin-only sections (NO sales pipeline access)
   if (role === "admin") {
     return [
-      ...baseNavigation,
+      {
+        label: "General",
+        items: [
+          {
+            title: "Dashboard",
+            url: "/admin/dashboard",
+            icon: LayoutDashboard,
+            description: "Overview and statistics",
+          },
+        ],
+      },
+      {
+        label: "Management",
+        items: [
+          {
+            title: "Proposals",
+            url: "/admin/proposals",
+            icon: ScrollText,
+            description: "Review and approve proposals",
+          },
+        ],
+      },
       {
         label: "Content",
         items: [

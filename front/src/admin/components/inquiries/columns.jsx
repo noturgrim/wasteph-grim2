@@ -6,11 +6,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Pencil, Trash2, ArrowRight, ArrowUpDown, ArrowUp, ArrowDown, FileText } from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { StatusBadge } from "../StatusBadge";
+import { Badge } from "@/components/ui/badge";
 
-export const createColumns = ({ users = [], onView, onEdit, onConvert, onDelete, onRequestProposal, userRole }) => [
+export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestProposal, userRole }) => [
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -98,6 +99,51 @@ export const createColumns = ({ users = [], onView, onEdit, onConvert, onDelete,
     },
   },
   {
+    accessorKey: "proposalStatus",
+    header: "Proposal",
+    cell: ({ row }) => {
+      const proposalStatus = row.original.proposalStatus;
+
+      if (!proposalStatus) {
+        return (
+          <Badge variant="outline" className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-400">
+            No Proposal
+          </Badge>
+        );
+      }
+
+      const statusConfig = {
+        pending: {
+          label: "Pending Review",
+          className: "bg-yellow-100 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-200 border-yellow-300"
+        },
+        approved: {
+          label: "Approved",
+          className: "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200 border-green-300"
+        },
+        rejected: {
+          label: "Rejected",
+          className: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200 border-red-300"
+        },
+        sent: {
+          label: "Sent",
+          className: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 border-blue-300"
+        },
+      };
+
+      const config = statusConfig[proposalStatus] || {
+        label: proposalStatus,
+        className: "bg-gray-100 text-gray-800"
+      };
+
+      return (
+        <Badge variant="outline" className={config.className}>
+          {config.label}
+        </Badge>
+      );
+    },
+  },
+  {
     accessorKey: "assignedTo",
     header: "Assigned To",
     cell: ({ row }) => {
@@ -150,8 +196,9 @@ export const createColumns = ({ users = [], onView, onEdit, onConvert, onDelete,
 
       return (
         <div className="flex items-center gap-2">
-          {/* Request Proposal Button - shown for inquiries not yet submitted */}
-          {inquiry.status !== "submitted_proposal" &&
+          {/* Request Proposal Button - only show if NO proposal exists OR proposal was rejected */}
+          {!inquiry.proposalStatus &&
+           inquiry.status !== "submitted_proposal" &&
            inquiry.status !== "declined" &&
            inquiry.status !== "on_boarded" && (
             <Button
@@ -165,18 +212,16 @@ export const createColumns = ({ users = [], onView, onEdit, onConvert, onDelete,
             </Button>
           )}
 
-          {/* Convert Button - shown for advanced status inquiries */}
-          {(inquiry.status === "submitted_proposal" ||
-            inquiry.status === "negotiating" ||
-            inquiry.status === "waiting_for_feedback") && (
+          {/* Show Proposal button for rejected proposals - allow resubmission */}
+          {inquiry.proposalStatus === "rejected" && (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onConvert(inquiry)}
-              className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              onClick={() => onRequestProposal(inquiry)}
+              className="h-8 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
             >
-              <ArrowRight className="h-4 w-4 mr-1" />
-              Convert
+              <FileText className="h-4 w-4 mr-1" />
+              Revise Proposal
             </Button>
           )}
 
@@ -197,24 +242,6 @@ export const createColumns = ({ users = [], onView, onEdit, onConvert, onDelete,
                 <span className="flex-1">Edit</span>
                 <Pencil className="h-4 w-4" />
               </DropdownMenuItem>
-
-              {inquiry.status !== "submitted_proposal" &&
-               inquiry.status !== "declined" &&
-               inquiry.status !== "on_boarded" && (
-                <DropdownMenuItem onClick={() => onRequestProposal(inquiry)} className="cursor-pointer">
-                  <span className="flex-1">Request Proposal</span>
-                  <FileText className="h-4 w-4" />
-                </DropdownMenuItem>
-              )}
-
-              {(inquiry.status === "submitted_proposal" ||
-                inquiry.status === "negotiating" ||
-                inquiry.status === "waiting_for_feedback") && (
-                <DropdownMenuItem onClick={() => onConvert(inquiry)} className="cursor-pointer">
-                  <span className="flex-1">Convert to Lead</span>
-                  <ArrowRight className="h-4 w-4" />
-                </DropdownMenuItem>
-              )}
 
               <DropdownMenuSeparator />
 

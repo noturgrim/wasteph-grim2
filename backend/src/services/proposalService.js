@@ -1,5 +1,5 @@
 import { db } from "../db/index.js";
-import { proposalTable, activityLogTable } from "../db/schema.js";
+import { proposalTable, activityLogTable, inquiryTable } from "../db/schema.js";
 import { eq, desc, and, or, like, inArray, count } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 import inquiryService from "./inquiryService.js";
@@ -73,7 +73,33 @@ class ProposalService {
     const { status, inquiryId, search, page = 1, limit = 10 } = options;
     const offset = (page - 1) * limit;
 
-    let query = db.select().from(proposalTable);
+    // Select proposal data with joined inquiry details
+    let query = db
+      .select({
+        id: proposalTable.id,
+        inquiryId: proposalTable.inquiryId,
+        templateId: proposalTable.templateId,
+        requestedBy: proposalTable.requestedBy,
+        proposalData: proposalTable.proposalData,
+        status: proposalTable.status,
+        reviewedBy: proposalTable.reviewedBy,
+        reviewedAt: proposalTable.reviewedAt,
+        adminNotes: proposalTable.adminNotes,
+        rejectionReason: proposalTable.rejectionReason,
+        emailSentAt: proposalTable.emailSentAt,
+        emailStatus: proposalTable.emailStatus,
+        pdfUrl: proposalTable.pdfUrl,
+        createdAt: proposalTable.createdAt,
+        updatedAt: proposalTable.updatedAt,
+        // Inquiry details
+        inquiryName: inquiryTable.name,
+        inquiryEmail: inquiryTable.email,
+        inquiryPhone: inquiryTable.phone,
+        inquiryCompany: inquiryTable.company,
+      })
+      .from(proposalTable)
+      .leftJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id));
+
     const conditions = [];
 
     // Permission check: Regular sales see only their proposals
@@ -158,10 +184,13 @@ class ProposalService {
     // Get existing proposal
     const existing = await this.getProposalById(proposalId);
 
-    // Only allow updates to pending proposals
-    if (existing.status !== "pending") {
-      throw new AppError("Can only update pending proposals", 400);
+    // Allow updates to pending or rejected proposals
+    if (existing.status !== "pending" && existing.status !== "rejected") {
+      throw new AppError("Can only update pending or rejected proposals", 400);
     }
+
+    // If updating a rejected proposal, reset it to pending and clear rejection fields
+    const isRejectedProposal = existing.status === "rejected";
 
     const [proposal] = await db
       .update(proposalTable)
@@ -173,6 +202,13 @@ class ProposalService {
               : JSON.stringify(proposalData),
         }),
         ...(templateId && { templateId }),
+        // If it was rejected, reset to pending and clear rejection data
+        ...(isRejectedProposal && {
+          status: "pending",
+          rejectionReason: null,
+          reviewedBy: null,
+          reviewedAt: null,
+        }),
         updatedAt: new Date(),
       })
       .where(eq(proposalTable.id, proposalId))
@@ -181,7 +217,7 @@ class ProposalService {
     // Log activity
     await this.logActivity({
       userId,
-      action: "proposal_updated",
+      action: isRejectedProposal ? "proposal_revised" : "proposal_updated",
       entityType: "proposal",
       entityId: proposal.id,
       ipAddress: metadata.ipAddress,
@@ -228,38 +264,45 @@ class ProposalService {
       throw new AppError("PDF generation failed: " + error.message, 500);
     }
 
-    // Step 5: Send email - CRITICAL PATH
+    // Step 5: Send email - CRITICAL PATH (skip in development if SKIP_EMAIL_IN_DEV is set)
+    const skipEmail = process.env.SKIP_EMAIL_IN_DEV === "true" && process.env.NODE_ENV === "development";
     let emailResult;
-    try {
-      emailResult = await emailService.sendProposalEmail(
-        inquiry.email,
-        JSON.parse(proposal.proposalData),
-        inquiry,
-        pdfBuffer
-      );
 
-      if (!emailResult.success) {
-        throw new Error(emailResult.error || "Email send failed");
+    if (skipEmail) {
+      console.log("[DEV MODE] Skipping email send - SKIP_EMAIL_IN_DEV is enabled");
+      emailResult = { success: true };
+    } else {
+      try {
+        emailResult = await emailService.sendProposalEmail(
+          inquiry.email,
+          JSON.parse(proposal.proposalData),
+          inquiry,
+          pdfBuffer
+        );
+
+        if (!emailResult.success) {
+          throw new Error(emailResult.error || "Email send failed");
+        }
+      } catch (error) {
+        // Email failed - DO NOT approve proposal
+        // Save PDF but mark email as failed for manual retry
+        await db
+          .update(proposalTable)
+          .set({
+            adminNotes: `${adminNotes || ""}\n\n[SYSTEM] Email send failed: ${
+              error.message
+            }. Use retry-email endpoint to resend.`,
+            emailStatus: "failed",
+            pdfUrl, // Save PDF for retry
+            updatedAt: new Date(),
+          })
+          .where(eq(proposalTable.id, proposalId));
+
+        throw new AppError(
+          "Email send failed. Proposal NOT approved. PDF saved for retry. Please use retry endpoint.",
+          500
+        );
       }
-    } catch (error) {
-      // Email failed - DO NOT approve proposal
-      // Save PDF but mark email as failed for manual retry
-      await db
-        .update(proposalTable)
-        .set({
-          adminNotes: `${adminNotes || ""}\n\n[SYSTEM] Email send failed: ${
-            error.message
-          }. Use retry-email endpoint to resend.`,
-          emailStatus: "failed",
-          pdfUrl, // Save PDF for retry
-          updatedAt: new Date(),
-        })
-        .where(eq(proposalTable.id, proposalId));
-
-      throw new AppError(
-        "Email send failed. Proposal NOT approved. PDF saved for retry. Please use retry endpoint.",
-        500
-      );
     }
 
     // Step 6: ONLY NOW update proposal to approved (email succeeded)

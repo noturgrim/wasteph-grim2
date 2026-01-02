@@ -1,7 +1,4 @@
-import InquiryService from "../services/inquiryService.js";
-
-// Initialize service
-const inquiryService = new InquiryService();
+import inquiryService from "../services/inquiryService.js";
 
 /**
  * Controller: Create inquiry (public endpoint for website forms)

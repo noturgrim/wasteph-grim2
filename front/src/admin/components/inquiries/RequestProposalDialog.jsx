@@ -34,22 +34,57 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
     notes: "",
   });
 
-  // Fetch default template on mount
+  // Fetch default template and existing proposal data on mount
   useEffect(() => {
-    const fetchDefaultTemplate = async () => {
+    const fetchData = async () => {
       try {
+        // Fetch default template
         const response = await api.getDefaultProposalTemplate();
-        // API returns { success: true, data: template }
         setDefaultTemplate(response.data || response);
+
+        // If inquiry has a rejected proposal, fetch and populate it
+        if (inquiry?.proposalId && inquiry?.proposalStatus === "rejected") {
+          try {
+            const proposalResponse = await api.getProposalById(inquiry.proposalId);
+            const proposal = proposalResponse.data || proposalResponse;
+
+            // Parse existing proposal data
+            const existingData = typeof proposal.proposalData === "string"
+              ? JSON.parse(proposal.proposalData)
+              : proposal.proposalData;
+
+            // Populate form with existing data
+            if (existingData.services && existingData.services.length > 0) {
+              setServices(existingData.services);
+            }
+            if (existingData.pricing) {
+              setPricing({
+                taxRate: existingData.pricing.taxRate || 12,
+                discount: existingData.pricing.discount || 0,
+              });
+            }
+            if (existingData.terms) {
+              setTerms(existingData.terms);
+            }
+          } catch (error) {
+            console.error("Failed to fetch existing proposal:", error);
+            toast.error("Could not load rejected proposal data");
+          }
+        } else {
+          // Reset to default values for new proposals
+          setServices([{ name: "", description: "", quantity: 1, unitPrice: 0, subtotal: 0 }]);
+          setPricing({ taxRate: 12, discount: 0 });
+          setTerms({ paymentTerms: "Net 30", validityDays: 30, notes: "" });
+        }
       } catch (error) {
         console.error("Failed to fetch default template:", error);
       }
     };
 
     if (open) {
-      fetchDefaultTemplate();
+      fetchData();
     }
-  }, [open]);
+  }, [open, inquiry]);
 
   const handleAddService = () => {
     setServices([
@@ -146,25 +181,38 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
   const handleSubmit = async () => {
     const calculatedPricing = calculatePricing();
 
-    const proposalData = {
-      inquiryId: inquiry.id,
-      proposalData: {
-        services: services.map(s => ({
-          name: s.name,
-          description: s.description || "",
-          quantity: parseFloat(s.quantity),
-          unitPrice: parseFloat(s.unitPrice),
-          subtotal: parseFloat(s.subtotal),
-        })),
-        pricing: calculatedPricing,
-        terms,
-      },
+    const proposalDataPayload = {
+      services: services.map(s => ({
+        name: s.name,
+        description: s.description || "",
+        quantity: parseFloat(s.quantity),
+        unitPrice: parseFloat(s.unitPrice),
+        subtotal: parseFloat(s.subtotal),
+      })),
+      pricing: calculatedPricing,
+      terms,
     };
 
     setIsSubmitting(true);
     try {
-      await api.createProposal(proposalData);
-      toast.success("Proposal request submitted successfully");
+      // Check if we're updating an existing rejected proposal or creating a new one
+      const isRevision = inquiry?.proposalId && inquiry?.proposalStatus === "rejected";
+
+      if (isRevision) {
+        // Update existing proposal
+        await api.updateProposal(inquiry.proposalId, {
+          proposalData: proposalDataPayload,
+        });
+        toast.success("Proposal revised and resubmitted successfully");
+      } else {
+        // Create new proposal
+        await api.createProposal({
+          inquiryId: inquiry.id,
+          proposalData: proposalDataPayload,
+        });
+        toast.success("Proposal request submitted successfully");
+      }
+
       onOpenChange(false);
       if (onSuccess) onSuccess();
 
@@ -174,7 +222,7 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
       setTerms({ paymentTerms: "Net 30", validityDays: 30, notes: "" });
       setShowPreview(false);
     } catch (error) {
-      toast.error(error.message || "Failed to create proposal request");
+      toast.error(error.message || "Failed to submit proposal request");
     } finally {
       setIsSubmitting(false);
     }
@@ -192,12 +240,18 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {showPreview ? "Preview Proposal" : "Request Proposal"}
+            {showPreview
+              ? "Preview Proposal"
+              : inquiry?.proposalStatus === "rejected"
+                ? "Revise Proposal"
+                : "Request Proposal"}
           </DialogTitle>
           <DialogDescription>
             {showPreview
               ? "Review the proposal before submitting"
-              : `Create a proposal request for ${inquiry?.name} (${inquiry?.email})`
+              : inquiry?.proposalStatus === "rejected"
+                ? `Revise the rejected proposal for ${inquiry?.name} (${inquiry?.email})`
+                : `Create a proposal request for ${inquiry?.name} (${inquiry?.email})`
             }
           </DialogDescription>
         </DialogHeader>
@@ -205,6 +259,18 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
         {!showPreview ? (
           /* FORM VIEW */
           <form onSubmit={handlePreview} className="space-y-6">
+          {/* Rejection Reason Banner */}
+          {inquiry?.proposalStatus === "rejected" && inquiry?.proposalRejectionReason && (
+            <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <p className="text-sm font-semibold text-red-900 dark:text-red-100 mb-1">
+                Rejection Reason:
+              </p>
+              <p className="text-sm text-red-700 dark:text-red-300">
+                {inquiry.proposalRejectionReason}
+              </p>
+            </div>
+          )}
+
           {/* Services Section */}
           <div>
             <div className="flex items-center justify-between mb-3">

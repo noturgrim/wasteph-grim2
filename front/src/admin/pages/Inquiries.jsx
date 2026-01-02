@@ -28,7 +28,6 @@ import { DeleteConfirmationModal } from "../components/modals";
 import { AddInquiryDialog } from "../components/inquiries/AddInquiryDialog";
 import { EditInquiryDialog } from "../components/inquiries/EditInquiryDialog";
 import { ViewInquiryDialog } from "../components/inquiries/ViewInquiryDialog";
-import { ConvertToLeadDialog } from "../components/inquiries/ConvertToLeadDialog";
 import { RequestProposalDialog } from "../components/inquiries/RequestProposalDialog";
 import { createColumns } from "../components/inquiries/columns";
 
@@ -61,6 +60,7 @@ export default function Inquiries() {
     source: true,
     serviceType: true,
     status: true,
+    proposalStatus: true,
     assignedTo: true,
     createdAt: true,
   });
@@ -71,7 +71,6 @@ export default function Inquiries() {
   // Dialogs
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRequestProposalDialogOpen, setIsRequestProposalDialogOpen] = useState(false);
@@ -192,21 +191,6 @@ export default function Inquiries() {
     }
   };
 
-  const handleConvertToLead = async (serviceDetails) => {
-    setIsSubmitting(true);
-    try {
-      await api.convertInquiryToLead(selectedInquiry.id, serviceDetails);
-      toast.success("Inquiry converted to lead successfully");
-      setIsConvertDialogOpen(false);
-      fetchAllInquiries();
-      fetchInquiries();
-    } catch (error) {
-      toast.error(error.message || "Failed to convert inquiry");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleDeleteInquiry = (inquiry) => {
     setSelectedInquiry(inquiry);
     setIsDeleteDialogOpen(true);
@@ -234,10 +218,6 @@ export default function Inquiries() {
     onEdit: (inquiry) => {
       setSelectedInquiry(inquiry);
       setIsEditDialogOpen(true);
-    },
-    onConvert: (inquiry) => {
-      setSelectedInquiry(inquiry);
-      setIsConvertDialogOpen(true);
     },
     onRequestProposal: (inquiry) => {
       setSelectedInquiry(inquiry);
@@ -524,14 +504,6 @@ export default function Inquiries() {
         inquiry={selectedInquiry}
         users={users}
         onSubmit={handleUpdateInquiry}
-        isSubmitting={isSubmitting}
-      />
-
-      <ConvertToLeadDialog
-        open={isConvertDialogOpen}
-        onOpenChange={setIsConvertDialogOpen}
-        inquiry={selectedInquiry}
-        onConvert={handleConvertToLead}
         isSubmitting={isSubmitting}
       />
 
