@@ -68,8 +68,8 @@ const Header = () => {
           { id: "waste-streams", navId: "waste-streams" },
           { id: "process", navId: "process" },
           { id: "community-showcase", navId: "community-showcase" },
+          { id: "clients", navId: "community-showcase" }, // Clients (What Our Clients Say) is part of Showcase
           { id: "contact", navId: "contact" },
-          { id: "clients", navId: "contact" }, // Clients flows with contact area
         ];
 
         // Find which section is most visible in viewport
