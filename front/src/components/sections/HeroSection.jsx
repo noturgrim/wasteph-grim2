@@ -366,6 +366,19 @@ const HeroSection = () => {
                     </span>
                   </span>
                 </div>
+                <div className="relative block w-full">
+                  <span className="inline-flex flex-wrap items-center gap-[0.15em] text-[clamp(2rem,6vw,5rem)] font-black uppercase leading-[0.85] tracking-[-0.05em] sm:flex-nowrap">
+                    <span className="bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
+                      PHILGeps
+                    </span>
+                    <div className="hidden text-[0.4em] text-white/40 sm:inline-block">
+                      ·
+                    </div>
+                    <span className="bg-gradient-to-br from-[#15803d] via-[#16a34a] to-[#22c55e] bg-clip-text text-transparent">
+                      PLATINUM
+                    </span>
+                  </span>
+                </div>
               </div>
             </div>
 

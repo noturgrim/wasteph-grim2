@@ -263,7 +263,7 @@ const PublicApp = () => {
             disableSnap={isBlogPage || isClientsPage || isNotFoundPage}
           >
             <Header />
-            <main className="pt-20">
+            <main className="pt-14 lg:pt-20">
               <Suspense fallback={<div className="min-h-screen" />}>
                 <Routes>
                   <Route path="/" element={<HomeContent />} />
