@@ -270,7 +270,20 @@ const HeroSection = () => {
                 <div className="relative block w-full">
                   <span className="inline-flex flex-wrap items-center gap-[0.15em] text-[clamp(2rem,6vw,5rem)] font-black uppercase leading-[0.85] tracking-[-0.05em] sm:flex-nowrap">
                     <span className="bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
-                      ECC
+                      PEZA
+                    </span>
+                    <div className="hidden text-[0.4em] text-white/40 sm:inline-block">
+                      ·
+                    </div>
+                    <span className="bg-gradient-to-br from-[#15803d] via-[#16a34a] to-[#22c55e] bg-clip-text text-transparent">
+                      ACCREDITED
+                    </span>
+                  </span>
+                </div>
+                <div className="relative block w-full">
+                  <span className="inline-flex flex-wrap items-center gap-[0.15em] text-[clamp(2rem,6vw,5rem)] font-black uppercase leading-[0.85] tracking-[-0.05em] sm:flex-nowrap">
+                    <span className="bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
+                      CENRO
                     </span>
                     <div className="hidden text-[0.4em] text-white/40 sm:inline-block">
                       ·
@@ -283,20 +296,7 @@ const HeroSection = () => {
                 <div className="relative block w-full">
                   <span className="inline-flex flex-wrap items-center gap-[0.15em] text-[clamp(2rem,6vw,5rem)] font-black uppercase leading-[0.85] tracking-[-0.05em] sm:flex-nowrap">
                     <span className="bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
-                      DENR
-                    </span>
-                    <div className="hidden text-[0.4em] text-white/40 sm:inline-block">
-                      ·
-                    </div>
-                    <span className="bg-gradient-to-br from-[#15803d] via-[#16a34a] to-[#22c55e] bg-clip-text text-transparent">
-                      REGISTERED
-                    </span>
-                  </span>
-                </div>
-                <div className="relative block w-full">
-                  <span className="inline-flex flex-wrap items-center gap-[0.15em] text-[clamp(2rem,6vw,5rem)] font-black uppercase leading-[0.85] tracking-[-0.05em] sm:flex-nowrap">
-                    <span className="bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
-                      DOT
+                      DOLE
                     </span>
                     <div className="hidden text-[0.4em] text-white/40 sm:inline-block">
                       ·
@@ -309,26 +309,26 @@ const HeroSection = () => {
                 <div className="relative block w-full">
                   <span className="inline-flex flex-wrap items-center gap-[0.15em] text-[clamp(2rem,6vw,5rem)] font-black uppercase leading-[0.85] tracking-[-0.05em] sm:flex-nowrap">
                     <span className="bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
-                      ISO
+                      SAFETY
                     </span>
                     <div className="hidden text-[0.4em] text-white/40 sm:inline-block">
                       ·
                     </div>
                     <span className="bg-gradient-to-br from-[#15803d] via-[#16a34a] to-[#22c55e] bg-clip-text text-transparent">
-                      14001
+                      ACCREDITED
                     </span>
                   </span>
                 </div>
                 <div className="relative block w-full">
                   <span className="inline-flex flex-wrap items-center gap-[0.15em] text-[clamp(2rem,6vw,5rem)] font-black uppercase leading-[0.85] tracking-[-0.05em] sm:flex-nowrap">
                     <span className="bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent">
-                      FULLY
+                      PCO
                     </span>
                     <div className="hidden text-[0.4em] text-white/40 sm:inline-block">
                       ·
                     </div>
                     <span className="bg-gradient-to-br from-[#15803d] via-[#16a34a] to-[#22c55e] bg-clip-text text-transparent">
-                      LICENSED
+                      OVERSIGHT
                     </span>
                   </span>
                 </div>
@@ -374,16 +374,7 @@ const HeroSection = () => {
                     <div className="space-y-2">
                       <div className="flex items-center justify-end gap-3">
                         <span className="text-sm text-white/60">
-                          Trucks Operating
-                        </span>
-                        <span className="text-2xl font-bold text-white">5</span>
-                      </div>
-                      <div className="flex items-center justify-end gap-3">
-                        <span className="text-sm text-white/60">
-                          Service Hours
-                        </span>
-                        <span className="text-2xl font-bold text-white">
-                          24/7
+                          Operating 24/7
                         </span>
                       </div>
                       <div className="flex items-center justify-end gap-3">
