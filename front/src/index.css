@@ -193,6 +193,24 @@ div {
   animation-play-state: running;
 }
 
+/* Slide down animation for fleet video divider dot */
+@keyframes slide-down {
+  0% {
+    top: 0%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
 /* Performance: Reduce motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
   *,

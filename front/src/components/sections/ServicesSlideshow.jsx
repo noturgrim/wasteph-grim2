@@ -4,57 +4,57 @@ import RevealOnScroll from "../common/RevealOnScroll";
 import FadeInUp from "../common/FadeInUp";
 
 // Showcase events
-import sept26Image from "../../assets/showcase/sept26.png";
-import sept10Image from "../../assets/showcase/sept10.png";
-import sept5Image from "../../assets/showcase/sept5.png";
-import aug13Image from "../../assets/showcase/aug13.png";
-import june6Image from "../../assets/showcase/june6.png";
+import img1 from "../../assets/showcase/img1.jpeg";
+import img2 from "../../assets/showcase/img2.jpeg";
+import img3 from "../../assets/showcase/img3.jpeg";
+import img4 from "../../assets/showcase/img4.jpeg";
+import img5 from "../../assets/showcase/img5.jpeg";
 
 const showcaseEvents = [
   {
     id: 1,
-    title: "VisMin Hospitality Summit",
-    date: "September 26, 2025",
-    tagline: "Engaging the hospitality industry",
+    title: "Plastic 101 Education Program",
+    date: "Barangay Luz",
+    tagline: "Empowering communities through education",
     description:
-      "Our heartfelt appreciation goes out to all who dropped by our booth at the 2nd Philippine VisMin Hospitality Summit in Nustar Fili Hotel. Thank you for engaging with us, playing our mini game about segregation, and taking home some Waste PH giveaways!",
-    image: sept26Image,
+      "Our team was on-site at Barangay Luz to orient residents on plastic categories and guide them on their first steps in smarter recycling. We are grateful to the locals who were hands-on in sorting the recyclables and assisting our crew.",
+    image: img1,
   },
   {
     id: 2,
-    title: "BPO/Mall Waste Clearing",
-    date: "September 10, 2025",
-    tagline: "Piled-Up Garbage? Cleared by Waste PH",
+    title: "Cebu Sustainability Alliance",
+    date: "Stakeholders' Meeting",
+    tagline: "Building partnerships for environmental stewardship",
     description:
-      "Our waste management crew successfully cleared the accumulated waste at a well-known BPO/mall right in the city center.",
-    image: sept10Image,
+      "Waste PH is grateful to take part in the first Stakeholders' Meeting for Cebu Sustainability and Environmental Stewardship Alliance meeting. Our CEO Philip Cañete stood for our company's mission of responsible waste management and environmental care.",
+    image: img2,
   },
   {
     id: 3,
-    title: "Barangay Luz Partnership",
-    date: "September 5, 2025",
-    tagline: "Sealing the deal and sharing our mission",
+    title: "Cebu City Waste Board Discussion",
+    date: "Solid Waste Management",
+    tagline: "Every discussion is a step closer to a cleaner Cebu",
     description:
-      "After a successful 2 months pilot program in reducing waste to landfill with Barangay Luz, Waste PH has been awarded their official Waste Management partner for their Recyclables.",
-    image: sept5Image,
+      "Waste PH is grateful for the opportunity to discuss impactful waste management solutions with the Cebu City Solid Waste Management Board and other eager advocates who share the same vision.",
+    image: img3,
   },
   {
     id: 4,
-    title: "Medellin Mayor Meeting",
-    date: "August 13, 2025",
-    tagline: "Building municipal partnerships",
+    title: "Partnership with Mayor Archival",
+    date: "2026 Initiative",
+    tagline: "Movement for a cleaner and more sustainable Cebu",
     description:
-      "Waste PH is thankful to talk proper waste management and sustainability practices with the new mayor & team of Medellin, Cebu. Looking forward to a cleaner future!",
-    image: aug13Image,
+      "Thank you Mayor Archival for hearing us out. We are grateful to be part of this initiative and movement for a cleaner and more sustainable Cebu City this 2026. Cebuanos can make this possible.",
+    image: img4,
   },
   {
     id: 5,
-    title: "World Environment Day",
-    date: "June 6, 2025",
-    tagline: "Plaza Independencia celebrates with Waste PH",
+    title: "Flood-Free Cebu Event",
+    date: "Community Outreach",
+    tagline: "Flood-free starts with waste-free",
     description:
-      "We're grateful to have been part of the World Environment Day event at Plaza Independencia! Thank you to the public for showing support, to those who visited our booth, and for properly disposing of their trash in our garbage compactor.",
-    image: june6Image,
+      "Our Waste PH team joined the Flood-Free Cebu event to share how proper waste management plays a vital role in preventing flooding. We truly appreciate everyone who stopped by our booth to learn more about what we do.",
+    image: img5,
   },
 ];
 
@@ -88,13 +88,13 @@ const EventCard = ({ event, index, isActive, onClick }) => {
           src={event.image}
           alt={event.title}
           className={`h-full w-full object-cover transition-all duration-700 ${
-            isActive ? "scale-100 opacity-100" : "scale-105 opacity-60"
+            isActive ? "scale-100 opacity-100" : "scale-105 opacity-90"
           }`}
           loading="lazy"
         />
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent" />
+        {/* Gradient Overlay - Lighter for better image visibility */}
+        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
 
         {/* Date Badge */}
         <div className="absolute right-3 top-3">

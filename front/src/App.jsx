@@ -24,11 +24,11 @@ import ilcorso from "./assets/clients/ilcorso.png";
 import mandani from "./assets/clients/mandani.png";
 
 // Showcase images
-import sept26Image from "./assets/showcase/sept26.png";
-import sept10Image from "./assets/showcase/sept10.png";
-import sept5Image from "./assets/showcase/sept5.png";
-import aug13Image from "./assets/showcase/aug13.png";
-import june6Image from "./assets/showcase/june6.png";
+import img1 from "./assets/showcase/img1.jpeg";
+import img2 from "./assets/showcase/img2.jpeg";
+import img3 from "./assets/showcase/img3.jpeg";
+import img4 from "./assets/showcase/img4.jpeg";
+import img5 from "./assets/showcase/img5.jpeg";
 
 // Videos
 import montageVideo from "./assets/video/montage.mp4";
@@ -144,11 +144,11 @@ const PublicApp = () => {
           ilcorso,
           mandani,
           // Showcase event images
-          sept26Image,
-          sept10Image,
-          sept5Image,
-          aug13Image,
-          june6Image,
+          img1,
+          img2,
+          img3,
+          img4,
+          img5,
         ];
 
         // Preload videos

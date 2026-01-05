@@ -335,35 +335,112 @@ const HeroSection = () => {
               </div>
             </div>
 
-            {/* Fleet Info Overlay - Shows when hovering Fleet Operating stats */}
+            {/* Fleet Info Overlay - Split Screen Reveal */}
             <div
-              className={`absolute inset-0 z-20 flex items-center justify-center will-change-transform transition-all duration-500 ease-in-out ${
+              className={`absolute inset-0 z-20 overflow-hidden transition-all duration-700 ease-out ${
                 showFleetInfo
-                  ? "opacity-100 visible scale-100"
-                  : "opacity-0 invisible scale-95 pointer-events-none"
+                  ? "opacity-100 visible"
+                  : "opacity-0 invisible pointer-events-none"
               }`}
               onMouseEnter={() => setIsHoveringFleet(true)}
               onMouseLeave={() => setIsHoveringFleet(false)}
             >
-              <div className="relative h-full w-full max-w-3xl overflow-hidden rounded-2xl border border-white/20 shadow-2xl">
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  preload="metadata"
-                  className="h-full w-full object-cover object-[center_60%]"
+              {/* Split Screen Container */}
+              <div className="relative flex h-full w-full items-center">
+                {/* Left Side - Dark Backdrop with Info */}
+                <div
+                  className={`relative z-10 flex h-full w-1/2 flex-col items-end justify-center pr-8 transition-all duration-700 ease-out ${
+                    showFleetInfo ? "translate-x-0" : "-translate-x-full"
+                  }`}
                 >
-                  <source src={trucksVideo} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-6">
-                  <div className="text-[clamp(2rem,6vw,4rem)] font-black uppercase leading-[0.85] tracking-[-0.05em] text-white">
-                    ACTIVE FLEET
+                  <div className="absolute inset-0 bg-gradient-to-r from-black via-black to-black/80 backdrop-blur-xl" />
+                  <div className="relative space-y-4 text-right">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-[#15803d]/30 bg-[#15803d]/10 px-4 py-2">
+                      <div className="relative flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#22c55e] opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-[#22c55e]" />
+                      </div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#22c55e]">
+                        Live Operations
+                      </span>
+                    </div>
+                    <h3 className="text-[clamp(2rem,5vw,3.5rem)] font-black uppercase leading-[0.9] tracking-tight text-white">
+                      ACTIVE
+                      <br />
+                      <span className="bg-gradient-to-br from-[#15803d] via-[#16a34a] to-[#22c55e] bg-clip-text text-transparent">
+                        FLEET
+                      </span>
+                    </h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-end gap-3">
+                        <span className="text-sm text-white/60">
+                          Trucks Operating
+                        </span>
+                        <span className="text-2xl font-bold text-white">5</span>
+                      </div>
+                      <div className="flex items-center justify-end gap-3">
+                        <span className="text-sm text-white/60">
+                          Service Hours
+                        </span>
+                        <span className="text-2xl font-bold text-white">
+                          24/7
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-end gap-3">
+                        <span className="text-sm text-white/60">
+                          Coverage Area
+                        </span>
+                        <span className="text-lg font-bold text-white">
+                          Cebu
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-2 text-[clamp(0.875rem,2vw,1.25rem)] font-medium text-white/80">
-                    5 Trucks Operating 24/7
+                </div>
+
+                {/* Vertical Divider Line */}
+                <div
+                  className={`absolute left-1/2 top-0 z-20 h-full w-px transition-all duration-700 ease-out ${
+                    showFleetInfo ? "opacity-100" : "opacity-0"
+                  }`}
+                >
+                  <div className="h-full w-full bg-gradient-to-b from-transparent via-[#15803d] to-transparent" />
+                  {/* Animated glowing dot */}
+                  <div
+                    className={`absolute left-1/2 top-0 h-2 w-2 -translate-x-1/2 rounded-full bg-[#22c55e] shadow-[0_0_20px_rgba(34,197,94,0.8)] ${
+                      showFleetInfo
+                        ? "animate-[slide-down_3s_ease-in-out_infinite]"
+                        : ""
+                    }`}
+                  />
+                </div>
+
+                {/* Right Side - Video */}
+                <div
+                  className={`relative z-10 h-full w-1/2 transition-all duration-700 ease-out ${
+                    showFleetInfo ? "translate-x-0" : "translate-x-full"
+                  }`}
+                >
+                  <div className="relative h-full w-full overflow-hidden">
+                    <video
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="h-full w-full object-cover"
+                    >
+                      <source src={trucksVideo} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                    {/* Subtle gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-black/20" />
+
+                    {/* Video Frame Corners */}
+                    <div className="absolute left-4 top-4 h-8 w-8 border-l-2 border-t-2 border-[#15803d]" />
+                    <div className="absolute right-4 top-4 h-8 w-8 border-r-2 border-t-2 border-[#15803d]" />
+                    <div className="absolute bottom-4 left-4 h-8 w-8 border-b-2 border-l-2 border-[#15803d]" />
+                    <div className="absolute bottom-4 right-4 h-8 w-8 border-b-2 border-r-2 border-[#15803d]" />
                   </div>
                 </div>
               </div>
