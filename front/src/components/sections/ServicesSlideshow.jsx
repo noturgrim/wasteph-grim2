@@ -2,15 +2,20 @@ import React, { useState, useEffect } from "react";
 import SectionShell from "../common/SectionShell";
 import RevealOnScroll from "../common/RevealOnScroll";
 import FadeInUp from "../common/FadeInUp";
+import {
+  fetchFacebookPosts,
+  transformFacebookPost,
+} from "../../services/facebookService";
 
-// Showcase events
+// Fallback showcase events (used if Facebook API fails)
 import img1 from "../../assets/showcase/img1.jpeg";
 import img2 from "../../assets/showcase/img2.jpeg";
 import img3 from "../../assets/showcase/img3.jpeg";
 import img4 from "../../assets/showcase/img4.jpeg";
 import img5 from "../../assets/showcase/img5.jpeg";
 
-const showcaseEvents = [
+// Fallback events if Facebook API fails
+const fallbackEvents = [
   {
     id: 1,
     title: "Plastic 101 Education Program",
@@ -60,12 +65,17 @@ const showcaseEvents = [
 
 // Event Card Component
 const EventCard = ({ event, index, isActive, onClick }) => {
-  const handleClick = () => onClick(index);
+  const handleClick = () => {
+    onClick(index);
+    if (event.link) {
+      window.open(event.link, "_blank", "noopener,noreferrer");
+    }
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      onClick(index);
+      handleClick();
     }
   };
 
@@ -144,7 +154,7 @@ const EventCard = ({ event, index, isActive, onClick }) => {
             isActive ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
           }`}
         >
-          <p className="text-sm leading-relaxed text-white/70">
+          <p className="line-clamp-4 text-sm leading-relaxed text-white/70">
             {event.description}
           </p>
         </div>
@@ -155,18 +165,18 @@ const EventCard = ({ event, index, isActive, onClick }) => {
             isActive ? "text-[#16a34a]" : "text-white/40"
           }`}
         >
-          <span>{isActive ? "Now Viewing" : "Click to View"}</span>
+          <span>View on Facebook</span>
           <svg
-            className={`h-3 w-3 transition-transform ${
-              isActive ? "rotate-90" : ""
-            }`}
+            className="h-3 w-3"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
             aria-hidden="true"
           >
-            <polyline points="9 18 15 12 9 6" />
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" />
+            <line x1="10" y1="14" x2="21" y2="3" />
           </svg>
         </div>
       </div>
@@ -183,6 +193,37 @@ const EventCard = ({ event, index, isActive, onClick }) => {
 
 const ServicesSlideshow = () => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showcaseEvents, setShowcaseEvents] = useState(fallbackEvents);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch Facebook posts on mount
+  useEffect(() => {
+    loadFacebookPosts();
+  }, []);
+
+  const loadFacebookPosts = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const posts = await fetchFacebookPosts(6);
+
+      if (posts && posts.length > 0) {
+        const transformedPosts = posts.map(transformFacebookPost);
+        setShowcaseEvents(transformedPosts);
+      } else {
+        // No posts returned, use fallback
+        setShowcaseEvents(fallbackEvents);
+      }
+    } catch (err) {
+      console.error("Failed to load Facebook posts:", err);
+      setError(err.message || "Failed to load posts from Facebook");
+      setShowcaseEvents(fallbackEvents);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Preload all images
   useEffect(() => {
@@ -192,10 +233,14 @@ const ServicesSlideshow = () => {
         img.src = event.image;
       }
     });
-  }, []);
+  }, [showcaseEvents]);
 
   const handleCardClick = (index) => {
     setActiveIndex(index);
+  };
+
+  const handleRetry = () => {
+    loadFacebookPosts();
   };
 
   return (
@@ -215,26 +260,52 @@ const ServicesSlideshow = () => {
               Discover our recent partnerships, events, and initiatives making a
               positive impact across Cebu
             </p>
+            {isLoading && (
+              <p className="mt-2 text-xs text-white/40">
+                Loading latest posts...
+              </p>
+            )}
           </div>
         </FadeInUp>
 
         {/* Events Grid */}
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-          {showcaseEvents.map((event, index) => (
-            <RevealOnScroll
-              key={event.id}
-              delayClass={`delay-[${(index + 1) * 100}ms]`}
-              variant="fade-up"
-            >
-              <EventCard
-                event={event}
-                index={index}
-                isActive={activeIndex === index}
-                onClick={handleCardClick}
-              />
-            </RevealOnScroll>
-          ))}
-        </div>
+        {!isLoading && showcaseEvents.length > 0 && (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+            {showcaseEvents.map((event, index) => (
+              <RevealOnScroll
+                key={event.id}
+                delayClass={`delay-[${(index + 1) * 100}ms]`}
+                variant="fade-up"
+              >
+                <EventCard
+                  event={event}
+                  index={index}
+                  isActive={activeIndex === index}
+                  onClick={handleCardClick}
+                />
+              </RevealOnScroll>
+            ))}
+          </div>
+        )}
+
+        {/* Loading Skeleton */}
+        {isLoading && (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div
+                key={i}
+                className="flex h-full w-full flex-col overflow-hidden rounded-xl border border-white/5 bg-white/2"
+              >
+                <div className="aspect-video animate-pulse bg-white/5" />
+                <div className="flex flex-1 flex-col gap-3 p-5">
+                  <div className="h-6 w-3/4 animate-pulse rounded bg-white/5" />
+                  <div className="h-4 w-1/2 animate-pulse rounded bg-white/5" />
+                  <div className="h-16 w-full animate-pulse rounded bg-white/5" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </SectionShell>
   );
