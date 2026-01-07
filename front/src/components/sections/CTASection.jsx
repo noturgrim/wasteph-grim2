@@ -57,18 +57,139 @@ const CTASection = () => {
   const [formData, setFormData] = useState({
     company: "",
     email: "",
+    phone: "",
     wasteType: "",
     location: "",
   });
   const [focusedField, setFocusedField] = useState(null);
   const [submitStatus, setSubmitStatus] = useState(null);
+  const [errors, setErrors] = useState({});
+
+  // Validation functions
+  const validatePhone = (phone) => {
+    // Remove all non-digit characters for validation
+    const digitsOnly = phone.replace(/\D/g, "");
+
+    // Philippine phone number validation
+    // Mobile: 09XX XXX XXXX (11 digits) or +639XX XXX XXXX (13 digits with +63)
+    // Landline: (0XX) XXX XXXX (10 digits)
+
+    if (!phone.trim()) {
+      return "Phone number is required";
+    }
+
+    // Check if starts with +63 (Philippine country code)
+    if (phone.startsWith("+63")) {
+      if (digitsOnly.length !== 12) {
+        // +63 + 10 digits
+        return "Philippine mobile number should be +63 9XX XXX XXXX";
+      }
+      if (!digitsOnly.startsWith("639")) {
+        return "Philippine mobile number should start with +63 9";
+      }
+    }
+    // Check if starts with 09 (Philippine mobile format)
+    else if (phone.startsWith("09")) {
+      if (digitsOnly.length !== 11) {
+        return "Philippine mobile number should be 09XX XXX XXXX (11 digits)";
+      }
+    }
+    // Check if it's a landline format starting with 0
+    else if (phone.startsWith("0") && !phone.startsWith("09")) {
+      if (digitsOnly.length < 10 || digitsOnly.length > 11) {
+        return "Landline number should be 10-11 digits";
+      }
+    }
+    // International format without +
+    else if (digitsOnly.length >= 10 && digitsOnly.length <= 15) {
+      // Allow international numbers (10-15 digits)
+      return null;
+    } else {
+      return "Please enter a valid phone number";
+    }
+
+    return null; // No error
+  };
+
+  const validateEmail = (email) => {
+    if (!email.trim()) {
+      return "Email is required";
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return "Please enter a valid email address";
+    }
+
+    return null;
+  };
+
+  const validateCompany = (company) => {
+    if (!company.trim()) {
+      return "Company/Site name is required";
+    }
+
+    if (company.trim().length < 2) {
+      return "Company name must be at least 2 characters";
+    }
+
+    return null;
+  };
 
   const handleChange = (field) => (e) => {
-    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+    const value = e.target.value;
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
+    // Clear error for this field when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: null }));
+    }
+  };
+
+  const handleBlur = (field) => () => {
+    setFocusedField(null);
+
+    // Validate on blur
+    let error = null;
+    if (field === "phone") {
+      error = validatePhone(formData.phone);
+    } else if (field === "email") {
+      error = validateEmail(formData.email);
+    } else if (field === "company") {
+      error = validateCompany(formData.company);
+    }
+
+    if (error) {
+      setErrors((prev) => ({ ...prev, [field]: error }));
+    }
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
+
+    // Validate all fields before submission
+    const newErrors = {};
+    newErrors.company = validateCompany(formData.company);
+    newErrors.email = validateEmail(formData.email);
+    newErrors.phone = validatePhone(formData.phone);
+
+    if (!formData.wasteType.trim()) {
+      newErrors.wasteType = "Waste type is required";
+    }
+
+    if (!formData.location.trim()) {
+      newErrors.location = "Location is required";
+    }
+
+    // Filter out null errors
+    const hasErrors = Object.values(newErrors).some((error) => error !== null);
+
+    if (hasErrors) {
+      setErrors(newErrors);
+      setSubmitStatus("error");
+      setTimeout(() => setSubmitStatus(null), 3000);
+      return;
+    }
 
     // Create email content
     const subject = encodeURIComponent(
@@ -78,6 +199,7 @@ const CTASection = () => {
       `New inquiry from Waste PH website:\n\n` +
         `Company/Site: ${formData.company}\n` +
         `Email: ${formData.email}\n` +
+        `Phone: ${formData.phone}\n` +
         `Waste Type: ${formData.wasteType}\n` +
         `Location: ${formData.location}\n\n` +
         `---\n` +
@@ -95,9 +217,11 @@ const CTASection = () => {
       setFormData({
         company: "",
         email: "",
+        phone: "",
         wasteType: "",
         location: "",
       });
+      setErrors({});
       setSubmitStatus(null);
     }, 3000);
   };
@@ -171,14 +295,30 @@ const CTASection = () => {
                   </span>
                   <input
                     type="text"
-                    className="w-full rounded-lg border-2 border-white/30 bg-white/8 px-4 py-3 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)] sm:text-base"
+                    className={`w-full rounded-lg border-2 bg-white/8 px-4 py-3 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 sm:text-base ${
+                      errors.company
+                        ? "border-red-500 focus:border-red-500 focus:bg-red-500/10 focus:shadow-[0_0_25px_rgba(239,68,68,0.4)]"
+                        : "border-white/30 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)]"
+                    }`}
                     placeholder="Your business name"
                     value={formData.company}
                     onChange={handleChange("company")}
                     onFocus={() => setFocusedField("company")}
-                    onBlur={() => setFocusedField(null)}
+                    onBlur={handleBlur("company")}
                     required
+                    aria-invalid={errors.company ? "true" : "false"}
+                    aria-describedby={
+                      errors.company ? "company-error" : undefined
+                    }
                   />
+                  {errors.company && (
+                    <p
+                      id="company-error"
+                      className="text-xs text-red-400 font-medium"
+                    >
+                      {errors.company}
+                    </p>
+                  )}
                 </label>
 
                 {/* Email */}
@@ -198,14 +338,68 @@ const CTASection = () => {
                   </span>
                   <input
                     type="email"
-                    className="w-full rounded-lg border-2 border-white/30 bg-white/8 px-4 py-3 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)] sm:text-base"
+                    className={`w-full rounded-lg border-2 bg-white/8 px-4 py-3 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 sm:text-base ${
+                      errors.email
+                        ? "border-red-500 focus:border-red-500 focus:bg-red-500/10 focus:shadow-[0_0_25px_rgba(239,68,68,0.4)]"
+                        : "border-white/30 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)]"
+                    }`}
                     placeholder="your@email.com"
                     value={formData.email}
                     onChange={handleChange("email")}
                     onFocus={() => setFocusedField("email")}
-                    onBlur={() => setFocusedField(null)}
+                    onBlur={handleBlur("email")}
                     required
+                    aria-invalid={errors.email ? "true" : "false"}
+                    aria-describedby={errors.email ? "email-error" : undefined}
                   />
+                  {errors.email && (
+                    <p
+                      id="email-error"
+                      className="text-xs text-red-400 font-medium"
+                    >
+                      {errors.email}
+                    </p>
+                  )}
+                </label>
+
+                {/* Phone Number */}
+                <label className="group relative space-y-2">
+                  <span className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-[#15803d] sm:text-sm">
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                    </svg>
+                    Phone Number
+                  </span>
+                  <input
+                    type="tel"
+                    className={`w-full rounded-lg border-2 bg-white/8 px-4 py-3 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 sm:text-base ${
+                      errors.phone
+                        ? "border-red-500 focus:border-red-500 focus:bg-red-500/10 focus:shadow-[0_0_25px_rgba(239,68,68,0.4)]"
+                        : "border-white/30 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)]"
+                    }`}
+                    placeholder="+63 912 345 6789"
+                    value={formData.phone}
+                    onChange={handleChange("phone")}
+                    onFocus={() => setFocusedField("phone")}
+                    onBlur={handleBlur("phone")}
+                    required
+                    aria-invalid={errors.phone ? "true" : "false"}
+                    aria-describedby={errors.phone ? "phone-error" : undefined}
+                  />
+                  {errors.phone && (
+                    <p
+                      id="phone-error"
+                      className="text-xs text-red-400 font-medium"
+                    >
+                      {errors.phone}
+                    </p>
+                  )}
                 </label>
 
                 {/* Waste Type */}
@@ -224,14 +418,30 @@ const CTASection = () => {
                   </span>
                   <input
                     type="text"
-                    className="w-full rounded-lg border-2 border-white/30 bg-white/8 px-4 py-3 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)] sm:text-base"
+                    className={`w-full rounded-lg border-2 bg-white/8 px-4 py-3 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 sm:text-base ${
+                      errors.wasteType
+                        ? "border-red-500 focus:border-red-500 focus:bg-red-500/10 focus:shadow-[0_0_25px_rgba(239,68,68,0.4)]"
+                        : "border-white/30 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)]"
+                    }`}
                     placeholder="Mixed, food, residual..."
                     value={formData.wasteType}
                     onChange={handleChange("wasteType")}
                     onFocus={() => setFocusedField("wasteType")}
                     onBlur={() => setFocusedField(null)}
                     required
+                    aria-invalid={errors.wasteType ? "true" : "false"}
+                    aria-describedby={
+                      errors.wasteType ? "wasteType-error" : undefined
+                    }
                   />
+                  {errors.wasteType && (
+                    <p
+                      id="wasteType-error"
+                      className="text-xs text-red-400 font-medium"
+                    >
+                      {errors.wasteType}
+                    </p>
+                  )}
                 </label>
 
                 {/* Location */}
@@ -251,14 +461,30 @@ const CTASection = () => {
                   </span>
                   <input
                     type="text"
-                    className="w-full rounded-lg border-2 border-white/30 bg-white/8 px-4 py-3 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)] sm:text-base"
+                    className={`w-full rounded-lg border-2 bg-white/8 px-4 py-3 text-sm font-medium text-white outline-none transition-all placeholder:text-white/40 sm:text-base ${
+                      errors.location
+                        ? "border-red-500 focus:border-red-500 focus:bg-red-500/10 focus:shadow-[0_0_25px_rgba(239,68,68,0.4)]"
+                        : "border-white/30 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)]"
+                    }`}
                     placeholder="City or site address"
                     value={formData.location}
                     onChange={handleChange("location")}
                     onFocus={() => setFocusedField("location")}
                     onBlur={() => setFocusedField(null)}
                     required
+                    aria-invalid={errors.location ? "true" : "false"}
+                    aria-describedby={
+                      errors.location ? "location-error" : undefined
+                    }
                   />
+                  {errors.location && (
+                    <p
+                      id="location-error"
+                      className="text-xs text-red-400 font-medium"
+                    >
+                      {errors.location}
+                    </p>
+                  )}
                 </label>
               </div>
 
@@ -266,10 +492,12 @@ const CTASection = () => {
               <div className="pt-2">
                 <button
                   type="submit"
-                  className={`group relative w-full overflow-hidden rounded-xl px-8 py-4 text-base font-black uppercase tracking-wide text-white shadow-[0_8px_30px_rgba(21,128,61,0.4)] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#15803d] focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
+                  className={`group relative w-full overflow-hidden rounded-xl px-8 py-4 text-base font-black uppercase tracking-wide text-white shadow-[0_8px_30px_rgba(21,128,61,0.4)] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${
                     submitStatus === "success"
-                      ? "bg-[#16a34a]"
-                      : "bg-linear-to-r from-[#15803d] to-[#16a34a] hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(21,128,61,0.6)]"
+                      ? "bg-[#16a34a] focus-visible:ring-[#16a34a]"
+                      : submitStatus === "error"
+                      ? "bg-red-600 shadow-[0_8px_30px_rgba(239,68,68,0.4)] focus-visible:ring-red-500"
+                      : "bg-linear-to-r from-[#15803d] to-[#16a34a] hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(21,128,61,0.6)] focus-visible:ring-[#15803d]"
                   }`}
                 >
                   <span className="relative z-10 flex items-center justify-center gap-2">
@@ -285,6 +513,21 @@ const CTASection = () => {
                           <path d="M20 6L9 17l-5-5" />
                         </svg>
                         Email Client Opened
+                      </>
+                    ) : submitStatus === "error" ? (
+                      <>
+                        <svg
+                          className="h-5 w-5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="8" x2="12" y2="12" />
+                          <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                        Please Fix Errors
                       </>
                     ) : (
                       <>
@@ -302,7 +545,7 @@ const CTASection = () => {
                     )}
                   </span>
                   {/* Shimmer effect */}
-                  {submitStatus !== "success" && (
+                  {submitStatus !== "success" && submitStatus !== "error" && (
                     <div className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                   )}
                 </button>
