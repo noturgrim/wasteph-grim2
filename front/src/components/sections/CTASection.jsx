@@ -549,6 +549,12 @@ const CTASection = () => {
                     <div className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                   )}
                 </button>
+
+                {/* Note */}
+                <p className="mt-3 text-center text-xs text-white/60 leading-relaxed">
+                  After sending your email, our team will contact you shortly to
+                  discuss your waste management needs.
+                </p>
               </div>
 
               {/* Contact Info */}
