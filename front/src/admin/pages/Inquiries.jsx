@@ -29,6 +29,7 @@ import { AddInquiryDialog } from "../components/inquiries/AddInquiryDialog";
 import { EditInquiryDialog } from "../components/inquiries/EditInquiryDialog";
 import { ViewInquiryDialog } from "../components/inquiries/ViewInquiryDialog";
 import { RequestProposalDialog } from "../components/inquiries/RequestProposalDialog";
+import { SendProposalDialog } from "../components/inquiries/SendProposalDialog";
 import { createColumns } from "../components/inquiries/columns";
 
 export default function Inquiries() {
@@ -74,6 +75,7 @@ export default function Inquiries() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRequestProposalDialogOpen, setIsRequestProposalDialogOpen] = useState(false);
+  const [isSendProposalDialogOpen, setIsSendProposalDialogOpen] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState(null);
 
   // Submission states
@@ -222,6 +224,10 @@ export default function Inquiries() {
     onRequestProposal: (inquiry) => {
       setSelectedInquiry(inquiry);
       setIsRequestProposalDialogOpen(true);
+    },
+    onSendToClient: (inquiry) => {
+      setSelectedInquiry(inquiry);
+      setIsSendProposalDialogOpen(true);
     },
     onDelete: handleDeleteInquiry,
     userRole: user?.role,
@@ -517,6 +523,16 @@ export default function Inquiries() {
       <RequestProposalDialog
         open={isRequestProposalDialogOpen}
         onOpenChange={setIsRequestProposalDialogOpen}
+        inquiry={selectedInquiry}
+        onSuccess={() => {
+          fetchAllInquiries();
+          fetchInquiries();
+        }}
+      />
+
+      <SendProposalDialog
+        open={isSendProposalDialogOpen}
+        onOpenChange={setIsSendProposalDialogOpen}
         inquiry={selectedInquiry}
         onSuccess={() => {
           fetchAllInquiries();

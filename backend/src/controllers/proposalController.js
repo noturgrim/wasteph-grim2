@@ -149,7 +149,7 @@ export const approveProposal = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: proposal,
-      message: "Proposal approved and email sent successfully",
+      message: "Proposal approved successfully. Sales can now send it to the client.",
     });
   } catch (error) {
     next(error);
@@ -189,6 +189,39 @@ export const rejectProposal = async (req, res, next) => {
       success: true,
       data: proposal,
       message: "Proposal rejected",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Send proposal to client - SALES ONLY (own proposals)
+ * POST /api/proposals/:id/send
+ */
+export const sendProposal = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const metadata = {
+      ipAddress: req.ip,
+      userAgent: req.get("user-agent"),
+    };
+
+    // Only sales can send proposals
+    if (req.user.role !== "sales") {
+      throw new AppError("Only sales users can send proposals", 403);
+    }
+
+    const proposal = await proposalService.sendProposal(
+      id,
+      req.user.id,
+      metadata
+    );
+
+    res.status(200).json({
+      success: true,
+      data: proposal,
+      message: "Proposal sent to client successfully",
     });
   } catch (error) {
     next(error);
@@ -286,6 +319,42 @@ export const downloadProposalPDF = async (req, res, next) => {
       `attachment; filename="WastePH_Proposal_${id}.pdf"`
     );
     res.send(pdfBuffer);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Preview proposal PDF without saving
+ * POST /api/proposals/:id/preview-pdf
+ */
+export const previewProposalPDF = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const proposal = await proposalService.getProposalById(id);
+
+    // Permission check - only creator can preview
+    if (
+      req.user.role === "sales" &&
+      !req.user.isMasterSales &&
+      proposal.requestedBy !== req.user.id
+    ) {
+      throw new AppError("Access denied", 403);
+    }
+
+    // Generate PDF on-the-fly (don't save)
+    const pdfBuffer = await proposalService.generatePreviewPDF(id);
+
+    // Return PDF as base64 for frontend display
+    const base64PDF = pdfBuffer.toString("base64");
+
+    res.json({
+      success: true,
+      data: {
+        pdfBase64: base64PDF,
+        contentType: "application/pdf",
+      },
+    });
   } catch (error) {
     next(error);
   }

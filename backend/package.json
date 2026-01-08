@@ -15,7 +15,8 @@
     "db:reset": "node src/scripts/resetDatabase.js",
     "seed:admin": "node src/scripts/seedAdmin.js",
     "seed:services": "node src/scripts/seedServices.js",
-    "seed:proposal-template": "node src/scripts/seedProposalTemplate.js"
+    "seed:proposal-template": "node src/scripts/seedProposalTemplate.js",
+    "migrate:proposal-status": "node src/scripts/migrateProposalStatus.js"
   },
   "keywords": [],
   "author": "",

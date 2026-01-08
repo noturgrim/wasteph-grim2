@@ -56,10 +56,11 @@ export const priorityLevelEnum = pgEnum("priority_level", [
   "high",
 ]);
 export const proposalStatusEnum = pgEnum("proposal_status", [
-  "pending",
-  "approved",
-  "rejected",
-  "cancelled",
+  "pending",    // Sales created, waiting for admin review
+  "approved",   // Admin approved, waiting for sales to send
+  "rejected",   // Admin rejected, sales can revise
+  "sent",       // Sales sent to client
+  "cancelled",  // Cancelled by sales or admin
 ]);
 
 // Lucia Auth Tables
@@ -312,6 +313,8 @@ export const proposalTable = pgTable("proposal", {
   adminNotes: text("admin_notes"),
 
   // Email Tracking
+  sentBy: text("sent_by").references(() => userTable.id), // Sales user who sent to client
+  sentAt: timestamp("sent_at", { withTimezone: true }), // When sent to client
   emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
   emailStatus: text("email_status"), // "sent", "failed"
 

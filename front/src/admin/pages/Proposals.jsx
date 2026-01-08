@@ -18,7 +18,7 @@ import { DataTable } from "../components/DataTable";
 import { FacetedFilter } from "../components/FacetedFilter";
 import { SearchInput } from "../components/SearchInput";
 import { createColumns } from "../components/proposals/columns";
-import { ViewProposalDialog } from "../components/proposals/ViewProposalDialog";
+import { ReviewProposalDialog } from "../components/proposals/ReviewProposalDialog";
 import { ApproveProposalDialog } from "../components/proposals/ApproveProposalDialog";
 import { RejectProposalDialog } from "../components/proposals/RejectProposalDialog";
 
@@ -54,10 +54,9 @@ export default function Proposals() {
   const [users, setUsers] = useState([]);
 
   // Dialogs
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedProposal, setSelectedProposal] = useState(null);
 
   // Fetch users on mount
@@ -110,9 +109,9 @@ export default function Proposals() {
     }
   };
 
-  const handleView = (proposal) => {
+  const handleReview = (proposal) => {
     setSelectedProposal(proposal);
-    setIsViewDialogOpen(true);
+    setIsReviewDialogOpen(true);
   };
 
   const handleApprove = (proposal) => {
@@ -123,11 +122,6 @@ export default function Proposals() {
   const handleReject = (proposal) => {
     setSelectedProposal(proposal);
     setIsRejectDialogOpen(true);
-  };
-
-  const handleEdit = (proposal) => {
-    setSelectedProposal(proposal);
-    setIsEditDialogOpen(true);
   };
 
   const handleDownload = async (proposal) => {
@@ -144,7 +138,7 @@ export default function Proposals() {
   const confirmApprove = async (adminNotes = "") => {
     try {
       await api.approveProposal(selectedProposal.id, adminNotes);
-      toast.success("Proposal approved and sent to client");
+      toast.success("Proposal approved successfully");
       setIsApproveDialogOpen(false);
       fetchProposals();
     } catch (error) {
@@ -163,6 +157,20 @@ export default function Proposals() {
     }
   };
 
+  const handleDelete = async (proposal) => {
+    if (!window.confirm(`Are you sure you want to delete the proposal for ${proposal.inquiryName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await api.cancelProposal(proposal.id);
+      toast.success("Proposal deleted successfully");
+      fetchProposals();
+    } catch (error) {
+      toast.error(error.message || "Failed to delete proposal");
+    }
+  };
+
   const handlePageChange = (newPage) => {
     setPagination(prev => ({ ...prev, page: newPage }));
     fetchProposals(newPage);
@@ -178,11 +186,9 @@ export default function Proposals() {
   // Create columns with handlers
   const allColumns = createColumns({
     users,
-    onView: handleView,
-    onApprove: handleApprove,
-    onReject: handleReject,
-    onEdit: handleEdit,
+    onReview: handleReview,
     onDownload: handleDownload,
+    onDelete: handleDelete,
   });
 
   // Filter columns based on visibility
@@ -356,9 +362,9 @@ export default function Proposals() {
       />
 
       {/* Dialogs */}
-      <ViewProposalDialog
-        open={isViewDialogOpen}
-        onOpenChange={setIsViewDialogOpen}
+      <ReviewProposalDialog
+        open={isReviewDialogOpen}
+        onOpenChange={setIsReviewDialogOpen}
         proposal={selectedProposal}
         users={users}
         onApprove={handleApprove}

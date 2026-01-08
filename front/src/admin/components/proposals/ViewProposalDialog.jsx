@@ -62,7 +62,7 @@ export function ViewProposalDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="!w-[70vw] !max-w-[70vw] h-[90vh] !max-h-[90vh] overflow-y-auto p-6">
         <DialogHeader>
           <DialogTitle>Proposal Details</DialogTitle>
           <DialogDescription>
@@ -272,7 +272,7 @@ export function ViewProposalDialog({
                 className="bg-green-600 hover:bg-green-700"
               >
                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                Approve & Send
+                Approve
               </Button>
             </>
           )}

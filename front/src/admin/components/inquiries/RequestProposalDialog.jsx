@@ -18,9 +18,10 @@ import { toast } from "sonner";
 export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
-  const [previewHtml, setPreviewHtml] = useState("");
+  const [previewPdfBase64, setPreviewPdfBase64] = useState("");
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [defaultTemplate, setDefaultTemplate] = useState(null);
+  const [tempProposalId, setTempProposalId] = useState(null);
   const [services, setServices] = useState([
     { name: "", description: "", quantity: 1, unitPrice: 0, subtotal: 0 },
   ]);
@@ -147,7 +148,7 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
       const validityDate = new Date();
       validityDate.setDate(validityDate.getDate() + (parseInt(terms.validityDays) || 30));
 
-      // Prepare sample data for preview
+      // Prepare sample data for preview (NO DATABASE SAVE)
       const sampleData = {
         services: services.map(s => ({
           name: s.name,
@@ -167,8 +168,9 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
         clientCompany: inquiry?.company || "",
       };
 
+      // Generate HTML preview (no database save)
       const response = await api.previewProposalTemplate(defaultTemplate.htmlTemplate, sampleData);
-      setPreviewHtml(response.data.renderedHtml);
+      setPreviewPdfBase64(response.data.renderedHtml);
       setShowPreview(true);
     } catch (error) {
       toast.error("Failed to generate preview");
@@ -221,6 +223,7 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
       setPricing({ taxRate: 12, discount: 0 });
       setTerms({ paymentTerms: "Net 30", validityDays: 30, notes: "" });
       setShowPreview(false);
+      setPreviewPdfBase64("");
     } catch (error) {
       toast.error(error.message || "Failed to submit proposal request");
     } finally {
@@ -237,7 +240,7 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
       onOpenChange(isOpen);
       if (!isOpen) setShowPreview(false);
     }}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="!w-[70vw] !max-w-[70vw] h-[90vh] !max-h-[90vh] overflow-y-auto p-6">
         <DialogHeader>
           <DialogTitle>
             {showPreview
@@ -490,7 +493,7 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
                 {/* Rendered HTML Preview */}
                 <div className="border rounded-lg overflow-hidden bg-white">
                   <iframe
-                    srcDoc={previewHtml}
+                    srcDoc={previewPdfBase64}
                     title="Proposal Preview"
                     className="w-full h-[600px] border-0"
                     sandbox="allow-same-origin"

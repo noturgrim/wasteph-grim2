@@ -6,12 +6,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown, FileText } from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown, FileText, Send } from "lucide-react";
 import { format } from "date-fns";
 import { StatusBadge } from "../StatusBadge";
 import { Badge } from "@/components/ui/badge";
 
-export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestProposal, userRole }) => [
+export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestProposal, onSendToClient, userRole }) => [
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -222,6 +222,19 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestP
             >
               <FileText className="h-4 w-4 mr-1" />
               Revise Proposal
+            </Button>
+          )}
+
+          {/* Show Send to Client button for approved proposals */}
+          {inquiry.proposalStatus === "approved" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onSendToClient(inquiry)}
+              className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            >
+              <Send className="h-4 w-4 mr-1" />
+              Send to Client
             </Button>
           )}
 

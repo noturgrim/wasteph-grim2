@@ -228,7 +228,7 @@ class ProposalService {
   }
 
   /**
-   * Approve proposal - WITH ROBUST ERROR HANDLING
+   * Approve proposal - Admin approves proposal (does NOT send email)
    * @param {string} proposalId - Proposal UUID
    * @param {string} adminId - Admin approving
    * @param {string} adminNotes - Admin notes
@@ -243,15 +243,82 @@ class ProposalService {
       throw new AppError("Proposal already reviewed", 400);
     }
 
-    // Step 2: Get inquiry and validate it exists
-    const inquiry = await inquiryService.getInquiryById(proposal.inquiryId);
+    // Step 2: Update proposal to approved (NO email sending, NO PDF generation)
+    const [updatedProposal] = await db
+      .update(proposalTable)
+      .set({
+        status: "approved",
+        reviewedBy: adminId,
+        reviewedAt: new Date(),
+        adminNotes,
+        updatedAt: new Date(),
+      })
+      .where(eq(proposalTable.id, proposalId))
+      .returning();
 
-    // Step 3: Get template
+    // Step 3: Notify sales person that proposal is approved (non-critical)
+    try {
+      const { userTable } = await import("../db/schema.js");
+      const [salesUser] = await db
+        .select()
+        .from(userTable)
+        .where(eq(userTable.id, proposal.requestedBy))
+        .limit(1);
+
+      if (salesUser) {
+        const inquiry = await inquiryService.getInquiryById(proposal.inquiryId);
+        await emailService.sendNotificationEmail(
+          salesUser.email,
+          "Proposal Approved - Ready to Send",
+          `Your proposal for ${inquiry.name} has been approved. You can now send it to the client.`
+        );
+      }
+    } catch (error) {
+      console.error("Failed to notify sales:", error);
+      // Don't throw - notification failure shouldn't fail approval
+    }
+
+    // Step 4: Log activity
+    await this.logActivity({
+      userId: adminId,
+      action: "proposal_approved",
+      entityType: "proposal",
+      entityId: proposal.id,
+      details: { inquiryId: proposal.inquiryId },
+      ipAddress: metadata.ipAddress,
+      userAgent: metadata.userAgent,
+    });
+
+    return updatedProposal;
+  }
+
+  /**
+   * Send proposal to client - Sales sends approved proposal via email
+   * @param {string} proposalId - Proposal UUID
+   * @param {string} salesUserId - Sales user sending the proposal
+   * @param {Object} metadata - Request metadata
+   * @returns {Promise<Object>} Updated proposal
+   */
+  async sendProposal(proposalId, salesUserId, metadata = {}) {
+    // Step 1: Validate proposal is approved
+    const proposal = await this.getProposalById(proposalId);
+
+    if (proposal.status !== "approved") {
+      throw new AppError("Can only send approved proposals", 400);
+    }
+
+    // Step 2: Validate sales user is the one who requested it
+    if (proposal.requestedBy !== salesUserId) {
+      throw new AppError("Only the requesting sales person can send this proposal", 403);
+    }
+
+    // Step 3: Get inquiry and template
+    const inquiry = await inquiryService.getInquiryById(proposal.inquiryId);
     const template = await proposalTemplateService.getTemplateById(
       proposal.templateId
     );
 
-    // Step 4: Generate PDF (FAIL FAST if this fails)
+    // Step 4: Generate PDF
     let pdfBuffer, pdfUrl;
     try {
       pdfBuffer = await pdfService.generateProposalPDF(
@@ -264,99 +331,80 @@ class ProposalService {
       throw new AppError("PDF generation failed: " + error.message, 500);
     }
 
-    // Step 5: Send email - CRITICAL PATH (skip in development if SKIP_EMAIL_IN_DEV is set)
-    const skipEmail = process.env.SKIP_EMAIL_IN_DEV === "true" && process.env.NODE_ENV === "development";
-    let emailResult;
+    // Step 5: Send email to client
+    try {
+      const emailResult = await emailService.sendProposalEmail(
+        inquiry.email,
+        JSON.parse(proposal.proposalData),
+        inquiry,
+        pdfBuffer
+      );
 
-    if (skipEmail) {
-      console.log("[DEV MODE] Skipping email send - SKIP_EMAIL_IN_DEV is enabled");
-      emailResult = { success: true };
-    } else {
-      try {
-        emailResult = await emailService.sendProposalEmail(
-          inquiry.email,
-          JSON.parse(proposal.proposalData),
-          inquiry,
-          pdfBuffer
-        );
-
-        if (!emailResult.success) {
-          throw new Error(emailResult.error || "Email send failed");
-        }
-      } catch (error) {
-        // Email failed - DO NOT approve proposal
-        // Save PDF but mark email as failed for manual retry
-        await db
-          .update(proposalTable)
-          .set({
-            adminNotes: `${adminNotes || ""}\n\n[SYSTEM] Email send failed: ${
-              error.message
-            }. Use retry-email endpoint to resend.`,
-            emailStatus: "failed",
-            pdfUrl, // Save PDF for retry
-            updatedAt: new Date(),
-          })
-          .where(eq(proposalTable.id, proposalId));
-
-        throw new AppError(
-          "Email send failed. Proposal NOT approved. PDF saved for retry. Please use retry endpoint.",
-          500
-        );
+      if (!emailResult.success) {
+        throw new Error(emailResult.error || "Email send failed");
       }
+    } catch (error) {
+      // Email failed - Save PDF but mark email as failed
+      await db
+        .update(proposalTable)
+        .set({
+          emailStatus: "failed",
+          pdfUrl, // Save PDF for retry
+          updatedAt: new Date(),
+        })
+        .where(eq(proposalTable.id, proposalId));
+
+      throw new AppError(
+        "Email send failed. PDF saved. Please retry or contact support.",
+        500
+      );
     }
 
-    // Step 6: ONLY NOW update proposal to approved (email succeeded)
+    // Step 6: Update proposal to sent (with optimistic locking to prevent race conditions)
     const [updatedProposal] = await db
       .update(proposalTable)
       .set({
-        status: "approved",
-        reviewedBy: adminId,
-        reviewedAt: new Date(),
-        adminNotes,
+        status: "sent",
+        sentBy: salesUserId,
+        sentAt: new Date(),
         emailSentAt: new Date(),
         emailStatus: "sent",
         pdfUrl,
         updatedAt: new Date(),
       })
-      .where(eq(proposalTable.id, proposalId))
+      .where(
+        and(
+          eq(proposalTable.id, proposalId),
+          eq(proposalTable.status, "approved") // Ensure still approved (prevents double-send)
+        )
+      )
       .returning();
 
-    // Step 7: Update inquiry status (ONLY after email sent successfully)
-    await inquiryService.updateInquiry(
-      proposal.inquiryId,
-      { status: "submitted_proposal" },
-      adminId,
-      metadata
-    );
-
-    // Step 8: Notify sales person (non-critical, log but don't fail)
-    try {
-      const { userTable } = await import("../db/schema.js");
-      const [salesUser] = await db
-        .select()
-        .from(userTable)
-        .where(eq(userTable.id, proposal.requestedBy))
-        .limit(1);
-
-      if (salesUser) {
-        await emailService.sendNotificationEmail(
-          salesUser.email,
-          "Proposal Approved",
-          `Your proposal for ${inquiry.name} has been approved and sent.`
-        );
-      }
-    } catch (error) {
-      console.error("Failed to notify sales:", error);
-      // Don't throw - notification failure shouldn't fail approval
+    // If no rows updated, proposal was already sent or status changed
+    if (!updatedProposal) {
+      throw new AppError("Proposal no longer approved or already sent", 400);
     }
 
-    // Step 9: Log activity
+    // Step 7: Update inquiry status (non-critical, log errors but don't fail)
+    try {
+      await inquiryService.updateInquiry(
+        proposal.inquiryId,
+        { status: "submitted_proposal" },
+        salesUserId,
+        metadata
+      );
+    } catch (error) {
+      console.error("Failed to update inquiry status after sending proposal:", error);
+      // Don't throw - proposal is already sent, inquiry update failure shouldn't rollback
+    }
+
+    // Step 8: Log activity
     await this.logActivity({
-      userId: adminId,
-      action: "proposal_approved",
+      userId: salesUserId,
+      action: "proposal_sent",
       entityType: "proposal",
       entityId: proposal.id,
-      details: { inquiryId: proposal.inquiryId },
+      details: { inquiryId: proposal.inquiryId, clientEmail: inquiry.email },
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent,
     });
@@ -563,6 +611,28 @@ class ProposalService {
     } catch (error) {
       throw new AppError("PDF file not found", 404);
     }
+  }
+
+  /**
+   * Generate PDF preview without saving (for frontend preview)
+   * @param {string} proposalId - Proposal UUID
+   * @returns {Promise<Buffer>} PDF buffer
+   */
+  async generatePreviewPDF(proposalId) {
+    const proposal = await this.getProposalById(proposalId);
+    const inquiry = await inquiryService.getInquiryById(proposal.inquiryId);
+    const template = await proposalTemplateService.getTemplateById(
+      proposal.templateId
+    );
+
+    // Generate PDF (don't save)
+    const pdfBuffer = await pdfService.generateProposalPDF(
+      JSON.parse(proposal.proposalData),
+      inquiry,
+      template.htmlTemplate
+    );
+
+    return pdfBuffer;
   }
 
   /**

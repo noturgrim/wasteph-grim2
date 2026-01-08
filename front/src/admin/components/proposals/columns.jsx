@@ -15,7 +15,8 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Pencil
+  Pencil,
+  FileSearch
 } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +45,7 @@ const getStatusBadge = (status) => {
   );
 };
 
-export const createColumns = ({ users = [], onView, onApprove, onReject, onEdit, onDownload }) => [
+export const createColumns = ({ users = [], onReview, onDownload, onDelete }) => [
   {
     accessorKey: "inquiryName",
     header: ({ column }) => {
@@ -80,7 +81,7 @@ export const createColumns = ({ users = [], onView, onApprove, onReject, onEdit,
       const proposal = row.original;
       return (
         <button
-          onClick={() => onView(proposal)}
+          onClick={() => onReview(proposal)}
           className="font-bold underline hover:text-primary cursor-pointer text-left"
         >
           {proposal.inquiryName || "N/A"}
@@ -175,32 +176,22 @@ export const createColumns = ({ users = [], onView, onApprove, onReject, onEdit,
 
       return (
         <div className="flex items-center gap-2">
-          {/* Approve Button - shown for pending proposals */}
-          {proposal.status === "pending" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onApprove(proposal)}
-              className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
-            >
-              <CheckCircle2 className="h-4 w-4 mr-1" />
-              Approve
-            </Button>
-          )}
+          {/* Review/View Button - shown for all proposals */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onReview(proposal)}
+            className={
+              proposal.status === "pending"
+                ? "h-8 px-3 text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium"
+                : "h-8 px-3"
+            }
+          >
+            <FileSearch className="h-4 w-4 mr-1" />
+            {proposal.status === "pending" ? "Review" : "View"}
+          </Button>
 
-          {/* Reject Button - shown for pending proposals */}
-          {proposal.status === "pending" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onReject(proposal)}
-              className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <XCircle className="h-4 w-4 mr-1" />
-              Reject
-            </Button>
-          )}
-
+          {/* Dropdown Menu (Three Dots) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
@@ -209,17 +200,10 @@ export const createColumns = ({ users = [], onView, onApprove, onReject, onEdit,
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => onView(proposal)} className="cursor-pointer">
-                <span className="flex-1">View Detail</span>
+              <DropdownMenuItem onClick={() => onReview(proposal)} className="cursor-pointer">
+                <span className="flex-1">{proposal.status === "pending" ? "Review" : "View Detail"}</span>
                 <Eye className="h-4 w-4" />
               </DropdownMenuItem>
-
-              {proposal.status === "pending" && (
-                <DropdownMenuItem onClick={() => onEdit(proposal)} className="cursor-pointer">
-                  <span className="flex-1">Edit Proposal</span>
-                  <Pencil className="h-4 w-4" />
-                </DropdownMenuItem>
-              )}
 
               {proposal.pdfUrl && (
                 <DropdownMenuItem onClick={() => onDownload(proposal)} className="cursor-pointer">
@@ -230,18 +214,15 @@ export const createColumns = ({ users = [], onView, onApprove, onReject, onEdit,
 
               <DropdownMenuSeparator />
 
-              {proposal.status === "pending" && (
-                <>
-                  <DropdownMenuItem onClick={() => onApprove(proposal)} className="cursor-pointer">
-                    <span className="flex-1">Approve</span>
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem onClick={() => onReject(proposal)} className="cursor-pointer text-destructive">
-                    <span className="flex-1">Reject</span>
-                    <XCircle className="h-4 w-4 text-destructive" />
-                  </DropdownMenuItem>
-                </>
+              {/* Delete option */}
+              {onDelete && (
+                <DropdownMenuItem 
+                  onClick={() => onDelete(proposal)} 
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                >
+                  <span className="flex-1">Delete Proposal</span>
+                  <XCircle className="h-4 w-4" />
+                </DropdownMenuItem>
               )}
             </DropdownMenuContent>
           </DropdownMenu>

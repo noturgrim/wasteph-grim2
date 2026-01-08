@@ -313,8 +313,21 @@ class ApiClient {
     });
   }
 
+  async sendProposal(id, confirm = true) {
+    return this.request(`/proposals/${id}/send`, {
+      method: "POST",
+      body: JSON.stringify({ confirm }),
+    });
+  }
+
   async cancelProposal(id) {
     return this.request(`/proposals/${id}/cancel`, {
+      method: "POST",
+    });
+  }
+
+  async previewProposalPDF(id) {
+    return this.request(`/proposals/${id}/preview-pdf`, {
       method: "POST",
     });
   }

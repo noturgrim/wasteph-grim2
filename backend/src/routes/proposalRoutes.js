@@ -7,9 +7,11 @@ import {
   updateProposal,
   approveProposal,
   rejectProposal,
+  sendProposal,
   cancelProposal,
   retryProposalEmail,
   downloadProposalPDF,
+  previewProposalPDF,
 } from "../controllers/proposalController.js";
 import {
   validateCreateProposal,
@@ -43,6 +45,9 @@ router.post("/:id/approve", requireAuth, validateApproveProposal, approveProposa
 // Reject proposal (Admin only)
 router.post("/:id/reject", requireAuth, validateRejectProposal, rejectProposal);
 
+// Send proposal to client (Sales - own approved proposals only)
+router.post("/:id/send", requireAuth, sendProposal);
+
 // Cancel proposal (Sales - own proposals only)
 router.post("/:id/cancel", requireAuth, cancelProposal);
 
@@ -51,5 +56,8 @@ router.post("/:id/retry-email", requireAuth, retryProposalEmail);
 
 // Download proposal PDF
 router.get("/:id/pdf", requireAuth, downloadProposalPDF);
+
+// Preview proposal PDF (Sales - for preview before submitting)
+router.post("/:id/preview-pdf", requireAuth, previewProposalPDF);
 
 export default router;
