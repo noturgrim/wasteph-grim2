@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waste Collection Proposal</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #000;
+      padding: 20px;
+      max-width: 210mm; /* A4 width */
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      text-align: right;
+      margin-bottom: 30px;
+      border-bottom: 3px solid #003333;
+      padding-bottom: 10px;
+    }
+
+    .header h1 {
+      font-size: 24pt;
+      font-weight: bold;
+      color: #003333;
+      margin: 0;
+      letter-spacing: 2px;
+    }
+
+    .header .tagline {
+      font-size: 9pt;
+      color: #003333;
+      margin-bottom: 5px;
+    }
+
+    .header .contact-info {
+      font-size: 8pt;
+      color: #666;
+      line-height: 1.4;
+    }
+
+    /* Client Info */
+    .client-info {
+      margin-bottom: 20px;
+    }
+
+    .client-info p {
+      margin-bottom: 2px;
+      font-weight: bold;
+    }
+
+    /* Salutation */
+    .salutation {
+      margin: 20px 0;
+    }
+
+    /* Content Sections */
+    h2 {
+      font-size: 12pt;
+      font-weight: bold;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      color: #003333;
+    }
+
+    h3 {
+      font-size: 11pt;
+      font-weight: bold;
+      margin-top: 15px;
+      margin-bottom: 8px;
+    }
+
+    h4 {
+      font-size: 11pt;
+      font-weight: bold;
+      margin-top: 12px;
+      margin-bottom: 5px;
+    }
+
+    p {
+      margin-bottom: 10px;
+      text-align: justify;
+    }
+
+    /* Pricing Table */
+    .pricing-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0 20px 0;
+    }
+
+    .pricing-table thead {
+      background-color: #003333;
+      color: white;
+    }
+
+    .pricing-table th,
+    .pricing-table td {
+      border: 1px solid #000;
+      padding: 8px 10px;
+      text-align: left;
+    }
+
+    .pricing-table th {
+      font-weight: bold;
+      font-size: 10pt;
+    }
+
+    .pricing-table td {
+      font-size: 10pt;
+    }
+
+    .pricing-table tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    /* Note styling */
+    .note {
+      font-style: italic;
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+
+    /* Lists */
+    ul {
+      margin: 10px 0 10px 30px;
+    }
+
+    ul li {
+      margin-bottom: 5px;
+    }
+
+    ul.inner {
+      list-style-type: circle;
+      margin-top: 5px;
+    }
+
+    /* Guarantees Section */
+    .guarantee-section {
+      margin-top: 15px;
+    }
+
+    /* Disposal Process */
+    .process-list {
+      margin-left: 20px;
+    }
+
+    .process-list li {
+      margin-bottom: 10px;
+    }
+
+    /* Accreditations */
+    .accreditation-list {
+      margin-left: 20px;
+    }
+
+    .accreditation-list li {
+      margin-bottom: 10px;
+    }
+
+    .accreditation-title {
+      font-weight: bold;
+    }
+
+    .accreditation-details {
+      margin-left: 15px;
+      font-size: 10pt;
+    }
+
+    /* Signature Section */
+    .signature-section {
+      margin-top: 40px;
+    }
+
+    .signature-section p {
+      margin-bottom: 5px;
+    }
+
+    .signature-line {
+      margin-top: 30px;
+      border-top: 1px solid #000;
+      width: 250px;
+    }
+
+    /* Logo/Circle at bottom */
+    .footer-logo {
+      text-align: center;
+      margin-top: 30px;
+      margin-bottom: 10px;
+    }
+
+    .circle-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #00BFFF;
+      display: inline-block;
+      position: relative;
+    }
+
+    .circle-logo::after {
+      content: "♻";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      color: white;
+    }
+
+    /* Page break */
+    .page-break {
+      page-break-after: always;
+    }
+
+    /* Strong emphasis */
+    strong {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <h1>WASTE • PH</h1>
+    <p class="tagline">PRIVATE WASTE MANAGEMENT</p>
+    <p class="contact-info">
+      UNIT 503, THE MERIDIAN CONDOMINIUM, GOLAM DR., KASAMBAGAN, CEBU CITY, CEBU, 6000<br>
+      ADMIN @WASTE.PH | SALES @WASTE.PH | 0956-246-1503 | 0927-796-6731
+    </p>
+  </div>
+
+  <!-- Client Information -->
+  <div class="client-info">
+    <p>{{proposalDate}}</p>
+    <p>{{clientName}}</p>
+    {{#if clientPosition}}
+    <p>{{clientPosition}}</p>
+    {{/if}}
+    {{#if clientCompany}}
+    <p>{{clientCompany}}</p>
+    {{/if}}
+    {{#if clientAddress}}
+    <p>{{clientAddress}}</p>
+    {{/if}}
+  </div>
+
+  <!-- Salutation -->
+  <div class="salutation">
+    <p>Dear Sir/Madam,</p>
+  </div>
+
+  <!-- Introduction -->
+  <p>
+    This is in reference to the work specification for <strong>Waste Collection</strong> for your business
+    establishment, in compliance with regulations;
+  </p>
+
+  <!-- Scope of Work -->
+  <h2>SCOPE OF WORK</h2>
+
+  <h3>1. Garbage Collection</h3>
+
+  <table class="pricing-table">
+    <thead>
+      <tr>
+        <th>Solid Waste Classification</th>
+        <th>Price per month (in PHP)</th>
+        <th>Waste Allowance</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each services}}
+      <tr>
+        <td>{{this.name}}</td>
+        <td>₱ {{currency this.unitPrice}}</td>
+        <td>{{#if this.wasteAllowance}}{{this.wasteAllowance}} kg{{else}}N/A{{/if}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  <p class="note">
+    <strong>Note:</strong> {{excessRate}} php per kg shall be billed upon excess of the allocated Waste
+    Allowance of {{wasteAllowance}} kg.
+  </p>
+
+  <!-- Terms -->
+  <h3>Terms:</h3>
+
+  <h4>Payment Terms:</h4>
+  <ul>
+    <li>Garbage Collection shall be upon completion of service:
+      <ul class="inner">
+        <li>₱{{currency pricing.total}} for {{wasteAllowance}} kg Waste allowance billable</li>
+        <li>If the waste exceeds the {{wasteAllowance}} kg capacity allocated, an additional charge of ₱{{excessRate}} per kg will apply.</li>
+      </ul>
+    </li>
+  </ul>
+
+  <h4>Schedule:</h4>
+  <ul>
+    <li>The schedule of Pickups is flexible and reliant on client needs.
+      <ul class="inner">
+        <li>We may operate scheduled pick-ups of 1 - 7 times per week as necessary or by client requests</li>
+      </ul>
+    </li>
+  </ul>
+
+  <!-- Our Guarantees -->
+  <h3>Our Guarantees:</h3>
+
+  <div class="guarantee-section">
+    <h4>On Time Scheduled Pickups</h4>
+    <ul>
+      <li>Our garbage collection service operates with precision, ensuring on-time pickups to maintain a clean and efficient environment. We take pride in our commitment to timely waste removal, providing a reliable solution for our community's sanitation needs. With our scheduled garbage collection, you can trust that your waste will be promptly and responsibly managed.</li>
+    </ul>
+
+    <h4>Cost Effective Waste Solutions</h4>
+    <ul>
+      <li>Our waste solutions are designed to be cost-effective, offering efficient and budget-friendly options for waste management. We prioritize providing sustainable solutions without compromising on quality, making environmentally conscious practices accessible at affordable rates.</li>
+    </ul>
+
+    <h4>Proper disposal with certification</h4>
+    <ul>
+      <li>Our commitment to the proper disposal of garbage is reinforced by certification, ensuring that waste is handled responsibly and in compliance with environmental standards. We take pride in our rigorous processes, guaranteeing that every disposal action aligns with approved protocols. Choose confidence in waste management with our certified practices for a cleaner and greener future.</li>
+    </ul>
+  </div>
+
+  <!-- Page break for second page -->
+  <div class="page-break"></div>
+
+  <!-- Disposal Process -->
+  <h2>DISPOSAL PROCESS</h2>
+
+  <p>
+    Garbage collected from your facility shall be disposed of at Prime Waste Solutions, Inc's Material Recovery Facility, located at Sitio Kainsikan, Brgy. Binaliw, Cebu City. All garbage collected and disposed shall be issued a Certificate of Disposal from Prime Waste Solutions, Inc.
+  </p>
+
+  <h3>Processes:</h3>
+
+  <p>Upon arrival of our trucks at the MRF, the solid waste shall undergo the following processes:</p>
+
+  <ol class="process-list">
+    <li><strong>Sorting:</strong> Sorting facility where collected waste is meticulously segregated into categories such as plastics, paper, glass, metals, and organic waste. This step is crucial for effective recycling and further processing.</li>
+    <li><strong>Recycling:</strong> Items marked as recyclable such as plastics, paper, glass, and metals, shall be collected by accredited recyclers from the premises of Prime Waste Solutions.</li>
+    <li><strong>Waste to Energy:</strong> Organic waste is used to fuel the waste-to-energy technologies to convert non-recyclable waste into energy. This method helps minimize the volume of waste sent to landfills while producing renewable energy, contributing to the reduction of greenhouse gas emissions. Prime Waste Solutions has started the production of municipal waste solid-derived fuel in Cebu. This fuel is a low-carbon refuse derived fuel (RDF) produced from Municipal solid waste derived from its daily 1000 tons of waste from nearby Cities, Municipalities, and Barangays.</li>
+  </ol>
+
+  <!-- Closing Statement -->
+  <p>
+    Waste PH provides you with exceptional service and reliable support to meet your waste management needs.
+  </p>
+
+  <p>
+    We look forward to the possibility of working with you and contributing to your organization's environmental sustainability goals.
+  </p>
+
+  <p>Thank you for considering our services.</p>
+
+  <!-- Signature Section -->
+  <div class="signature-section">
+    <p>Sincerely,</p>
+    <br>
+    <br>
+    <p>Adrian Kim S. Balila</p>
+    <p>Chief Marketing Officer</p>
+    <p><strong>WASTE PH</strong></p>
+    <br>
+    <br>
+    <p><strong>Accepted By:</strong></p>
+    <div class="signature-line"></div>
+  </div>
+
+  <!-- Footer Logo -->
+  <div class="footer-logo">
+    <div class="circle-logo"></div>
+  </div>
+</body>
+</html>

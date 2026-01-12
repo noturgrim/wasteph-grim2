@@ -86,7 +86,7 @@ class PDFService {
    * @returns {Object} Template data
    */
   prepareTemplateData(proposalData, inquiryData) {
-    const { services, pricing, terms } = proposalData;
+    const { services, pricing, terms, ...rest } = proposalData;
 
     // Calculate dates
     const proposalDate = new Date();
@@ -95,7 +95,7 @@ class PDFService {
       validUntilDate.getDate() + (terms.validityDays || 30)
     );
 
-    return {
+    const baseData = {
       // Company info
       companyLogoUrl:
         process.env.COMPANY_LOGO_URL || "https://wasteph.com/logo.png",
@@ -106,7 +106,9 @@ class PDFService {
 
       // Client information
       clientName: inquiryData.name || "Valued Client",
-      clientCompany: inquiryData.company || "N/A",
+      clientPosition: inquiryData.position || "",
+      clientCompany: inquiryData.company || "",
+      clientAddress: inquiryData.address || "",
       clientEmail: inquiryData.email,
       clientPhone: inquiryData.phone || "N/A",
 
@@ -133,6 +135,16 @@ class PDFService {
         notes: terms.notes || "",
       },
     };
+
+    // Add template-specific fields from rest of proposalData
+    // These fields (wasteAllowance, excessRate, equipment, etc.) come from template-specific forms
+    Object.keys(rest).forEach((key) => {
+      if (rest[key] !== undefined && rest[key] !== null) {
+        baseData[key] = rest[key];
+      }
+    });
+
+    return baseData;
   }
 
   /**

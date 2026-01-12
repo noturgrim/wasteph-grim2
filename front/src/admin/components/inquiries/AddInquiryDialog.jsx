@@ -20,13 +20,6 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 
-const SERVICE_TYPES = [
-  { value: "garbage_collection", label: "Garbage Collection" },
-  { value: "septic_siphoning", label: "Septic Siphoning" },
-  { value: "hazardous_waste", label: "Hazardous Waste" },
-  { value: "onetime_hauling", label: "One-time Hauling" },
-];
-
 export function AddInquiryDialog({ open, onOpenChange, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState({
     name: "",
@@ -34,7 +27,6 @@ export function AddInquiryDialog({ open, onOpenChange, onSubmit, isSubmitting })
     phone: "",
     company: "",
     message: "",
-    serviceType: "",
     source: "phone",
   });
 
@@ -66,7 +58,6 @@ export function AddInquiryDialog({ open, onOpenChange, onSubmit, isSubmitting })
       phone: "",
       company: "",
       message: "",
-      serviceType: "",
       source: "phone",
     });
     setFormErrors({});
@@ -146,27 +137,6 @@ export function AddInquiryDialog({ open, onOpenChange, onSubmit, isSubmitting })
                 setFormData({ ...formData, company: e.target.value })
               }
             />
-          </div>
-
-          <div>
-            <Label htmlFor="serviceType">Type of Inquiry</Label>
-            <Select
-              value={formData.serviceType}
-              onValueChange={(val) =>
-                setFormData({ ...formData, serviceType: val })
-              }
-            >
-              <SelectTrigger id="serviceType">
-                <SelectValue placeholder="Select service type" />
-              </SelectTrigger>
-              <SelectContent>
-                {SERVICE_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           <div>

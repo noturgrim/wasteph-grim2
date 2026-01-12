@@ -9,6 +9,9 @@ import {
   setDefaultTemplate,
   deleteTemplate,
   previewTemplate,
+  getTemplateByType,
+  getTemplatesByCategory,
+  suggestTemplateForInquiry,
 } from "../controllers/proposalTemplateController.js";
 import {
   validateCreateTemplate,
@@ -26,6 +29,15 @@ const router = Router();
 
 // Get default template (before /api/proposal-templates/:id to avoid route collision)
 router.get("/default", requireAuth, getDefaultTemplate);
+
+// Get templates grouped by category
+router.get("/by-category", requireAuth, getTemplatesByCategory);
+
+// Get template by type
+router.get("/type/:type", requireAuth, getTemplateByType);
+
+// Suggest template for inquiry
+router.get("/suggest/:inquiryId", requireAuth, suggestTemplateForInquiry);
 
 // Preview template rendering
 router.post("/preview", requireAuth, validatePreviewTemplate, previewTemplate);

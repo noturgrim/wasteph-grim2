@@ -67,36 +67,42 @@ export function ReviewProposalDialog({
   const { services = [], pricing = {}, terms = {} } = proposalData;
 
   // Load PDF when switching to PDF tab
-  const handleTabChange = async (value) => {
+  const handleTabChange = (value) => {
     setActiveTab(value);
-    
+
     if (value === "pdf" && !pdfPreviewUrl && !isLoadingPdf) {
       setIsLoadingPdf(true);
-      try {
-        // If PDF already exists, use it
-        if (proposal.pdfUrl) {
-          const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-          setPdfPreviewUrl(`${API_BASE_URL}/proposals/${proposal.id}/pdf`);
-        } else {
-          // Generate preview PDF
-          const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-          const response = await fetch(
-            `${API_BASE_URL}/proposals/${proposal.id}/preview-pdf`,
-            {
-              method: "POST",
-              credentials: "include",
+
+      // Use requestAnimationFrame to ensure spinner renders before PDF loads
+      requestAnimationFrame(() => {
+        requestAnimationFrame(async () => {
+          try {
+            // If PDF already exists, use it
+            if (proposal.pdfUrl) {
+              const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+              setPdfPreviewUrl(`${API_BASE_URL}/proposals/${proposal.id}/pdf`);
+            } else {
+              // Generate preview PDF
+              const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+              const response = await fetch(
+                `${API_BASE_URL}/proposals/${proposal.id}/preview-pdf`,
+                {
+                  method: "POST",
+                  credentials: "include",
+                }
+              );
+              const data = await response.json();
+              if (data.success) {
+                setPdfPreviewUrl(`data:application/pdf;base64,${data.data.pdfBase64}`);
+              }
             }
-          );
-          const data = await response.json();
-          if (data.success) {
-            setPdfPreviewUrl(`data:application/pdf;base64,${data.data.pdfBase64}`);
+          } catch (error) {
+            console.error("Failed to load PDF:", error);
+          } finally {
+            setIsLoadingPdf(false);
           }
-        }
-      } catch (error) {
-        console.error("Failed to load PDF:", error);
-      } finally {
-        setIsLoadingPdf(false);
-      }
+        });
+      });
     }
   };
 
@@ -294,8 +300,8 @@ export function ReviewProposalDialog({
             {isLoadingPdf ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center space-y-2">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="text-sm text-muted-foreground">Loading PDF preview...</p>
+                  <p className="text-lg font-medium">Loading PDF preview...</p>
+                  <p className="text-sm text-muted-foreground">Please wait, this may take a moment</p>
                 </div>
               </div>
             ) : pdfPreviewUrl ? (

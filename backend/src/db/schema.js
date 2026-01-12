@@ -63,6 +63,17 @@ export const proposalStatusEnum = pgEnum("proposal_status", [
   "cancelled",  // Cancelled by sales or admin
 ]);
 
+// Proposal Template Types
+export const proposalTemplateTypeEnum = pgEnum("proposal_template_type", [
+  "compactor_hauling",
+  "hazardous_waste",
+  "fixed_monthly",
+  "clearing_project",
+  "one_time_hauling",
+  "long_term",
+  "recyclables_purchase"
+]);
+
 // Lucia Auth Tables
 export const userTable = pgTable("user", {
   id: text("id").primaryKey(),
@@ -101,6 +112,7 @@ export const inquiryTable = pgTable("inquiry", {
   company: text("company"),
   message: text("message").notNull(),
   serviceId: uuid("service_id").references(() => serviceTable.id),
+  serviceType: text("service_type"), // Maps to template types for auto-suggestion
   status: inquiryStatusEnum("status").notNull().default("initial_comms"),
   source: text("source").default("website"),
   assignedTo: text("assigned_to").references(() => userTable.id),
@@ -272,6 +284,9 @@ export const proposalTemplateTable = pgTable("proposal_template", {
   name: text("name").notNull().unique(),
   description: text("description"),
   htmlTemplate: text("html_template").notNull(),
+  templateType: proposalTemplateTypeEnum("template_type"),
+  category: text("category"), // "waste_collection", "hazardous", "recyclables"
+  templateConfig: text("template_config"), // JSON: {hasWasteAllowance, hasEquipment, etc.}
   isActive: boolean("is_active").notNull().default(true),
   isDefault: boolean("is_default").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -283,6 +298,7 @@ export const proposalTemplateTable = pgTable("proposal_template", {
 }, (table) => ({
   nameIdx: index("proposal_template_name_idx").on(table.name),
   isDefaultIdx: index("proposal_template_is_default_idx").on(table.isDefault),
+  templateTypeIdx: index("proposal_template_type_idx").on(table.templateType),
 }));
 
 // Proposals
@@ -306,6 +322,7 @@ export const proposalTable = pgTable("proposal", {
 
   // Workflow Status
   status: proposalStatusEnum("status").notNull().default("pending"),
+  wasTemplateSuggested: boolean("was_template_suggested").default(false),
 
   // Review Details
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),

@@ -17,6 +17,7 @@ const proposalDataSchema = z.object({
         quantity: z.number().min(1, "Quantity must be at least 1"),
         unitPrice: z.number().min(0, "Unit price must be non-negative"),
         subtotal: z.number().min(0, "Subtotal must be non-negative"),
+        wasteAllowance: z.number().min(0).optional(), // Template-specific
       })
     )
     .min(1, "At least one service is required"),
@@ -34,6 +35,21 @@ const proposalDataSchema = z.object({
     validityDays: z.number().int().min(1).max(365).optional(),
     notes: z.string().optional(),
   }),
+
+  // Template-specific optional fields
+  wasteAllowance: z.number().min(0).optional(),
+  excessRate: z.number().min(0).optional(),
+  equipment: z
+    .array(
+      z.object({
+        name: z.string(),
+        quantity: z.number().min(1),
+        hours: z.number().min(0).optional(),
+        rate: z.number().min(0),
+        subtotal: z.number().min(0),
+      })
+    )
+    .optional(),
 });
 
 const createProposalSchema = z.object({

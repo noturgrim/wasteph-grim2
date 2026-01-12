@@ -225,3 +225,62 @@ export const previewTemplate = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Get template by type
+ * GET /api/proposal-templates/type/:type
+ */
+export const getTemplateByType = async (req, res, next) => {
+  try {
+    const { type } = req.params;
+    const template = await proposalTemplateService.getTemplateByType(type);
+
+    res.status(200).json({
+      success: true,
+      data: template,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get templates grouped by category
+ * GET /api/proposal-templates/by-category
+ */
+export const getTemplatesByCategory = async (req, res, next) => {
+  try {
+    const templates = await proposalTemplateService.getTemplatesByCategory();
+
+    res.status(200).json({
+      success: true,
+      data: templates,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Suggest template for inquiry
+ * GET /api/proposal-templates/suggest/:inquiryId
+ */
+export const suggestTemplateForInquiry = async (req, res, next) => {
+  try {
+    const { inquiryId } = req.params;
+
+    // Get inquiry (service will handle this)
+    const inquiryService = (await import("../services/inquiryService.js")).default;
+    const inquiry = await inquiryService.getInquiryById(inquiryId);
+
+    // Suggest template
+    const template = await proposalTemplateService.suggestTemplateForInquiry(inquiry);
+
+    res.status(200).json({
+      success: true,
+      data: template,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

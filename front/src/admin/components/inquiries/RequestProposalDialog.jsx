@@ -8,14 +8,22 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, ArrowLeft, Eye } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { api } from "../../services/api";
 import { toast } from "sonner";
+import { StepIndicator } from "./proposal-steps/StepIndicator";
+import { Step1ServiceType } from "./proposal-steps/Step1ServiceType";
+import { Step2ClientInfo } from "./proposal-steps/Step2ClientInfo";
+import { Step2ServiceDetails } from "./proposal-steps/Step2ServiceDetails";
+import { Step4Pricing } from "./proposal-steps/Step4Pricing";
+import { Step5Terms } from "./proposal-steps/Step5Terms";
+import { NavigationFooter } from "./proposal-steps/NavigationFooter";
+
 
 export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }) {
+  // Multi-step form state
+  const [currentStep, setCurrentStep] = useState(1);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [previewPdfBase64, setPreviewPdfBase64] = useState("");
@@ -31,17 +39,84 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
   });
   const [terms, setTerms] = useState({
     paymentTerms: "Net 30",
-    validityDays: 30,
+    schedule: "",
     notes: "",
   });
 
-  // Fetch default template and existing proposal data on mount
+  // Client info state
+  const [clientInfo, setClientInfo] = useState({
+    clientName: "",
+    clientPosition: "",
+    clientCompany: "",
+    clientAddress: "",
+    proposalDate: new Date().toISOString().split('T')[0],
+    validityDays: 30,
+  });
+
+  // Service Type selection (primary selector)
+  const [selectedServiceType, setSelectedServiceType] = useState("");
+
+  // Template selection state
+  const [templates, setTemplates] = useState({});
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [suggestedTemplate, setSuggestedTemplate] = useState(null);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+
+  // Template-specific fields (dynamic based on service type)
+  const [templateFields, setTemplateFields] = useState({});
+
+  // Fetch templates, suggestions, and existing proposal data
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoadingTemplates(true);
       try {
-        // Fetch default template
-        const response = await api.getDefaultProposalTemplate();
-        setDefaultTemplate(response.data || response);
+        // Fetch all templates grouped by category
+        const templatesResponse = await api.getTemplatesByCategory();
+        setTemplates(templatesResponse.data || templatesResponse);
+
+        // Pre-populate service type from inquiry (if available)
+        if (inquiry?.serviceType) {
+          setSelectedServiceType(inquiry.serviceType);
+        }
+
+        // Pre-populate client info from inquiry
+        if (inquiry) {
+          setClientInfo({
+            clientName: inquiry.name || "",
+            clientPosition: inquiry.position || "",
+            clientCompany: inquiry.company || "",
+            clientAddress: inquiry.address || "",
+            proposalDate: new Date().toISOString().split('T')[0],
+            validityDays: 30,
+          });
+        }
+
+        // Fetch suggested template based on inquiry OR selected service type
+        if (inquiry?.id || selectedServiceType) {
+          try {
+            let suggested;
+            if (inquiry?.id) {
+              const suggestionResponse = await api.suggestTemplateForInquiry(inquiry.id);
+              suggested = suggestionResponse.data || suggestionResponse;
+            }
+
+            if (suggested) {
+              setSuggestedTemplate(suggested);
+              setSelectedTemplate(suggested);
+              setDefaultTemplate(suggested);
+
+              // Initialize template-specific fields based on config
+              initializeTemplateFields(suggested);
+            }
+          } catch (error) {
+            console.error("Failed to fetch template suggestion:", error);
+            // Fall back to default template
+            const defaultResponse = await api.getDefaultProposalTemplate();
+            const defaultTpl = defaultResponse.data || defaultResponse;
+            setDefaultTemplate(defaultTpl);
+            setSelectedTemplate(defaultTpl);
+          }
+        }
 
         // If inquiry has a rejected proposal, fetch and populate it
         if (inquiry?.proposalId && inquiry?.proposalStatus === "rejected") {
@@ -67,6 +142,13 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
             if (existingData.terms) {
               setTerms(existingData.terms);
             }
+            // Populate template-specific fields
+            if (existingData.wasteAllowance || existingData.excessRate) {
+              setTemplateFields({
+                wasteAllowance: existingData.wasteAllowance || 0,
+                excessRate: existingData.excessRate || 0,
+              });
+            }
           } catch (error) {
             console.error("Failed to fetch existing proposal:", error);
             toast.error("Could not load rejected proposal data");
@@ -75,10 +157,14 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
           // Reset to default values for new proposals
           setServices([{ name: "", description: "", quantity: 1, unitPrice: 0, subtotal: 0 }]);
           setPricing({ taxRate: 12, discount: 0 });
-          setTerms({ paymentTerms: "Net 30", validityDays: 30, notes: "" });
+          setTerms({ paymentTerms: "Net 30", schedule: "", notes: "" });
+          setTemplateFields({ wasteAllowance: 0, excessRate: 0 });
         }
       } catch (error) {
-        console.error("Failed to fetch default template:", error);
+        console.error("Failed to fetch templates:", error);
+        toast.error("Could not load proposal templates");
+      } finally {
+        setIsLoadingTemplates(false);
       }
     };
 
@@ -86,6 +172,128 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
       fetchData();
     }
   }, [open, inquiry]);
+
+  // Helper: Initialize template-specific fields based on template config
+  const initializeTemplateFields = (template) => {
+    if (!template?.templateConfig) {
+      setTemplateFields({});
+      return;
+    }
+
+    const config = typeof template.templateConfig === "string"
+      ? JSON.parse(template.templateConfig)
+      : template.templateConfig;
+
+    const fields = {};
+
+    // Compactor Hauling fields
+    if (config.hasWasteAllowance) fields.wasteAllowance = 0;
+    if (config.hasExcessRate) fields.excessRate = 0;
+
+    // Fixed Monthly fields
+    if (config.hasContractDuration) fields.contractDuration = 12;
+    if (config.hasMonthlyRate) fields.monthlyRate = 0;
+    if (config.hasPickupSchedule) fields.pickupSchedule = "";
+
+    // Clearing Project fields
+    if (config.hasEquipment) fields.equipment = [];
+    if (config.hasLaborCrew) fields.laborCrew = { numberOfWorkers: 0, daysRequired: 0, ratePerDay: 0 };
+    if (config.hasProjectDuration) fields.projectDuration = "";
+
+    // One Time Hauling fields
+    if (config.hasTruckType) fields.truckType = "";
+    if (config.hasNumberOfTrips) fields.numberOfTrips = 1;
+    if (config.hasRatePerTrip) fields.ratePerTrip = 0;
+
+    // Long Term fields
+    if (config.hasRatePerKg) fields.ratePerKg = 0;
+    if (config.hasMinimumCharge) fields.minimumMonthlyCharge = 0;
+    if (config.hasWeighingMethod) fields.weighingMethod = "";
+
+    // Recyclables fields
+    if (config.hasRecyclableTypes) fields.recyclableTypes = [];
+    if (config.hasPurchaseRates) fields.purchaseRates = {};
+
+    // Hazardous Waste fields
+    if (config.requiresManifest) fields.manifestNumber = "";
+    if (config.requiresLicense) fields.transportLicense = "";
+
+    setTemplateFields(fields);
+  };
+
+  // Handle service type selection (primary selector)
+  const handleServiceTypeChange = async (serviceType) => {
+    setSelectedServiceType(serviceType);
+
+    // Create mock inquiry for template suggestion
+    const mockInquiry = { serviceType };
+
+    try {
+      // Map service type to template type
+      const serviceTypeMap = {
+        waste_collection: "compactor_hauling",
+        hazardous: "hazardous_waste",
+        fixed_monthly: "fixed_monthly",
+        clearing: "clearing_project",
+        one_time: "one_time_hauling",
+        long_term: "long_term",
+        recyclables: "recyclables_purchase",
+      };
+
+      const templateType = serviceTypeMap[serviceType];
+      if (!templateType) return;
+
+      // Find template by type
+      let foundTemplate = null;
+      Object.values(templates).forEach((categoryTemplates) => {
+        const template = categoryTemplates.find((t) => t.templateType === templateType);
+        if (template) foundTemplate = template;
+      });
+
+      if (foundTemplate) {
+        // Fetch full template details
+        const response = await api.getProposalTemplateById(foundTemplate.id);
+        const fullTemplate = response.data || response;
+        setSelectedTemplate(fullTemplate);
+        setDefaultTemplate(fullTemplate);
+        setSuggestedTemplate(fullTemplate);
+
+        // Initialize fields for this service
+        initializeTemplateFields(fullTemplate);
+      }
+    } catch (error) {
+      console.error("Failed to load template for service type:", error);
+      toast.error("Could not load template");
+    }
+  };
+
+  const handleTemplateChange = async (templateId) => {
+    setIsLoadingTemplates(true);
+    try {
+      // Find the selected template from the templates object
+      let foundTemplate = null;
+      Object.values(templates).forEach((categoryTemplates) => {
+        const template = categoryTemplates.find((t) => t.id === templateId);
+        if (template) foundTemplate = template;
+      });
+
+      if (foundTemplate) {
+        // Fetch full template details
+        const response = await api.getProposalTemplateById(templateId);
+        const fullTemplate = response.data || response;
+        setSelectedTemplate(fullTemplate);
+        setDefaultTemplate(fullTemplate);
+
+        // Initialize template-specific fields based on config
+        initializeTemplateFields(fullTemplate);
+      }
+    } catch (error) {
+      console.error("Failed to fetch template details:", error);
+      toast.error("Could not load template details");
+    } finally {
+      setIsLoadingTemplates(false);
+    }
+  };
 
   const handleAddService = () => {
     setServices([
@@ -132,13 +340,18 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
     e.preventDefault();
 
     // Validation
-    if (services.length === 0 || !services[0].name) {
-      toast.error("Please add at least one service");
+    if (!defaultTemplate) {
+      toast.error("Template not loaded");
       return;
     }
 
-    if (!defaultTemplate) {
-      toast.error("Template not loaded");
+    if (!selectedServiceType) {
+      toast.error("Please select a service type");
+      return;
+    }
+
+    if (!clientInfo.clientName) {
+      toast.error("Please enter the client name");
       return;
     }
 
@@ -146,26 +359,41 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
     try {
       const calculatedPricing = calculatePricing();
       const validityDate = new Date();
-      validityDate.setDate(validityDate.getDate() + (parseInt(terms.validityDays) || 30));
+      validityDate.setDate(validityDate.getDate() + (parseInt(clientInfo.validityDays) || 30));
+
+      // Use placeholder services for now since pricing UI is not implemented yet
+      const placeholderServices = [{
+        name: "Waste Collection Service",
+        description: "Standard waste collection and disposal service",
+        quantity: 1,
+        unitPrice: 5000,
+        subtotal: 5000,
+      }];
 
       // Prepare sample data for preview (NO DATABASE SAVE)
       const sampleData = {
-        services: services.map(s => ({
-          name: s.name,
-          description: s.description || "",
-          quantity: parseFloat(s.quantity),
-          unitPrice: parseFloat(s.unitPrice),
-          subtotal: parseFloat(s.subtotal),
-        })),
-        pricing: calculatedPricing,
-        terms: {
-          ...terms,
-          validityDays: parseInt(terms.validityDays) || 30,
+        services: placeholderServices,
+        pricing: {
+          subtotal: 5000,
+          tax: 600,
+          discount: 0,
+          total: 5600,
+          taxRate: 12,
+        },
+        terms,
+        clientInfo: {
+          ...clientInfo,
+          validityDays: parseInt(clientInfo.validityDays) || 30,
         },
         validityDate: validityDate.toISOString(),
-        clientName: inquiry?.name || "Client Name",
+        clientName: clientInfo.clientName || inquiry?.name || "Client Name",
         clientEmail: inquiry?.email || "client@example.com",
-        clientCompany: inquiry?.company || "",
+        clientCompany: clientInfo.clientCompany || inquiry?.company || "",
+        clientPosition: clientInfo.clientPosition || "",
+        clientAddress: clientInfo.clientAddress || inquiry?.address || "",
+        proposalDate: clientInfo.proposalDate,
+        // Include template-specific fields
+        ...templateFields,
       };
 
       // Generate HTML preview (no database save)
@@ -181,18 +409,28 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
   };
 
   const handleSubmit = async () => {
-    const calculatedPricing = calculatePricing();
+    // Use placeholder services for now since pricing UI is not implemented yet
+    const placeholderServices = [{
+      name: "Waste Collection Service",
+      description: "Standard waste collection and disposal service",
+      quantity: 1,
+      unitPrice: 5000,
+      subtotal: 5000,
+    }];
 
     const proposalDataPayload = {
-      services: services.map(s => ({
-        name: s.name,
-        description: s.description || "",
-        quantity: parseFloat(s.quantity),
-        unitPrice: parseFloat(s.unitPrice),
-        subtotal: parseFloat(s.subtotal),
-      })),
-      pricing: calculatedPricing,
+      services: placeholderServices,
+      pricing: {
+        subtotal: 5000,
+        tax: 600,
+        discount: 0,
+        total: 5600,
+        taxRate: 12,
+      },
       terms,
+      clientInfo,
+      // Include template-specific fields
+      ...templateFields,
     };
 
     setIsSubmitting(true);
@@ -204,12 +442,14 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
         // Update existing proposal
         await api.updateProposal(inquiry.proposalId, {
           proposalData: proposalDataPayload,
+          templateId: selectedTemplate?.id, // Include template ID
         });
         toast.success("Proposal revised and resubmitted successfully");
       } else {
         // Create new proposal
         await api.createProposal({
           inquiryId: inquiry.id,
+          templateId: selectedTemplate?.id, // Include template ID
           proposalData: proposalDataPayload,
         });
         toast.success("Proposal request submitted successfully");
@@ -221,15 +461,48 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
       // Reset form
       setServices([{ name: "", description: "", quantity: 1, unitPrice: 0, subtotal: 0 }]);
       setPricing({ taxRate: 12, discount: 0 });
-      setTerms({ paymentTerms: "Net 30", validityDays: 30, notes: "" });
+      setTerms({ paymentTerms: "Net 30", schedule: "", notes: "" });
+      setClientInfo({
+        clientName: "",
+        clientPosition: "",
+        clientCompany: "",
+        clientAddress: "",
+        proposalDate: new Date().toISOString().split('T')[0],
+        validityDays: 30,
+      });
       setShowPreview(false);
       setPreviewPdfBase64("");
+      setCurrentStep(1); // Reset to first step
     } catch (error) {
       toast.error(error.message || "Failed to submit proposal request");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Multi-step navigation functions
+  const goToNextStep = () => {
+    if (currentStep < 5) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const goToPrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const goToStep = (stepNumber) => {
+    setCurrentStep(stepNumber);
+  };
+
+  // Reset step when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setCurrentStep(1);
+    }
+  }, [open]);
 
   const calculatedPricing = calculatePricing();
   const validityDate = new Date();
@@ -240,257 +513,128 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
       onOpenChange(isOpen);
       if (!isOpen) setShowPreview(false);
     }}>
-      <DialogContent className="!w-[70vw] !max-w-[70vw] h-[90vh] !max-h-[90vh] overflow-y-auto p-6">
-        <DialogHeader>
-          <DialogTitle>
-            {showPreview
-              ? "Preview Proposal"
-              : inquiry?.proposalStatus === "rejected"
-                ? "Revise Proposal"
-                : "Request Proposal"}
-          </DialogTitle>
-          <DialogDescription>
-            {showPreview
-              ? "Review the proposal before submitting"
-              : inquiry?.proposalStatus === "rejected"
-                ? `Revise the rejected proposal for ${inquiry?.name} (${inquiry?.email})`
-                : `Create a proposal request for ${inquiry?.name} (${inquiry?.email})`
-            }
-          </DialogDescription>
-        </DialogHeader>
-
+      <DialogContent className="!w-[900px] !max-w-[90vw] !h-[92vh] !max-h-[92vh] flex flex-col p-0">
         {!showPreview ? (
-          /* FORM VIEW */
-          <form onSubmit={handlePreview} className="space-y-6">
-          {/* Rejection Reason Banner */}
-          {inquiry?.proposalStatus === "rejected" && inquiry?.proposalRejectionReason && (
-            <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4">
-              <p className="text-sm font-semibold text-red-900 dark:text-red-100 mb-1">
-                Rejection Reason:
-              </p>
-              <p className="text-sm text-red-700 dark:text-red-300">
-                {inquiry.proposalRejectionReason}
-              </p>
-            </div>
-          )}
-
-          {/* Services Section */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <Label className="text-base font-semibold">Services</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleAddService}
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Add Service
-              </Button>
+          /* MULTI-STEP FORM VIEW */
+          <>
+            {/* Header */}
+            <div className="px-6 py-3 border-b shrink-0">
+              <DialogHeader>
+                <DialogTitle className="text-xl">
+                  {inquiry?.proposalStatus === "rejected" ? "Revise Proposal" : "Create Proposal"}
+                </DialogTitle>
+                <DialogDescription>
+                  {inquiry?.name} ({inquiry?.email})
+                </DialogDescription>
+              </DialogHeader>
             </div>
 
-            <div className="space-y-4">
-              {services.map((service, index) => (
-                <div key={index} className="border rounded-lg p-4 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <Label className="text-sm font-medium">Service {index + 1}</Label>
-                    {services.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveService(index)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    )}
+            {/* Step Indicator */}
+            <div className="shrink-0">
+              <StepIndicator currentStep={currentStep} onStepClick={goToStep} />
+            </div>
+
+            {/* Form Content - Scrollable Area */}
+            <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+              <div className="max-w-3xl mx-auto space-y-4">
+                {/* Rejection Reason Banner */}
+                {inquiry?.proposalStatus === "rejected" && inquiry?.proposalRejectionReason && (
+                  <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-red-900 dark:text-red-100 mb-1">
+                      Rejection Reason:
+                    </p>
+                    <p className="text-sm text-red-700 dark:text-red-300">
+                      {inquiry.proposalRejectionReason}
+                    </p>
                   </div>
+                )}
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="col-span-2">
-                      <Label htmlFor={`service-name-${index}`}>Service Name *</Label>
-                      <Input
-                        id={`service-name-${index}`}
-                        value={service.name}
-                        onChange={(e) => handleServiceChange(index, "name", e.target.value)}
-                        placeholder="e.g., Weekly Garbage Collection"
-                        required
-                      />
-                    </div>
+                {/* STEP 1: Service Type Selection */}
+                {currentStep === 1 && (
+                  <Step1ServiceType
+                    selectedServiceType={selectedServiceType}
+                    onServiceTypeChange={handleServiceTypeChange}
+                    selectedTemplate={selectedTemplate}
+                  />
+                )}
 
-                    <div className="col-span-2">
-                      <Label htmlFor={`service-description-${index}`}>Description</Label>
-                      <Textarea
-                        id={`service-description-${index}`}
-                        value={service.description}
-                        onChange={(e) => handleServiceChange(index, "description", e.target.value)}
-                        placeholder="Service details..."
-                        rows={2}
-                      />
-                    </div>
+                {/* STEP 2: Client & Proposal Info */}
+                {currentStep === 2 && (
+                  <Step2ClientInfo
+                    clientInfo={clientInfo}
+                    onClientInfoChange={setClientInfo}
+                    inquiry={inquiry}
+                  />
+                )}
 
-                    <div>
-                      <Label htmlFor={`service-quantity-${index}`}>Quantity</Label>
-                      <Input
-                        id={`service-quantity-${index}`}
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={service.quantity}
-                        onChange={(e) => handleServiceChange(index, "quantity", e.target.value)}
-                        required
-                      />
-                    </div>
+                {/* STEP 3: Service-Specific Details */}
+                {currentStep === 3 && (
+                  <Step2ServiceDetails
+                    selectedServiceType={selectedServiceType}
+                    selectedTemplate={selectedTemplate}
+                    templateFields={templateFields}
+                    onTemplateFieldsChange={setTemplateFields}
+                  />
+                )}
 
-                    <div>
-                      <Label htmlFor={`service-unitPrice-${index}`}>Unit Price (₱)</Label>
-                      <Input
-                        id={`service-unitPrice-${index}`}
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={service.unitPrice}
-                        onChange={(e) => handleServiceChange(index, "unitPrice", e.target.value)}
-                        required
-                      />
-                    </div>
+                {/* STEP 4: Pricing & Charges */}
+                {currentStep === 4 && (
+                  <Step4Pricing
+                    services={services}
+                    pricing={pricing}
+                    calculatedPricing={calculatedPricing}
+                    onPricingChange={setPricing}
+                    onServiceChange={handleServiceChange}
+                  />
+                )}
 
-                    <div className="col-span-2">
-                      <Label>Subtotal</Label>
-                      <div className="text-lg font-semibold text-green-600">
-                        ₱{service.subtotal.toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Pricing Section */}
-          <div className="border-t pt-4">
-            <Label className="text-base font-semibold mb-3 block">Pricing</Label>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="discount">Discount (₱)</Label>
-                <Input
-                  id="discount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={pricing.discount}
-                  onChange={(e) => setPricing({ ...pricing, discount: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="taxRate">Tax Rate (%)</Label>
-                <Input
-                  id="taxRate"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  value={pricing.taxRate}
-                  onChange={(e) => setPricing({ ...pricing, taxRate: e.target.value })}
-                />
+                {/* STEP 5: Terms & Conditions */}
+                {currentStep === 5 && (
+                  <Step5Terms
+                    terms={terms}
+                    onTermsChange={setTerms}
+                  />
+                )}
               </div>
             </div>
 
-            {/* Pricing Summary */}
-            <div className="mt-4 bg-slate-50 dark:bg-slate-900 rounded-lg p-4 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Subtotal:</span>
-                <span className="font-medium">₱{calculatedPricing.subtotal.toFixed(2)}</span>
-              </div>
-              {calculatedPricing.discount > 0 && (
-                <div className="flex justify-between text-sm text-red-600">
-                  <span>Discount:</span>
-                  <span className="font-medium">- ₱{calculatedPricing.discount.toFixed(2)}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-sm">
-                <span>Tax ({pricing.taxRate}%):</span>
-                <span className="font-medium">₱{calculatedPricing.tax.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold border-t pt-2">
-                <span>Total:</span>
-                <span className="text-green-600">₱{calculatedPricing.total.toFixed(2)}</span>
-              </div>
+            {/* Multi-Step Navigation Footer */}
+            <div className="shrink-0">
+              <NavigationFooter
+                currentStep={currentStep}
+                totalSteps={5}
+                onPrevious={goToPrevStep}
+                onNext={goToNextStep}
+                onPreview={handlePreview}
+                onCancel={() => onOpenChange(false)}
+                canProceed={true}
+                isLoadingPreview={isLoadingPreview}
+                isDefaultTemplateLoaded={!!defaultTemplate}
+                hasSelectedService={!!selectedServiceType}
+              />
             </div>
-          </div>
-
-          {/* Terms Section */}
-          <div className="border-t pt-4">
-            <Label className="text-base font-semibold mb-3 block">Terms & Conditions</Label>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="paymentTerms">Payment Terms</Label>
-                <Input
-                  id="paymentTerms"
-                  value={terms.paymentTerms}
-                  onChange={(e) => setTerms({ ...terms, paymentTerms: e.target.value })}
-                  placeholder="Net 30"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="validityDays">Validity (Days)</Label>
-                <Input
-                  id="validityDays"
-                  type="number"
-                  min="1"
-                  value={terms.validityDays}
-                  onChange={(e) => setTerms({ ...terms, validityDays: e.target.value })}
-                />
-              </div>
-
-              <div className="col-span-2">
-                <Label htmlFor="notes">Additional Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={terms.notes}
-                  onChange={(e) => setTerms({ ...terms, notes: e.target.value })}
-                  placeholder="Any additional terms or notes..."
-                  rows={3}
-                />
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isLoadingPreview || !defaultTemplate}>
-              <Eye className="h-4 w-4 mr-2" />
-              {isLoadingPreview ? "Generating..." : "Preview"}
-            </Button>
-          </DialogFooter>
-        </form>
+          </>
         ) : (
           /* PREVIEW VIEW - Show actual rendered template */
-          <div className="space-y-4">
-            {isLoadingPreview ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-center space-y-2">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="text-sm text-muted-foreground">Generating preview...</p>
-                </div>
+          <>
+            <div className="px-6 pt-6 shrink-0">
+              <div className="bg-green-50 dark:bg-green-950 rounded-lg p-3 text-sm">
+                <p className="text-green-900 dark:text-green-100">
+                  📄 This is how the proposal will look when sent to <strong>{inquiry?.name}</strong>
+                </p>
               </div>
-            ) : (
-              <>
-                <div className="bg-green-50 dark:bg-green-950 rounded-lg p-3 text-sm">
-                  <p className="text-green-900 dark:text-green-100">
-                    📄 This is how the proposal will look when sent to <strong>{inquiry?.name}</strong>
-                  </p>
-                </div>
+            </div>
 
-                {/* Rendered HTML Preview */}
+            {/* Scrollable Preview Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+              {isLoadingPreview ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center space-y-2">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                    <p className="text-sm text-muted-foreground">Generating preview...</p>
+                  </div>
+                </div>
+              ) : (
                 <div className="border rounded-lg overflow-hidden bg-white">
                   <iframe
                     srcDoc={previewPdfBase64}
@@ -499,24 +643,27 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
                     sandbox="allow-same-origin"
                   />
                 </div>
-              </>
-            )}
+              )}
+            </div>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowPreview(false)}
-                disabled={isSubmitting || isLoadingPreview}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Edit
-              </Button>
-              <Button onClick={handleSubmit} disabled={isSubmitting || isLoadingPreview}>
-                {isSubmitting ? "Submitting..." : "Confirm & Submit"}
-              </Button>
-            </DialogFooter>
-          </div>
+            {/* Footer */}
+            <div className="px-6 pb-6 shrink-0">
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowPreview(false)}
+                  disabled={isSubmitting || isLoadingPreview}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Edit
+                </Button>
+                <Button onClick={handleSubmit} disabled={isSubmitting || isLoadingPreview}>
+                  {isSubmitting ? "Submitting..." : "Confirm & Submit"}
+                </Button>
+              </DialogFooter>
+            </div>
+          </>
         )}
       </DialogContent>
     </Dialog>

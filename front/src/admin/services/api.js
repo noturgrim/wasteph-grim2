@@ -395,6 +395,18 @@ class ApiClient {
       body: JSON.stringify({ templateHtml, sampleData }),
     });
   }
+
+  async getTemplatesByCategory() {
+    return this.request("/proposal-templates/by-category");
+  }
+
+  async getTemplateByType(type) {
+    return this.request(`/proposal-templates/type/${type}`);
+  }
+
+  async suggestTemplateForInquiry(inquiryId) {
+    return this.request(`/proposal-templates/suggest/${inquiryId}`);
+  }
 }
 
 // Export singleton instance

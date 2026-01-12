@@ -1,0 +1,1165 @@
+import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Trash2, ArrowLeft, Eye, Sparkles, ArrowRight, Home, FileText, DollarSign, FileCheck } from "lucide-react";
+import { api } from "../../services/api";
+import { toast } from "sonner";
+
+// Service types that map to proposal templates
+const SERVICE_TYPES = [
+  { value: "waste_collection", label: "Waste Collection (Compactor Hauling)", icon: "🚛" },
+  { value: "hazardous", label: "Hazardous Waste Collection", icon: "☢️" },
+  { value: "fixed_monthly", label: "Fixed Monthly Rate", icon: "📅" },
+  { value: "clearing", label: "Clearing Project", icon: "🏗️" },
+  { value: "one_time", label: "One Time Hauling", icon: "🚚" },
+  { value: "long_term", label: "Long Term Garbage (Per-kg)", icon: "⚖️" },
+  { value: "recyclables", label: "Purchase of Recyclables", icon: "♻️" },
+];
+
+// Multi-step form steps
+const STEPS = [
+  { id: 1, title: "Service Type", description: "Select service", icon: Home },
+  { id: 2, title: "Service Details", description: "Specific information", icon: FileText },
+  { id: 3, title: "Services & Pricing", description: "Add services & costs", icon: DollarSign },
+  { id: 4, title: "Terms", description: "Payment & validity", icon: FileCheck },
+  { id: 5, title: "Preview", description: "Review & submit", icon: Eye },
+];
+
+export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }) {
+  // Multi-step form state
+  const [currentStep, setCurrentStep] = useState(1);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewPdfBase64, setPreviewPdfBase64] = useState("");
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [defaultTemplate, setDefaultTemplate] = useState(null);
+  const [tempProposalId, setTempProposalId] = useState(null);
+  const [services, setServices] = useState([
+    { name: "", description: "", quantity: 1, unitPrice: 0, subtotal: 0 },
+  ]);
+  const [pricing, setPricing] = useState({
+    taxRate: 12,
+    discount: 0,
+  });
+  const [terms, setTerms] = useState({
+    paymentTerms: "Net 30",
+    validityDays: 30,
+    notes: "",
+  });
+
+  // Service Type selection (primary selector)
+  const [selectedServiceType, setSelectedServiceType] = useState("");
+
+  // Template selection state
+  const [templates, setTemplates] = useState({});
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [suggestedTemplate, setSuggestedTemplate] = useState(null);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+
+  // Template-specific fields (dynamic based on service type)
+  const [templateFields, setTemplateFields] = useState({});
+
+  // Fetch templates, suggestions, and existing proposal data
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoadingTemplates(true);
+      try {
+        // Fetch all templates grouped by category
+        const templatesResponse = await api.getTemplatesByCategory();
+        setTemplates(templatesResponse.data || templatesResponse);
+
+        // Pre-populate service type from inquiry (if available)
+        if (inquiry?.serviceType) {
+          setSelectedServiceType(inquiry.serviceType);
+        }
+
+        // Fetch suggested template based on inquiry OR selected service type
+        if (inquiry?.id || selectedServiceType) {
+          try {
+            let suggested;
+            if (inquiry?.id) {
+              const suggestionResponse = await api.suggestTemplateForInquiry(inquiry.id);
+              suggested = suggestionResponse.data || suggestionResponse;
+            }
+
+            if (suggested) {
+              setSuggestedTemplate(suggested);
+              setSelectedTemplate(suggested);
+              setDefaultTemplate(suggested);
+
+              // Initialize template-specific fields based on config
+              initializeTemplateFields(suggested);
+            }
+          } catch (error) {
+            console.error("Failed to fetch template suggestion:", error);
+            // Fall back to default template
+            const defaultResponse = await api.getDefaultProposalTemplate();
+            const defaultTpl = defaultResponse.data || defaultResponse;
+            setDefaultTemplate(defaultTpl);
+            setSelectedTemplate(defaultTpl);
+          }
+        }
+
+        // If inquiry has a rejected proposal, fetch and populate it
+        if (inquiry?.proposalId && inquiry?.proposalStatus === "rejected") {
+          try {
+            const proposalResponse = await api.getProposalById(inquiry.proposalId);
+            const proposal = proposalResponse.data || proposalResponse;
+
+            // Parse existing proposal data
+            const existingData = typeof proposal.proposalData === "string"
+              ? JSON.parse(proposal.proposalData)
+              : proposal.proposalData;
+
+            // Populate form with existing data
+            if (existingData.services && existingData.services.length > 0) {
+              setServices(existingData.services);
+            }
+            if (existingData.pricing) {
+              setPricing({
+                taxRate: existingData.pricing.taxRate || 12,
+                discount: existingData.pricing.discount || 0,
+              });
+            }
+            if (existingData.terms) {
+              setTerms(existingData.terms);
+            }
+            // Populate template-specific fields
+            if (existingData.wasteAllowance || existingData.excessRate) {
+              setTemplateFields({
+                wasteAllowance: existingData.wasteAllowance || 0,
+                excessRate: existingData.excessRate || 0,
+              });
+            }
+          } catch (error) {
+            console.error("Failed to fetch existing proposal:", error);
+            toast.error("Could not load rejected proposal data");
+          }
+        } else {
+          // Reset to default values for new proposals
+          setServices([{ name: "", description: "", quantity: 1, unitPrice: 0, subtotal: 0 }]);
+          setPricing({ taxRate: 12, discount: 0 });
+          setTerms({ paymentTerms: "Net 30", validityDays: 30, notes: "" });
+          setTemplateFields({ wasteAllowance: 0, excessRate: 0 });
+        }
+      } catch (error) {
+        console.error("Failed to fetch templates:", error);
+        toast.error("Could not load proposal templates");
+      } finally {
+        setIsLoadingTemplates(false);
+      }
+    };
+
+    if (open) {
+      fetchData();
+    }
+  }, [open, inquiry]);
+
+  // Helper: Initialize template-specific fields based on template config
+  const initializeTemplateFields = (template) => {
+    if (!template?.templateConfig) {
+      setTemplateFields({});
+      return;
+    }
+
+    const config = typeof template.templateConfig === "string"
+      ? JSON.parse(template.templateConfig)
+      : template.templateConfig;
+
+    const fields = {};
+
+    // Compactor Hauling fields
+    if (config.hasWasteAllowance) fields.wasteAllowance = 0;
+    if (config.hasExcessRate) fields.excessRate = 0;
+
+    // Fixed Monthly fields
+    if (config.hasContractDuration) fields.contractDuration = 12;
+    if (config.hasMonthlyRate) fields.monthlyRate = 0;
+    if (config.hasPickupSchedule) fields.pickupSchedule = "";
+
+    // Clearing Project fields
+    if (config.hasEquipment) fields.equipment = [];
+    if (config.hasLaborCrew) fields.laborCrew = { numberOfWorkers: 0, daysRequired: 0, ratePerDay: 0 };
+    if (config.hasProjectDuration) fields.projectDuration = "";
+
+    // One Time Hauling fields
+    if (config.hasTruckType) fields.truckType = "";
+    if (config.hasNumberOfTrips) fields.numberOfTrips = 1;
+    if (config.hasRatePerTrip) fields.ratePerTrip = 0;
+
+    // Long Term fields
+    if (config.hasRatePerKg) fields.ratePerKg = 0;
+    if (config.hasMinimumCharge) fields.minimumMonthlyCharge = 0;
+    if (config.hasWeighingMethod) fields.weighingMethod = "";
+
+    // Recyclables fields
+    if (config.hasRecyclableTypes) fields.recyclableTypes = [];
+    if (config.hasPurchaseRates) fields.purchaseRates = {};
+
+    // Hazardous Waste fields
+    if (config.requiresManifest) fields.manifestNumber = "";
+    if (config.requiresLicense) fields.transportLicense = "";
+
+    setTemplateFields(fields);
+  };
+
+  // Handle service type selection (primary selector)
+  const handleServiceTypeChange = async (serviceType) => {
+    setSelectedServiceType(serviceType);
+
+    // Create mock inquiry for template suggestion
+    const mockInquiry = { serviceType };
+
+    try {
+      // Map service type to template type
+      const serviceTypeMap = {
+        waste_collection: "compactor_hauling",
+        hazardous: "hazardous_waste",
+        fixed_monthly: "fixed_monthly",
+        clearing: "clearing_project",
+        one_time: "one_time_hauling",
+        long_term: "long_term",
+        recyclables: "recyclables_purchase",
+      };
+
+      const templateType = serviceTypeMap[serviceType];
+      if (!templateType) return;
+
+      // Find template by type
+      let foundTemplate = null;
+      Object.values(templates).forEach((categoryTemplates) => {
+        const template = categoryTemplates.find((t) => t.templateType === templateType);
+        if (template) foundTemplate = template;
+      });
+
+      if (foundTemplate) {
+        // Fetch full template details
+        const response = await api.getTemplateById(foundTemplate.id);
+        const fullTemplate = response.data || response;
+        setSelectedTemplate(fullTemplate);
+        setDefaultTemplate(fullTemplate);
+        setSuggestedTemplate(fullTemplate);
+
+        // Initialize fields for this service
+        initializeTemplateFields(fullTemplate);
+      }
+    } catch (error) {
+      console.error("Failed to load template for service type:", error);
+      toast.error("Could not load template");
+    }
+  };
+
+  const handleTemplateChange = async (templateId) => {
+    setIsLoadingTemplates(true);
+    try {
+      // Find the selected template from the templates object
+      let foundTemplate = null;
+      Object.values(templates).forEach((categoryTemplates) => {
+        const template = categoryTemplates.find((t) => t.id === templateId);
+        if (template) foundTemplate = template;
+      });
+
+      if (foundTemplate) {
+        // Fetch full template details
+        const response = await api.getTemplateById(templateId);
+        const fullTemplate = response.data || response;
+        setSelectedTemplate(fullTemplate);
+        setDefaultTemplate(fullTemplate);
+
+        // Initialize template-specific fields based on config
+        initializeTemplateFields(fullTemplate);
+      }
+    } catch (error) {
+      console.error("Failed to fetch template details:", error);
+      toast.error("Could not load template details");
+    } finally {
+      setIsLoadingTemplates(false);
+    }
+  };
+
+  const handleAddService = () => {
+    setServices([
+      ...services,
+      { name: "", description: "", quantity: 1, unitPrice: 0, subtotal: 0 },
+    ]);
+  };
+
+  const handleRemoveService = (index) => {
+    setServices(services.filter((_, i) => i !== index));
+  };
+
+  const handleServiceChange = (index, field, value) => {
+    const updatedServices = [...services];
+    updatedServices[index][field] = value;
+
+    // Recalculate subtotal
+    if (field === "quantity" || field === "unitPrice") {
+      const quantity = parseFloat(updatedServices[index].quantity) || 0;
+      const unitPrice = parseFloat(updatedServices[index].unitPrice) || 0;
+      updatedServices[index].subtotal = quantity * unitPrice;
+    }
+
+    setServices(updatedServices);
+  };
+
+  const calculatePricing = () => {
+    const subtotal = services.reduce((sum, service) => sum + (service.subtotal || 0), 0);
+    const discount = parseFloat(pricing.discount) || 0;
+    const subtotalAfterDiscount = subtotal - discount;
+    const tax = (subtotalAfterDiscount * (pricing.taxRate / 100)) || 0;
+    const total = subtotalAfterDiscount + tax;
+
+    return {
+      subtotal,
+      tax,
+      discount,
+      total,
+      taxRate: pricing.taxRate,
+    };
+  };
+
+  const handlePreview = async (e) => {
+    e.preventDefault();
+
+    // Validation
+    if (services.length === 0 || !services[0].name) {
+      toast.error("Please add at least one service");
+      return;
+    }
+
+    if (!defaultTemplate) {
+      toast.error("Template not loaded");
+      return;
+    }
+
+    setIsLoadingPreview(true);
+    try {
+      const calculatedPricing = calculatePricing();
+      const validityDate = new Date();
+      validityDate.setDate(validityDate.getDate() + (parseInt(terms.validityDays) || 30));
+
+      // Prepare sample data for preview (NO DATABASE SAVE)
+      const sampleData = {
+        services: services.map(s => ({
+          name: s.name,
+          description: s.description || "",
+          quantity: parseFloat(s.quantity),
+          unitPrice: parseFloat(s.unitPrice),
+          subtotal: parseFloat(s.subtotal),
+        })),
+        pricing: calculatedPricing,
+        terms: {
+          ...terms,
+          validityDays: parseInt(terms.validityDays) || 30,
+        },
+        validityDate: validityDate.toISOString(),
+        clientName: inquiry?.name || "Client Name",
+        clientEmail: inquiry?.email || "client@example.com",
+        clientCompany: inquiry?.company || "",
+        // Include template-specific fields
+        ...templateFields,
+      };
+
+      // Generate HTML preview (no database save)
+      const response = await api.previewProposalTemplate(defaultTemplate.htmlTemplate, sampleData);
+      setPreviewPdfBase64(response.data.renderedHtml);
+      setShowPreview(true);
+    } catch (error) {
+      toast.error("Failed to generate preview");
+      console.error("Preview error:", error);
+    } finally {
+      setIsLoadingPreview(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    const calculatedPricing = calculatePricing();
+
+    const proposalDataPayload = {
+      services: services.map(s => ({
+        name: s.name,
+        description: s.description || "",
+        quantity: parseFloat(s.quantity),
+        unitPrice: parseFloat(s.unitPrice),
+        subtotal: parseFloat(s.subtotal),
+      })),
+      pricing: calculatedPricing,
+      terms,
+      // Include template-specific fields
+      ...templateFields,
+    };
+
+    setIsSubmitting(true);
+    try {
+      // Check if we're updating an existing rejected proposal or creating a new one
+      const isRevision = inquiry?.proposalId && inquiry?.proposalStatus === "rejected";
+
+      if (isRevision) {
+        // Update existing proposal
+        await api.updateProposal(inquiry.proposalId, {
+          proposalData: proposalDataPayload,
+          templateId: selectedTemplate?.id, // Include template ID
+        });
+        toast.success("Proposal revised and resubmitted successfully");
+      } else {
+        // Create new proposal
+        await api.createProposal({
+          inquiryId: inquiry.id,
+          templateId: selectedTemplate?.id, // Include template ID
+          proposalData: proposalDataPayload,
+        });
+        toast.success("Proposal request submitted successfully");
+      }
+
+      onOpenChange(false);
+      if (onSuccess) onSuccess();
+
+      // Reset form
+      setServices([{ name: "", description: "", quantity: 1, unitPrice: 0, subtotal: 0 }]);
+      setPricing({ taxRate: 12, discount: 0 });
+      setTerms({ paymentTerms: "Net 30", validityDays: 30, notes: "" });
+      setShowPreview(false);
+      setPreviewPdfBase64("");
+      setCurrentStep(1); // Reset to first step
+    } catch (error) {
+      toast.error(error.message || "Failed to submit proposal request");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Multi-step navigation functions
+  const goToNextStep = () => {
+    if (currentStep < STEPS.length) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const goToPrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const goToStep = (stepNumber) => {
+    setCurrentStep(stepNumber);
+  };
+
+  // Reset step when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setCurrentStep(1);
+    }
+  }, [open]);
+
+  const calculatedPricing = calculatePricing();
+  const validityDate = new Date();
+  validityDate.setDate(validityDate.getDate() + (parseInt(terms.validityDays) || 30));
+
+  return (
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      onOpenChange(isOpen);
+      if (!isOpen) setShowPreview(false);
+    }}>
+      <DialogContent className="!w-[900px] !max-w-[90vw] !h-[92vh] !max-h-[92vh] overflow-hidden p-0">
+        {!showPreview ? (
+          /* MULTI-STEP FORM VIEW */
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="px-6 py-4 border-b shrink-0">
+              <DialogHeader>
+                <DialogTitle className="text-xl">
+                  {inquiry?.proposalStatus === "rejected" ? "Revise Proposal" : "Create Proposal"}
+                </DialogTitle>
+                <DialogDescription>
+                  {inquiry?.name} ({inquiry?.email})
+                </DialogDescription>
+              </DialogHeader>
+            </div>
+
+            {/* Step Indicator */}
+            <div className="px-6 py-4 border-b bg-slate-50 dark:bg-slate-900 shrink-0">
+              <div className="flex items-center justify-between max-w-4xl mx-auto">
+                {STEPS.map((step, index) => {
+                  const Icon = step.icon;
+                  const isActive = currentStep === step.id;
+                  const isCompleted = currentStep > step.id;
+
+                  return (
+                    <div key={step.id} className="flex items-center flex-1">
+                      <div className="flex flex-col items-center flex-1">
+                        <button
+                          type="button"
+                          onClick={() => goToStep(step.id)}
+                          disabled={!isCompleted && !isActive}
+                          className={`
+                            flex items-center justify-center w-10 h-10 rounded-full transition-all
+                            ${isActive ? 'bg-blue-600 text-white ring-4 ring-blue-100 dark:ring-blue-900' : ''}
+                            ${isCompleted ? 'bg-green-600 text-white cursor-pointer hover:bg-green-700' : ''}
+                            ${!isActive && !isCompleted ? 'bg-slate-200 dark:bg-slate-700 text-slate-400' : ''}
+                            disabled:cursor-not-allowed
+                          `}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </button>
+                        <div className="mt-2 text-center">
+                          <p className={`text-xs font-medium ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`}>
+                            {step.title}
+                          </p>
+                          <p className="text-xs text-slate-400 hidden md:block">
+                            {step.description}
+                          </p>
+                        </div>
+                      </div>
+                      {index < STEPS.length - 1 && (
+                        <div className={`
+                          flex-1 h-0.5 mx-2 transition-all
+                          ${isCompleted ? 'bg-green-600' : 'bg-slate-200 dark:bg-slate-700'}
+                        `} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Form Content */}
+            <form onSubmit={handlePreview} className="flex-1 overflow-y-scroll px-6 py-4 min-h-0">
+              <div className="max-w-3xl mx-auto space-y-6 pb-6">
+                {/* Rejection Reason Banner */}
+                {inquiry?.proposalStatus === "rejected" && inquiry?.proposalRejectionReason && (
+                  <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-red-900 dark:text-red-100 mb-1">
+                      Rejection Reason:
+                    </p>
+                    <p className="text-sm text-red-700 dark:text-red-300">
+                      {inquiry.proposalRejectionReason}
+                    </p>
+                  </div>
+                )}
+
+                {/* STEP 1: Service Type Selection */}
+                {currentStep === 1 && (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-1">Select Service Type</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Choose the type of service for this proposal. This will determine the template and required information.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {SERVICE_TYPES.map((serviceType) => (
+                        <button
+                          key={serviceType.value}
+                          type="button"
+                          onClick={() => {
+                            handleServiceTypeChange(serviceType.value);
+                          }}
+                          className={`
+                            p-4 rounded-lg border-2 transition-all text-left
+                            ${selectedServiceType === serviceType.value
+                              ? 'border-blue-600 bg-blue-50 dark:bg-blue-950'
+                              : 'border-slate-200 dark:border-slate-700 hover:border-blue-300'
+                            }
+                          `}
+                        >
+                          <div className="text-2xl mb-1.5">{serviceType.icon}</div>
+                          <div className="font-semibold text-sm">{serviceType.label}</div>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Template info (hidden, auto-selected) */}
+                    {selectedTemplate && (
+                      <div className="mt-4 p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                        <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
+                          <Sparkles className="h-4 w-4" />
+                          <span className="font-medium">Template auto-selected:</span>
+                          <span>{selectedTemplate.name}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* STEP 2: Service-Specific Details */}
+                {currentStep === 2 && selectedServiceType && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Service Details</h3>
+                      <p className="text-sm text-muted-foreground mb-6">
+                        Fill in specific information for {SERVICE_TYPES.find(s => s.value === selectedServiceType)?.label}
+                      </p>
+                    </div>
+
+                    {/* Service-Specific Fields */}
+                    {selectedTemplate?.templateConfig && (() => {
+            const config = typeof selectedTemplate.templateConfig === "string"
+              ? JSON.parse(selectedTemplate.templateConfig)
+              : selectedTemplate.templateConfig;
+
+            const hasAnyFields = Object.keys(config).some(key => key.startsWith('has') || key.startsWith('requires'));
+
+            return hasAnyFields && (
+              <div className="border rounded-lg p-4 space-y-4 bg-amber-50 dark:bg-amber-950">
+                <Label className="text-base font-semibold">Service Details</Label>
+                <p className="text-sm text-muted-foreground">
+                  Fill in the specific details for {SERVICE_TYPES.find(s => s.value === selectedServiceType)?.label}
+                </p>
+
+                {/* Compactor Hauling Fields */}
+                {(config.hasWasteAllowance || config.hasExcessRate) && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {config.hasWasteAllowance && (
+                      <div>
+                        <Label htmlFor="wasteAllowance">Waste Allowance (kg)</Label>
+                        <Input
+                          id="wasteAllowance"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={templateFields.wasteAllowance || 0}
+                          onChange={(e) => setTemplateFields({ ...templateFields, wasteAllowance: parseFloat(e.target.value) || 0 })}
+                          placeholder="e.g., 100"
+                        />
+                      </div>
+                    )}
+                    {config.hasExcessRate && (
+                      <div>
+                        <Label htmlFor="excessRate">Excess Rate (₱/kg)</Label>
+                        <Input
+                          id="excessRate"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={templateFields.excessRate || 0}
+                          onChange={(e) => setTemplateFields({ ...templateFields, excessRate: parseFloat(e.target.value) || 0 })}
+                          placeholder="e.g., 5.00"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Fixed Monthly Fields */}
+                {(config.hasContractDuration || config.hasMonthlyRate || config.hasPickupSchedule) && (
+                  <div className="space-y-4">
+                    {config.hasContractDuration && (
+                      <div>
+                        <Label htmlFor="contractDuration">Contract Duration (months)</Label>
+                        <Input
+                          id="contractDuration"
+                          type="number"
+                          min="1"
+                          value={templateFields.contractDuration || 12}
+                          onChange={(e) => setTemplateFields({ ...templateFields, contractDuration: parseInt(e.target.value) || 12 })}
+                          placeholder="e.g., 12"
+                        />
+                      </div>
+                    )}
+                    {config.hasMonthlyRate && (
+                      <div>
+                        <Label htmlFor="monthlyRate">Monthly Rate (₱)</Label>
+                        <Input
+                          id="monthlyRate"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={templateFields.monthlyRate || 0}
+                          onChange={(e) => setTemplateFields({ ...templateFields, monthlyRate: parseFloat(e.target.value) || 0 })}
+                          placeholder="e.g., 15000"
+                        />
+                      </div>
+                    )}
+                    {config.hasPickupSchedule && (
+                      <div>
+                        <Label htmlFor="pickupSchedule">Pickup Schedule</Label>
+                        <Input
+                          id="pickupSchedule"
+                          type="text"
+                          value={templateFields.pickupSchedule || ""}
+                          onChange={(e) => setTemplateFields({ ...templateFields, pickupSchedule: e.target.value })}
+                          placeholder="e.g., Monday, Wednesday, Friday"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* One Time Hauling Fields */}
+                {(config.hasTruckType || config.hasNumberOfTrips || config.hasRatePerTrip) && (
+                  <div className="space-y-4">
+                    {config.hasTruckType && (
+                      <div>
+                        <Label htmlFor="truckType">Truck Type</Label>
+                        <Select
+                          value={templateFields.truckType || ""}
+                          onValueChange={(val) => setTemplateFields({ ...templateFields, truckType: val })}
+                        >
+                          <SelectTrigger id="truckType">
+                            <SelectValue placeholder="Select truck type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="4-wheeler">4-Wheeler</SelectItem>
+                            <SelectItem value="6-wheeler">6-Wheeler</SelectItem>
+                            <SelectItem value="10-wheeler">10-Wheeler</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    {config.hasNumberOfTrips && (
+                      <div>
+                        <Label htmlFor="numberOfTrips">Number of Trips</Label>
+                        <Input
+                          id="numberOfTrips"
+                          type="number"
+                          min="1"
+                          value={templateFields.numberOfTrips || 1}
+                          onChange={(e) => setTemplateFields({ ...templateFields, numberOfTrips: parseInt(e.target.value) || 1 })}
+                          placeholder="e.g., 3"
+                        />
+                      </div>
+                    )}
+                    {config.hasRatePerTrip && (
+                      <div>
+                        <Label htmlFor="ratePerTrip">Rate per Trip (₱)</Label>
+                        <Input
+                          id="ratePerTrip"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={templateFields.ratePerTrip || 0}
+                          onChange={(e) => setTemplateFields({ ...templateFields, ratePerTrip: parseFloat(e.target.value) || 0 })}
+                          placeholder="e.g., 2500"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Long Term Fields */}
+                {(config.hasRatePerKg || config.hasMinimumCharge || config.hasWeighingMethod) && (
+                  <div className="space-y-4">
+                    {config.hasRatePerKg && (
+                      <div>
+                        <Label htmlFor="ratePerKg">Rate per Kilogram (₱/kg)</Label>
+                        <Input
+                          id="ratePerKg"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={templateFields.ratePerKg || 0}
+                          onChange={(e) => setTemplateFields({ ...templateFields, ratePerKg: parseFloat(e.target.value) || 0 })}
+                          placeholder="e.g., 3.50"
+                        />
+                      </div>
+                    )}
+                    {config.hasMinimumCharge && (
+                      <div>
+                        <Label htmlFor="minimumMonthlyCharge">Minimum Monthly Charge (₱)</Label>
+                        <Input
+                          id="minimumMonthlyCharge"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={templateFields.minimumMonthlyCharge || 0}
+                          onChange={(e) => setTemplateFields({ ...templateFields, minimumMonthlyCharge: parseFloat(e.target.value) || 0 })}
+                          placeholder="e.g., 5000"
+                        />
+                      </div>
+                    )}
+                    {config.hasWeighingMethod && (
+                      <div>
+                        <Label htmlFor="weighingMethod">Weighing Method</Label>
+                        <Select
+                          value={templateFields.weighingMethod || ""}
+                          onValueChange={(val) => setTemplateFields({ ...templateFields, weighingMethod: val })}
+                        >
+                          <SelectTrigger id="weighingMethod">
+                            <SelectValue placeholder="Select weighing method" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="on-site">On-site Scale</SelectItem>
+                            <SelectItem value="facility">Facility Scale</SelectItem>
+                            <SelectItem value="certified">Certified Third-Party</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Hazardous Waste Fields */}
+                {(config.requiresManifest || config.requiresLicense) && (
+                  <div className="space-y-4">
+                    {config.requiresManifest && (
+                      <div>
+                        <Label htmlFor="manifestNumber">Manifest Number</Label>
+                        <Input
+                          id="manifestNumber"
+                          type="text"
+                          value={templateFields.manifestNumber || ""}
+                          onChange={(e) => setTemplateFields({ ...templateFields, manifestNumber: e.target.value })}
+                          placeholder="e.g., MF-2024-001"
+                        />
+                      </div>
+                    )}
+                    {config.requiresLicense && (
+                      <div>
+                        <Label htmlFor="transportLicense">Transport License Number</Label>
+                        <Input
+                          id="transportLicense"
+                          type="text"
+                          value={templateFields.transportLicense || ""}
+                          onChange={(e) => setTemplateFields({ ...templateFields, transportLicense: e.target.value })}
+                          placeholder="e.g., TR-2024-001"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Clearing Project Fields - Simplified for now */}
+                {config.hasProjectDuration && (
+                  <div>
+                    <Label htmlFor="projectDuration">Project Duration</Label>
+                    <Input
+                      id="projectDuration"
+                      type="text"
+                      value={templateFields.projectDuration || ""}
+                      onChange={(e) => setTemplateFields({ ...templateFields, projectDuration: e.target.value })}
+                      placeholder="e.g., 5 days"
+                    />
+                  </div>
+                )}
+                      </div>
+                    );
+                    })()}
+                  </div>
+                )}
+
+                {/* STEP 3: Services & Pricing */}
+                {currentStep === 3 && selectedServiceType && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Services & Pricing</h3>
+                      <p className="text-sm text-muted-foreground mb-6">
+                        Add the services included in this proposal and their pricing.
+                      </p>
+                    </div>
+
+                    <div>
+            <div className="flex items-center justify-between mb-3">
+              <Label className="text-base font-semibold">Services</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddService}
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Service
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {services.map((service, index) => (
+                <div key={index} className="border rounded-lg p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <Label className="text-sm font-medium">Service {index + 1}</Label>
+                    {services.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveService(index)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2">
+                      <Label htmlFor={`service-name-${index}`}>Service Name *</Label>
+                      <Input
+                        id={`service-name-${index}`}
+                        value={service.name}
+                        onChange={(e) => handleServiceChange(index, "name", e.target.value)}
+                        placeholder="e.g., Weekly Garbage Collection"
+                        required
+                      />
+                    </div>
+
+                    <div className="col-span-2">
+                      <Label htmlFor={`service-description-${index}`}>Description</Label>
+                      <Textarea
+                        id={`service-description-${index}`}
+                        value={service.description}
+                        onChange={(e) => handleServiceChange(index, "description", e.target.value)}
+                        placeholder="Service details..."
+                        rows={2}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor={`service-quantity-${index}`}>Quantity</Label>
+                      <Input
+                        id={`service-quantity-${index}`}
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={service.quantity}
+                        onChange={(e) => handleServiceChange(index, "quantity", e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor={`service-unitPrice-${index}`}>Unit Price (₱)</Label>
+                      <Input
+                        id={`service-unitPrice-${index}`}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={service.unitPrice}
+                        onChange={(e) => handleServiceChange(index, "unitPrice", e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="col-span-2">
+                      <Label>Subtotal</Label>
+                      <div className="text-lg font-semibold text-green-600">
+                        ₱{service.subtotal.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+              </div>
+
+              {/* Pricing Section */}
+              <div className="border-t pt-4">
+                <Label className="text-base font-semibold mb-3 block">Pricing</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="discount">Discount (₱)</Label>
+                    <Input
+                      id="discount"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={pricing.discount}
+                      onChange={(e) => setPricing({ ...pricing, discount: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="taxRate">Tax Rate (%)</Label>
+                    <Input
+                      id="taxRate"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={pricing.taxRate}
+                      onChange={(e) => setPricing({ ...pricing, taxRate: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Pricing Summary */}
+                <div className="mt-4 bg-slate-50 dark:bg-slate-900 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal:</span>
+                    <span className="font-medium">₱{calculatedPricing.subtotal.toFixed(2)}</span>
+                  </div>
+                  {calculatedPricing.discount > 0 && (
+                    <div className="flex justify-between text-sm text-red-600">
+                      <span>Discount:</span>
+                      <span className="font-medium">- ₱{calculatedPricing.discount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm">
+                    <span>Tax ({pricing.taxRate}%):</span>
+                    <span className="font-medium">₱{calculatedPricing.tax.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold border-t pt-2">
+                    <span>Total:</span>
+                    <span className="text-green-600">₱{calculatedPricing.total.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+                  </div>
+                )}
+
+                {/* STEP 4: Terms & Conditions */}
+                {currentStep === 4 && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Terms & Conditions</h3>
+                      <p className="text-sm text-muted-foreground mb-6">
+                        Specify payment terms and proposal validity.
+                      </p>
+                    </div>
+
+                    <div className="border-t pt-4">
+                <Label className="text-base font-semibold mb-3 block">Terms & Conditions</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="paymentTerms">Payment Terms</Label>
+                    <Input
+                      id="paymentTerms"
+                      value={terms.paymentTerms}
+                      onChange={(e) => setTerms({ ...terms, paymentTerms: e.target.value })}
+                      placeholder="Net 30"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="validityDays">Validity (Days)</Label>
+                    <Input
+                      id="validityDays"
+                      type="number"
+                      min="1"
+                      value={terms.validityDays}
+                      onChange={(e) => setTerms({ ...terms, validityDays: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <Label htmlFor="notes">Additional Notes</Label>
+                    <Textarea
+                      id="notes"
+                      value={terms.notes}
+                      onChange={(e) => setTerms({ ...terms, notes: e.target.value })}
+                      placeholder="Any additional terms or notes..."
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              </div>
+                  </div>
+                )}
+              </div>
+            </form>
+
+          {/* Multi-Step Navigation Footer */}
+            <div className="px-6 py-4 border-t bg-white dark:bg-slate-900 flex items-center justify-between shrink-0">
+              {/* Previous Button */}
+              {currentStep > 1 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={goToPrevStep}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Previous
+                </Button>
+              )}
+
+              <div className="flex-1" />
+
+              {/* Cancel Button */}
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+                className="mr-2"
+              >
+                Cancel
+              </Button>
+
+              {/* Next/Generate Preview Button */}
+              {currentStep < 5 ? (
+                <Button
+                  type="button"
+                  onClick={goToNextStep}
+                  disabled={!selectedServiceType}
+                >
+                  Next
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={handlePreview}
+                  disabled={isLoadingPreview || !defaultTemplate || !selectedServiceType}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  {isLoadingPreview ? "Generating..." : "Generate Preview"}
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* PREVIEW VIEW - Show actual rendered template */
+          <div className="p-6 space-y-4">
+            {isLoadingPreview ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center space-y-2">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="text-sm text-muted-foreground">Generating preview...</p>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="bg-green-50 dark:bg-green-950 rounded-lg p-3 text-sm">
+                  <p className="text-green-900 dark:text-green-100">
+                    📄 This is how the proposal will look when sent to <strong>{inquiry?.name}</strong>
+                  </p>
+                </div>
+
+                {/* Rendered HTML Preview */}
+                <div className="border rounded-lg overflow-hidden bg-white">
+                  <iframe
+                    srcDoc={previewPdfBase64}
+                    title="Proposal Preview"
+                    className="w-full h-[600px] border-0"
+                    sandbox="allow-same-origin"
+                  />
+                </div>
+              </>
+            )}
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowPreview(false)}
+                disabled={isSubmitting || isLoadingPreview}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Edit
+              </Button>
+              <Button onClick={handleSubmit} disabled={isSubmitting || isLoadingPreview}>
+                {isSubmitting ? "Submitting..." : "Confirm & Submit"}
+              </Button>
+            </DialogFooter>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

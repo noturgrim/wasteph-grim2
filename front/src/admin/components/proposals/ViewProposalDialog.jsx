@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,10 +7,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { CheckCircle2, XCircle, Download } from "lucide-react";
+import { CheckCircle2, XCircle, Download, FileText, Eye } from "lucide-react";
 
 const getStatusBadge = (status) => {
   const statusConfig = {
@@ -44,6 +46,10 @@ export function ViewProposalDialog({
   onReject,
   onDownload
 }) {
+  const [activeTab, setActiveTab] = useState("details");
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
+  const [isLoadingPdf, setIsLoadingPdf] = useState(false);
+
   if (!proposal) return null;
 
   const requestedByUser = users.find(u => u.id === proposal.requestedBy);
@@ -60,27 +66,76 @@ export function ViewProposalDialog({
 
   const { services = [], pricing = {}, terms = {} } = proposalData;
 
+  // Load PDF when switching to PDF tab
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+
+    if (value === "pdf" && !pdfPreviewUrl && !isLoadingPdf) {
+      setIsLoadingPdf(true);
+
+      // Use requestAnimationFrame to ensure loading text renders before PDF loads
+      requestAnimationFrame(() => {
+        requestAnimationFrame(async () => {
+          try {
+            // If PDF already exists, use it
+            if (proposal.pdfUrl) {
+              const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+              setPdfPreviewUrl(`${API_BASE_URL}/proposals/${proposal.id}/pdf`);
+            } else {
+              // Generate preview PDF
+              const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+              const response = await fetch(
+                `${API_BASE_URL}/proposals/${proposal.id}/preview-pdf`,
+                {
+                  method: "POST",
+                  credentials: "include",
+                }
+              );
+              const data = await response.json();
+              if (data.success) {
+                setPdfPreviewUrl(`data:application/pdf;base64,${data.data.pdfBase64}`);
+              }
+            }
+          } catch (error) {
+            console.error("Failed to load PDF:", error);
+          } finally {
+            setIsLoadingPdf(false);
+          }
+        });
+      });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!w-[70vw] !max-w-[70vw] h-[90vh] !max-h-[90vh] overflow-y-auto p-6">
+      <DialogContent className="!w-[70vw] !max-w-[70vw] h-[90vh] !max-h-[90vh] overflow-hidden flex flex-col p-6">
         <DialogHeader>
-          <DialogTitle>Proposal Details</DialogTitle>
-          <DialogDescription>
-            Review complete proposal information
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          {/* Header Info */}
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold">{proposal.inquiryName}</h3>
-              <p className="text-sm text-muted-foreground">{proposal.inquiryEmail}</p>
+              <DialogTitle>Proposal Details</DialogTitle>
+              <DialogDescription>
+                {proposal.inquiryName} • {proposal.inquiryEmail}
+              </DialogDescription>
             </div>
             {getStatusBadge(proposal.status)}
           </div>
+        </DialogHeader>
 
-          {/* Client Information */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="details">
+              <FileText className="h-4 w-4 mr-2" />
+              Details
+            </TabsTrigger>
+            <TabsTrigger value="pdf">
+              <Eye className="h-4 w-4 mr-2" />
+              PDF Preview
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Details Tab */}
+          <TabsContent value="details" className="flex-1 overflow-y-auto mt-4 space-y-4">
+            {/* Client Information */}
           <div className="border rounded-lg p-4">
             <h3 className="text-sm font-semibold mb-3">Client Information</h3>
             <div className="grid grid-cols-2 gap-4">
@@ -238,7 +293,30 @@ export function ViewProposalDialog({
               </div>
             )}
           </div>
-        </div>
+          </TabsContent>
+
+          {/* PDF Preview Tab */}
+          <TabsContent value="pdf" className="flex-1 overflow-hidden mt-4">
+            {isLoadingPdf ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center space-y-2">
+                  <p className="text-lg font-medium">Loading PDF preview...</p>
+                  <p className="text-sm text-muted-foreground">Please wait, this may take a moment</p>
+                </div>
+              </div>
+            ) : pdfPreviewUrl ? (
+              <iframe
+                src={pdfPreviewUrl}
+                title="Proposal PDF Preview"
+                className="w-full h-full border rounded-lg"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-sm text-muted-foreground">Click to load PDF preview</p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
 
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>

@@ -273,6 +273,92 @@ class ProposalTemplateService {
   }
 
   /**
+   * Get template by type
+   * @param {string} templateType - Template type enum value
+   * @returns {Promise<Object>} Template object
+   */
+  async getTemplateByType(templateType) {
+    const [template] = await db
+      .select()
+      .from(proposalTemplateTable)
+      .where(
+        and(
+          eq(proposalTemplateTable.templateType, templateType),
+          eq(proposalTemplateTable.isActive, true)
+        )
+      )
+      .limit(1);
+
+    if (!template) {
+      throw new AppError(`Template type '${templateType}' not found`, 404);
+    }
+
+    return template;
+  }
+
+  /**
+   * Suggest template based on inquiry service type
+   * @param {Object} inquiry - Inquiry object with serviceType field
+   * @returns {Promise<Object>} Suggested template
+   */
+  async suggestTemplateForInquiry(inquiry) {
+    // Service type to template type mapping
+    // These should match the SERVICE_TYPES in frontend inquiry forms
+    const serviceTypeMap = {
+      waste_collection: "compactor_hauling",
+      hazardous: "hazardous_waste",
+      fixed_monthly: "fixed_monthly",
+      clearing: "clearing_project",
+      one_time: "one_time_hauling",
+      long_term: "long_term",
+      recyclables: "recyclables_purchase",
+    };
+
+    // Get suggested template type or default to compactor_hauling
+    const suggestedType =
+      serviceTypeMap[inquiry.serviceType] || "compactor_hauling";
+
+    try {
+      return await this.getTemplateByType(suggestedType);
+    } catch (error) {
+      // Fallback to default template if suggested type not found
+      return await this.getDefaultTemplate();
+    }
+  }
+
+  /**
+   * Get all active templates grouped by category
+   * @returns {Promise<Object>} Templates grouped by category
+   */
+  async getTemplatesByCategory() {
+    const templates = await db
+      .select()
+      .from(proposalTemplateTable)
+      .where(eq(proposalTemplateTable.isActive, true))
+      .orderBy(proposalTemplateTable.category, proposalTemplateTable.name);
+
+    // Group templates by category
+    return templates.reduce((acc, template) => {
+      const category = template.category || "other";
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+
+      acc[category].push({
+        id: template.id,
+        name: template.name,
+        description: template.description,
+        templateType: template.templateType,
+        config: template.templateConfig
+          ? JSON.parse(template.templateConfig)
+          : {},
+      });
+
+      return acc;
+    }, {});
+  }
+
+  /**
    * Render template with data using Handlebars
    * @param {string} templateHtml - Template HTML string with {{placeholders}}
    * @param {Object} data - Data to inject into template
@@ -297,9 +383,14 @@ class ProposalTemplateService {
    * Register custom Handlebars helpers
    */
   registerHandlebarsHelpers() {
-    // Helper for formatting currency
+    // Helper for formatting currency with commas
     Handlebars.registerHelper("currency", function (value) {
-      return `₱${Number(value).toFixed(2)}`;
+      const number = Number(value);
+      if (isNaN(number)) return "0.00";
+      return number.toLocaleString("en-PH", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
     });
 
     // Helper for formatting dates

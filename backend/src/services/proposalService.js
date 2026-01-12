@@ -24,15 +24,21 @@ class ProposalService {
   async createProposal(proposalData, userId, metadata = {}) {
     const { inquiryId, templateId, proposalData: data } = proposalData;
 
-    // Validate inquiry exists
-    await inquiryService.getInquiryById(inquiryId);
+    // Get inquiry
+    const inquiry = await inquiryService.getInquiryById(inquiryId);
 
-    // Validate template exists (or use default if not provided)
+    // Determine template - auto-suggest if not provided
     let template;
+    let wasTemplateSuggested = false;
+
     if (templateId) {
+      // Template explicitly provided
       template = await proposalTemplateService.getTemplateById(templateId);
+      wasTemplateSuggested = false;
     } else {
-      template = await proposalTemplateService.getDefaultTemplate();
+      // Auto-suggest template based on inquiry service type
+      template = await proposalTemplateService.suggestTemplateForInquiry(inquiry);
+      wasTemplateSuggested = true;
     }
 
     // Create proposal
@@ -44,6 +50,7 @@ class ProposalService {
         requestedBy: userId,
         proposalData: typeof data === "string" ? data : JSON.stringify(data),
         status: "pending",
+        wasTemplateSuggested,
       })
       .returning();
 
@@ -53,7 +60,12 @@ class ProposalService {
       action: "proposal_created",
       entityType: "proposal",
       entityId: proposal.id,
-      details: { inquiryId, templateId: template.id },
+      details: {
+        inquiryId,
+        templateId: template.id,
+        templateType: template.templateType,
+        wasTemplateSuggested,
+      },
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent,
     });
