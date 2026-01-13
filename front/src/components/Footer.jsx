@@ -23,19 +23,6 @@ const Footer = () => {
             sales@waste.ph
           </a>
           <div className="flex items-center gap-4 text-xs text-white/60">
-            <button
-              type="button"
-              className="font-semibold uppercase tracking-widest transition-colors hover:text-white focus-visible:text-white focus-visible:outline-none"
-            >
-              Privacy
-            </button>
-            <button
-              type="button"
-              className="font-semibold uppercase tracking-widest transition-colors hover:text-white focus-visible:text-white focus-visible:outline-none"
-            >
-              Terms
-            </button>
-            <span className="text-white/20">•</span>
             <a
               href="/admin"
               className="font-semibold uppercase tracking-widest text-white/40 transition-colors hover:text-white/70 focus-visible:text-white/70 focus-visible:outline-none"
