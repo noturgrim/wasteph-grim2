@@ -1,0 +1,21 @@
+{
+  "name": "wasteph-logo-generator",
+  "version": "1.0.0",
+  "description": "Generate WastePH logos with exact LoadingScreen styling using Node.js",
+  "main": "generate_wasteph_logo.js",
+  "scripts": {
+    "generate": "node generate_wasteph_logo.js",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": [
+    "wasteph",
+    "logo",
+    "generator",
+    "montserrat"
+  ],
+  "author": "WastePH",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^21.11.0"
+  }
+}
