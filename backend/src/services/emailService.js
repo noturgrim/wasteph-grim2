@@ -255,7 +255,7 @@ class EmailService {
 
     <div class="footer">
       <p><strong>WastePH - Professional Waste Management Solutions</strong></p>
-      <p>Email: info@wasteph.com | Phone: +63 XXX XXXX</p>
+      <p>Email: info@wasteph.com | Phone: +639562461503</p>
       <p style="margin-top: 15px; font-size: 11px; color: #999;">
         This is an automated email. Please do not reply directly to this message.
       </p>
@@ -328,7 +328,7 @@ class EmailService {
     </div>
     <div class="footer">
       <p><strong>WastePH</strong></p>
-      <p>Email: info@wasteph.com | Phone: +63 XXX XXXX</p>
+      <p>Email: info@wasteph.com | Phone: +639562461503</p>
     </div>
   </div>
 </body>
