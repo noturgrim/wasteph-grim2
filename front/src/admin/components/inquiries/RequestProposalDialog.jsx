@@ -371,67 +371,146 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[900px]! max-w-[95vw]! h-[90vh]! max-h-[90vh]! flex flex-col p-0">
-        {/* Header */}
-        <div className="px-6 py-4 border-b shrink-0">
-          <DialogHeader>
-            <DialogTitle className="text-xl">
-              {inquiry?.proposalStatus === "rejected" ? "Revise Proposal" : "Create Proposal"}
-            </DialogTitle>
-            <DialogDescription>
-              For {inquiry?.name} ({inquiry?.email})
-            </DialogDescription>
-          </DialogHeader>
+      <DialogContent className="w-[1000px]! max-w-[95vw]! h-[90vh]! max-h-[90vh]! flex flex-col p-0 gap-0">
+        {/* Two Column Layout */}
+        <div className="flex flex-1 min-h-0">
+          {/* Left Sidebar - Progress Steps */}
+          <div className="w-[280px] shrink-0 bg-linear-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-r border-gray-200 dark:border-gray-700 p-6 flex flex-col">
+            {/* Header in Sidebar */}
+            <div className="mb-8">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                {inquiry?.proposalStatus === "rejected" ? "Revise Proposal" : "Create Proposal"}
+              </h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                For {inquiry?.name}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">
+                {inquiry?.email}
+              </p>
+            </div>
 
-          {/* Step Indicator */}
-          <div className="flex items-center gap-2 mt-4">
-            <div
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
-                currentStep === 1
-                  ? "bg-[#106934] text-white"
-                  : currentStep > 1
-                  ? "bg-green-100 text-green-800"
-                  : "bg-gray-100 text-gray-500"
-              }`}
-            >
-              <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">
-                1
-              </span>
-              Service Type
+            {/* Step Indicator - Vertical */}
+            <div className="flex flex-col gap-3 flex-1">
+              {/* Step 1 */}
+              <div className="relative">
+                <div
+                  className={`flex items-start gap-3 p-3 rounded-lg transition-all ${
+                    currentStep === 1
+                      ? "bg-[#15803d] text-white shadow-md"
+                      : currentStep > 1
+                      ? "bg-white/60 dark:bg-gray-800/60 text-green-700 dark:text-green-400"
+                      : "bg-white/40 dark:bg-gray-800/40 text-gray-400 dark:text-gray-500"
+                  }`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                      currentStep === 1
+                        ? "bg-white/20 text-white"
+                        : currentStep > 1
+                        ? "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-400"
+                    }`}
+                  >
+                    {currentStep > 1 ? "✓" : "1"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm leading-tight">Service Type</p>
+                    <p className={`text-xs mt-0.5 leading-tight ${
+                      currentStep === 1 ? "text-white/80" : "text-gray-500 dark:text-gray-400"
+                    }`}>
+                      Select service category
+                    </p>
+                  </div>
+                </div>
+                {/* Connector Line */}
+                <div
+                  className={`absolute left-[27px] top-[52px] w-0.5 h-3 ${
+                    currentStep > 1 ? "bg-green-400 dark:bg-green-600" : "bg-gray-300 dark:bg-gray-600"
+                  }`}
+                />
+              </div>
+
+              {/* Step 2 */}
+              <div className="relative">
+                <div
+                  className={`flex items-start gap-3 p-3 rounded-lg transition-all ${
+                    currentStep === 2
+                      ? "bg-[#15803d] text-white shadow-md"
+                      : currentStep > 2
+                      ? "bg-white/60 dark:bg-gray-800/60 text-green-700 dark:text-green-400"
+                      : "bg-white/40 dark:bg-gray-800/40 text-gray-400 dark:text-gray-500"
+                  }`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                      currentStep === 2
+                        ? "bg-white/20 text-white"
+                        : currentStep > 2
+                        ? "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-400"
+                    }`}
+                  >
+                    {currentStep > 2 ? "✓" : "2"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm leading-tight">Client Info</p>
+                    <p className={`text-xs mt-0.5 leading-tight ${
+                      currentStep === 2 ? "text-white/80" : "text-gray-500 dark:text-gray-400"
+                    }`}>
+                      Enter client details
+                    </p>
+                  </div>
+                </div>
+                {/* Connector Line */}
+                <div
+                  className={`absolute left-[27px] top-[52px] w-0.5 h-3 ${
+                    currentStep > 2 ? "bg-green-400 dark:bg-green-600" : "bg-gray-300 dark:bg-gray-600"
+                  }`}
+                />
+              </div>
+
+              {/* Step 3 */}
+              <div>
+                <div
+                  className={`flex items-start gap-3 p-3 rounded-lg transition-all ${
+                    currentStep === 3
+                      ? "bg-[#15803d] text-white shadow-md"
+                      : "bg-white/40 dark:bg-gray-800/40 text-gray-400 dark:text-gray-500"
+                  }`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                      currentStep === 3
+                        ? "bg-white/20 text-white"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-400"
+                    }`}
+                  >
+                    3
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm leading-tight">Edit & Submit</p>
+                    <p className={`text-xs mt-0.5 leading-tight ${
+                      currentStep === 3 ? "text-white/80" : "text-gray-500 dark:text-gray-400"
+                    }`}>
+                      Customize proposal
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className={`w-8 h-0.5 ${currentStep > 1 ? "bg-green-400" : "bg-gray-200"}`} />
-            <div
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
-                currentStep === 2
-                  ? "bg-[#106934] text-white"
-                  : currentStep > 2
-                  ? "bg-green-100 text-green-800"
-                  : "bg-gray-100 text-gray-500"
-              }`}
-            >
-              <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">
-                2
-              </span>
-              Client Info
-            </div>
-            <div className={`w-8 h-0.5 ${currentStep > 2 ? "bg-green-400" : "bg-gray-200"}`} />
-            <div
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
-                currentStep === 3
-                  ? "bg-[#106934] text-white"
-                  : "bg-gray-100 text-gray-500"
-              }`}
-            >
-              <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">
-                3
-              </span>
-              Edit & Submit
+
+            {/* Help Text at Bottom */}
+            <div className="mt-auto pt-6 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                Need help? Contact support at support@wasteph.com
+              </p>
             </div>
           </div>
-        </div>
 
-        {/* Content */}
-        <div className={`flex-1 px-6 py-4 min-h-0 ${currentStep === 3 ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'}`}>
+          {/* Right Content Area */}
+          <div className="flex-1 flex flex-col min-w-0">
+            {/* Content */}
+            <div className={`flex-1 px-8 py-6 min-h-0 ${currentStep === 3 ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'}`}>
           {/* Rejection Banner */}
           {inquiry?.proposalStatus === "rejected" && inquiry?.proposalRejectionReason && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
@@ -442,13 +521,21 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
 
           {currentStep === 1 ? (
             /* STEP 1: Service Type Selection */
-            <div className="space-y-6 max-w-2xl mx-auto">
-              <div className="space-y-2">
-                <Label htmlFor="serviceType" className="text-base font-semibold">
-                  Select Service Type <span className="text-red-500">*</span>
+            <div className="space-y-6">
+              {/* Step Title */}
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Select Service Type</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Choose the type of service for this proposal
+                </p>
+              </div>
+
+              <div className="space-y-2 max-w-xl">
+                <Label htmlFor="serviceType" className="text-sm font-semibold">
+                  Service Type <span className="text-red-500">*</span>
                 </Label>
-                <p className="text-sm text-gray-500">
-                  Choose the type of service for this proposal. The appropriate template will be automatically selected.
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  The appropriate template will be automatically selected based on your choice.
                 </p>
                 <Select value={selectedServiceType} onValueChange={handleServiceTypeChange}>
                   <SelectTrigger id="serviceType" className="w-full h-12 text-base">
@@ -493,13 +580,21 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
             </div>
           ) : currentStep === 2 ? (
             /* STEP 2: Client Information Form */
-            <div className="space-y-4 max-w-2xl mx-auto">
+            <div className="space-y-6">
+              {/* Step Title */}
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Client Information</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Enter the client details for this proposal
+                </p>
+              </div>
+
               {isLoadingTemplate ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-[#106934]" />
                 </div>
               ) : (
-                <>
+                <div className="space-y-4 max-w-2xl">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="clientName">
@@ -604,21 +699,29 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
 
                   {/* Template Info */}
                   {template && (
-                    <div className="bg-gray-50 rounded-lg p-3 text-sm">
-                      <span className="text-gray-500">Using template: </span>
-                      <span className="font-medium">{template.name}</span>
+                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">Using template: </span>
+                      <span className="font-medium text-gray-900 dark:text-white">{template.name}</span>
                     </div>
                   )}
-                </>
+                </div>
               )}
             </div>
           ) : (
             /* STEP 3: Edit & Submit */
-            <div className="flex flex-col h-full min-h-0 gap-4">
+            <div className="flex flex-col h-full min-h-0">
+              {/* Step Title */}
+              <div className="pb-4 border-b border-gray-200 dark:border-gray-700 shrink-0 mb-4">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Edit & Submit Proposal</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Customize the proposal content and submit for approval
+                </p>
+              </div>
+
               {/* Instructions */}
-              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-sm shrink-0">
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-sm shrink-0 mb-3">
                 <div className="flex items-start gap-2">
-                  <Edit3 className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+                  <Edit3 className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
                   <div>
                     <p className="text-blue-800 dark:text-blue-100 font-medium">
                       Edit your proposal content below
@@ -632,11 +735,11 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
 
               {/* Unsaved Changes Warning - uses visibility to prevent layout shift */}
               <div
-                className={`bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm shrink-0 transition-all duration-200 ${
-                  hasUnsavedEditorChanges ? 'visible opacity-100' : 'invisible opacity-0'
+                className={`bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm shrink-0 mb-3 transition-all duration-200 ${
+                  hasUnsavedEditorChanges ? 'visible opacity-100' : 'invisible opacity-0 h-0 mb-0 p-0 border-0'
                 }`}
               >
-                <div className="flex items-center gap-2 text-amber-800">
+                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
                   <AlertCircle className="h-4 w-4 shrink-0" />
                   <span>You have unsaved changes. Save before submitting.</span>
                 </div>
@@ -645,8 +748,8 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
               {/* Editor */}
               {isLoadingEditor ? (
                 <div className="flex-1 flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-[#106934]" />
-                  <span className="ml-3 text-gray-600">Loading editor...</span>
+                  <Loader2 className="h-8 w-8 animate-spin text-[#15803d]" />
+                  <span className="ml-3 text-gray-600 dark:text-gray-400">Loading editor...</span>
                 </div>
               ) : (
                 <div className="flex-1 min-h-0">
@@ -660,67 +763,71 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
               )}
             </div>
           )}
-        </div>
+            </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t shrink-0">
-          <DialogFooter className="gap-2">
-            {currentStep === 1 ? (
-              <>
-                <Button variant="outline" onClick={() => onOpenChange(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={() => setCurrentStep(2)}
-                  disabled={!selectedServiceType || isLoadingTemplate}
-                >
-                  {isLoadingTemplate ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <ArrowRight className="h-4 w-4 mr-2" />
-                  )}
-                  Next
-                </Button>
-              </>
-            ) : currentStep === 2 ? (
-              <>
-                <Button variant="outline" onClick={() => setCurrentStep(1)}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
-                </Button>
-                <Button
-                  onClick={prepareEditorContent}
-                  disabled={!isFormValid || isLoadingEditor || isLoadingTemplate}
-                >
-                  {isLoadingEditor ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Edit3 className="h-4 w-4 mr-2" />
-                  )}
-                  Edit Proposal
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button variant="outline" onClick={() => setCurrentStep(2)} disabled={isSubmitting}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!canSubmit}
-                  className={!canSubmit ? "opacity-50" : ""}
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4 mr-2" />
-                  )}
-                  Submit Request
-                </Button>
-              </>
-            )}
-          </DialogFooter>
+            {/* Footer - Inside Right Content Area */}
+            <div className="px-8 py-4 border-t border-gray-200 dark:border-gray-700 shrink-0 bg-gray-50/50 dark:bg-gray-900/50">
+              <div className="flex items-center justify-between gap-3">
+                {currentStep === 1 ? (
+                  <>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => setCurrentStep(2)}
+                      disabled={!selectedServiceType || isLoadingTemplate}
+                      className="min-w-[120px]"
+                    >
+                      {isLoadingTemplate ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <ArrowRight className="h-4 w-4 mr-2" />
+                      )}
+                      Next Step
+                    </Button>
+                  </>
+                ) : currentStep === 2 ? (
+                  <>
+                    <Button variant="outline" onClick={() => setCurrentStep(1)}>
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Back
+                    </Button>
+                    <Button
+                      onClick={prepareEditorContent}
+                      disabled={!isFormValid || isLoadingEditor || isLoadingTemplate}
+                      className="min-w-[140px]"
+                    >
+                      {isLoadingEditor ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Edit3 className="h-4 w-4 mr-2" />
+                      )}
+                      Edit Proposal
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="outline" onClick={() => setCurrentStep(2)} disabled={isSubmitting}>
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Back
+                    </Button>
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={!canSubmit}
+                      className={`min-w-[140px] ${!canSubmit ? "opacity-50" : ""}`}
+                    >
+                      {isSubmitting ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4 mr-2" />
+                      )}
+                      Submit Request
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
