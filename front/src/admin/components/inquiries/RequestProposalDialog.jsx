@@ -316,6 +316,17 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
   const handleServiceTypeChange = async (serviceType) => {
     setSelectedServiceType(serviceType);
     await loadTemplateForServiceType(serviceType);
+
+    // Update the inquiry with the selected service type
+    if (inquiry?.id) {
+      try {
+        await api.updateInquiry(inquiry.id, { serviceType });
+        console.log("Inquiry updated with service type:", serviceType);
+      } catch (error) {
+        console.error("Failed to update inquiry service type:", error);
+        // Don't show error to user as this is a background operation
+      }
+    }
   };
 
   // Render template with client data and load into editor
