@@ -1,4 +1,5 @@
 import inquiryService from "../services/inquiryService.js";
+import inquiryNotesService from "../services/inquiryNotesService.js";
 
 /**
  * Controller: Create inquiry (public endpoint for website forms)
@@ -199,6 +200,56 @@ export const deleteInquiry = async (req, res, next) => {
     res.json({
       success: true,
       message: "Inquiry deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Controller: Add a note to an inquiry
+ * Route: POST /api/inquiries/:id/notes
+ * Access: Protected (authenticated users)
+ */
+export const addInquiryNote = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+    const userId = req.user.id;
+
+    if (!content || content.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Note content is required",
+      });
+    }
+
+    const note = await inquiryNotesService.addNote(id, content, userId);
+
+    res.status(201).json({
+      success: true,
+      message: "Note added successfully",
+      data: note,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Controller: Get all notes for an inquiry
+ * Route: GET /api/inquiries/:id/notes
+ * Access: Protected (authenticated users)
+ */
+export const getInquiryNotes = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const notes = await inquiryNotesService.getNotesByInquiry(id);
+
+    res.json({
+      success: true,
+      data: notes,
     });
   } catch (error) {
     next(error);

@@ -126,6 +126,23 @@ export const inquiryTable = pgTable("inquiry", {
     .defaultNow(),
 });
 
+export const inquiryNotesTable = pgTable("inquiry_notes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  inquiryId: uuid("inquiry_id")
+    .notNull()
+    .references(() => inquiryTable.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  createdBy: text("created_by")
+    .notNull()
+    .references(() => userTable.id),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (table) => ({
+  inquiryIdIdx: index("inquiry_notes_inquiry_id_idx").on(table.inquiryId),
+  createdAtIdx: index("inquiry_notes_created_at_idx").on(table.createdAt),
+}));
+
 export const leadTable = pgTable("lead", {
   id: uuid("id").primaryKey().defaultRandom(),
   clientName: text("client_name").notNull(),

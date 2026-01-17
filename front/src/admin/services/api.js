@@ -130,6 +130,17 @@ class ApiClient {
     });
   }
 
+  async getInquiryNotes(inquiryId) {
+    return this.request(`/inquiries/${inquiryId}/notes`);
+  }
+
+  async addInquiryNote(inquiryId, content) {
+    return this.request(`/inquiries/${inquiryId}/notes`, {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    });
+  }
+
   // Lead endpoints
   async getLeads(filters = {}) {
     const params = new URLSearchParams();

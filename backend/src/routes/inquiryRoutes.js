@@ -8,6 +8,8 @@ import {
   assignInquiry,
   convertInquiryToLead,
   deleteInquiry,
+  addInquiryNote,
+  getInquiryNotes,
 } from "../controllers/inquiryController.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { inquiryValidation, validate } from "../middleware/validation.js";
@@ -25,6 +27,10 @@ router.post("/:id/assign", requireAuth, assignInquiry);
 
 // Convert inquiry to lead - MUST be before /:id routes
 router.post("/:id/convert-to-lead", requireAuth, convertInquiryToLead);
+
+// Notes routes - MUST be before /:id routes
+router.post("/:id/notes", requireAuth, addInquiryNote);
+router.get("/:id/notes", requireAuth, getInquiryNotes);
 
 // Protected routes - all authenticated users
 router.get("/", requireAuth, getAllInquiries);

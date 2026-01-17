@@ -257,18 +257,29 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], onS
             </div>
           </div>
 
-          <div className="grid grid-cols-[120px_1fr] items-start gap-4">
-            <Label htmlFor="edit-notes" className="text-right pt-2">Notes</Label>
-            <Textarea
-              id="edit-notes"
-              rows={3}
-              value={formData.notes}
-              onChange={(e) =>
-                setFormData({ ...formData, notes: e.target.value })
-              }
-              placeholder="Add internal notes"
-            />
-          </div>
+          {/* Deprecated: Notes field - use timeline instead */}
+          {formData.notes && (
+            <div className="grid grid-cols-[120px_1fr] items-start gap-4 opacity-50">
+              <Label htmlFor="edit-notes" className="text-right pt-2">
+                Legacy Notes
+                <span className="block text-xs text-muted-foreground font-normal">
+                  (Read-only)
+                </span>
+              </Label>
+              <div className="space-y-1">
+                <Textarea
+                  id="edit-notes"
+                  rows={3}
+                  value={formData.notes}
+                  disabled
+                  className="bg-muted cursor-not-allowed"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Use the timeline in View Details to add new notes
+                </p>
+              </div>
+            </div>
+          )}
 
           <DialogFooter className="mt-6">
             <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">

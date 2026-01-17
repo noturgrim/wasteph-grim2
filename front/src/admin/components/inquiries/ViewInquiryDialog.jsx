@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { FileText } from "lucide-react";
 import { RequestProposalDialog } from "./RequestProposalDialog";
+import { NotesTimeline } from "./NotesTimeline";
 
 const SERVICE_TYPE_LABELS = {
   garbage_collection: "Garbage Collection",
@@ -34,19 +35,19 @@ export function ViewInquiryDialog({ open, onOpenChange, inquiry, users = [], onP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="w-[85vw]! max-w-[900px]! max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
           <DialogTitle>Inquiry Details</DialogTitle>
           <DialogDescription>
             View complete inquiry information
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6 min-h-0">
           {/* Contact Information */}
           <div>
             <h3 className="text-sm font-semibold mb-3 text-foreground">Contact Information</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-x-6 gap-y-4">
               <div>
                 <p className="text-sm text-muted-foreground">Name</p>
                 <p className="text-sm font-medium">{inquiry.name}</p>
@@ -72,7 +73,7 @@ export function ViewInquiryDialog({ open, onOpenChange, inquiry, users = [], onP
 
           <div className="border-t pt-4">
             <h3 className="text-sm font-semibold mb-3 text-foreground">Inquiry Details</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-x-6 gap-y-4">
               {inquiry.serviceType && (
                 <div>
                   <p className="text-sm text-muted-foreground">Type of Inquiry</p>
@@ -143,24 +144,13 @@ export function ViewInquiryDialog({ open, onOpenChange, inquiry, users = [], onP
             </div>
           </div>
 
+          {/* Notes Timeline */}
           <div className="border-t pt-4">
-            <h3 className="text-sm font-semibold mb-2 text-foreground">Message</h3>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-              {inquiry.message}
-            </p>
+            <NotesTimeline inquiryId={inquiry.id} />
           </div>
-
-          {inquiry.notes && (
-            <div className="border-t pt-4">
-              <h3 className="text-sm font-semibold mb-2 text-foreground">Internal Notes</h3>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                {inquiry.notes}
-              </p>
-            </div>
-          )}
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
+        <DialogFooter className="px-6 py-4 border-t shrink-0 flex-col sm:flex-row gap-2">
           {/* Show info for pending/approved proposals */}
           {inquiry.proposalStatus === "pending" && (
             <div className="text-sm text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-950 px-3 py-2 rounded-md">
