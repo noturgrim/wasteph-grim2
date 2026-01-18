@@ -48,7 +48,11 @@ canvas {
   transform: translate3d(0, 0, 0);
 }
 
-.animate-spin,
+/* Note: Do NOT set transform on animate-spin - it conflicts with rotation animation */
+.animate-spin {
+  will-change: transform;
+}
+
 .animate-pulse {
   will-change: transform;
   transform: translate3d(0, 0, 0);
