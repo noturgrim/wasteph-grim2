@@ -90,13 +90,15 @@ const DEFAULT_TEMPLATE_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// Service type options (simplified)
+// Service type options - matches RequestProposalDialog
 const SERVICE_TYPES = [
-  { value: "waste_collection", label: "Waste Collection" },
-  { value: "waste_disposal", label: "Waste Disposal" },
-  { value: "recycling", label: "Recycling Services" },
-  { value: "consultation", label: "Consultation" },
-  { value: "other", label: "Other" },
+  { value: "waste_collection", label: "Waste Collection (Compactor Hauling)" },
+  { value: "hazardous", label: "Hazardous Waste" },
+  { value: "fixed_monthly", label: "Fixed Monthly Rate" },
+  { value: "clearing", label: "Clearing Project" },
+  { value: "one_time", label: "One Time Hauling" },
+  { value: "long_term", label: "Long Term Garbage (Per-kg)" },
+  { value: "recyclables", label: "Purchase of Recyclables" },
 ];
 
 export function TemplateEditorDialog({ open, onOpenChange, template, onSave }) {

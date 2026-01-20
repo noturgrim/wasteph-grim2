@@ -8,7 +8,10 @@ export default defineConfig({
   out: "./drizzle",
   driver: "pg",
   dbCredentials: {
-    connectionString: process.env.DATABASE_URL + "?sslmode=require",
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false,
+    },
   },
   verbose: true,
   strict: true,

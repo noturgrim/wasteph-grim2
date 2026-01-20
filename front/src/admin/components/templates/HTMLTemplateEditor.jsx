@@ -52,22 +52,36 @@ export function HTMLTemplateEditor({ content, onChange, onFullPreview }) {
   // Isolate HTML styles to prevent them from affecting the page
   const isolateHTMLStyles = (htmlContent) => {
     if (!htmlContent) return "";
-    
+
     // Create a unique ID for scoping
     const scopeId = "template-preview-scope";
     let processed = htmlContent;
-    
-    // Extract and remove head content (meta, title, etc.)
+
+    // Extract styles from head first (before removing head)
+    let extractedStyles = "";
+    const headMatch = processed.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+    if (headMatch) {
+      const headContent = headMatch[1];
+      const styleMatches = headContent.match(/<style[^>]*>[\s\S]*?<\/style>/gi);
+      if (styleMatches) {
+        extractedStyles = styleMatches.join("\n");
+      }
+    }
+
+    // Remove entire head section
     processed = processed.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, "");
-    
+
     // Extract body content if it's a full HTML document
     const bodyMatch = processed.match(/<body[^>]*>([\s\S]*)<\/body>/i);
     if (bodyMatch) {
       processed = bodyMatch[1];
     }
-    
+
+    // Combine extracted styles with any styles in body
+    const allStyles = extractedStyles + "\n" + processed;
+
     // Process style tags to scope them
-    processed = processed.replace(/<style([^>]*)>([\s\S]*?)<\/style>/gi, (match, attrs, styles) => {
+    const scopedContent = allStyles.replace(/<style([^>]*)>([\s\S]*?)<\/style>/gi, (match, attrs, styles) => {
       let scopedStyles = styles
         // Scope universal selector
         .replace(/\*\s*\{/g, `#${scopeId} *{`)
@@ -89,12 +103,15 @@ export function HTMLTemplateEditor({ content, onChange, onFullPreview }) {
           // Scope the selector
           return `${prefix}#${scopeId} ${trimmed}{`;
         });
-      
+
       return `<style${attrs}>${scopedStyles}</style>`;
     });
-    
-    // Wrap in scoped container
-    return `<div id="${scopeId}">${processed}</div>`;
+
+    // Get body content without styles
+    const bodyContent = processed.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
+
+    // Wrap in scoped container with styles at the top
+    return `<div id="${scopeId}">${scopedContent}${bodyContent}</div>`;
   };
 
   // Generate preview with debouncing
@@ -107,14 +124,25 @@ export function HTMLTemplateEditor({ content, onChange, onFullPreview }) {
 
       setIsGeneratingPreview(true);
       try {
-        // Sample data for preview - simplified client info only
+        // Sample data for preview - includes all common placeholders
         const sampleData = {
+          // Client info
           clientName: "John Doe",
           clientEmail: "john.doe@example.com",
           clientPhone: "+63 912 345 6789",
+          company: "ABC Corporation",
           clientCompany: "ABC Corporation",
+          position: "Operations Manager",
           clientPosition: "Operations Manager",
+          address: "123 Business St, Metro Manila",
           clientAddress: "123 Business St, Metro Manila",
+
+          // Dates
+          date: new Date().toLocaleDateString("en-PH", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
           proposalDate: new Date().toLocaleDateString("en-PH", {
             year: "numeric",
             month: "long",
@@ -125,6 +153,14 @@ export function HTMLTemplateEditor({ content, onChange, onFullPreview }) {
             month: "long",
             day: "numeric",
           }),
+
+          // Pricing data
+          pricing: {
+            monthlyRate: "5,000.00",
+            wasteAllowance: "1,000.00",
+            excessRate: "4.00",
+            total: "5,000.00"
+          }
         };
 
         // Use the existing preview API
@@ -135,16 +171,31 @@ export function HTMLTemplateEditor({ content, onChange, onFullPreview }) {
           // For now, we'll render the HTML directly using Handlebars on client side
           // Or show a message that preview will be in PDF format
 
-          // Simple client-side preview
+          // Simple client-side preview with support for nested objects
           let rendered = htmlContent;
 
-          // Replace simple placeholders with sample data
-          Object.keys(sampleData).forEach((key) => {
-            const value = sampleData[key];
-            if (typeof value === "string" || typeof value === "number") {
-              rendered = rendered.replace(new RegExp(`{{${key}}}`, "g"), value);
-            }
-          });
+          // Helper function to replace placeholders (including nested ones like pricing.monthlyRate)
+          const replacePlaceholders = (html, data, prefix = "") => {
+            let result = html;
+
+            Object.keys(data).forEach((key) => {
+              const value = data[key];
+              const fullKey = prefix ? `${prefix}.${key}` : key;
+
+              if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+                // Recursively handle nested objects
+                result = replacePlaceholders(result, value, fullKey);
+              } else if (typeof value === "string" || typeof value === "number") {
+                // Replace the placeholder
+                result = result.replace(new RegExp(`\\{\\{${fullKey}\\}\\}`, "g"), value);
+              }
+            });
+
+            return result;
+          };
+
+          // Replace all placeholders
+          rendered = replacePlaceholders(rendered, sampleData);
 
           // Remove any remaining Handlebars syntax that we don't support
           // Use a single comprehensive regex to remove ALL {{...}} patterns
@@ -359,12 +410,11 @@ export function HTMLTemplateEditor({ content, onChange, onFullPreview }) {
           <div className="flex-1 p-6 overflow-auto bg-white min-h-0">
             {previewHtml ? (
               <div
-                style={{ 
-                  wordBreak: "break-word", 
-                  overflowWrap: "break-word", 
+                style={{
+                  wordBreak: "break-word",
+                  overflowWrap: "break-word",
                   maxWidth: "100%",
                   isolation: "isolate",
-                  contain: "layout style paint",
                   position: "relative"
                 }}
                 dangerouslySetInnerHTML={{ __html: previewHtml }}

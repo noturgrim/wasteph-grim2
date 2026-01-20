@@ -12,22 +12,36 @@ import { Badge } from "@/components/ui/badge";
 // Isolate HTML styles to prevent them from affecting the page
 const isolateHTMLStyles = (htmlContent) => {
   if (!htmlContent) return "";
-  
+
   // Create a unique ID for scoping
   const scopeId = "template-preview-scope";
   let processed = htmlContent;
-  
-  // Extract and remove head content (meta, title, etc.)
+
+  // Extract styles from head first (before removing head)
+  let extractedStyles = "";
+  const headMatch = processed.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+  if (headMatch) {
+    const headContent = headMatch[1];
+    const styleMatches = headContent.match(/<style[^>]*>[\s\S]*?<\/style>/gi);
+    if (styleMatches) {
+      extractedStyles = styleMatches.join("\n");
+    }
+  }
+
+  // Remove entire head section
   processed = processed.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, "");
-  
+
   // Extract body content if it's a full HTML document
   const bodyMatch = processed.match(/<body[^>]*>([\s\S]*)<\/body>/i);
   if (bodyMatch) {
     processed = bodyMatch[1];
   }
-  
+
+  // Combine extracted styles with any styles in body
+  const allStyles = extractedStyles + "\n" + processed;
+
   // Process style tags to scope them
-  processed = processed.replace(/<style([^>]*)>([\s\S]*?)<\/style>/gi, (match, attrs, styles) => {
+  const scopedContent = allStyles.replace(/<style([^>]*)>([\s\S]*?)<\/style>/gi, (match, attrs, styles) => {
     let scopedStyles = styles
       // Scope universal selector
       .replace(/\*\s*\{/g, `#${scopeId} *{`)
@@ -49,12 +63,15 @@ const isolateHTMLStyles = (htmlContent) => {
         // Scope the selector
         return `${prefix}#${scopeId} ${trimmed}{`;
       });
-    
+
     return `<style${attrs}>${scopedStyles}</style>`;
   });
-  
-  // Wrap in scoped container
-  return `<div id="${scopeId}">${processed}</div>`;
+
+  // Get body content without styles
+  const bodyContent = processed.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
+
+  // Wrap in scoped container with styles at the top
+  return `<div id="${scopeId}">${scopedContent}${bodyContent}</div>`;
 };
 
 export function TemplatePreviewDialog({ open, onOpenChange, template, htmlContent }) {
@@ -72,14 +89,25 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, htmlConten
 
       setIsLoading(true);
       try {
-        // Sample data for preview
+        // Sample data for preview - comprehensive with all common placeholders
         const sampleData = {
+          // Client info
           clientName: "John Doe",
           clientEmail: "john.doe@example.com",
           clientPhone: "+63 912 345 6789",
+          company: "ABC Corporation",
           clientCompany: "ABC Corporation",
+          position: "Operations Manager",
           clientPosition: "Operations Manager",
+          address: "123 Business St, Metro Manila",
           clientAddress: "123 Business St, Metro Manila",
+
+          // Dates
+          date: new Date().toLocaleDateString("en-PH", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
           proposalDate: new Date().toLocaleDateString("en-PH", {
             year: "numeric",
             month: "long",
@@ -90,9 +118,13 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, htmlConten
             month: "long",
             day: "numeric",
           }),
+
+          // Company info
           companyName: "WASTE • PH",
           companyTagline: "PRIVATE WASTE MANAGEMENT",
           companyAddress: "UNIT 503, THE MERIDIAN CONDOMINIUM, GOLAM DR., KASAMBAGAN, CEBU CITY",
+
+          // Services
           services: [
             {
               name: "Waste Collection Service",
@@ -109,29 +141,55 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, htmlConten
               subtotal: 3000,
             },
           ],
+
+          // Pricing data (for Fixed Monthly Rate and other templates)
           pricing: {
             subtotal: 8000,
             tax: 960,
             discount: 0,
-            total: 8960,
+            total: "8,960.00",
             taxRate: 12,
+            monthlyRate: "5,000.00",
+            wasteAllowance: "1,000.00",
+            excessRate: "4.00",
           },
+
+          // Terms
           terms: {
             paymentTerms: "Net 30 days from invoice date",
             notes: "All prices are subject to change without prior notice.",
           },
-          wasteAllowance: 500,
-          excessRate: 15,
+
+          // Other fields
+          wasteAllowance: "1,000.00",
+          excessRate: "4.00",
         };
 
-        // Basic placeholder replacement for preview (simplified)
-        let rendered = content;
-        Object.keys(sampleData).forEach((key) => {
-          const value = sampleData[key];
-          if (typeof value === "string" || typeof value === "number") {
-            rendered = rendered.replace(new RegExp(`{{${key}}}`, "g"), value);
-          }
-        });
+        // Helper function to replace placeholders (including nested ones like pricing.monthlyRate)
+        const replacePlaceholders = (html, data, prefix = "") => {
+          let result = html;
+
+          Object.keys(data).forEach((key) => {
+            const value = data[key];
+            const fullKey = prefix ? `${prefix}.${key}` : key;
+
+            if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+              // Recursively handle nested objects
+              result = replacePlaceholders(result, value, fullKey);
+            } else if (typeof value === "string" || typeof value === "number") {
+              // Replace the placeholder
+              result = result.replace(new RegExp(`\\{\\{${fullKey}\\}\\}`, "g"), value);
+            }
+          });
+
+          return result;
+        };
+
+        // Replace all placeholders
+        let rendered = replacePlaceholders(content, sampleData);
+
+        // Remove any remaining Handlebars syntax that we don't support
+        rendered = rendered.replace(/\{\{[^{}]*\}\}/g, "");
 
         // Isolate styles to prevent them from affecting the page
         rendered = isolateHTMLStyles(rendered);
@@ -254,7 +312,6 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, htmlConten
                   overflowWrap: "break-word",
                   maxWidth: "100%",
                   isolation: "isolate",
-                  contain: "layout style paint",
                   position: "relative"
                 }}
                 dangerouslySetInnerHTML={{ __html: previewHtml }}

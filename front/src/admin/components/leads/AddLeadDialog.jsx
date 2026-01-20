@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +50,13 @@ export function AddLeadDialog({ open, onOpenChange, onSubmit, isSubmitting }) {
     });
     setFormErrors({});
   };
+
+  // Reset form when dialog opens
+  useEffect(() => {
+    if (open) {
+      resetForm();
+    }
+  }, [open]);
 
   const handleOpenChange = (isOpen) => {
     if (!isOpen) {
