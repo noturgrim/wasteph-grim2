@@ -1,4 +1,8 @@
 import clientsShowcaseService from "../services/clientsShowcaseService.js";
+import {
+  createClientShowcaseSchema,
+  updateClientShowcaseSchema,
+} from "../validation/clientsShowcaseSchema.js";
 
 /**
  * Clients Showcase Controller
@@ -76,7 +80,22 @@ export const getClientsShowcaseById = async (req, res, next) => {
  */
 export const createClientsShowcase = async (req, res, next) => {
   try {
-    const clientData = req.body;
+    // Validate and sanitize input
+    const validationResult = createClientShowcaseSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: validationResult.error.errors.map((err) => ({
+          field: err.path.join("."),
+          message: err.message,
+        })),
+      });
+    }
+
+    // Use validated and sanitized data
+    const clientData = validationResult.data;
     const userId = req.user.id;
 
     const client = await clientsShowcaseService.createClientsShowcase(clientData, userId);
@@ -99,7 +118,23 @@ export const createClientsShowcase = async (req, res, next) => {
 export const updateClientsShowcase = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const clientData = req.body;
+
+    // Validate and sanitize input
+    const validationResult = updateClientShowcaseSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: validationResult.error.errors.map((err) => ({
+          field: err.path.join("."),
+          message: err.message,
+        })),
+      });
+    }
+
+    // Use validated and sanitized data
+    const clientData = validationResult.data;
 
     const client = await clientsShowcaseService.updateClientsShowcase(id, clientData);
 

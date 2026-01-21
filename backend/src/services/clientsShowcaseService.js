@@ -50,12 +50,31 @@ class ClientsShowcaseService {
    * Create new client showcase
    */
   async createClientsShowcase(clientData, userId) {
+    // Whitelist allowed fields to prevent mass assignment
+    const allowedData = {
+      company: clientData.company,
+      industry: clientData.industry,
+      logo: clientData.logo || null,
+      location: clientData.location || null,
+      employees: clientData.employees || null,
+      established: clientData.established || null,
+      background: clientData.background,
+      challenge: clientData.challenge || null,
+      solution: clientData.solution || null,
+      testimonial: clientData.testimonial,
+      author: clientData.author,
+      position: clientData.position || null,
+      rating: clientData.rating || null,
+      wasteReduction: clientData.wasteReduction || null,
+      partnership: clientData.partnership || null,
+      achievements: clientData.achievements || [],
+      isActive: clientData.isActive !== undefined ? clientData.isActive : true,
+      createdBy: userId, // Server-controlled field
+    };
+
     const [client] = await db
       .insert(clientsShowcaseTable)
-      .values({
-        ...clientData,
-        createdBy: userId,
-      })
+      .values(allowedData)
       .returning();
 
     return client;
@@ -65,12 +84,34 @@ class ClientsShowcaseService {
    * Update client showcase
    */
   async updateClientsShowcase(id, clientData) {
+    // Whitelist allowed fields to prevent mass assignment
+    const allowedData = {};
+
+    // Only include fields that are present in clientData
+    if (clientData.company !== undefined) allowedData.company = clientData.company;
+    if (clientData.industry !== undefined) allowedData.industry = clientData.industry;
+    if (clientData.logo !== undefined) allowedData.logo = clientData.logo;
+    if (clientData.location !== undefined) allowedData.location = clientData.location;
+    if (clientData.employees !== undefined) allowedData.employees = clientData.employees;
+    if (clientData.established !== undefined) allowedData.established = clientData.established;
+    if (clientData.background !== undefined) allowedData.background = clientData.background;
+    if (clientData.challenge !== undefined) allowedData.challenge = clientData.challenge;
+    if (clientData.solution !== undefined) allowedData.solution = clientData.solution;
+    if (clientData.testimonial !== undefined) allowedData.testimonial = clientData.testimonial;
+    if (clientData.author !== undefined) allowedData.author = clientData.author;
+    if (clientData.position !== undefined) allowedData.position = clientData.position;
+    if (clientData.rating !== undefined) allowedData.rating = clientData.rating;
+    if (clientData.wasteReduction !== undefined) allowedData.wasteReduction = clientData.wasteReduction;
+    if (clientData.partnership !== undefined) allowedData.partnership = clientData.partnership;
+    if (clientData.achievements !== undefined) allowedData.achievements = clientData.achievements;
+    if (clientData.isActive !== undefined) allowedData.isActive = clientData.isActive;
+
+    // Server-controlled field
+    allowedData.updatedAt = new Date();
+
     const [updated] = await db
       .update(clientsShowcaseTable)
-      .set({
-        ...clientData,
-        updatedAt: new Date(),
-      })
+      .set(allowedData)
       .where(eq(clientsShowcaseTable.id, id))
       .returning();
 
