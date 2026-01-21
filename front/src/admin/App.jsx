@@ -15,6 +15,7 @@ import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import ProposalTemplates from "./pages/ProposalTemplates";
 import Proposals from "./pages/Proposals";
+import Showcase from "./pages/Showcase";
 
 const CRMApp = () => {
   return (
@@ -58,6 +59,14 @@ const CRMApp = () => {
               element={
                 <ProtectedRoute allowedRoles={["admin"]}>
                   <BlogPosts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="showcase"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <Showcase />
                 </ProtectedRoute>
               }
             />

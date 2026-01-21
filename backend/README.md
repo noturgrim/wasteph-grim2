@@ -134,6 +134,17 @@ The server will start on `http://localhost:5000` by default.
 - `PATCH /api/clients/:id` - Update client (auth required)
 - `DELETE /api/clients/:id` - Delete client (admin/manager only)
 
+### Showcases
+
+- `GET /api/showcases` - Get active showcases (public)
+- `GET /api/showcases/all` - Get all showcases (auth required)
+- `GET /api/showcases/:id` - Get showcase by ID (auth required)
+- `POST /api/showcases` - Create showcase (auth required)
+- `PUT /api/showcases/:id` - Update showcase (auth required)
+- `DELETE /api/showcases/:id` - Delete showcase (auth required)
+- `PATCH /api/showcases/:id/toggle` - Toggle showcase status (auth required)
+- `PATCH /api/showcases/:id/order` - Update display order (auth required)
+
 ## User Roles
 
 - `admin` - Full access to all resources
@@ -172,6 +183,12 @@ The server will start on `http://localhost:5000` by default.
 
 - Active customers
 - Contract management
+
+### Showcase Table
+
+- Community impact showcase items
+- Display on public website
+- Order and visibility management
 
 ### Activity Log Table
 

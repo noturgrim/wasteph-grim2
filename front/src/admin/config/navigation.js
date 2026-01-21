@@ -9,6 +9,7 @@ import {
   BookOpen,
   FileEdit,
   ScrollText,
+  Image,
 } from "lucide-react";
 
 /**
@@ -121,6 +122,12 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
             url: "/admin/blog",
             icon: BookOpen,
             description: "Manage blog content",
+          },
+          {
+            title: "Showcase",
+            url: "/admin/showcase",
+            icon: Image,
+            description: "Manage community showcase",
           },
         ],
       },

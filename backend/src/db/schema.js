@@ -375,6 +375,30 @@ export const proposalTable = pgTable("proposal", {
   ),
 }));
 
+// Showcase Table
+export const showcaseTable = pgTable("showcase", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  tagline: text("tagline"),
+  description: text("description").notNull(),
+  image: text("image"),
+  link: text("link"),
+  displayOrder: integer("display_order").default(0),
+  isActive: boolean("is_active").notNull().default(true),
+  createdBy: text("created_by")
+    .notNull()
+    .references(() => userTable.id),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (table) => ({
+  displayOrderIdx: index("showcase_display_order_idx").on(table.displayOrder),
+  isActiveIdx: index("showcase_is_active_idx").on(table.isActive),
+}));
+
 // Activity Log
 export const activityLogTable = pgTable("activity_log", {
   id: uuid("id").primaryKey().defaultRandom(),

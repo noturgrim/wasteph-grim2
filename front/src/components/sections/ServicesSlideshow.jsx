@@ -2,19 +2,16 @@ import React, { useState, useEffect } from "react";
 import SectionShell from "../common/SectionShell";
 import RevealOnScroll from "../common/RevealOnScroll";
 import FadeInUp from "../common/FadeInUp";
-import {
-  fetchFacebookPosts,
-  transformFacebookPost,
-} from "../../services/facebookService";
+import { fetchShowcases } from "../../services/showcaseService";
 
-// Fallback showcase events (used if Facebook API fails)
+// Fallback showcase events (used if API fails)
 import img1 from "../../assets/showcase/img1.jpeg";
 import img2 from "../../assets/showcase/img2.jpeg";
 import img3 from "../../assets/showcase/img3.jpeg";
 import img4 from "../../assets/showcase/img4.jpeg";
 import img5 from "../../assets/showcase/img5.jpeg";
 
-// Fallback events if Facebook API fails
+// Fallback events if API fails
 const fallbackEvents = [
   {
     id: 1,
@@ -170,7 +167,7 @@ const EventCard = ({ event, index, isActive, onClick }) => {
             type="button"
             onClick={handleReadMoreClick}
             className="mt-auto flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-[#16a34a] transition-all hover:gap-3 hover:text-[#16a34a]/80"
-            aria-label={`Read more about ${event.title} on Facebook`}
+            aria-label={`Read more about ${event.title}`}
           >
             <span>Read More</span>
             <svg
@@ -222,28 +219,41 @@ const ServicesSlideshow = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch Facebook posts on mount
+  // Fetch showcases on mount
   useEffect(() => {
-    loadFacebookPosts();
+    loadShowcases();
   }, []);
 
-  const loadFacebookPosts = async () => {
+  const loadShowcases = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const posts = await fetchFacebookPosts(6);
+      const showcases = await fetchShowcases(6);
 
-      if (posts && posts.length > 0) {
-        const transformedPosts = posts.map(transformFacebookPost);
-        setShowcaseEvents(transformedPosts);
+      if (showcases && showcases.length > 0) {
+        // Transform showcases to match component format
+        const transformedShowcases = showcases.map((showcase) => ({
+          id: showcase.id,
+          title: showcase.title,
+          date: new Date(showcase.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+          tagline: showcase.tagline || "",
+          description: showcase.description,
+          image: showcase.image || null,
+          link: showcase.link || null,
+        }));
+        setShowcaseEvents(transformedShowcases);
       } else {
-        // No posts returned, use fallback
+        // No showcases returned, use fallback
         setShowcaseEvents(fallbackEvents);
       }
     } catch (err) {
-      console.error("Failed to load Facebook posts:", err);
-      setError(err.message || "Failed to load posts from Facebook");
+      console.error("Failed to load showcases:", err);
+      setError(err.message || "Failed to load showcases");
       setShowcaseEvents(fallbackEvents);
     } finally {
       setIsLoading(false);
@@ -265,7 +275,7 @@ const ServicesSlideshow = () => {
   };
 
   const handleRetry = () => {
-    loadFacebookPosts();
+    loadShowcases();
   };
 
   return (
