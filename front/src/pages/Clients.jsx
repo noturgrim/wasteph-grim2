@@ -273,6 +273,11 @@ const Clients = () => {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(1); // Show 1 client at a time for carousel
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
 
   useEffect(() => {
     const loadClients = async () => {
@@ -308,6 +313,31 @@ const Clients = () => {
     setCurrentPage(pageNumber);
     // Scroll to top of the page
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Touch handlers for swipe
+  const onTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe && currentPage < totalPages) {
+      handlePageChange(currentPage + 1);
+    }
+    if (isRightSwipe && currentPage > 1) {
+      handlePageChange(currentPage - 1);
+    }
   };
 
   // Keyboard navigation for carousel
@@ -400,7 +430,12 @@ const Clients = () => {
                 )}
 
                 {/* Carousel Container */}
-                <div className="relative overflow-hidden">
+                <div 
+                  className="relative overflow-hidden"
+                  onTouchStart={onTouchStart}
+                  onTouchMove={onTouchMove}
+                  onTouchEnd={onTouchEnd}
+                >
                   {/* Carousel Track */}
                   <div 
                     className="flex transition-transform duration-500 ease-in-out"
