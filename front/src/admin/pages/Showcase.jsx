@@ -1,22 +1,29 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { toast } from "../utils/toast";
-import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, Calendar, Image as ImageIcon, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import { AddShowcaseDialog } from "../components/showcase/AddShowcaseDialog";
 import { EditShowcaseDialog } from "../components/showcase/EditShowcaseDialog";
-import { DeleteConfirmationModal } from "../components/modals";
 import {
   fetchAllShowcases,
   deleteShowcase,
@@ -25,11 +32,15 @@ import {
 
 const Showcase = () => {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [showcases, setShowcases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingShowcase, setEditingShowcase] = useState(null);
   const [deletingShowcase, setDeletingShowcase] = useState(null);
+  const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
+  const [togglingId, setTogglingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     loadShowcases();
@@ -40,6 +51,12 @@ const Showcase = () => {
       setLoading(true);
       const data = await fetchAllShowcases();
       setShowcases(data || []);
+      
+      // Calculate stats
+      const total = data?.length || 0;
+      const active = data?.filter(s => s.isActive).length || 0;
+      const inactive = total - active;
+      setStats({ total, active, inactive });
     } catch (error) {
       console.error("Error loading showcases:", error);
       // Check if it's a database/table error
@@ -49,6 +66,7 @@ const Showcase = () => {
         toast.error("Failed to load showcases");
       }
       setShowcases([]);
+      setStats({ total: 0, active: 0, inactive: 0 });
     } finally {
       setLoading(false);
     }
@@ -67,6 +85,7 @@ const Showcase = () => {
   };
 
   const handleToggleStatus = async (showcase) => {
+    setTogglingId(showcase.id);
     try {
       await toggleShowcaseStatus(showcase.id);
       toast.success(
@@ -76,12 +95,15 @@ const Showcase = () => {
     } catch (error) {
       console.error("Error toggling showcase status:", error);
       toast.error("Failed to toggle showcase status");
+    } finally {
+      setTogglingId(null);
     }
   };
 
   const handleDeleteConfirm = async () => {
     if (!deletingShowcase) return;
 
+    setDeletingId(deletingShowcase.id);
     try {
       await deleteShowcase(deletingShowcase.id);
       toast.success("Showcase deleted successfully");
@@ -90,6 +112,8 @@ const Showcase = () => {
     } catch (error) {
       console.error("Error deleting showcase:", error);
       toast.error("Failed to delete showcase");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -103,118 +127,185 @@ const Showcase = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Showcase</h1>
-          <p className="text-muted-foreground">
-            Manage community impact showcase items displayed on the website
-          </p>
-        </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Showcase
-        </Button>
+      {/* Stats Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Total Showcases</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{stats.total}</div>
+          </CardContent>
+        </Card>
+        <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Active</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-green-600">
+              {stats.active}
+            </div>
+          </CardContent>
+        </Card>
+        <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Inactive</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-slate-600">
+              {stats.inactive}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[80px]">Image</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Tagline</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="w-[100px]">Status</TableHead>
-              <TableHead className="w-[150px] text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      {/* Main Content Card */}
+      <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+        <CardHeader>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle>Showcase Items</CardTitle>
+              <CardDescription>
+                Manage community impact showcase items displayed on the website
+              </CardDescription>
+            </div>
+            <Button
+              onClick={() => setIsAddDialogOpen(true)}
+              className="bg-linear-to-r from-[#15803d] to-[#16a34a] hover:opacity-90"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Showcase
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Showcase List */}
+          <div className="space-y-4">
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  Loading...
-                </TableCell>
-              </TableRow>
+              <div className="py-12 text-center">
+                <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-[#15803d]" />
+                <p className="text-muted-foreground">Loading showcases...</p>
+              </div>
             ) : showcases.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+              <div className="py-12 text-center">
+                <p className="text-muted-foreground">
                   No showcases found. Create your first showcase to get started.
-                </TableCell>
-              </TableRow>
+                </p>
+              </div>
             ) : (
               showcases.map((showcase) => (
-                <TableRow key={showcase.id}>
-                  <TableCell>
-                    {showcase.image ? (
-                      <img
-                        src={showcase.image}
-                        alt={showcase.title}
-                        className="h-12 w-12 rounded object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-12 w-12 items-center justify-center rounded bg-muted text-xs text-muted-foreground">
-                        No image
+                <div
+                  key={showcase.id}
+                  className={`group rounded-lg border p-4 transition-all hover:shadow-lg ${
+                    theme === "dark"
+                      ? "border-white/10 bg-white/5 hover:border-[#15803d]/50"
+                      : "border-slate-200 bg-white hover:border-[#15803d]/50"
+                  }`}
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    {/* Left Section: Image + Content */}
+                    <div className="flex flex-1 gap-4">
+                      {/* Image */}
+                      {showcase.image ? (
+                        <img
+                          src={showcase.image}
+                          alt={showcase.title}
+                          className="h-24 w-24 flex-shrink-0 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
+                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                      )}
+
+                      {/* Content */}
+                      <div className="flex-1 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3
+                            className={`text-lg font-bold ${
+                              theme === "dark" ? "text-white" : "text-slate-900"
+                            }`}
+                          >
+                            {showcase.title}
+                          </h3>
+                          <Badge
+                            className={
+                              showcase.isActive
+                                ? "bg-green-500/10 text-green-600 border-green-500/20"
+                                : "bg-slate-500/10 text-slate-600 border-slate-500/20"
+                            }
+                          >
+                            {showcase.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
+                        {showcase.tagline && (
+                          <p
+                            className={`text-sm ${
+                              theme === "dark" ? "text-white/60" : "text-slate-600"
+                            }`}
+                          >
+                            {showcase.tagline}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          <span>Created {formatDate(showcase.createdAt)}</span>
+                        </div>
                       </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {showcase.title}
-                  </TableCell>
-                  <TableCell className="max-w-[300px] truncate text-sm text-muted-foreground">
-                    {showcase.tagline || "-"}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(showcase.createdAt)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={showcase.isActive ? "default" : "secondary"}
-                    >
-                      {showcase.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    </div>
+
+                    {/* Right Section: Actions */}
+                    <div className="flex gap-2 sm:flex-col lg:flex-row">
                       <Button
-                        variant="ghost"
-                        size="icon"
+                        variant="outline"
+                        size="sm"
                         onClick={() => handleToggleStatus(showcase)}
-                        title={
-                          showcase.isActive
-                            ? "Deactivate showcase"
-                            : "Activate showcase"
-                        }
+                        disabled={togglingId === showcase.id}
+                        className="flex-1 hover:bg-[#15803d]/10 hover:text-[#15803d] sm:flex-none"
                       >
-                        {showcase.isActive ? (
-                          <EyeOff className="h-4 w-4" />
+                        {togglingId === showcase.id ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {showcase.isActive ? "Deactivating..." : "Activating..."}
+                          </>
+                        ) : showcase.isActive ? (
+                          <>
+                            <EyeOff className="mr-2 h-4 w-4" />
+                            Deactivate
+                          </>
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Activate
+                          </>
                         )}
                       </Button>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
                         onClick={() => setEditingShowcase(showcase)}
+                        disabled={togglingId === showcase.id}
+                        className="hover:bg-[#15803d]/10 hover:text-[#15803d]"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
                         onClick={() => setDeletingShowcase(showcase)}
+                        disabled={togglingId === showcase.id}
+                        className="hover:bg-red-500/10 hover:text-red-600"
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </div>
+                </div>
               ))
             )}
-          </TableBody>
-        </Table>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Dialogs */}
       <AddShowcaseDialog
@@ -232,13 +323,40 @@ const Showcase = () => {
         />
       )}
 
-      <DeleteConfirmationModal
-        isOpen={!!deletingShowcase}
-        onClose={() => setDeletingShowcase(null)}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Showcase"
-        description={`Are you sure you want to delete "${deletingShowcase?.title}"? This action cannot be undone.`}
-      />
+      <Dialog open={!!deletingShowcase} onOpenChange={() => setDeletingShowcase(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Showcase</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deletingShowcase?.title}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeletingShowcase(null)}
+              disabled={deletingId === deletingShowcase?.id}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deletingId === deletingShowcase?.id}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deletingId === deletingShowcase?.id ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

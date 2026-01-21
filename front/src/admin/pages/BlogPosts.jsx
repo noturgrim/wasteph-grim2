@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Search, Edit, Trash2, Eye, Calendar, Tag } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Eye, Calendar, Tag, Loader2 } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { toast } from "../utils/toast";
 import { Button } from "@/components/ui/button";
@@ -97,6 +97,8 @@ const BlogPosts = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeletingPost, setIsDeletingPost] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -153,6 +155,7 @@ const BlogPosts = () => {
   });
 
   const handleCreatePost = async () => {
+    setIsSubmitting(true);
     try {
       const postData = {
         ...formData,
@@ -177,10 +180,13 @@ const BlogPosts = () => {
     } catch (error) {
       console.error("Failed to create post:", error);
       toast.error(error.message || "Failed to create blog post");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleEditPost = async () => {
+    setIsSubmitting(true);
     try {
       const postData = {
         ...formData,
@@ -196,10 +202,13 @@ const BlogPosts = () => {
     } catch (error) {
       console.error("Failed to update post:", error);
       toast.error(error.message || "Failed to update blog post");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeletePost = async () => {
+    setIsDeletingPost(true);
     try {
       await deletePost(selectedPost.id);
       toast.success("Blog post deleted successfully");
@@ -210,6 +219,8 @@ const BlogPosts = () => {
     } catch (error) {
       console.error("Failed to delete post:", error);
       toast.error(error.message || "Failed to delete blog post");
+    } finally {
+      setIsDeletingPost(false);
     }
   };
 
@@ -571,14 +582,23 @@ const BlogPosts = () => {
                 setIsCreateDialogOpen(false);
                 setIsEditDialogOpen(false);
               }}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
               onClick={isCreateDialogOpen ? handleCreatePost : handleEditPost}
+              disabled={isSubmitting}
               className="bg-linear-to-r from-[#15803d] to-[#16a34a]"
             >
-              {isCreateDialogOpen ? "Create Post" : "Save Changes"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {isCreateDialogOpen ? "Creating..." : "Saving..."}
+                </>
+              ) : (
+                isCreateDialogOpen ? "Create Post" : "Save Changes"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -598,15 +618,24 @@ const BlogPosts = () => {
             <Button
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeletingPost}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
               onClick={handleDeletePost}
+              disabled={isDeletingPost}
               className="bg-red-600 hover:bg-red-700"
             >
-              Delete
+              {isDeletingPost ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
