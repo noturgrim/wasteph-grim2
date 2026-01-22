@@ -12,6 +12,9 @@ import {
   retryProposalEmail,
   downloadProposalPDF,
   previewProposalPDF,
+  handleClientApproval,
+  handleClientRejection,
+  getProposalStatusPublic,
 } from "../controllers/proposalController.js";
 import {
   validateCreateProposal,
@@ -21,6 +24,20 @@ import {
 } from "../middleware/proposalValidation.js";
 
 const router = Router();
+
+/**
+ * PUBLIC Routes (no authentication required - token-based)
+ * These routes are accessed from client email links
+ */
+
+// Client approval from email
+router.post("/public/:id/approve", handleClientApproval);
+
+// Client rejection from email
+router.post("/public/:id/reject", handleClientRejection);
+
+// Get proposal status (for displaying on response page)
+router.get("/public/:id/status", getProposalStatusPublic);
 
 /**
  * Proposal Routes

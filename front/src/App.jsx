@@ -69,6 +69,9 @@ const ComingSoon = lazy(() => import("./pages/ComingSoon"));
 // Lazy load 404 page
 const NotFound = lazy(() => import("./pages/NotFound"));
 
+// Lazy load Proposal Response page (public)
+const ProposalResponse = lazy(() => import("./pages/ProposalResponse"));
+
 // Lazy load CRM app
 const CRMApp = lazy(() => import("./admin/index"));
 
@@ -297,6 +300,16 @@ const App = () => {
             }
           >
             <CRMApp />
+          </Suspense>
+        }
+      />
+
+      {/* Proposal Response - Standalone page (no header/footer) */}
+      <Route
+        path="/proposal-response/:proposalId/:action"
+        element={
+          <Suspense fallback={<div className="min-h-screen" />}>
+            <ProposalResponse />
           </Suspense>
         }
       />

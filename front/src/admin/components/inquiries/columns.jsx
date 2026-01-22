@@ -206,8 +206,8 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestP
             </Button>
           )}
 
-          {/* Show Proposal button for rejected proposals - allow resubmission */}
-          {inquiry.proposalStatus === "rejected" && (
+          {/* Show Proposal button for disapproved proposals - allow resubmission */}
+          {inquiry.proposalStatus === "disapproved" && (
             <Button
               variant="ghost"
               size="sm"

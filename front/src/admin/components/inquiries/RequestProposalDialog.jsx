@@ -71,8 +71,8 @@ export function RequestProposalDialog({ open, onOpenChange, inquiry, onSuccess }
         console.error("Failed to load services:", error);
       }
 
-      // Check if this is a revision of a rejected proposal
-      const isRevision = inquiry?.proposalId && inquiry?.proposalStatus === "rejected";
+      // Check if this is a revision of a disapproved proposal
+      const isRevision = inquiry?.proposalId && inquiry?.proposalStatus === "disapproved";
 
       if (isRevision) {
         // Load existing proposal data for editing
@@ -432,8 +432,8 @@ ${bodyTag}
         editedJsonContent: savedEditorContent.json,
       };
 
-      // Check if revising a rejected proposal
-      const isRevision = inquiry?.proposalId && inquiry?.proposalStatus === "rejected";
+      // Check if revising a disapproved proposal
+      const isRevision = inquiry?.proposalId && inquiry?.proposalStatus === "disapproved";
 
       if (isRevision) {
         await api.updateProposal(inquiry.proposalId, {
@@ -523,7 +523,7 @@ ${bodyTag}
             {/* Header in Sidebar */}
             <div className="mb-8">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-                {inquiry?.proposalStatus === "rejected" ? "Revise Proposal" : "Create Proposal"}
+                {inquiry?.proposalStatus === "disapproved" ? "Revise Proposal" : "Create Proposal"}
               </h3>
               <p className="text-xs text-gray-600 dark:text-gray-400">
                 For {inquiry?.name}
@@ -656,7 +656,7 @@ ${bodyTag}
             {/* Content */}
             <div className={`flex-1 px-8 py-6 min-h-0 ${currentStep === 3 ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'}`}>
           {/* Rejection Banner */}
-          {inquiry?.proposalStatus === "rejected" && inquiry?.proposalRejectionReason && (
+          {inquiry?.proposalStatus === "disapproved" && inquiry?.proposalRejectionReason && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
               <p className="text-sm font-semibold text-red-900 mb-1">Rejection Reason:</p>
               <p className="text-sm text-red-700">{inquiry.proposalRejectionReason}</p>

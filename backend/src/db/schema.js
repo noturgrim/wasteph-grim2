@@ -56,11 +56,13 @@ export const priorityLevelEnum = pgEnum("priority_level", [
   "high",
 ]);
 export const proposalStatusEnum = pgEnum("proposal_status", [
-  "pending",    // Sales created, waiting for admin review
-  "approved",   // Admin approved, waiting for sales to send
-  "rejected",   // Admin rejected, sales can revise
-  "sent",       // Sales sent to client
-  "cancelled",  // Cancelled by sales or admin
+  "pending",      // Sales created, waiting for admin review
+  "approved",     // Admin approved, waiting for sales to send
+  "disapproved",  // Admin disapproved, sales can revise
+  "sent",         // Sales sent to client, waiting for client response
+  "accepted",     // Client accepted the proposal
+  "rejected",     // Client rejected the proposal
+  "cancelled",    // Cancelled by sales or admin
 ]);
 
 // Proposal Template Types
@@ -352,6 +354,12 @@ export const proposalTable = pgTable("proposal", {
   sentAt: timestamp("sent_at", { withTimezone: true }), // When sent to client
   emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
   emailStatus: text("email_status"), // "sent", "failed"
+
+  // Client Response (from email buttons)
+  clientResponse: text("client_response"), // "approved", "rejected", null
+  clientResponseAt: timestamp("client_response_at", { withTimezone: true }),
+  clientResponseToken: text("client_response_token"), // Secure token for email links
+  clientResponseIp: text("client_response_ip"),
 
   // PDF Storage
   pdfUrl: text("pdf_url"),

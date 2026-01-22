@@ -182,6 +182,13 @@ class InquiryNotesService {
       serviceMap[service.id] = service.name;
     });
 
+    // Fetch user names for assignedTo lookups
+    const users = await db.select().from(userTable);
+    const userMap = {};
+    users.forEach(user => {
+      userMap[user.id] = `${user.firstName} ${user.lastName}`;
+    });
+
     // Combine and format timeline entries
     const timeline = [
       // Manual notes
@@ -203,6 +210,16 @@ class InquiryNotesService {
             to: details.changes.serviceId.to,
             fromName: serviceMap[details.changes.serviceId.from] || null,
             toName: serviceMap[details.changes.serviceId.to] || null,
+          };
+        }
+
+        // Enrich assignedTo changes with user names
+        if (details?.changes?.assignedTo) {
+          details.changes.assignedTo = {
+            from: details.changes.assignedTo.from,
+            to: details.changes.assignedTo.to,
+            fromName: userMap[details.changes.assignedTo.from] || null,
+            toName: userMap[details.changes.assignedTo.to] || null,
           };
         }
 

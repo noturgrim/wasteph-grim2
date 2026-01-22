@@ -46,9 +46,11 @@ class EmailService {
    * @param {Object} proposalData - Proposal data
    * @param {Object} inquiryData - Inquiry data for client info
    * @param {Buffer} pdfBuffer - PDF buffer
+   * @param {string} proposalId - Proposal UUID for response links
+   * @param {string} responseToken - Secure token for client response
    * @returns {Promise<Object>} Email result
    */
-  async sendProposalEmail(to, proposalData, inquiryData, pdfBuffer) {
+  async sendProposalEmail(to, proposalData, inquiryData, pdfBuffer, proposalId, responseToken) {
     try {
       // Handle both old format (pricing/terms objects) and new format (flat structure with editedHtmlContent)
       const isNewFormat = !!proposalData.editedHtmlContent;
@@ -68,8 +70,8 @@ class EmailService {
 
       // Generate email HTML
       const htmlContent = isNewFormat
-        ? this.generateSimpleProposalEmailHTML(clientName)
-        : this.generateProposalEmailHTML(clientName, total);
+        ? this.generateSimpleProposalEmailHTML(clientName, proposalId, responseToken)
+        : this.generateProposalEmailHTML(clientName, total, proposalId, responseToken);
 
       // Send email with PDF attachment
       console.log(`📤 Sending proposal email to: ${to}`);
@@ -141,9 +143,12 @@ class EmailService {
   /**
    * Generate simple proposal email HTML for new format (without total)
    * @param {string} clientName - Client name
+   * @param {string} proposalId - Proposal UUID
+   * @param {string} responseToken - Secure token for client response
    * @returns {string} HTML content
    */
-  generateSimpleProposalEmailHTML(clientName) {
+  generateSimpleProposalEmailHTML(clientName, proposalId, responseToken) {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     return `
 <!DOCTYPE html>
 <html lang="en">
@@ -218,6 +223,32 @@ class EmailService {
     .footer strong {
       color: #106934;
     }
+    .action-buttons {
+      text-align: center;
+      margin: 30px 0;
+      padding: 20px 0;
+    }
+    .btn {
+      display: inline-block;
+      padding: 14px 35px;
+      margin: 0 10px;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 16px;
+      transition: opacity 0.3s;
+    }
+    .btn:hover {
+      opacity: 0.8;
+    }
+    .btn-approve {
+      background-color: #10b981;
+      color: #ffffff;
+    }
+    .btn-reject {
+      background-color: #ef4444;
+      color: #ffffff;
+    }
   </style>
 </head>
 <body>
@@ -247,6 +278,12 @@ class EmailService {
       <p>We look forward to the opportunity to serve you.</p>
     </div>
 
+    <div class="action-buttons">
+      <p style="margin-bottom: 20px; color: #666;">Please review the attached proposal and let us know your decision:</p>
+      <a href="${frontendUrl}/proposal-response/${proposalId}/approve?token=${responseToken}" class="btn btn-approve">✓ Approve Proposal</a>
+      <a href="${frontendUrl}/proposal-response/${proposalId}/reject?token=${responseToken}" class="btn btn-reject">✗ Reject Proposal</a>
+    </div>
+
     <div class="footer">
       <p><strong>WastePH - Professional Waste Management Solutions</strong></p>
       <p>Email: info@wasteph.com | Phone: +639562461503</p>
@@ -264,9 +301,12 @@ class EmailService {
    * Generate proposal email HTML using template literals
    * @param {string} clientName - Client name
    * @param {number} total - Total amount
+   * @param {string} proposalId - Proposal UUID
+   * @param {string} responseToken - Secure token for client response
    * @returns {string} HTML content
    */
-  generateProposalEmailHTML(clientName, total) {
+  generateProposalEmailHTML(clientName, total, proposalId, responseToken) {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     return `
 <!DOCTYPE html>
 <html lang="en">
@@ -363,6 +403,32 @@ class EmailService {
     .footer strong {
       color: #2c5282;
     }
+    .action-buttons {
+      text-align: center;
+      margin: 30px 0;
+      padding: 20px 0;
+    }
+    .btn {
+      display: inline-block;
+      padding: 14px 35px;
+      margin: 0 10px;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 16px;
+      transition: opacity 0.3s;
+    }
+    .btn:hover {
+      opacity: 0.8;
+    }
+    .btn-approve {
+      background-color: #10b981;
+      color: #ffffff;
+    }
+    .btn-reject {
+      background-color: #ef4444;
+      color: #ffffff;
+    }
   </style>
 </head>
 <body>
@@ -398,6 +464,12 @@ class EmailService {
       <p>Should you have any questions or require clarification on any aspect of this proposal, please do not hesitate to contact us.</p>
 
       <p>We look forward to the opportunity to serve you.</p>
+    </div>
+
+    <div class="action-buttons">
+      <p style="margin-bottom: 20px; color: #666;">Please review the attached proposal and let us know your decision:</p>
+      <a href="${frontendUrl}/proposal-response/${proposalId}/approve?token=${responseToken}" class="btn btn-approve">✓ Approve Proposal</a>
+      <a href="${frontendUrl}/proposal-response/${proposalId}/reject?token=${responseToken}" class="btn btn-reject">✗ Reject Proposal</a>
     </div>
 
     <div class="footer">

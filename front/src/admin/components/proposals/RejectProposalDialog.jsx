@@ -71,7 +71,7 @@ export function RejectProposalDialog({ open, onOpenChange, proposal, onConfirm }
               id="rejectionReason"
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="Explain why this proposal is being rejected (e.g., pricing issues, incorrect services, compliance concerns)..."
+              placeholder="Explain why this proposal is being disapproved (e.g., pricing issues, incorrect services, compliance concerns)..."
               rows={4}
               className="mt-1"
               required

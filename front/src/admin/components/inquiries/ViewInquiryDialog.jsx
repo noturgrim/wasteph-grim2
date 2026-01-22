@@ -105,17 +105,23 @@ export function ViewInquiryDialog({ open, onOpenChange, inquiry, users = [], onP
                           ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-200 border-yellow-300"
                           : inquiry.proposalStatus === "approved"
                           ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200 border-green-300"
-                          : inquiry.proposalStatus === "rejected"
+                          : inquiry.proposalStatus === "disapproved"
                           ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200 border-red-300"
                           : inquiry.proposalStatus === "sent"
-                          ? "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200 border-blue-300"
+                          ? "bg-gray-100 text-gray-800 dark:bg-gray-950 dark:text-gray-200 border-gray-300"
+                          : inquiry.proposalStatus === "accepted"
+                          ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200 border-green-300"
+                          : inquiry.proposalStatus === "rejected"
+                          ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200 border-red-300"
                           : "bg-gray-100 text-gray-800"
                       }
                     >
                       {inquiry.proposalStatus === "pending" ? "Pending Review" :
                        inquiry.proposalStatus === "approved" ? "Approved" :
-                       inquiry.proposalStatus === "rejected" ? "Rejected" :
+                       inquiry.proposalStatus === "disapproved" ? "Disapproved" :
                        inquiry.proposalStatus === "sent" ? "Sent" :
+                       inquiry.proposalStatus === "accepted" ? "Client Accepted" :
+                       inquiry.proposalStatus === "rejected" ? "Client Rejected" :
                        inquiry.proposalStatus}
                     </Badge>
                   )}
@@ -162,9 +168,9 @@ export function ViewInquiryDialog({ open, onOpenChange, inquiry, users = [], onP
               Proposal has been sent to client
             </div>
           )}
-          {inquiry.proposalStatus === "rejected" && (
+          {inquiry.proposalStatus === "disapproved" && (
             <div className="text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950 px-3 py-2 rounded-md space-y-1">
-              <p className="font-semibold">Proposal was rejected</p>
+              <p className="font-semibold">Proposal was disapproved</p>
               {inquiry.proposalRejectionReason && (
                 <p className="text-xs">
                   <strong>Reason:</strong> {inquiry.proposalRejectionReason}

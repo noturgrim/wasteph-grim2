@@ -23,9 +23,11 @@ import { Badge } from "@/components/ui/badge";
 const getStatusBadge = (status) => {
   const statusConfig = {
     pending: { label: "Pending Review", variant: "secondary" },
-    approved: { label: "Approved", variant: "default" },
-    rejected: { label: "Rejected", variant: "destructive" },
-    sent: { label: "Sent to Client", variant: "success" },
+    approved: { label: "Approved", variant: "success" },
+    disapproved: { label: "Disapproved", variant: "destructive" },
+    sent: { label: "Sent to Client", variant: "default" },
+    accepted: { label: "Client Accepted", variant: "success" },
+    rejected: { label: "Client Rejected", variant: "destructive" },
   };
 
   const config = statusConfig[status] || { label: status, variant: "secondary" };

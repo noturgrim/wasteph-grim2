@@ -8,6 +8,18 @@ import { AppError } from "../middleware/errorHandler.js";
  * Follows: Route → Controller → Service → DB architecture
  */
 class InquiryService {
+  // Map service names from database to frontend format (snake_case)
+  serviceNameToFrontend(serviceName) {
+    const reverseMapping = {
+      'Fixed Monthly Rate': 'fixed_monthly_rate',
+      'Hazardous Waste': 'hazardous_waste',
+      'Clearing Project': 'clearing_project',
+      'Long Term Garbage': 'long_term_garbage',
+      'One-time Hauling': 'onetime_hauling',
+      'Purchase of Recyclables': 'purchase_of_recyclables',
+    };
+    return reverseMapping[serviceName] || serviceName;
+  }
   /**
    * Create a new inquiry
    * @param {Object} inquiryData - Inquiry data from request
@@ -56,6 +68,7 @@ class InquiryService {
         location: inquiryTable.location,
         message: inquiryTable.message,
         serviceId: inquiryTable.serviceId,
+        serviceType: serviceTable.name, // Add service name as serviceType for frontend compatibility
         status: inquiryTable.status,
         source: inquiryTable.source,
         assignedTo: inquiryTable.assignedTo,
@@ -97,13 +110,38 @@ class InquiryService {
       }
     }
 
-    // Service type filter - support multiple service types (comma-separated)
+    // Service filter - lookup service UUIDs by names, then filter by IDs
     if (serviceType) {
-      const serviceTypes = serviceType.split(',').map(s => s.trim());
-      if (serviceTypes.length === 1) {
-        conditions.push(eq(inquiryTable.serviceType, serviceTypes[0]));
-      } else {
-        conditions.push(inArray(inquiryTable.serviceType, serviceTypes));
+      const serviceNames = serviceType.split(',').map(s => s.trim());
+      
+      // Map frontend snake_case values to actual service names in database
+      const serviceNameMapping = {
+        'fixed_monthly_rate': 'Fixed Monthly Rate',
+        'hazardous_waste': 'Hazardous Waste',
+        'clearing_project': 'Clearing Project',
+        'long_term_garbage': 'Long Term Garbage',
+        'onetime_hauling': 'One-time Hauling',
+        'purchase_of_recyclables': 'Purchase of Recyclables',
+      };
+      
+      // Convert to actual service names
+      const actualServiceNames = serviceNames.map(name => serviceNameMapping[name] || name);
+      
+      // First, get the service IDs for these service names
+      const services = await db
+        .select({ id: serviceTable.id })
+        .from(serviceTable)
+        .where(inArray(serviceTable.name, actualServiceNames));
+      
+      const serviceIds = services.map(s => s.id);
+      
+      // Only add filter if we found matching services
+      if (serviceIds.length > 0) {
+        if (serviceIds.length === 1) {
+          conditions.push(eq(inquiryTable.serviceId, serviceIds[0]));
+        } else {
+          conditions.push(inArray(inquiryTable.serviceId, serviceIds));
+        }
       }
     }
 
@@ -185,9 +223,10 @@ class InquiryService {
       }
     });
 
-    // Attach proposal data to inquiries
+    // Attach proposal data to inquiries and convert serviceType to frontend format
     const inquiriesWithProposals = inquiries.map(inquiry => ({
       ...inquiry,
+      serviceType: inquiry.serviceType ? this.serviceNameToFrontend(inquiry.serviceType) : null,
       proposalId: proposalMap[inquiry.id]?.proposalId || null,
       proposalStatus: proposalMap[inquiry.id]?.proposalStatus || null,
       proposalCreatedAt: proposalMap[inquiry.id]?.proposalCreatedAt || null,

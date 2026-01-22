@@ -8,6 +8,7 @@ import emailService from "./emailService.js";
 import pdfService from "./pdfService.js";
 import fs from "fs/promises";
 import path from "path";
+import crypto from "crypto";
 
 /**
  * ProposalService - Business logic for proposal operations
@@ -196,13 +197,13 @@ class ProposalService {
     // Get existing proposal
     const existing = await this.getProposalById(proposalId);
 
-    // Allow updates to pending or rejected proposals
-    if (existing.status !== "pending" && existing.status !== "rejected") {
-      throw new AppError("Can only update pending or rejected proposals", 400);
+    // Allow updates to pending or disapproved proposals
+    if (existing.status !== "pending" && existing.status !== "disapproved") {
+      throw new AppError("Can only update pending or disapproved proposals", 400);
     }
 
-    // If updating a rejected proposal, reset it to pending and clear rejection fields
-    const isRejectedProposal = existing.status === "rejected";
+    // If updating a disapproved proposal, reset it to pending and clear rejection fields
+    const isDisapprovedProposal = existing.status === "disapproved";
 
     const [proposal] = await db
       .update(proposalTable)
@@ -214,8 +215,8 @@ class ProposalService {
               : JSON.stringify(proposalData),
         }),
         ...(templateId && { templateId }),
-        // If it was rejected, reset to pending and clear rejection data
-        ...(isRejectedProposal && {
+        // If it was disapproved, reset to pending and clear rejection data
+        ...(isDisapprovedProposal && {
           status: "pending",
           rejectionReason: null,
           reviewedBy: null,
@@ -229,7 +230,7 @@ class ProposalService {
     // Log activity
     await this.logActivity({
       userId,
-      action: isRejectedProposal ? "proposal_revised" : "proposal_updated",
+      action: isDisapprovedProposal ? "proposal_revised" : "proposal_updated",
       entityType: "proposal",
       entityId: proposal.id,
       ipAddress: metadata.ipAddress,
@@ -328,6 +329,15 @@ class ProposalService {
     const inquiry = await inquiryService.getInquiryById(proposal.inquiryId);
     const proposalData = JSON.parse(proposal.proposalData);
 
+    // Step 3.5: Generate secure token for client response
+    const responseToken = crypto.randomBytes(32).toString('hex');
+    
+    // Update proposal with response token
+    await db
+      .update(proposalTable)
+      .set({ clientResponseToken: responseToken })
+      .where(eq(proposalTable.id, proposalId));
+
     // Step 4: Generate PDF
     let pdfBuffer, pdfUrl;
     try {
@@ -367,7 +377,9 @@ class ProposalService {
         recipientEmail,
         proposalData,
         inquiry,
-        pdfBuffer
+        pdfBuffer,
+        proposalId,
+        responseToken
       );
 
       if (!emailResult.success) {
@@ -508,7 +520,7 @@ class ProposalService {
   }
 
   /**
-   * Reject proposal
+   * Reject proposal (Admin disapproves)
    * @param {string} proposalId - Proposal UUID
    * @param {string} adminId - Admin rejecting
    * @param {string} rejectionReason - Reason for rejection
@@ -525,7 +537,7 @@ class ProposalService {
     const [updatedProposal] = await db
       .update(proposalTable)
       .set({
-        status: "rejected",
+        status: "disapproved",
         reviewedBy: adminId,
         reviewedAt: new Date(),
         rejectionReason,
@@ -546,8 +558,8 @@ class ProposalService {
       if (salesUser) {
         await emailService.sendNotificationEmail(
           salesUser.email,
-          "Proposal Rejected",
-          `Your proposal has been rejected. Reason: ${rejectionReason}`
+          "Proposal Disapproved",
+          `Your proposal has been disapproved. Reason: ${rejectionReason}`
         );
       }
     } catch (error) {
@@ -557,7 +569,7 @@ class ProposalService {
     // Log activity
     await this.logActivity({
       userId: adminId,
-      action: "proposal_rejected",
+      action: "proposal_disapproved",
       entityType: "proposal",
       entityId: proposal.id,
       details: { rejectionReason },
@@ -675,6 +687,100 @@ class ProposalService {
     );
 
     return pdfBuffer;
+  }
+
+  /**
+   * Validate client response token
+   * @param {string} proposalId - Proposal UUID
+   * @param {string} token - Response token from email link
+   * @returns {Promise<Object>} Proposal if token is valid
+   * @throws {AppError} If token is invalid or proposal not found
+   */
+  async validateResponseToken(proposalId, token) {
+    const proposal = await this.getProposalById(proposalId);
+
+    if (!proposal.clientResponseToken) {
+      throw new AppError("This proposal does not have a response token", 400);
+    }
+
+    if (proposal.clientResponseToken !== token) {
+      throw new AppError("Invalid response token", 403);
+    }
+
+    // Check if already responded
+    if (proposal.clientResponse) {
+      throw new AppError(`This proposal has already been ${proposal.clientResponse}`, 400);
+    }
+
+    return proposal;
+  }
+
+  /**
+   * Record client approval via email
+   * @param {string} proposalId - Proposal UUID
+   * @param {string} ipAddress - Client IP address
+   * @returns {Promise<Object>} Updated proposal
+   */
+  async recordClientApproval(proposalId, ipAddress) {
+    // Update proposal status to accepted
+    const [updatedProposal] = await db
+      .update(proposalTable)
+      .set({
+        status: "accepted",
+        clientResponse: "approved",
+        clientResponseAt: new Date(),
+        clientResponseIp: ipAddress,
+        updatedAt: new Date(),
+      })
+      .where(eq(proposalTable.id, proposalId))
+      .returning();
+
+    // Log activity
+    await this.logActivity({
+      userId: updatedProposal.requestedBy, // Log under sales person who created it
+      action: "proposal_client_approved",
+      entityType: "proposal",
+      entityId: proposalId,
+      details: { clientIp: ipAddress },
+      ipAddress,
+      userAgent: null,
+    });
+
+    return updatedProposal;
+  }
+
+  /**
+   * Record client rejection via email
+   * @param {string} proposalId - Proposal UUID
+   * @param {string} ipAddress - Client IP address
+   * @returns {Promise<Object>} Updated proposal
+   */
+  async recordClientRejection(proposalId, ipAddress) {
+    // Update proposal status to rejected
+    const [updatedProposal] = await db
+      .update(proposalTable)
+      .set({
+        status: "rejected",
+        clientResponse: "rejected",
+        clientResponseAt: new Date(),
+        clientResponseIp: ipAddress,
+        updatedAt: new Date(),
+      })
+      .where(eq(proposalTable.id, proposalId))
+      .returning();
+
+    // Log activity
+    await this.logActivity({
+      userId: updatedProposal.requestedBy, // Log under sales person who created it
+      action: "proposal_client_rejected",
+      entityType: "proposal",
+      entityId: proposalId,
+      details: { clientIp: ipAddress },
+      ipAddress,
+      userAgent: null,
+    });
+
+    return updatedProposal;
   }
 
   /**

@@ -21,7 +21,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { api } from "../../services/api";
 
-export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], onSubmit, isSubmitting }) {
+export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isMasterSales = false, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -256,30 +256,33 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], onS
             </Select>
           </div>
 
-          <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-            <Label htmlFor="edit-assigned" className="text-right">Assigned To</Label>
-            <Select
-              value={formData.assignedTo}
-              onValueChange={(val) =>
-                setFormData({ ...formData, assignedTo: val })
-              }
-            >
-              <SelectTrigger id="edit-assigned">
-                <SelectValue placeholder="Select team member" />
-              </SelectTrigger>
-              <SelectContent>
-                {users.length === 0 ? (
-                  <div className="p-2 text-sm text-muted-foreground">No users found</div>
-                ) : (
-                  users.map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.firstName} {user.lastName} ({user.role})
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Only show Assigned To field for Master Sales */}
+          {isMasterSales && (
+            <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+              <Label htmlFor="edit-assigned" className="text-right">Assigned To</Label>
+              <Select
+                value={formData.assignedTo}
+                onValueChange={(val) =>
+                  setFormData({ ...formData, assignedTo: val })
+                }
+              >
+                <SelectTrigger id="edit-assigned">
+                  <SelectValue placeholder="Select team member" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground">No users found</div>
+                  ) : (
+                    users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {user.firstName} {user.lastName} ({user.role})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="grid grid-cols-[120px_1fr] items-start gap-4">
             <Label htmlFor="edit-message" className="text-right pt-2">Message</Label>

@@ -625,6 +625,7 @@ export default function Inquiries() {
         onOpenChange={setIsEditDialogOpen}
         inquiry={selectedInquiry}
         users={users}
+        isMasterSales={isMasterSales}
         onSubmit={handleUpdateInquiry}
         isSubmitting={isSubmitting}
       />

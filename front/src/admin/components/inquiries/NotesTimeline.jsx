@@ -72,6 +72,12 @@ const formatFieldChange = (field, change) => {
     to = change.toName || change.to || "(empty)";
   }
 
+  // Format assignedTo values (use user name if available)
+  if (field === "assignedTo") {
+    from = change.fromName || change.from || "(empty)";
+    to = change.toName || change.to || "(empty)";
+  }
+
   return { label, from, to };
 };
 
@@ -193,9 +199,9 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
         badgeText: "text-purple-700",
         badgeBorder: "border-purple-200",
       },
-      proposal_rejected: {
-        label: "Proposal Rejected",
-        description: details.rejectionReason ? `Rejected: ${details.rejectionReason}` : "Proposal was rejected by admin",
+      proposal_disapproved: {
+        label: "Proposal Disapproved",
+        description: details.rejectionReason ? `Disapproved: ${details.rejectionReason}` : "Proposal was disapproved by admin",
         icon: XCircle,
         badgeBg: "bg-red-50",
         badgeText: "text-red-700",
@@ -216,6 +222,22 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
         badgeBg: "bg-gray-50",
         badgeText: "text-gray-700",
         badgeBorder: "border-gray-200",
+      },
+      proposal_client_approved: {
+        label: "Client Approved",
+        description: "Client approved the proposal via email",
+        icon: CheckCircle,
+        badgeBg: "bg-emerald-50",
+        badgeText: "text-emerald-700",
+        badgeBorder: "border-emerald-200",
+      },
+      proposal_client_rejected: {
+        label: "Client Rejected",
+        description: "Client rejected the proposal via email",
+        icon: XCircle,
+        badgeBg: "bg-rose-50",
+        badgeText: "text-rose-700",
+        badgeBorder: "border-rose-200",
       },
     };
 
