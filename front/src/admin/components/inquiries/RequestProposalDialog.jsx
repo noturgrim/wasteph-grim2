@@ -450,6 +450,44 @@ ${bodyTag}
         toast.success("Proposal request submitted for approval");
       }
 
+      // Update inquiry with selected service and any additional client info added during proposal creation
+      if (inquiry.id) {
+        try {
+          const inquiryUpdateData = {};
+
+          // Always update serviceId if selected
+          if (selectedServiceId) {
+            inquiryUpdateData.serviceId = selectedServiceId;
+          }
+
+          // Update client info fields if they were added/modified during proposal creation
+          if (formData.clientName && formData.clientName !== inquiry.name) {
+            inquiryUpdateData.name = formData.clientName;
+          }
+          if (formData.clientEmail && formData.clientEmail !== inquiry.email) {
+            inquiryUpdateData.email = formData.clientEmail;
+          }
+          if (formData.clientPhone && formData.clientPhone !== inquiry.phone) {
+            inquiryUpdateData.phone = formData.clientPhone;
+          }
+          if (formData.clientCompany && formData.clientCompany !== inquiry.company) {
+            inquiryUpdateData.company = formData.clientCompany;
+          }
+          // Map clientAddress to location field in inquiry table
+          if (formData.clientAddress && formData.clientAddress !== inquiry.location) {
+            inquiryUpdateData.location = formData.clientAddress;
+          }
+
+          // Only make API call if there's data to update
+          if (Object.keys(inquiryUpdateData).length > 0) {
+            await api.updateInquiry(inquiry.id, inquiryUpdateData);
+          }
+        } catch (error) {
+          console.error("Failed to update inquiry:", error);
+          // Don't show error to user as the proposal was created successfully
+        }
+      }
+
       onOpenChange(false);
       if (onSuccess) onSuccess();
     } catch (error) {

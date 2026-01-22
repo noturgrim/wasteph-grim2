@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { api } from "../../services/api";
 
 export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState({
@@ -31,10 +32,28 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], onS
     source: "phone",
     status: "initial_comms",
     assignedTo: "",
+    serviceId: "",
     notes: "",
   });
 
   const [formErrors, setFormErrors] = useState({});
+  const [services, setServices] = useState([]);
+
+  // Load services on mount
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const response = await api.getServices();
+        setServices(response.data || []);
+      } catch (error) {
+        console.error("Failed to load services:", error);
+      }
+    };
+
+    if (open) {
+      loadServices();
+    }
+  }, [open]);
 
   useEffect(() => {
     if (inquiry && open) {
@@ -48,6 +67,7 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], onS
         source: inquiry.source || "phone",
         status: inquiry.status || "initial_comms",
         assignedTo: inquiry.assignedTo || "",
+        serviceId: inquiry.serviceId || "",
         notes: inquiry.notes || "",
       });
     }
@@ -162,6 +182,31 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], onS
               }
               placeholder="City, Province or Address"
             />
+          </div>
+
+          <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+            <Label htmlFor="edit-service" className="text-right">Service</Label>
+            <Select
+              value={formData.serviceId}
+              onValueChange={(val) =>
+                setFormData({ ...formData, serviceId: val })
+              }
+            >
+              <SelectTrigger id="edit-service">
+                <SelectValue placeholder="Select service type" />
+              </SelectTrigger>
+              <SelectContent>
+                {services.length === 0 ? (
+                  <div className="p-2 text-sm text-muted-foreground">No services found</div>
+                ) : (
+                  services.map((service) => (
+                    <SelectItem key={service.id} value={service.id}>
+                      {service.name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-[120px_1fr] items-center gap-4">

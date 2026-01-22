@@ -1,5 +1,5 @@
 import { db } from "../db/index.js";
-import { inquiryTable, activityLogTable, leadTable, proposalTable } from "../db/schema.js";
+import { inquiryTable, activityLogTable, leadTable, proposalTable, serviceTable } from "../db/schema.js";
 import { eq, desc, and, or, like, inArray, count, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 
@@ -45,8 +45,31 @@ class InquiryService {
     // Calculate offset
     const offset = (page - 1) * limit;
 
-    // Build base query
-    let query = db.select().from(inquiryTable);
+    // Build base query with service join
+    let query = db
+      .select({
+        id: inquiryTable.id,
+        name: inquiryTable.name,
+        email: inquiryTable.email,
+        phone: inquiryTable.phone,
+        company: inquiryTable.company,
+        location: inquiryTable.location,
+        message: inquiryTable.message,
+        serviceId: inquiryTable.serviceId,
+        status: inquiryTable.status,
+        source: inquiryTable.source,
+        assignedTo: inquiryTable.assignedTo,
+        notes: inquiryTable.notes,
+        createdAt: inquiryTable.createdAt,
+        updatedAt: inquiryTable.updatedAt,
+        service: {
+          id: serviceTable.id,
+          name: serviceTable.name,
+          description: serviceTable.description,
+        },
+      })
+      .from(inquiryTable)
+      .leftJoin(serviceTable, eq(inquiryTable.serviceId, serviceTable.id));
     const conditions = [];
 
     // Status filter - support multiple statuses (comma-separated)
@@ -115,7 +138,10 @@ class InquiryService {
     }
 
     // Get total count for pagination
-    let countQuery = db.select({ value: count() }).from(inquiryTable);
+    let countQuery = db
+      .select({ value: count() })
+      .from(inquiryTable)
+      .leftJoin(serviceTable, eq(inquiryTable.serviceId, serviceTable.id));
     if (conditions.length > 0) {
       countQuery = countQuery.where(and(...conditions));
     }
@@ -228,7 +254,7 @@ class InquiryService {
    * @throws {AppError} If inquiry not found
    */
   async updateInquiry(inquiryId, updateData, userId, metadata = {}) {
-    const { name, email, phone, company, location, message, source, status, assignedTo, notes, serviceType } = updateData;
+    const { name, email, phone, company, location, message, source, status, assignedTo, notes, serviceType, serviceId } = updateData;
 
     const [inquiry] = await db
       .update(inquiryTable)
@@ -244,6 +270,7 @@ class InquiryService {
         ...(assignedTo !== undefined && { assignedTo }),
         ...(notes !== undefined && { notes }),
         ...(serviceType !== undefined && { serviceType }),
+        ...(serviceId !== undefined && { serviceId }),
         updatedAt: new Date(),
       })
       .where(eq(inquiryTable.id, inquiryId))

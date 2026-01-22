@@ -77,17 +77,11 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestP
     },
   },
   {
-    accessorKey: "serviceType",
-    header: "Type of Inquiry",
+    accessorKey: "service",
+    header: "Service",
     cell: ({ row }) => {
-      const serviceType = row.original.serviceType;
-      const labels = {
-        garbage_collection: "Garbage Collection",
-        septic_siphoning: "Septic Siphoning",
-        hazardous_waste: "Hazardous Waste",
-        onetime_hauling: "One-time Hauling",
-      };
-      return serviceType ? labels[serviceType] || serviceType : "-";
+      const service = row.original.service;
+      return service?.name || "-";
     },
   },
   {
