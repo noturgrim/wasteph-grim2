@@ -34,7 +34,7 @@ export const createShowcaseSchema = z.object({
     })
     .trim()
     .min(10, "Description must be at least 10 characters")
-    .max(1000, "Description must be less than 1000 characters")
+    .max(5000, "Description must be less than 5000 characters")
     .transform((val) => sanitizeString(val)),
 
   // Optional fields
@@ -81,7 +81,7 @@ export const updateShowcaseSchema = z.object({
     .string()
     .trim()
     .min(10, "Description must be at least 10 characters")
-    .max(1000, "Description must be less than 1000 characters")
+    .max(5000, "Description must be less than 5000 characters")
     .transform((val) => sanitizeString(val))
     .optional(),
 
