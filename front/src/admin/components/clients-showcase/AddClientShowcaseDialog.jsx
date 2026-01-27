@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { createClientShowcase } from "../../../services/clientsShowcaseService";
+import { toast } from "../../utils/toast";
 
 export function AddClientShowcaseDialog({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -43,8 +44,14 @@ export function AddClientShowcaseDialog({ isOpen, onClose, onSuccess }) {
     if (!formData.company?.trim()) {
       errors.company = "Company name is required";
     }
+    if (!formData.logo?.trim()) {
+      errors.logo = "Logo URL is required";
+    }
     if (!formData.industry?.trim()) {
       errors.industry = "Industry is required";
+    }
+    if (!formData.location?.trim()) {
+      errors.location = "Location is required";
     }
     if (!formData.background?.trim()) {
       errors.background = "Background is required";
@@ -76,7 +83,25 @@ export function AddClientShowcaseDialog({ isOpen, onClose, onSuccess }) {
       onSuccess();
     } catch (error) {
       console.error("Error creating client showcase:", error);
-      setFormErrors({ submit: error.message || "Failed to create client showcase" });
+      const errorMessage = error.message || "Failed to create client showcase";
+      setFormErrors({ submit: errorMessage });
+      
+      // Parse and display errors with proper line breaks
+      const parts = errorMessage.split(': ');
+      if (parts.length > 1 && parts[1].includes(' • ')) {
+        const header = parts[0];
+        const errors = parts[1].split(' • ');
+        toast.error(
+          <div className="space-y-1">
+            <div className="font-semibold">{header}:</div>
+            {errors.map((err, idx) => (
+              <div key={idx} className="text-sm">• {err}</div>
+            ))}
+          </div>
+        );
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -138,7 +163,7 @@ export function AddClientShowcaseDialog({ isOpen, onClose, onSuccess }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[95vh] max-w-4xl overflow-hidden">
+      <DialogContent className="max-h-[95vh] max-w-4xl overflow-hidden" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Add New Client Showcase</DialogTitle>
           <DialogDescription>
@@ -167,14 +192,20 @@ export function AddClientShowcaseDialog({ isOpen, onClose, onSuccess }) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="logo">Logo URL</Label>
+                <Label htmlFor="logo">
+                  Logo URL <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="logo"
                   value={formData.logo}
                   onChange={(e) => handleChange("logo", e.target.value)}
                   placeholder="https://example.com/logo.png"
                   type="url"
+                  className={formErrors.logo ? "border-destructive" : ""}
                 />
+                {formErrors.logo && (
+                  <p className="text-sm text-destructive">{formErrors.logo}</p>
+                )}
               </div>
             </div>
 
@@ -196,13 +227,19 @@ export function AddClientShowcaseDialog({ isOpen, onClose, onSuccess }) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
+                <Label htmlFor="location">
+                  Location <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="location"
                   value={formData.location}
                   onChange={(e) => handleChange("location", e.target.value)}
                   placeholder="e.g., Metro Manila"
+                  className={formErrors.location ? "border-destructive" : ""}
                 />
+                {formErrors.location && (
+                  <p className="text-sm text-destructive">{formErrors.location}</p>
+                )}
               </div>
             </div>
 

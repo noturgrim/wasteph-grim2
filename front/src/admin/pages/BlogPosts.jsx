@@ -179,7 +179,24 @@ const BlogPosts = () => {
       loadStats();
     } catch (error) {
       console.error("Failed to create post:", error);
-      toast.error(error.message || "Failed to create blog post");
+      const errorMessage = error.message || "Failed to create blog post";
+      
+      // Parse and display errors with proper line breaks
+      const parts = errorMessage.split(': ');
+      if (parts.length > 1 && parts[1].includes(' • ')) {
+        const header = parts[0];
+        const errors = parts[1].split(' • ');
+        toast.error(
+          <div className="space-y-1">
+            <div className="font-semibold">{header}:</div>
+            {errors.map((err, idx) => (
+              <div key={idx} className="text-sm">• {err}</div>
+            ))}
+          </div>
+        );
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -201,7 +218,24 @@ const BlogPosts = () => {
       loadStats();
     } catch (error) {
       console.error("Failed to update post:", error);
-      toast.error(error.message || "Failed to update blog post");
+      const errorMessage = error.message || "Failed to update blog post";
+      
+      // Parse and display errors with proper line breaks
+      const parts = errorMessage.split(': ');
+      if (parts.length > 1 && parts[1].includes(' • ')) {
+        const header = parts[0];
+        const errors = parts[1].split(' • ');
+        toast.error(
+          <div className="space-y-1">
+            <div className="font-semibold">{header}:</div>
+            {errors.map((err, idx) => (
+              <div key={idx} className="text-sm">• {err}</div>
+            ))}
+          </div>
+        );
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -469,7 +503,7 @@ const BlogPosts = () => {
           }
         }}
       >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]" onInteractOutside={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>
               {isCreateDialogOpen ? "Create New Post" : "Edit Post"}
@@ -482,27 +516,35 @@ const BlogPosts = () => {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Title</label>
+              <label className="text-sm font-medium">
+                Title <span className="text-red-500">*</span>
+              </label>
               <Input
                 placeholder="Enter post title"
                 value={formData.title}
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
+                required
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Excerpt</label>
+              <label className="text-sm font-medium">
+                Excerpt <span className="text-red-500">*</span>
+              </label>
               <Input
                 placeholder="Brief description"
                 value={formData.excerpt}
                 onChange={(e) =>
                   setFormData({ ...formData, excerpt: e.target.value })
                 }
+                required
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Content</label>
+              <label className="text-sm font-medium">
+                Content <span className="text-red-500">*</span>
+              </label>
               <RichTextEditor
                 value={formData.content}
                 onChange={(value) =>
@@ -512,23 +554,29 @@ const BlogPosts = () => {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Cover Image URL</label>
+              <label className="text-sm font-medium">
+                Cover Image URL <span className="text-red-500">*</span>
+              </label>
               <Input
                 placeholder="https://example.com/image.jpg"
                 value={formData.coverImage}
                 onChange={(e) =>
                   setFormData({ ...formData, coverImage: e.target.value })
                 }
+                required
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Category</label>
+                <label className="text-sm font-medium">
+                  Category <span className="text-red-500">*</span>
+                </label>
                 <Select
                   value={formData.category}
                   onValueChange={(value) =>
                     setFormData({ ...formData, category: value })
                   }
+                  required
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
