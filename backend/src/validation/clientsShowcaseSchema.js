@@ -44,7 +44,7 @@ export const createClientShowcaseSchema = z.object({
     })
     .trim()
     .min(10, "Background must be at least 10 characters")
-    .max(2000, "Background must be less than 2000 characters")
+    .max(5000, "Background must be less than 5000 characters")
     .transform((val) => sanitizeString(val)),
 
   testimonial: z
@@ -54,7 +54,7 @@ export const createClientShowcaseSchema = z.object({
     })
     .trim()
     .min(10, "Testimonial must be at least 10 characters")
-    .max(1000, "Testimonial must be less than 1000 characters")
+    .max(3000, "Testimonial must be less than 3000 characters")
     .transform((val) => sanitizeString(val)),
 
   author: z
@@ -67,16 +67,26 @@ export const createClientShowcaseSchema = z.object({
     .max(100, "Author name must be less than 100 characters")
     .transform((val) => sanitizeString(val)),
 
-  // Optional fields
-  logo: urlSchema,
+  logo: z
+    .string({
+      required_error: "Logo URL is required",
+      invalid_type_error: "Logo URL must be a string",
+    })
+    .url("Invalid URL format")
+    .max(500, "Logo URL must be less than 500 characters")
+    .transform((val) => sanitizeString(val)),
 
   location: z
-    .string()
+    .string({
+      required_error: "Location is required",
+      invalid_type_error: "Location must be a string",
+    })
     .trim()
+    .min(1, "Location cannot be empty")
     .max(100, "Location must be less than 100 characters")
-    .transform((val) => sanitizeString(val))
-    .optional()
-    .or(z.literal("")),
+    .transform((val) => sanitizeString(val)),
+
+  // Optional fields
 
   employees: z
     .string()
@@ -97,7 +107,7 @@ export const createClientShowcaseSchema = z.object({
   challenge: z
     .string()
     .trim()
-    .max(1000, "Challenge must be less than 1000 characters")
+    .max(3000, "Challenge must be less than 3000 characters")
     .transform((val) => sanitizeString(val))
     .optional()
     .or(z.literal("")),
@@ -105,7 +115,7 @@ export const createClientShowcaseSchema = z.object({
   solution: z
     .string()
     .trim()
-    .max(1000, "Solution must be less than 1000 characters")
+    .max(3000, "Solution must be less than 3000 characters")
     .transform((val) => sanitizeString(val))
     .optional()
     .or(z.literal("")),
@@ -187,7 +197,7 @@ export const updateClientShowcaseSchema = z.object({
     .string()
     .trim()
     .min(10, "Background must be at least 10 characters")
-    .max(2000, "Background must be less than 2000 characters")
+    .max(5000, "Background must be less than 5000 characters")
     .transform((val) => sanitizeString(val))
     .optional(),
 
@@ -195,7 +205,7 @@ export const updateClientShowcaseSchema = z.object({
     .string()
     .trim()
     .min(10, "Testimonial must be at least 10 characters")
-    .max(1000, "Testimonial must be less than 1000 characters")
+    .max(3000, "Testimonial must be less than 3000 characters")
     .transform((val) => sanitizeString(val))
     .optional(),
 
@@ -233,14 +243,14 @@ export const updateClientShowcaseSchema = z.object({
   challenge: z
     .string()
     .trim()
-    .max(1000, "Challenge must be less than 1000 characters")
+    .max(3000, "Challenge must be less than 3000 characters")
     .transform((val) => sanitizeString(val))
     .optional(),
 
   solution: z
     .string()
     .trim()
-    .max(1000, "Solution must be less than 1000 characters")
+    .max(3000, "Solution must be less than 3000 characters")
     .transform((val) => sanitizeString(val))
     .optional(),
 

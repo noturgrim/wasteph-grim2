@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { updateClientShowcase } from "../../../services/clientsShowcaseService";
+import { toast } from "../../utils/toast";
 
 export function EditClientShowcaseDialog({ isOpen, onClose, onSuccess, client }) {
   const [formData, setFormData] = useState({
@@ -99,7 +100,25 @@ export function EditClientShowcaseDialog({ isOpen, onClose, onSuccess, client })
       onSuccess();
     } catch (error) {
       console.error("Error updating client showcase:", error);
-      setFormErrors({ submit: error.message || "Failed to update client showcase" });
+      const errorMessage = error.message || "Failed to update client showcase";
+      setFormErrors({ submit: errorMessage });
+      
+      // Parse and display errors with proper line breaks
+      const parts = errorMessage.split(': ');
+      if (parts.length > 1 && parts[1].includes(' • ')) {
+        const header = parts[0];
+        const errors = parts[1].split(' • ');
+        toast.error(
+          <div className="space-y-1">
+            <div className="font-semibold">{header}:</div>
+            {errors.map((err, idx) => (
+              <div key={idx} className="text-sm">• {err}</div>
+            ))}
+          </div>
+        );
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -131,7 +150,7 @@ export function EditClientShowcaseDialog({ isOpen, onClose, onSuccess, client })
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[95vh] max-w-4xl overflow-hidden">
+      <DialogContent className="max-h-[95vh] max-w-4xl overflow-hidden" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Edit Client Showcase</DialogTitle>
           <DialogDescription>

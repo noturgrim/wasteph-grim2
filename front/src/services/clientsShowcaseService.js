@@ -90,6 +90,11 @@ export const createClientShowcase = async (clientData) => {
 
     if (!response.ok) {
       const error = await response.json();
+      // Include detailed validation errors if present
+      if (error.errors && Array.isArray(error.errors)) {
+        const errorList = error.errors.map(e => e.message).join(' • ');
+        throw new Error(`${error.message || "Validation failed"}: ${errorList}`);
+      }
       throw new Error(error.message || "Failed to create client showcase");
     }
 
@@ -120,6 +125,11 @@ export const updateClientShowcase = async (id, clientData) => {
 
     if (!response.ok) {
       const error = await response.json();
+      // Include detailed validation errors if present
+      if (error.errors && Array.isArray(error.errors)) {
+        const errorList = error.errors.map(e => e.message).join(' • ');
+        throw new Error(`${error.message || "Validation failed"}: ${errorList}`);
+      }
       throw new Error(error.message || "Failed to update client showcase");
     }
 

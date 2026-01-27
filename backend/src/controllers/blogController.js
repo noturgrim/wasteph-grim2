@@ -166,11 +166,22 @@ export async function createPost(req, res) {
     const userId = req.user.id;
     const postData = req.body;
 
-    // Validate required fields
-    if (!postData.title || !postData.excerpt || !postData.content || !postData.category) {
+    // Validate required fields with detailed error messages
+    const missingFields = [];
+    if (!postData.title || postData.title.trim() === "") missingFields.push("title");
+    if (!postData.excerpt || postData.excerpt.trim() === "") missingFields.push("excerpt");
+    if (!postData.content || postData.content.trim() === "") missingFields.push("content");
+    if (!postData.category || postData.category.trim() === "") missingFields.push("category");
+    if (!postData.coverImage || postData.coverImage.trim() === "") missingFields.push("coverImage");
+
+    if (missingFields.length > 0) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields: title, excerpt, content, category",
+        message: `Missing or empty required fields: ${missingFields.join(", ")}`,
+        errors: missingFields.map(field => ({
+          field,
+          message: `${field === "coverImage" ? "Cover Image URL" : field.charAt(0).toUpperCase() + field.slice(1)} is required and cannot be empty`
+        }))
       });
     }
 

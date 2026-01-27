@@ -155,6 +155,11 @@ export async function createPost(postData) {
 
     if (!response.ok) {
       const error = await response.json();
+      // Include detailed validation errors if present
+      if (error.errors && Array.isArray(error.errors)) {
+        const errorList = error.errors.map(e => e.message).join(' • ');
+        throw new Error(`${error.message || "Validation failed"}: ${errorList}`);
+      }
       throw new Error(error.message || "Failed to create blog post");
     }
 
@@ -182,6 +187,11 @@ export async function updatePost(id, postData) {
 
     if (!response.ok) {
       const error = await response.json();
+      // Include detailed validation errors if present
+      if (error.errors && Array.isArray(error.errors)) {
+        const errorList = error.errors.map(e => e.message).join(' • ');
+        throw new Error(`${error.message || "Validation failed"}: ${errorList}`);
+      }
       throw new Error(error.message || "Failed to update blog post");
     }
 

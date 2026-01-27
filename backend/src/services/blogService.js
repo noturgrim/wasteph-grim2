@@ -126,6 +126,7 @@ export async function createPost(postData, userId) {
     .insert(blogPostTable)
     .values({
       ...postData,
+      author: "WastePH Team", // Ensure author has a default value
       slug,
       readTime,
       publishedAt,
