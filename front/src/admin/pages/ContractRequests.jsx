@@ -21,6 +21,7 @@ import { createColumns } from "../components/contracts/columns";
 import { RequestContractDialog } from "../components/contracts/RequestContractDialog";
 import { UploadContractDialog } from "../components/contracts/UploadContractDialog";
 import { SendToClientDialog } from "../components/contracts/SendToClientDialog";
+import { ViewContractDetailsDialog } from "../components/contracts/ViewContractDetailsDialog";
 
 export default function ContractRequests() {
   const { user } = useAuth();
@@ -55,6 +56,7 @@ export default function ContractRequests() {
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [isSendToClientDialogOpen, setIsSendToClientDialogOpen] = useState(false);
+  const [isViewDetailsDialogOpen, setIsViewDetailsDialogOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState(null);
 
   // Fetch users on mount
@@ -140,6 +142,11 @@ export default function ContractRequests() {
     api.previewContractPdf(contract.contract.id);
   };
 
+  const handleViewDetails = (contract) => {
+    setSelectedContract(contract);
+    setIsViewDetailsDialogOpen(true);
+  };
+
   const confirmRequestContract = async (contractDetails) => {
     try {
       await api.requestContract(selectedContract.contract.id, contractDetails);
@@ -201,6 +208,7 @@ export default function ContractRequests() {
     onSendToSales: handleSendToSales,
     onSendToClient: handleSendToClient,
     onViewContract: handleViewContract,
+    onViewDetails: handleViewDetails,
   });
 
   // Filter columns based on visibility
@@ -318,6 +326,13 @@ export default function ContractRequests() {
         onOpenChange={setIsSendToClientDialogOpen}
         contract={selectedContract}
         onConfirm={confirmSendToClient}
+      />
+
+      <ViewContractDetailsDialog
+        open={isViewDetailsDialogOpen}
+        onOpenChange={setIsViewDetailsDialogOpen}
+        contract={selectedContract}
+        users={users}
       />
     </div>
   );

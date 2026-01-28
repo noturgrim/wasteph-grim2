@@ -11,9 +11,11 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Upload, Loader2, AlertCircle, FileCheck } from "lucide-react";
+import { Upload, Loader2, AlertCircle, FileCheck, ChevronDown, ChevronUp } from "lucide-react";
+import { ContractDetailsSection } from "./ContractDetailsSection";
 
 export function UploadContractDialog({ open, onOpenChange, contract, users, onConfirm }) {
+  const [showDetails, setShowDetails] = useState(false);
   const [pdfFile, setPdfFile] = useState(null);
   const [adminNotes, setAdminNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,86 +82,99 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="!max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5 text-blue-600" />
             Upload Contract
           </DialogTitle>
           <DialogDescription>
-            Upload the contract PDF document for this client.
+            Review contract details and upload the PDF document.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Contract Request Details */}
-          <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 space-y-2">
-            <div>
-              <p className="text-sm text-muted-foreground">Client</p>
-              <p className="font-semibold">{clientName}</p>
+        {/* Two Column Layout */}
+        <div className="grid gap-6 overflow-hidden flex-1" style={{ gridTemplateColumns: '1.5fr 1fr' }}>
+          {/* LEFT COLUMN - Contract Details from Sales */}
+          <div className="border-r pr-6 overflow-y-auto">
+            <div className="space-y-4">
+              {/* Header */}
+              <div className="sticky top-0 bg-background pb-3 border-b">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Contract Details from Sales
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Sales Person: {salesPersonName}
+                </p>
+              </div>
+
+              {/* Contract Details */}
+              <ContractDetailsSection contract={contract} />
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Sales Person</p>
-              <p className="font-medium">{salesPersonName}</p>
-            </div>
-            {requestNotes && (
+          </div>
+
+          {/* RIGHT COLUMN - Upload Form */}
+          <div className="overflow-y-auto">
+            <div className="space-y-4">
+              {/* Header */}
+              <div className="sticky top-0 bg-background pb-2 border-b">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  Upload Contract PDF
+                </h3>
+              </div>
+
+              {/* File Upload */}
               <div>
-                <p className="text-sm text-muted-foreground">Request Notes</p>
-                <p className="text-sm">{requestNotes}</p>
+                <Label htmlFor="contractPdf">Contract PDF *</Label>
+                <Input
+                  id="contractPdf"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleFileChange}
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Upload a PDF file (max 10MB)
+                </p>
+                {pdfFile && (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-green-600">
+                    <FileCheck className="h-4 w-4" />
+                    {pdfFile.name} ({(pdfFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </div>
+                )}
+                {error && (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-red-600">
+                    <AlertCircle className="h-4 w-4" />
+                    {error}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* File Upload */}
-          <div>
-            <Label htmlFor="contractPdf">Contract PDF *</Label>
-            <Input
-              id="contractPdf"
-              type="file"
-              accept="application/pdf"
-              onChange={handleFileChange}
-              className="mt-1"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Upload a PDF file (max 10MB)
-            </p>
-            {pdfFile && (
-              <div className="mt-2 flex items-center gap-2 text-sm text-green-600">
-                <FileCheck className="h-4 w-4" />
-                {pdfFile.name} ({(pdfFile.size / 1024 / 1024).toFixed(2)} MB)
+              {/* Admin Notes (Optional) */}
+              <div>
+                <Label htmlFor="adminNotes">
+                  Notes for Sales <span className="text-muted-foreground">(Optional)</span>
+                </Label>
+                <Textarea
+                  id="adminNotes"
+                  value={adminNotes}
+                  onChange={(e) => setAdminNotes(e.target.value)}
+                  placeholder="Add any notes or instructions for sales..."
+                  rows={4}
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  These notes will be visible to the sales person.
+                </p>
               </div>
-            )}
-            {error && (
-              <div className="mt-2 flex items-center gap-2 text-sm text-red-600">
-                <AlertCircle className="h-4 w-4" />
-                {error}
+
+              {/* Info */}
+              <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                <p className="text-sm text-yellow-900 dark:text-yellow-100">
+                  <strong>Note:</strong> You can save the contract as a draft or save and immediately send it to sales.
+                </p>
               </div>
-            )}
-          </div>
-
-          {/* Admin Notes (Optional) */}
-          <div>
-            <Label htmlFor="adminNotes">
-              Notes for Sales <span className="text-muted-foreground">(Optional)</span>
-            </Label>
-            <Textarea
-              id="adminNotes"
-              value={adminNotes}
-              onChange={(e) => setAdminNotes(e.target.value)}
-              placeholder="Add any notes or instructions for sales..."
-              rows={3}
-              className="mt-1"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              These notes will be visible to the sales person.
-            </p>
-          </div>
-
-          {/* Info */}
-          <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-            <p className="text-sm text-yellow-900 dark:text-yellow-100">
-              <strong>Note:</strong> You can save the contract as a draft or save and immediately send it to sales.
-            </p>
+            </div>
           </div>
         </div>
 

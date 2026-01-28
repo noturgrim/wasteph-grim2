@@ -52,6 +52,7 @@ export const createColumns = ({
   onSendToSales,
   onSendToClient,
   onViewContract,
+  onViewDetails,
 }) => [
   {
     accessorKey: "clientName",
@@ -223,12 +224,23 @@ export const createColumns = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {/* View Contract Details (if requested) */}
+              {(status !== "pending_request") && (
+                <>
+                  <DropdownMenuItem onClick={() => onViewDetails(contract)}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    View Request Details
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+
               {/* View Contract PDF (if exists) */}
               {hasPdf && (
                 <>
                   <DropdownMenuItem onClick={() => onViewContract(contract)}>
                     <Eye className="mr-2 h-4 w-4" />
-                    View Contract
+                    View Contract PDF
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                 </>
