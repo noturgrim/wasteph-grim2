@@ -27,7 +27,11 @@ export function AddLeadDialog({ open, onOpenChange, onSubmit, isSubmitting }) {
 
   const validateForm = () => {
     const errors = {};
-    if (!formData.clientName?.trim()) errors.clientName = "Client name is required.";
+
+    // Either client name OR company must be provided
+    if (!formData.clientName?.trim() && !formData.company?.trim()) {
+      errors.general = "Either Client Name or Company is required.";
+    }
 
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -71,85 +75,73 @@ export function AddLeadDialog({ open, onOpenChange, onSubmit, isSubmitting }) {
         <DialogHeader>
           <DialogTitle>Add New Lead</DialogTitle>
           <DialogDescription>
-            Add a potential client to the lead pool for sales reps to claim
+            Add a potential client to the lead pool for sales reps to claim.
+            Either Client Name or Company is required.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {formErrors.general && (
+            <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+              {formErrors.general}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="clientName">Client Name *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="clientName">Client Name</Label>
               <Input
                 id="clientName"
                 value={formData.clientName}
                 onChange={(e) => {
                   setFormData({ ...formData, clientName: e.target.value });
-                  if (formErrors.clientName) {
-                    setFormErrors({ ...formErrors, clientName: null });
+                  if (formErrors.general) {
+                    setFormErrors({ ...formErrors, general: null });
                   }
                 }}
-                className={formErrors.clientName ? "border-red-500" : ""}
+                placeholder="e.g., John Doe"
               />
-              {formErrors.clientName && (
-                <p className="text-sm text-red-500 mt-1">{formErrors.clientName}</p>
-              )}
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="company">Company</Label>
               <Input
                 id="company"
                 value={formData.company}
                 onChange={(e) => {
                   setFormData({ ...formData, company: e.target.value });
-                  if (formErrors.company) {
-                    setFormErrors({ ...formErrors, company: null });
+                  if (formErrors.general) {
+                    setFormErrors({ ...formErrors, general: null });
                   }
                 }}
-                className={formErrors.company ? "border-red-500" : ""}
+                placeholder="e.g., ABC Corporation"
               />
-              {formErrors.company && (
-                <p className="text-sm text-red-500 mt-1">{formErrors.company}</p>
-              )}
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => {
-                  setFormData({ ...formData, email: e.target.value });
-                  if (formErrors.email) {
-                    setFormErrors({ ...formErrors, email: null });
-                  }
-                }}
-                className={formErrors.email ? "border-red-500" : ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                placeholder="contact@example.com"
               />
-              {formErrors.email && (
-                <p className="text-sm text-red-500 mt-1">{formErrors.email}</p>
-              )}
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
               <Input
                 id="phone"
                 value={formData.phone}
-                onChange={(e) => {
-                  setFormData({ ...formData, phone: e.target.value });
-                  if (formErrors.phone) {
-                    setFormErrors({ ...formErrors, phone: null });
-                  }
-                }}
-                className={formErrors.phone ? "border-red-500" : ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+                placeholder="+63 912 345 6789"
               />
-              {formErrors.phone && (
-                <p className="text-sm text-red-500 mt-1">{formErrors.phone}</p>
-              )}
             </div>
 
-            <div className="col-span-2">
+            <div className="col-span-2 space-y-2">
               <Label htmlFor="location">Location</Label>
               <Input
                 id="location"
@@ -161,7 +153,7 @@ export function AddLeadDialog({ open, onOpenChange, onSubmit, isSubmitting }) {
               />
             </div>
 
-            <div className="col-span-2">
+            <div className="col-span-2 space-y-2">
               <Label htmlFor="notes">Notes</Label>
               <Textarea
                 id="notes"
