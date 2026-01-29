@@ -1,6 +1,22 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Loader2, Send, MessageSquare, ChevronDown, ChevronUp, Activity, Edit, UserPlus, Trash2, FileText, ArrowRightLeft, CheckCircle, XCircle, Mail, FilePlus } from "lucide-react";
+import {
+  Loader2,
+  Send,
+  MessageSquare,
+  ChevronDown,
+  ChevronUp,
+  Activity,
+  Edit,
+  UserPlus,
+  Trash2,
+  FileText,
+  ArrowRightLeft,
+  CheckCircle,
+  XCircle,
+  Mail,
+  FilePlus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -153,11 +169,15 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
       },
       inquiry_created: {
         label: details.fromLeadPool ? "Claimed from Lead Pool" : "Created",
-        description: details.fromLeadPool ? "Claimed lead and converted to inquiry" : "Created inquiry",
+        description: details.fromLeadPool
+          ? "Claimed lead and converted to inquiry"
+          : "Created inquiry",
         icon: details.fromLeadPool ? FileText : UserPlus,
         badgeBg: details.fromLeadPool ? "bg-indigo-50" : "bg-green-50",
         badgeText: details.fromLeadPool ? "text-indigo-700" : "text-green-700",
-        badgeBorder: details.fromLeadPool ? "border-indigo-200" : "border-green-200",
+        badgeBorder: details.fromLeadPool
+          ? "border-indigo-200"
+          : "border-green-200",
       },
       inquiry_updated: {
         label: "Updated",
@@ -201,7 +221,9 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
       },
       proposal_disapproved: {
         label: "Proposal Disapproved",
-        description: details.rejectionReason ? `Disapproved: ${details.rejectionReason}` : "Proposal was disapproved by admin",
+        description: details.rejectionReason
+          ? `Disapproved: ${details.rejectionReason}`
+          : "Proposal was disapproved by admin",
         icon: XCircle,
         badgeBg: "bg-red-50",
         badgeText: "text-red-700",
@@ -241,37 +263,45 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
       },
     };
 
-    return activityTypes[action] || {
-      label: "Activity",
-      description: "Performed an action",
-      icon: Activity,
-      badgeBg: "bg-gray-50",
-      badgeText: "text-gray-700",
-      badgeBorder: "border-gray-200",
-    };
+    return (
+      activityTypes[action] || {
+        label: "Activity",
+        description: "Performed an action",
+        icon: Activity,
+        badgeBg: "bg-gray-50",
+        badgeText: "text-gray-700",
+        badgeBorder: "border-gray-200",
+      }
+    );
   };
 
   const renderTimelineEntry = (entry) => {
     if (entry.type === "note") {
       // Manual note
       return (
-        <div key={entry.id} className="flex gap-3 py-3 border-b border-gray-100 last:border-0">
-          <Edit className="h-5 w-5 text-gray-400 mt-0.5 shrink-0" />
+        <div
+          key={entry.id}
+          className="flex gap-3 py-3 border-b border-gray-100 dark:border-gray-800 last:border-0"
+        >
+          <Edit className="h-5 w-5 text-gray-400 dark:text-gray-600 mt-0.5 shrink-0" />
 
           <div className="flex-1 space-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">
+              <span className="text-sm font-medium text-foreground">
                 {entry.createdBy?.firstName} {entry.createdBy?.lastName}
               </span>
-              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+              <Badge
+                variant="outline"
+                className="text-xs bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+              >
                 <MessageSquare className="h-3 w-3 mr-1" />
                 Note
               </Badge>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
                 {format(new Date(entry.createdAt), "MMM dd, yyyy 'at' h:mm a")}
               </span>
             </div>
-            <p className="text-sm text-gray-600 whitespace-pre-wrap">
+            <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
               {entry.content}
             </p>
           </div>
@@ -284,25 +314,31 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
       const activityInfo = getActivityInfo(entry.action, entry.details || {});
 
       return (
-        <div key={entry.id} className="flex gap-3 py-3 border-b border-gray-100 last:border-0">
-          <Edit className="h-5 w-5 text-gray-400 mt-0.5 shrink-0" />
+        <div
+          key={entry.id}
+          className="flex gap-3 py-3 border-b border-gray-100 dark:border-gray-800 last:border-0"
+        >
+          <Edit className="h-5 w-5 text-gray-400 dark:text-gray-600 mt-0.5 shrink-0" />
 
           <div className="flex-1 space-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">
+              <span className="text-sm font-medium text-foreground">
                 {entry.createdBy?.firstName} {entry.createdBy?.lastName}
               </span>
-              <Badge variant="outline" className={`text-xs ${activityInfo.badgeBg} ${activityInfo.badgeText} ${activityInfo.badgeBorder}`}>
+              <Badge
+                variant="outline"
+                className={`text-xs ${activityInfo.badgeBg} ${activityInfo.badgeText} ${activityInfo.badgeBorder} dark:opacity-90`}
+              >
                 {activityInfo.label}
               </Badge>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-gray-500 dark:text-gray-400">
                 {format(new Date(entry.createdAt), "MMM dd, yyyy 'at' h:mm a")}
               </span>
             </div>
 
             {/* Show description for non-update activities or when there are no field changes */}
             {activityInfo.description && changeCount === 0 && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
                 {activityInfo.description}
               </p>
             )}
@@ -313,14 +349,24 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
                 {Object.entries(changes).map(([field, change]) => {
                   const { label, from, to } = formatFieldChange(field, change);
                   return (
-                    <div key={field} className="flex items-start gap-1.5 text-gray-600">
+                    <div
+                      key={field}
+                      className="flex items-start gap-1.5 text-gray-600 dark:text-gray-300"
+                    >
                       <ArrowRightLeft className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                       <span>
-                        Changed <span className="font-medium text-gray-900">{label}</span>
+                        Changed{" "}
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                          {label}
+                        </span>
                         {" from "}
-                        <span className="font-medium text-red-600">{from}</span>
+                        <span className="font-medium text-red-600 dark:text-red-400">
+                          {from}
+                        </span>
                         {" to "}
-                        <span className="font-medium text-green-600">{to}</span>
+                        <span className="font-medium text-green-600 dark:text-green-400">
+                          {to}
+                        </span>
                       </span>
                     </div>
                   );
@@ -344,7 +390,11 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
             onClick={() => setIsExpanded(!isExpanded)}
             className="flex items-center gap-2 hover:opacity-70 transition-opacity"
             aria-expanded={isExpanded}
-            aria-label={isExpanded ? "Collapse activity timeline" : "Expand activity timeline"}
+            aria-label={
+              isExpanded
+                ? "Collapse activity timeline"
+                : "Expand activity timeline"
+            }
           >
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Activity className="h-4 w-4" />
@@ -377,73 +427,78 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
           <>
             {/* Add Note Form */}
             {isAddingNote && (
-          <form onSubmit={handleAddNote} className="space-y-2 mb-4 p-4 border rounded-lg bg-muted/30">
-            <Textarea
-              value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Add a note... (Ctrl+Enter to submit)"
-              rows={3}
-              disabled={isSubmitting}
-              className="resize-none"
-              autoFocus
-            />
-            <div className="flex justify-between items-center">
-              <p className="text-xs text-muted-foreground">
-                Notes are visible to all team members
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    setIsAddingNote(false);
-                    setNewNote("");
-                  }}
+              <form
+                onSubmit={handleAddNote}
+                className="space-y-2 mb-4 p-4 border rounded-lg bg-muted/30"
+              >
+                <Textarea
+                  value={newNote}
+                  onChange={(e) => setNewNote(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Add a note... (Ctrl+Enter to submit)"
+                  rows={3}
                   disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={isSubmitting || !newNote.trim()}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Adding...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="mr-2 h-4 w-4" />
-                      Submit
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </form>
-        )}
+                  className="resize-none"
+                  autoFocus
+                />
+                <div className="flex justify-between items-center">
+                  <p className="text-xs text-muted-foreground">
+                    Notes are visible to all team members
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setIsAddingNote(false);
+                        setNewNote("");
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={isSubmitting || !newNote.trim()}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Adding...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="mr-2 h-4 w-4" />
+                          Submit
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            )}
 
-        <div className="h-[300px] overflow-y-auto pr-2 scrollbar-thin">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <div className="h-[300px] overflow-y-auto pr-2 scrollbar-thin">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : timeline.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Activity className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                  <p className="text-sm">No activity yet</p>
+                  <p className="text-xs">
+                    Add the first note to start tracking activity
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {timeline.map((entry) => renderTimelineEntry(entry))}
+                </div>
+              )}
             </div>
-          ) : timeline.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Activity className="h-12 w-12 mx-auto mb-2 opacity-20" />
-              <p className="text-sm">No activity yet</p>
-              <p className="text-xs">Add the first note to start tracking activity</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {timeline.map((entry) => renderTimelineEntry(entry))}
-            </div>
-          )}
-        </div>
           </>
         )}
       </div>
