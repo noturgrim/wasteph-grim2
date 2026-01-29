@@ -52,6 +52,7 @@ const formatFieldChange = (field, change) => {
     status: "Status",
     assignedTo: "Assigned To",
     serviceId: "Service",
+    isInformationComplete: "Information Complete",
   };
 
   const statusLabels = {
@@ -67,8 +68,23 @@ const formatFieldChange = (field, change) => {
   };
 
   const label = fieldLabels[field] || field;
-  let from = change.from || "(empty)";
-  let to = change.to || "(empty)";
+  let from = change.from;
+  let to = change.to;
+
+  // Handle null/undefined/empty values
+  if (from === null || from === undefined || from === "") {
+    from = "(empty)";
+  }
+  if (to === null || to === undefined || to === "") {
+    to = "(empty)";
+  }
+
+  // Format boolean values
+  if (field === "isInformationComplete") {
+    from =
+      change.from === true ? "Yes" : change.from === false ? "No" : "(empty)";
+    to = change.to === true ? "Yes" : change.to === false ? "No" : "(empty)";
+  }
 
   // Format status values
   if (field === "status") {
