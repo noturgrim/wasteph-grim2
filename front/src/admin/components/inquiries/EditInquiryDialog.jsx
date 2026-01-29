@@ -375,7 +375,6 @@ export function EditInquiryDialog({
                 </p>
                 {!formData.isInformationComplete && (
                   <div className="flex items-center gap-1 text-xs text-amber-600 mt-2">
-                    <AlertCircle className="h-3 w-3" />
                     <span>
                       Proposal requests are disabled until information is
                       complete
