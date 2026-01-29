@@ -55,7 +55,8 @@ export default function ContractRequests() {
   // Dialogs
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [isSendToClientDialogOpen, setIsSendToClientDialogOpen] = useState(false);
+  const [isSendToClientDialogOpen, setIsSendToClientDialogOpen] =
+    useState(false);
   const [isViewDetailsDialogOpen, setIsViewDetailsDialogOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState(null);
 
@@ -66,7 +67,7 @@ export default function ContractRequests() {
 
   // Fetch filtered contracts
   useEffect(() => {
-    setPagination(prev => ({ ...prev, page: 1 })); // Reset to page 1 on filter change
+    setPagination((prev) => ({ ...prev, page: 1 })); // Reset to page 1 on filter change
     fetchContracts(1);
   }, [statusFilter, searchTerm]);
 
@@ -125,7 +126,9 @@ export default function ContractRequests() {
   };
 
   const handleSendToSales = async (contract) => {
-    if (!window.confirm("Are you sure you want to send this contract to sales?")) {
+    if (
+      !window.confirm("Are you sure you want to send this contract to sales?")
+    ) {
       return;
     }
 
@@ -158,9 +161,19 @@ export default function ContractRequests() {
     }
   };
 
-  const confirmUploadContract = async (pdfFile, adminNotes, sendToSales) => {
+  const confirmUploadContract = async (
+    pdfFile,
+    adminNotes,
+    sendToSales,
+    editedData,
+  ) => {
     try {
-      await api.uploadContractPdf(selectedContract.contract.id, pdfFile, adminNotes);
+      await api.uploadContractPdf(
+        selectedContract.contract.id,
+        pdfFile,
+        adminNotes,
+        editedData,
+      );
 
       if (sendToSales) {
         await api.sendContractToSales(selectedContract.contract.id);
@@ -188,12 +201,12 @@ export default function ContractRequests() {
   };
 
   const handlePageChange = (newPage) => {
-    setPagination(prev => ({ ...prev, page: newPage }));
+    setPagination((prev) => ({ ...prev, page: newPage }));
     fetchContracts(newPage);
   };
 
   const handleToggleColumn = (columnKey) => {
-    setColumnVisibility(prev => ({
+    setColumnVisibility((prev) => ({
       ...prev,
       [columnKey]: !prev[columnKey],
     }));
@@ -212,7 +225,7 @@ export default function ContractRequests() {
   });
 
   // Filter columns based on visibility
-  const columns = allColumns.filter(column => {
+  const columns = allColumns.filter((column) => {
     if (!column.accessorKey) return true; // Always show actions column
     return columnVisibility[column.accessorKey];
   });
@@ -249,7 +262,9 @@ export default function ContractRequests() {
             ]}
             selectedValues={statusFilter}
             onSelectionChange={setStatusFilter}
-            getCount={(status) => contracts.filter(c => c.contract?.status === status).length}
+            getCount={(status) =>
+              contracts.filter((c) => c.contract?.status === status).length
+            }
           />
 
           {/* Clear filters */}

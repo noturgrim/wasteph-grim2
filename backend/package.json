@@ -19,7 +19,8 @@
     "migrate:proposal-status": "node src/scripts/migrateProposalStatus.js",
     "migrate:inquiry-info-complete": "node src/scripts/runMigration.js",
     "migrate:calendar-events": "node src/scripts/migrateCalendarEvents.js",
-    "migrate:activity-log-inquiry-id": "node src/scripts/migrateActivityLogInquiryId.js"
+    "migrate:activity-log-inquiry-id": "node src/scripts/migrateActivityLogInquiryId.js",
+    "migrate:contract-service-address": "node src/scripts/migrateContractServiceAddress.js"
   },
   "keywords": [],
   "author": "",

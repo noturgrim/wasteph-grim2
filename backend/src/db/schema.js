@@ -467,8 +467,8 @@ export const contractsTable = pgTable("contracts", {
   clientEmailContract: text("client_email_contract"), // Client email for contract form
   clientAddress: text("client_address"), // Client address
   contractDuration: text("contract_duration"), // Effectivity of contract duration
-  serviceAddress: text("service_address"), // Service address (required)
-  actualAddress: text("actual_address"), // If Google Maps doesn't detect location
+  serviceLatitude: text("service_latitude"), // Service location latitude
+  serviceLongitude: text("service_longitude"), // Service location longitude
   collectionSchedule: collectionScheduleEnum("collection_schedule"),
   collectionScheduleOther: text("collection_schedule_other"), // If "other" is selected
   wasteAllowance: text("waste_allowance"), // Allocated amount for fixed clients

@@ -452,10 +452,11 @@ class ApiClient {
     });
   }
 
-  async uploadContractPdf(id, pdfFile, adminNotes) {
+  async uploadContractPdf(id, pdfFile, adminNotes, editedData = null) {
     const formData = new FormData();
     formData.append("contractPdf", pdfFile);
     if (adminNotes) formData.append("adminNotes", adminNotes);
+    if (editedData) formData.append("editedData", JSON.stringify(editedData));
 
     const response = await fetch(`${this.baseURL}/contracts/${id}/upload-pdf`, {
       method: "POST",

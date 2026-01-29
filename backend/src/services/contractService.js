@@ -94,10 +94,7 @@ class ContractService {
       .from(contractsTable)
       .leftJoin(proposalTable, eq(contractsTable.proposalId, proposalTable.id))
       .leftJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id))
-      .leftJoin(
-        userTable,
-        eq(contractsTable.requestedBy, userTable.id)
-      );
+      .leftJoin(userTable, eq(contractsTable.requestedBy, userTable.id));
 
     // Build filter conditions
     let conditions = [];
@@ -118,8 +115,8 @@ class ContractService {
         or(
           like(inquiryTable.name, `%${search}%`),
           like(inquiryTable.email, `%${search}%`),
-          like(inquiryTable.company, `%${search}%`)
-        )
+          like(inquiryTable.company, `%${search}%`),
+        ),
       );
     }
 
@@ -217,7 +214,10 @@ class ContractService {
 
     // Validate ownership (sales can only request their own contracts)
     if (contractData.proposal.requestedBy !== userId) {
-      throw new AppError("You can only request contracts for your own proposals", 403);
+      throw new AppError(
+        "You can only request contracts for your own proposals",
+        403,
+      );
     }
 
     // Extract contract details
@@ -228,8 +228,8 @@ class ContractService {
       clientEmailContract,
       clientAddress,
       contractDuration,
-      serviceAddress,
-      actualAddress,
+      serviceLatitude,
+      serviceLongitude,
       collectionSchedule,
       collectionScheduleOther,
       wasteAllowance,
@@ -255,8 +255,8 @@ class ContractService {
         clientEmailContract,
         clientAddress,
         contractDuration,
-        serviceAddress,
-        actualAddress,
+        serviceLatitude,
+        serviceLongitude,
         collectionSchedule,
         collectionScheduleOther,
         wasteAllowance,
@@ -292,33 +292,67 @@ class ContractService {
    * @param {Object} metadata - Request metadata
    * @returns {Promise<Object>} Updated contract
    */
-  async uploadContractPdf(contractId, pdfBuffer, adminNotes, userId, metadata = {}) {
+  async uploadContractPdf(
+    contractId,
+    pdfBuffer,
+    adminNotes,
+    userId,
+    editedData = null,
+    metadata = {},
+  ) {
     // Get contract
     const contractData = await this.getContractById(contractId);
     const contract = contractData.contract;
 
     // Validate status
-    if (contract.status !== "requested" && contract.status !== "ready_for_sales") {
+    if (
+      contract.status !== "requested" &&
+      contract.status !== "ready_for_sales"
+    ) {
       throw new AppError(
         "Can only upload contract when status is requested or ready_for_sales",
-        400
+        400,
       );
     }
 
     // Save PDF file
     const pdfUrl = await this.saveContractPdf(pdfBuffer, contractId);
 
+    // Prepare update object
+    const updateData = {
+      status: "ready_for_sales",
+      contractUploadedBy: userId,
+      contractUploadedAt: new Date(),
+      contractPdfUrl: pdfUrl,
+      adminNotes,
+      updatedAt: new Date(),
+    };
+
+    // If admin edited contract data, include it in the update
+    if (editedData) {
+      Object.assign(updateData, {
+        contractType: editedData.contractType,
+        clientName: editedData.clientName,
+        companyName: editedData.companyName,
+        clientEmailContract: editedData.clientEmailContract,
+        clientAddress: editedData.clientAddress,
+        contractDuration: editedData.contractDuration,
+        serviceLatitude: editedData.serviceLatitude,
+        serviceLongitude: editedData.serviceLongitude,
+        collectionSchedule: editedData.collectionSchedule,
+        collectionScheduleOther: editedData.collectionScheduleOther,
+        wasteAllowance: editedData.wasteAllowance,
+        specialClauses: editedData.specialClauses,
+        signatories: editedData.signatories ? JSON.stringify(editedData.signatories) : null,
+        ratePerKg: editedData.ratePerKg,
+        clientRequests: editedData.clientRequests,
+      });
+    }
+
     // Update contract
     const [updatedContract] = await db
       .update(contractsTable)
-      .set({
-        status: "ready_for_sales",
-        contractUploadedBy: userId,
-        contractUploadedAt: new Date(),
-        contractPdfUrl: pdfUrl,
-        adminNotes,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(contractsTable.id, contractId))
       .returning();
 
@@ -328,7 +362,11 @@ class ContractService {
       action: "contract_uploaded",
       entityType: "contract",
       entityId: contractId,
-      details: { pdfUrl, adminNotes },
+      details: { 
+        pdfUrl, 
+        adminNotes,
+        dataEdited: editedData ? true : false,
+      },
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent,
     });
@@ -396,12 +434,18 @@ class ContractService {
 
     // Validate status
     if (contract.status !== "sent_to_sales") {
-      throw new AppError("Can only send to client after admin sends to sales", 400);
+      throw new AppError(
+        "Can only send to client after admin sends to sales",
+        400,
+      );
     }
 
     // Validate ownership (sales can only send their own contracts)
     if (proposal.requestedBy !== userId) {
-      throw new AppError("You can only send contracts for your own proposals", 403);
+      throw new AppError(
+        "You can only send contracts for your own proposals",
+        403,
+      );
     }
 
     // Validate PDF exists
@@ -423,7 +467,7 @@ class ContractService {
       clientEmail,
       proposalData,
       inquiry,
-      pdfBuffer
+      pdfBuffer,
     );
 
     // Update contract
@@ -505,8 +549,15 @@ class ContractService {
    * @param {Object} activityData - Activity data
    */
   async logActivity(activityData) {
-    const { userId, action, entityType, entityId, details, ipAddress, userAgent } =
-      activityData;
+    const {
+      userId,
+      action,
+      entityType,
+      entityId,
+      details,
+      ipAddress,
+      userAgent,
+    } = activityData;
 
     await db.insert(activityLogTable).values({
       userId,

@@ -100,7 +100,7 @@ export const requestContract = async (req, res, next) => {
 export const uploadContractPdf = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { adminNotes } = req.body;
+    const { adminNotes, editedData } = req.body;
 
     // Only admin can upload contracts
     if (req.user.role !== "admin") {
@@ -110,6 +110,16 @@ export const uploadContractPdf = async (req, res, next) => {
     // Check if file was uploaded
     if (!req.file) {
       throw new AppError("Please upload a PDF file", 400);
+    }
+
+    // Parse editedData if it's a string
+    let parsedEditedData = null;
+    if (editedData) {
+      try {
+        parsedEditedData = typeof editedData === 'string' ? JSON.parse(editedData) : editedData;
+      } catch (e) {
+        console.error("Failed to parse editedData:", e);
+      }
     }
 
     const metadata = {
@@ -122,6 +132,7 @@ export const uploadContractPdf = async (req, res, next) => {
       req.file.buffer,
       adminNotes,
       req.user.id,
+      parsedEditedData,
       metadata
     );
 

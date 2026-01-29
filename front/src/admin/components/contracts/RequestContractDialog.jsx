@@ -23,7 +23,10 @@ import { toast } from "../../utils/toast";
 
 const CONTRACT_TYPES = [
   { value: "long_term_variable", label: "LONG TERM GARBAGE VARIABLE CHARGE" },
-  { value: "long_term_fixed", label: "LONG TERM GARBAGE FIXED CHARGE (MORE THAN 50,000 PHP / MONTH)" },
+  {
+    value: "long_term_fixed",
+    label: "LONG TERM GARBAGE FIXED CHARGE (MORE THAN 50,000 PHP / MONTH)",
+  },
   { value: "fixed_rate_term", label: "FIXED RATE TERM" },
   { value: "garbage_bins", label: "GARBAGE BINS" },
   { value: "garbage_bins_disposal", label: "GARBAGE BINS WITH DISPOSAL" },
@@ -37,7 +40,12 @@ const COLLECTION_SCHEDULES = [
   { value: "other", label: "Others (specify)" },
 ];
 
-export function RequestContractDialog({ open, onOpenChange, contract, onConfirm }) {
+export function RequestContractDialog({
+  open,
+  onOpenChange,
+  contract,
+  onConfirm,
+}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     contractType: "",
@@ -46,8 +54,8 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
     clientEmailContract: "",
     clientAddress: "",
     contractDuration: "",
-    serviceAddress: "",
-    actualAddress: "",
+    serviceLatitude: "",
+    serviceLongitude: "",
     collectionSchedule: "",
     collectionScheduleOther: "",
     wasteAllowance: "",
@@ -63,41 +71,41 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
     if (contract && open) {
       const inquiry = contract.inquiry || {};
       const proposal = contract.proposal || {};
-      
+
       // Parse proposal data if it exists
       let proposalData = {};
       if (proposal.proposalData) {
         try {
-          proposalData = typeof proposal.proposalData === 'string' 
-            ? JSON.parse(proposal.proposalData) 
-            : proposal.proposalData;
+          proposalData =
+            typeof proposal.proposalData === "string"
+              ? JSON.parse(proposal.proposalData)
+              : proposal.proposalData;
         } catch (e) {
           console.error("Failed to parse proposal data:", e);
         }
       }
 
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         clientName: proposalData.clientName || inquiry.name || "",
         companyName: proposalData.clientCompany || inquiry.company || "",
         clientEmailContract: proposalData.clientEmail || inquiry.email || "",
-        serviceAddress: inquiry.location || "",
       }));
     }
   }, [contract, open]);
 
   const handleChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSignatoryChange = (index, field, value) => {
     const newSignatories = [...formData.signatories];
     newSignatories[index][field] = value;
-    setFormData(prev => ({ ...prev, signatories: newSignatories }));
+    setFormData((prev) => ({ ...prev, signatories: newSignatories }));
   };
 
   const addSignatory = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       signatories: [...prev.signatories, { name: "", position: "" }],
     }));
@@ -106,28 +114,41 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
   const removeSignatory = (index) => {
     if (formData.signatories.length > 1) {
       const newSignatories = formData.signatories.filter((_, i) => i !== index);
-      setFormData(prev => ({ ...prev, signatories: newSignatories }));
+      setFormData((prev) => ({ ...prev, signatories: newSignatories }));
     }
   };
 
   const validateForm = () => {
     const errors = [];
 
+    // All fields are now required
     if (!formData.contractType) errors.push("Contract type is required");
     if (!formData.clientName) errors.push("Client name is required");
+    if (!formData.companyName) errors.push("Company name is required");
     if (!formData.clientEmailContract) errors.push("Client email is required");
-    if (!formData.serviceAddress) errors.push("Service address is required");
-    if (!formData.collectionSchedule) errors.push("Collection schedule is required");
-    if (formData.collectionSchedule === "other" && !formData.collectionScheduleOther) {
+    if (!formData.clientAddress) errors.push("Client address is required");
+    if (!formData.contractDuration)
+      errors.push("Contract duration is required");
+    if (!formData.serviceLatitude) errors.push("Service latitude is required");
+    if (!formData.serviceLongitude)
+      errors.push("Service longitude is required");
+    if (!formData.collectionSchedule)
+      errors.push("Collection schedule is required");
+    if (
+      formData.collectionSchedule === "other" &&
+      !formData.collectionScheduleOther
+    ) {
       errors.push("Please specify the collection schedule");
     }
-    if (!formData.specialClauses) errors.push("Special clauses field is required");
+    if (!formData.wasteAllowance) errors.push("Waste allowance is required");
+    if (!formData.specialClauses) errors.push("Special clauses are required");
     if (!formData.ratePerKg) errors.push("Rate per kg is required");
-    if (!formData.clientRequests) errors.push("Client requests field is required");
-    
+    if (!formData.clientRequests) errors.push("Client requests are required");
+    if (!formData.requestNotes) errors.push("Request notes are required");
+
     // Validate signatories
     const hasEmptySignatory = formData.signatories.some(
-      sig => !sig.name.trim() || !sig.position.trim()
+      (sig) => !sig.name.trim() || !sig.position.trim(),
     );
     if (hasEmptySignatory) {
       errors.push("All signatories must have a name and position");
@@ -155,8 +176,8 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
         clientEmailContract: "",
         clientAddress: "",
         contractDuration: "",
-        serviceAddress: "",
-        actualAddress: "",
+        serviceLatitude: "",
+        serviceLongitude: "",
         collectionSchedule: "",
         collectionScheduleOther: "",
         wasteAllowance: "",
@@ -181,8 +202,8 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
         clientEmailContract: "",
         clientAddress: "",
         contractDuration: "",
-        serviceAddress: "",
-        actualAddress: "",
+        serviceLatitude: "",
+        serviceLongitude: "",
         collectionSchedule: "",
         collectionScheduleOther: "",
         wasteAllowance: "",
@@ -207,7 +228,8 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
             Request Contract
           </DialogTitle>
           <DialogDescription>
-            Fill in the contract details for admin to create the contract document.
+            Fill in the contract details for admin to create the contract
+            document.
           </DialogDescription>
         </DialogHeader>
 
@@ -217,7 +239,10 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
             <Label htmlFor="contractType">
               Contract Type <span className="text-red-500">*</span>
             </Label>
-            <Select value={formData.contractType} onValueChange={(value) => handleChange("contractType", value)}>
+            <Select
+              value={formData.contractType}
+              onValueChange={(value) => handleChange("contractType", value)}
+            >
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Select contract type" />
               </SelectTrigger>
@@ -248,10 +273,10 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
             </p>
           </div>
 
-          {/* Company Name - Optional */}
+          {/* Company Name - Required */}
           <div>
             <Label htmlFor="companyName">
-              Company Name <span className="text-muted-foreground">(Optional)</span>
+              Company Name <span className="text-red-500">*</span>
             </Label>
             <Input
               id="companyName"
@@ -259,9 +284,10 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
               onChange={(e) => handleChange("companyName", e.target.value)}
               placeholder="Full CORPORATE NAME"
               className="mt-1"
+              required
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Full corporate or company name if different from client name
+              Full corporate or company name
             </p>
           </div>
 
@@ -274,16 +300,18 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
               id="clientEmailContract"
               type="email"
               value={formData.clientEmailContract}
-              onChange={(e) => handleChange("clientEmailContract", e.target.value)}
+              onChange={(e) =>
+                handleChange("clientEmailContract", e.target.value)
+              }
               placeholder="client@company.com"
               className="mt-1"
             />
           </div>
 
-          {/* Client Address - Optional */}
+          {/* Client Address - Required */}
           <div>
             <Label htmlFor="clientAddress">
-              Client Address
+              Client Address <span className="text-red-500">*</span>
             </Label>
             <Input
               id="clientAddress"
@@ -291,16 +319,18 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
               onChange={(e) => handleChange("clientAddress", e.target.value)}
               placeholder="Client's business or billing address"
               className="mt-1"
+              required
             />
             <p className="text-xs text-muted-foreground mt-1">
               Client's business or billing address
             </p>
           </div>
 
-          {/* Contract Duration */}
+          {/* Contract Duration - Required */}
           <div>
             <Label htmlFor="contractDuration">
-              Effectivity of Contract Duration
+              Effectivity of Contract Duration{" "}
+              <span className="text-red-500">*</span>
             </Label>
             <Input
               id="contractDuration"
@@ -308,49 +338,64 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
               onChange={(e) => handleChange("contractDuration", e.target.value)}
               placeholder="e.g., January 1, 2024 - December 31, 2024"
               className="mt-1"
+              required
             />
             <p className="text-xs text-muted-foreground mt-1">
               Duration or length of when contract is to be live and ends
             </p>
           </div>
 
-          {/* Service Address - Required */}
+          {/* Service Address (Latitude/Longitude) - Required */}
           <div>
-            <Label htmlFor="serviceAddress">
-              Service Address <span className="text-red-500">*</span>
+            <Label>
+              Service Address (Coordinates){" "}
+              <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="serviceAddress"
-              value={formData.serviceAddress}
-              onChange={(e) => handleChange("serviceAddress", e.target.value)}
-              placeholder="Service location address"
-              className="mt-1"
-            />
-          </div>
-
-          {/* Actual Address */}
-          <div>
-            <Label htmlFor="actualAddress">
-              Actual Address
-            </Label>
-            <Input
-              id="actualAddress"
-              value={formData.actualAddress}
-              onChange={(e) => handleChange("actualAddress", e.target.value)}
-              placeholder="If Google Maps does not detect location"
-              className="mt-1"
-            />
+            <div className="grid grid-cols-2 gap-4 mt-1">
+              <div>
+                <Input
+                  id="serviceLatitude"
+                  type="number"
+                  step="any"
+                  value={formData.serviceLatitude}
+                  onChange={(e) =>
+                    handleChange("serviceLatitude", e.target.value)
+                  }
+                  placeholder="Latitude (e.g., 14.5995)"
+                  required
+                />
+              </div>
+              <div>
+                <Input
+                  id="serviceLongitude"
+                  type="number"
+                  step="any"
+                  value={formData.serviceLongitude}
+                  onChange={(e) =>
+                    handleChange("serviceLongitude", e.target.value)
+                  }
+                  placeholder="Longitude (e.g., 120.9842)"
+                  required
+                />
+              </div>
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Actual address if Google Maps does not detect location
+              GPS coordinates of the service location
             </p>
           </div>
 
           {/* Collection Schedule - Required */}
           <div>
             <Label htmlFor="collectionSchedule">
-              Schedule of Garbage Collection <span className="text-red-500">*</span>
+              Schedule of Garbage Collection{" "}
+              <span className="text-red-500">*</span>
             </Label>
-            <Select value={formData.collectionSchedule} onValueChange={(value) => handleChange("collectionSchedule", value)}>
+            <Select
+              value={formData.collectionSchedule}
+              onValueChange={(value) =>
+                handleChange("collectionSchedule", value)
+              }
+            >
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Select schedule" />
               </SelectTrigger>
@@ -365,17 +410,19 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
             {formData.collectionSchedule === "other" && (
               <Input
                 value={formData.collectionScheduleOther}
-                onChange={(e) => handleChange("collectionScheduleOther", e.target.value)}
+                onChange={(e) =>
+                  handleChange("collectionScheduleOther", e.target.value)
+                }
                 placeholder="Specify schedule"
                 className="mt-2"
               />
             )}
           </div>
 
-          {/* Waste Allowance */}
+          {/* Waste Allowance - Required */}
           <div>
             <Label htmlFor="wasteAllowance">
-              Waste Allowance
+              Waste Allowance <span className="text-red-500">*</span>
             </Label>
             <Input
               id="wasteAllowance"
@@ -383,6 +430,7 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
               onChange={(e) => handleChange("wasteAllowance", e.target.value)}
               placeholder="Allocated amount for fixed clients"
               className="mt-1"
+              required
             />
             <p className="text-xs text-muted-foreground mt-1">
               Allocated amount for fixed clients
@@ -392,7 +440,8 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
           {/* Special Clauses - Required */}
           <div>
             <Label htmlFor="specialClauses">
-              Special Clauses or Requests <span className="text-red-500">*</span>
+              Special Clauses or Requests{" "}
+              <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="specialClauses"
@@ -407,20 +456,25 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
           {/* Signatories - Required */}
           <div>
             <Label>
-              Signatories and their Position <span className="text-red-500">*</span>
+              Signatories and their Position{" "}
+              <span className="text-red-500">*</span>
             </Label>
             <div className="space-y-3 mt-2">
               {formData.signatories.map((signatory, index) => (
                 <div key={index} className="flex gap-2">
                   <Input
                     value={signatory.name}
-                    onChange={(e) => handleSignatoryChange(index, "name", e.target.value)}
+                    onChange={(e) =>
+                      handleSignatoryChange(index, "name", e.target.value)
+                    }
                     placeholder="Name"
                     className="flex-1"
                   />
                   <Input
                     value={signatory.position}
-                    onChange={(e) => handleSignatoryChange(index, "position", e.target.value)}
+                    onChange={(e) =>
+                      handleSignatoryChange(index, "position", e.target.value)
+                    }
                     placeholder="Position"
                     className="flex-1"
                   />
@@ -463,7 +517,8 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
               className="mt-1"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Specify type of waste - whether VAT exclusive or inclusive (e.g., PHP 3.50/kg food - VAT ex.)
+              Specify type of waste - whether VAT exclusive or inclusive (e.g.,
+              PHP 3.50/kg food - VAT ex.)
             </p>
           </div>
 
@@ -482,10 +537,10 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
             />
           </div>
 
-          {/* Request Notes - Optional */}
+          {/* Request Notes - Required */}
           <div>
             <Label htmlFor="requestNotes">
-              Request Notes <span className="text-muted-foreground">(Optional)</span>
+              Request Notes <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="requestNotes"
@@ -494,13 +549,15 @@ export function RequestContractDialog({ open, onOpenChange, contract, onConfirm 
               placeholder="Add any additional notes for admin..."
               rows={2}
               className="mt-1"
+              required
             />
           </div>
 
           {/* Info */}
           <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg p-3">
             <p className="text-sm text-green-900 dark:text-green-100">
-              <strong>Note:</strong> Admin will be notified and will prepare the contract document based on the details you provide.
+              <strong>Note:</strong> Admin will be notified and will prepare the
+              contract document based on the details you provide.
             </p>
           </div>
         </div>
