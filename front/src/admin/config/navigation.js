@@ -11,6 +11,7 @@ import {
   ScrollText,
   Image,
   FileSignature,
+  Calendar,
 } from "lucide-react";
 
 /**
@@ -60,6 +61,12 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
           url: "/admin/dashboard",
           icon: LayoutDashboard,
           description: "Overview and statistics",
+        },
+        {
+          title: "Calendar",
+          url: "/admin/calendar",
+          icon: Calendar,
+          description: "Manage your schedule",
         },
       ],
     },

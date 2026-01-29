@@ -1,5 +1,11 @@
 import { db } from "../db/index.js";
-import { inquiryNotesTable, userTable, activityLogTable, proposalTable, serviceTable } from "../db/schema.js";
+import {
+  inquiryNotesTable,
+  userTable,
+  activityLogTable,
+  proposalTable,
+  serviceTable,
+} from "../db/schema.js";
 import { eq, desc, and, or } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 
@@ -135,26 +141,36 @@ class InquiryNotesService {
       .from(proposalTable)
       .where(eq(proposalTable.inquiryId, inquiryId));
 
-    const proposalIds = proposals.map(p => p.id);
+    const proposalIds = proposals.map((p) => p.id);
 
     // Fetch activity logs:
     // 1. Activities for the inquiry itself (entityType = "inquiry")
     // 2. Activities for proposals related to this inquiry (entityType = "proposal")
-    const activityConditions = [
+    // 3. Activities directly linked to this inquiry via inquiryId (calendar events, etc.)
+
+    const activityConditions = [];
+
+    // Activities with inquiryId set (calendar events, notes, etc.)
+    activityConditions.push(eq(activityLogTable.inquiryId, inquiryId));
+
+    // Activities for the inquiry entity itself
+    activityConditions.push(
       and(
         eq(activityLogTable.entityType, "inquiry"),
-        eq(activityLogTable.entityId, inquiryId)
+        eq(activityLogTable.entityId, inquiryId),
       ),
-    ];
+    );
 
     // Add proposal activities if there are any proposals
     if (proposalIds.length > 0) {
-      activityConditions.push(
-        and(
-          eq(activityLogTable.entityType, "proposal"),
-          or(...proposalIds.map(id => eq(activityLogTable.entityId, id)))
-        )
-      );
+      proposalIds.forEach((proposalId) => {
+        activityConditions.push(
+          and(
+            eq(activityLogTable.entityType, "proposal"),
+            eq(activityLogTable.entityId, proposalId),
+          ),
+        );
+      });
     }
 
     const activities = await db
@@ -178,21 +194,21 @@ class InquiryNotesService {
     // Fetch service names for service ID lookups (for inquiry_updated activities)
     const services = await db.select().from(serviceTable);
     const serviceMap = {};
-    services.forEach(service => {
+    services.forEach((service) => {
       serviceMap[service.id] = service.name;
     });
 
     // Fetch user names for assignedTo lookups
     const users = await db.select().from(userTable);
     const userMap = {};
-    users.forEach(user => {
+    users.forEach((user) => {
       userMap[user.id] = `${user.firstName} ${user.lastName}`;
     });
 
     // Combine and format timeline entries
     const timeline = [
       // Manual notes
-      ...notes.map(note => ({
+      ...notes.map((note) => ({
         id: note.id,
         type: "note",
         content: note.content,
@@ -200,9 +216,17 @@ class InquiryNotesService {
         createdBy: note.createdBy,
       })),
       // Activity logs
-      ...activities.map(activity => {
-        const details = activity.details ? JSON.parse(activity.details) : null;
-        
+      ...activities.map((activity) => {
+        // Parse details if it's a string, otherwise use as-is
+        let details = activity.details;
+        if (typeof details === "string") {
+          try {
+            details = JSON.parse(details);
+          } catch (e) {
+            details = null;
+          }
+        }
+
         // Enrich service changes with service names
         if (details?.changes?.serviceId) {
           details.changes.serviceId = {
@@ -242,4 +266,3 @@ class InquiryNotesService {
 }
 
 export default new InquiryNotesService();
-

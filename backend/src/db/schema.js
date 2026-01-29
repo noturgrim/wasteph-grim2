@@ -172,6 +172,34 @@ export const inquiryNotesTable = pgTable("inquiry_notes", {
   createdAtIdx: index("inquiry_notes_created_at_idx").on(table.createdAt),
 }));
 
+// Calendar Events Table
+export const calendarEventTable = pgTable("calendar_event", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => userTable.id, { onDelete: "cascade" }),
+  inquiryId: uuid("inquiry_id").references(() => inquiryTable.id, { onDelete: "set null" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  eventType: text("event_type"), // site_visit, call, meeting, follow_up, etc. (fully customizable)
+  scheduledDate: timestamp("scheduled_date", { withTimezone: true }).notNull(),
+  startTime: text("start_time"), // HH:MM format (optional)
+  endTime: text("end_time"), // HH:MM format (optional)
+  status: text("status").notNull().default("scheduled"), // scheduled, completed, cancelled
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (table) => ({
+  userIdIdx: index("calendar_event_user_id_idx").on(table.userId),
+  scheduledDateIdx: index("calendar_event_scheduled_date_idx").on(table.scheduledDate),
+  inquiryIdIdx: index("calendar_event_inquiry_id_idx").on(table.inquiryId),
+}));
+
 export const leadTable = pgTable("lead", {
   id: uuid("id").primaryKey().defaultRandom(),
   clientName: text("client_name").notNull(),
@@ -582,6 +610,9 @@ export const activityLogTable = pgTable("activity_log", {
   userId: text("user_id")
     .notNull()
     .references(() => userTable.id, { onDelete: "cascade" }),
+  inquiryId: uuid("inquiry_id").references(() => inquiryTable.id, {
+    onDelete: "cascade",
+  }),
   action: text("action").notNull(),
   entityType: text("entity_type").notNull(),
   entityId: text("entity_id").notNull(),

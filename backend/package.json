@@ -17,7 +17,9 @@
     "seed:services": "node src/scripts/seedServices.js",
     "seed:proposal-template": "node src/scripts/seedProposalTemplate.js",
     "migrate:proposal-status": "node src/scripts/migrateProposalStatus.js",
-    "migrate:inquiry-info-complete": "node src/scripts/runMigration.js"
+    "migrate:inquiry-info-complete": "node src/scripts/runMigration.js",
+    "migrate:calendar-events": "node src/scripts/migrateCalendarEvents.js",
+    "migrate:activity-log-inquiry-id": "node src/scripts/migrateActivityLogInquiryId.js"
   },
   "keywords": [],
   "author": "",

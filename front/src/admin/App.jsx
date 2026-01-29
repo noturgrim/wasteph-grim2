@@ -6,6 +6,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Calendar from "./pages/Calendar";
 import Inquiries from "./pages/Inquiries";
 import Leads from "./pages/Leads";
 import Clients from "./pages/Clients";
@@ -38,6 +39,7 @@ const CRMApp = () => {
           >
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="calendar" element={<Calendar />} />
 
             {/* Sales Pipeline - accessible by all roles */}
             <Route path="inquiries" element={<Inquiries />} />
@@ -100,7 +102,10 @@ const CRMApp = () => {
           </Route>
 
           {/* Catch all - redirect to dashboard */}
-          <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+          <Route
+            path="*"
+            element={<Navigate to="/admin/dashboard" replace />}
+          />
         </Routes>
       </AuthProvider>
     </ThemeProvider>

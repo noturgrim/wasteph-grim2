@@ -16,6 +16,7 @@ import {
   XCircle,
   Mail,
   FilePlus,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -276,6 +277,36 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
         badgeBg: "bg-rose-50",
         badgeText: "text-rose-700",
         badgeBorder: "border-rose-200",
+      },
+      calendar_event_created: {
+        label: "Event Scheduled",
+        description: details?.title
+          ? `Scheduled: ${details.title}${details.eventType ? ` (${details.eventType.replace(/_/g, " ")})` : ""}${details.scheduledDate ? ` for ${format(new Date(details.scheduledDate), "MMM dd, yyyy")}` : ""}`
+          : "Scheduled a calendar event",
+        icon: Calendar,
+        badgeBg: "bg-blue-50 dark:bg-blue-950",
+        badgeText: "text-blue-700 dark:text-blue-300",
+        badgeBorder: "border-blue-200 dark:border-blue-800",
+      },
+      calendar_event_updated: {
+        label: "Event Updated",
+        description: details?.title
+          ? `Updated: ${details.title}${details.statusChanged ? ` (${details.statusChanged.from} → ${details.statusChanged.to})` : ""}`
+          : "Updated calendar event",
+        icon: Calendar,
+        badgeBg: "bg-amber-50 dark:bg-amber-950",
+        badgeText: "text-amber-700 dark:text-amber-300",
+        badgeBorder: "border-amber-200 dark:border-amber-800",
+      },
+      calendar_event_deleted: {
+        label: "Event Cancelled",
+        description: details?.title
+          ? `Cancelled: ${details.title}${details.eventType ? ` (${details.eventType.replace(/_/g, " ")})` : ""}`
+          : "Cancelled calendar event",
+        icon: Calendar,
+        badgeBg: "bg-gray-50 dark:bg-gray-900",
+        badgeText: "text-gray-700 dark:text-gray-300",
+        badgeBorder: "border-gray-200 dark:border-gray-700",
       },
     };
 

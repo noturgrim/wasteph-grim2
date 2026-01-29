@@ -33,7 +33,7 @@ class ApiClient {
 
       if (!response.ok) {
         throw new Error(
-          data.message || `Request failed with status ${response.status}`
+          data.message || `Request failed with status ${response.status}`,
         );
       }
 
@@ -134,7 +134,8 @@ class ApiClient {
   // Lead endpoints
   async getLeads(filters = {}) {
     const params = new URLSearchParams();
-    if (filters.isClaimed !== undefined) params.append("isClaimed", filters.isClaimed);
+    if (filters.isClaimed !== undefined)
+      params.append("isClaimed", filters.isClaimed);
     if (filters.claimedBy) params.append("claimedBy", filters.claimedBy);
     if (filters.serviceType) params.append("serviceType", filters.serviceType);
     if (filters.search) params.append("search", filters.search);
@@ -363,13 +364,16 @@ class ApiClient {
   // Proposal Template endpoints (Master Sales only)
   async getProposalTemplates(filters = {}) {
     const params = new URLSearchParams();
-    if (filters.isActive !== undefined) params.append("isActive", filters.isActive);
+    if (filters.isActive !== undefined)
+      params.append("isActive", filters.isActive);
     if (filters.search) params.append("search", filters.search);
     if (filters.page) params.append("page", filters.page);
     if (filters.limit) params.append("limit", filters.limit);
 
     const queryString = params.toString();
-    return this.request(`/proposal-templates${queryString ? `?${queryString}` : ""}`);
+    return this.request(
+      `/proposal-templates${queryString ? `?${queryString}` : ""}`,
+    );
   }
 
   async getDefaultProposalTemplate() {
@@ -489,6 +493,52 @@ class ApiClient {
   async previewContractPdf(id) {
     const url = `${this.baseURL}/contracts/${id}/preview-pdf`;
     window.open(url, "_blank");
+  }
+
+  // Calendar Event endpoints
+  async getCalendarEvents(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.startDate) params.append("startDate", filters.startDate);
+    if (filters.endDate) params.append("endDate", filters.endDate);
+    if (filters.status) params.append("status", filters.status);
+    if (filters.inquiryId) params.append("inquiryId", filters.inquiryId);
+    if (filters.page) params.append("page", filters.page);
+    if (filters.limit) params.append("limit", filters.limit);
+
+    const queryString = params.toString();
+    return this.request(
+      `/calendar-events${queryString ? `?${queryString}` : ""}`,
+    );
+  }
+
+  async getCalendarEventById(id) {
+    return this.request(`/calendar-events/${id}`);
+  }
+
+  async createCalendarEvent(data) {
+    return this.request("/calendar-events", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCalendarEvent(id, data) {
+    return this.request(`/calendar-events/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async completeCalendarEvent(id) {
+    return this.request(`/calendar-events/${id}/complete`, {
+      method: "POST",
+    });
+  }
+
+  async deleteCalendarEvent(id) {
+    return this.request(`/calendar-events/${id}`, {
+      method: "DELETE",
+    });
   }
 }
 

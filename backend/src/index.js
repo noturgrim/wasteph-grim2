@@ -22,6 +22,7 @@ import contractRoutes from "./routes/contractRoutes.js";
 import showcaseRoutes from "./routes/showcaseRoutes.js";
 import clientsShowcaseRoutes from "./routes/clientsShowcaseRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
+import calendarEventRoutes from "./routes/calendarEventRoutes.js";
 
 dotenv.config();
 
@@ -87,6 +88,7 @@ app.use("/api/contracts", contractRoutes);
 app.use("/api/showcases", showcaseRoutes);
 app.use("/api/clients-showcase", clientsShowcaseRoutes);
 app.use("/api/blog", blogRoutes);
+app.use("/api/calendar-events", calendarEventRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

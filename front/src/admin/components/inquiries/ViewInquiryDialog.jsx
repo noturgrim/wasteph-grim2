@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,9 +11,10 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "../StatusBadge";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { FileText } from "lucide-react";
+import { FileText, Calendar } from "lucide-react";
 import { RequestProposalDialog } from "./RequestProposalDialog";
 import { NotesTimeline } from "./NotesTimeline";
+import { ScheduleEventDialog } from "../calendar/ScheduleEventDialog";
 
 const SERVICE_TYPE_LABELS = {
   garbage_collection: "Garbage Collection",
@@ -30,6 +31,15 @@ export function ViewInquiryDialog({
   onProposalCreated,
 }) {
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [timelineKey, setTimelineKey] = useState(0);
+
+  // Reset timeline key when dialog opens or inquiry changes
+  useEffect(() => {
+    if (open && inquiry) {
+      setTimelineKey((prev) => prev + 1);
+    }
+  }, [open, inquiry?.id]);
 
   if (!inquiry) return null;
 
@@ -37,6 +47,11 @@ export function ViewInquiryDialog({
 
   const handleProposalSuccess = () => {
     if (onProposalCreated) onProposalCreated();
+  };
+
+  const handleEventScheduled = () => {
+    // Force timeline to reload by changing the key
+    setTimelineKey((prev) => prev + 1);
   };
 
   return (
@@ -204,7 +219,7 @@ export function ViewInquiryDialog({
 
           {/* Notes Timeline */}
           <div className="border-t pt-4">
-            <NotesTimeline inquiryId={inquiry.id} />
+            <NotesTimeline key={timelineKey} inquiryId={inquiry.id} />
           </div>
         </div>
 
@@ -248,9 +263,18 @@ export function ViewInquiryDialog({
             </div>
           )}
 
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsScheduleDialogOpen(true)}
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              Schedule Event
+            </Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
 
@@ -260,6 +284,14 @@ export function ViewInquiryDialog({
         onOpenChange={setIsProposalDialogOpen}
         inquiry={inquiry}
         onSuccess={handleProposalSuccess}
+      />
+
+      {/* Schedule Event Dialog */}
+      <ScheduleEventDialog
+        open={isScheduleDialogOpen}
+        onOpenChange={setIsScheduleDialogOpen}
+        inquiryId={inquiry.id}
+        onSuccess={handleEventScheduled}
       />
     </Dialog>
   );

@@ -19,10 +19,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Calendar } from "lucide-react";
 import { api } from "../../services/api";
+import { ScheduleEventDialog } from "../calendar/ScheduleEventDialog";
 
-export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isMasterSales = false, onSubmit, isSubmitting }) {
+export function EditInquiryDialog({
+  open,
+  onOpenChange,
+  inquiry,
+  users = [],
+  isMasterSales = false,
+  onSubmit,
+  isSubmitting,
+}) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -40,6 +49,11 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
 
   const [formErrors, setFormErrors] = useState({});
   const [services, setServices] = useState([]);
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+
+  const handleEventScheduled = () => {
+    // Could refresh or show toast
+  };
 
   // Load services on mount
   useEffect(() => {
@@ -113,7 +127,9 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="grid grid-cols-[120px_1fr] items-start gap-4">
-            <Label htmlFor="edit-name" className="text-right pt-2">Name</Label>
+            <Label htmlFor="edit-name" className="text-right pt-2">
+              Name
+            </Label>
             <div className="flex-1">
               <Input
                 id="edit-name"
@@ -133,7 +149,9 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
           </div>
 
           <div className="grid grid-cols-[120px_1fr] items-start gap-4">
-            <Label htmlFor="edit-email" className="text-right pt-2">Email</Label>
+            <Label htmlFor="edit-email" className="text-right pt-2">
+              Email
+            </Label>
             <div className="flex-1">
               <Input
                 id="edit-email"
@@ -154,7 +172,9 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
           </div>
 
           <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-            <Label htmlFor="edit-phone" className="text-right">Phone Number</Label>
+            <Label htmlFor="edit-phone" className="text-right">
+              Phone Number
+            </Label>
             <Input
               id="edit-phone"
               value={formData.phone}
@@ -165,7 +185,9 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
           </div>
 
           <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-            <Label htmlFor="edit-company" className="text-right">Company</Label>
+            <Label htmlFor="edit-company" className="text-right">
+              Company
+            </Label>
             <Input
               id="edit-company"
               value={formData.company}
@@ -176,7 +198,9 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
           </div>
 
           <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-            <Label htmlFor="edit-location" className="text-right">Location</Label>
+            <Label htmlFor="edit-location" className="text-right">
+              Location
+            </Label>
             <Input
               id="edit-location"
               value={formData.location}
@@ -188,7 +212,9 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
           </div>
 
           <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-            <Label htmlFor="edit-service" className="text-right">Service</Label>
+            <Label htmlFor="edit-service" className="text-right">
+              Service
+            </Label>
             <Select
               value={formData.serviceId}
               onValueChange={(val) =>
@@ -200,7 +226,9 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
               </SelectTrigger>
               <SelectContent>
                 {services.length === 0 ? (
-                  <div className="p-2 text-sm text-muted-foreground">No services found</div>
+                  <div className="p-2 text-sm text-muted-foreground">
+                    No services found
+                  </div>
                 ) : (
                   services.map((service) => (
                     <SelectItem key={service.id} value={service.id}>
@@ -213,12 +241,12 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
           </div>
 
           <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-            <Label htmlFor="edit-source" className="text-right">Source</Label>
+            <Label htmlFor="edit-source" className="text-right">
+              Source
+            </Label>
             <Select
               value={formData.source}
-              onValueChange={(val) =>
-                setFormData({ ...formData, source: val })
-              }
+              onValueChange={(val) => setFormData({ ...formData, source: val })}
             >
               <SelectTrigger id="edit-source">
                 <SelectValue />
@@ -235,24 +263,30 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
           </div>
 
           <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-            <Label htmlFor="edit-status" className="text-right">Status</Label>
+            <Label htmlFor="edit-status" className="text-right">
+              Status
+            </Label>
             <Select
               value={formData.status}
-              onValueChange={(val) =>
-                setFormData({ ...formData, status: val })
-              }
+              onValueChange={(val) => setFormData({ ...formData, status: val })}
             >
               <SelectTrigger id="edit-status">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="submitted_proposal">Submitted Proposal</SelectItem>
+                <SelectItem value="submitted_proposal">
+                  Submitted Proposal
+                </SelectItem>
                 <SelectItem value="initial_comms">Initial Comms</SelectItem>
                 <SelectItem value="negotiating">Negotiating</SelectItem>
                 <SelectItem value="to_call">To Call</SelectItem>
-                <SelectItem value="submitted_company_profile">Submitted Company Profile</SelectItem>
+                <SelectItem value="submitted_company_profile">
+                  Submitted Company Profile
+                </SelectItem>
                 <SelectItem value="na">N/A</SelectItem>
-                <SelectItem value="waiting_for_feedback">Waiting for Feedback</SelectItem>
+                <SelectItem value="waiting_for_feedback">
+                  Waiting for Feedback
+                </SelectItem>
                 <SelectItem value="declined">Declined</SelectItem>
                 <SelectItem value="on_boarded">On Boarded</SelectItem>
               </SelectContent>
@@ -262,7 +296,9 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
           {/* Only show Assigned To field for Master Sales */}
           {isMasterSales && (
             <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-              <Label htmlFor="edit-assigned" className="text-right">Assigned To</Label>
+              <Label htmlFor="edit-assigned" className="text-right">
+                Assigned To
+              </Label>
               <Select
                 value={formData.assignedTo}
                 onValueChange={(val) =>
@@ -274,7 +310,9 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
                 </SelectTrigger>
                 <SelectContent>
                   {users.length === 0 ? (
-                    <div className="p-2 text-sm text-muted-foreground">No users found</div>
+                    <div className="p-2 text-sm text-muted-foreground">
+                      No users found
+                    </div>
                   ) : (
                     users.map((user) => (
                       <SelectItem key={user.id} value={user.id}>
@@ -288,7 +326,9 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
           )}
 
           <div className="grid grid-cols-[120px_1fr] items-start gap-4">
-            <Label htmlFor="edit-message" className="text-right pt-2">Message</Label>
+            <Label htmlFor="edit-message" className="text-right pt-2">
+              Message
+            </Label>
             <div className="flex-1">
               <Textarea
                 id="edit-message"
@@ -303,7 +343,9 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
                 className={formErrors.message ? "border-red-500" : ""}
               />
               {formErrors.message && (
-                <p className="text-sm text-red-500 mt-1">{formErrors.message}</p>
+                <p className="text-sm text-red-500 mt-1">
+                  {formErrors.message}
+                </p>
               )}
             </div>
           </div>
@@ -327,13 +369,17 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
                   Information Complete
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  Check this after visiting the client site or gathering all required information. 
-                  You can only request a proposal when information is complete.
+                  Check this after visiting the client site or gathering all
+                  required information. You can only request a proposal when
+                  information is complete.
                 </p>
                 {!formData.isInformationComplete && (
                   <div className="flex items-center gap-1 text-xs text-amber-600 mt-2">
                     <AlertCircle className="h-3 w-3" />
-                    <span>Proposal requests are disabled until information is complete</span>
+                    <span>
+                      Proposal requests are disabled until information is
+                      complete
+                    </span>
                   </div>
                 )}
               </div>
@@ -364,8 +410,21 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
             </div>
           )}
 
-          <DialogFooter className="mt-6">
-            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+          <DialogFooter className="mt-6 flex-col sm:flex-row gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsScheduleDialogOpen(true)}
+              className="w-full sm:w-auto"
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              Schedule Event
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
@@ -374,6 +433,14 @@ export function EditInquiryDialog({ open, onOpenChange, inquiry, users = [], isM
           </DialogFooter>
         </form>
       </DialogContent>
+
+      {/* Schedule Event Dialog */}
+      <ScheduleEventDialog
+        open={isScheduleDialogOpen}
+        onOpenChange={setIsScheduleDialogOpen}
+        inquiryId={inquiry?.id}
+        onSuccess={handleEventScheduled}
+      />
     </Dialog>
   );
 }
