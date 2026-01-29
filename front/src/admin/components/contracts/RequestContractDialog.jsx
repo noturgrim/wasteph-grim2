@@ -18,7 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Loader2, Plus, X } from "lucide-react";
+import { FileText, Loader2, Plus, X, Upload, FileCheck, AlertCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "../../utils/toast";
 
 const CONTRACT_TYPES = [
@@ -47,6 +48,8 @@ export function RequestContractDialog({
   onConfirm,
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasCustomTemplate, setHasCustomTemplate] = useState(false);
+  const [customTemplateFile, setCustomTemplateFile] = useState(null);
   const [formData, setFormData] = useState({
     contractType: "",
     clientName: "",
@@ -154,6 +157,11 @@ export function RequestContractDialog({
       errors.push("All signatories must have a name and position");
     }
 
+    // Validate custom template if checkbox is checked
+    if (hasCustomTemplate && !customTemplateFile) {
+      errors.push("Please upload the custom contract template");
+    }
+
     if (errors.length > 0) {
       toast.error(errors[0]);
       return false;
@@ -162,13 +170,40 @@ export function RequestContractDialog({
     return true;
   };
 
+  const handleCustomTemplateChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type (PDF or DOCX)
+      const validTypes = [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/msword",
+      ];
+      
+      if (!validTypes.includes(file.type)) {
+        toast.error("Only PDF or Word documents are allowed");
+        return;
+      }
+
+      // Validate file size (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("File size must be less than 10MB");
+        return;
+      }
+
+      setCustomTemplateFile(file);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
     try {
-      await onConfirm(formData);
+      await onConfirm(formData, hasCustomTemplate ? customTemplateFile : null);
       // Reset form after successful submission
+      setHasCustomTemplate(false);
+      setCustomTemplateFile(null);
       setFormData({
         contractType: "",
         clientName: "",
@@ -213,6 +248,8 @@ export function RequestContractDialog({
         clientRequests: "",
         requestNotes: "",
       });
+      setHasCustomTemplate(false);
+      setCustomTemplateFile(null);
     }
     onOpenChange(isOpen);
   };
@@ -551,6 +588,47 @@ export function RequestContractDialog({
               className="mt-1"
               required
             />
+          </div>
+
+          {/* Custom Contract Template */}
+          <div className="border-t pt-4">
+            <div className="flex items-center space-x-2 mb-3">
+              <Checkbox
+                id="hasCustomTemplate"
+                checked={hasCustomTemplate}
+                onCheckedChange={setHasCustomTemplate}
+              />
+              <Label
+                htmlFor="hasCustomTemplate"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Client has custom contract template
+              </Label>
+            </div>
+
+            {hasCustomTemplate && (
+              <div>
+                <Label htmlFor="customTemplate">
+                  Upload Custom Template <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="customTemplate"
+                  type="file"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={handleCustomTemplateChange}
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Upload PDF or Word document (max 10MB)
+                </p>
+                {customTemplateFile && (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                    <FileCheck className="h-4 w-4" />
+                    {customTemplateFile.name} ({(customTemplateFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Info */}

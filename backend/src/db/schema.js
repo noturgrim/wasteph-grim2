@@ -476,6 +476,7 @@ export const contractsTable = pgTable("contracts", {
   signatories: text("signatories"), // JSON array of signatories with positions
   ratePerKg: text("rate_per_kg"), // Rate specifications (e.g., "PHP 3.50/kg food - VAT ex.")
   clientRequests: text("client_requests"), // Client requests for modifications
+  customTemplateUrl: text("custom_template_url"), // Path to client's custom contract template (if provided)
 
   // Admin Contract Upload
   contractUploadedBy: text("contract_uploaded_by")

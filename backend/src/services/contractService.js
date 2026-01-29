@@ -202,7 +202,7 @@ class ContractService {
    * @param {Object} metadata - Request metadata
    * @returns {Promise<Object>} Updated contract
    */
-  async requestContract(contractId, contractDetails, userId, metadata = {}) {
+  async requestContract(contractId, contractDetails, userId, customTemplateBuffer = null, metadata = {}) {
     // Get contract
     const contractData = await this.getContractById(contractId);
     const contract = contractData.contract;
@@ -218,6 +218,12 @@ class ContractService {
         "You can only request contracts for your own proposals",
         403,
       );
+    }
+
+    // Save custom template if provided
+    let customTemplateUrl = null;
+    if (customTemplateBuffer) {
+      customTemplateUrl = await this.saveCustomTemplate(customTemplateBuffer, contractId);
     }
 
     // Extract contract details
@@ -264,6 +270,7 @@ class ContractService {
         signatories: signatories ? JSON.stringify(signatories) : null,
         ratePerKg,
         clientRequests,
+        customTemplateUrl,
         updatedAt: new Date(),
       })
       .where(eq(contractsTable.id, contractId))
@@ -517,6 +524,36 @@ class ContractService {
 
     // Return relative path
     return `/uploads/contracts/${filename}`;
+  }
+
+  /**
+   * Save custom contract template file
+   * @param {Buffer} fileBuffer - File buffer
+   * @param {string} contractId - Contract UUID
+   * @returns {Promise<string>} File URL path
+   */
+  async saveCustomTemplate(fileBuffer, contractId) {
+    // Create uploads directory if it doesn't exist
+    const uploadsDir = path.join(__dirname, "../../uploads/contract-templates");
+    await fs.mkdir(uploadsDir, { recursive: true });
+
+    // Determine file extension from buffer (simple check)
+    let ext = ".pdf"; // default
+    if (fileBuffer[0] === 0x50 && fileBuffer[1] === 0x4B) {
+      ext = ".docx"; // ZIP-based format (DOCX)
+    } else if (fileBuffer[0] === 0xD0 && fileBuffer[1] === 0xCF) {
+      ext = ".doc"; // DOC format
+    }
+
+    // Generate filename
+    const filename = `template-${contractId}-${Date.now()}${ext}`;
+    const filepath = path.join(uploadsDir, filename);
+
+    // Write file
+    await fs.writeFile(filepath, fileBuffer);
+
+    // Return relative path
+    return `/uploads/contract-templates/${filename}`;
   }
 
   /**

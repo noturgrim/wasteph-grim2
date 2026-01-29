@@ -20,7 +20,8 @@
     "migrate:inquiry-info-complete": "node src/scripts/runMigration.js",
     "migrate:calendar-events": "node src/scripts/migrateCalendarEvents.js",
     "migrate:activity-log-inquiry-id": "node src/scripts/migrateActivityLogInquiryId.js",
-    "migrate:contract-service-address": "node src/scripts/migrateContractServiceAddress.js"
+    "migrate:contract-service-address": "node src/scripts/migrateContractServiceAddress.js",
+    "migrate:custom-template-url": "node src/scripts/migrateCustomTemplateUrl.js"
   },
   "keywords": [],
   "author": "",

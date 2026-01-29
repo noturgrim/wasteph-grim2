@@ -65,6 +65,7 @@ export const requestContract = async (req, res, next) => {
   try {
     const { id } = req.params;
     const contractDetails = req.body; // All contract details from form
+    const customTemplateFile = req.file; // Optional custom template file
 
     // Only sales can request contracts
     if (req.user.role !== "sales") {
@@ -80,6 +81,7 @@ export const requestContract = async (req, res, next) => {
       id,
       contractDetails,
       req.user.id,
+      customTemplateFile ? customTemplateFile.buffer : null,
       metadata
     );
 

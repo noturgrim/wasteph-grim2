@@ -24,12 +24,16 @@ export function ContractDetailsSection({ contract }) {
   let signatories = [];
   if (contractData.signatories) {
     try {
-      signatories =
+      const parsed =
         typeof contractData.signatories === "string"
           ? JSON.parse(contractData.signatories)
           : contractData.signatories;
+
+      // Ensure it's an array
+      signatories = Array.isArray(parsed) ? parsed : [];
     } catch (e) {
       console.error("Failed to parse signatories:", e);
+      signatories = [];
     }
   }
 
@@ -205,6 +209,41 @@ export function ContractDetailsSection({ contract }) {
             <p className="text-sm whitespace-pre-wrap">
               {contractData.requestNotes}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Contract Template */}
+      {contractData.customTemplateUrl && (
+        <div>
+          <h4 className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
+            Custom Contract Template
+          </h4>
+          <div className="bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+            <p className="text-sm text-purple-900 dark:text-purple-100 mb-2">
+              Client provided a custom contract template
+            </p>
+            <a
+              href={`${(import.meta.env.VITE_API_URL || "http://localhost:5000/api").replace("/api", "")}${contractData.customTemplateUrl}`}
+              download
+              className="inline-flex items-center gap-2 text-sm text-purple-700 dark:text-purple-300 hover:underline"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+                />
+              </svg>
+              Download Template
+            </a>
           </div>
         </div>
       )}

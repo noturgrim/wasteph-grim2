@@ -4,8 +4,13 @@ import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import { testConnection } from "./db/index.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Import routes
 import authRoutes from "./routes/authRoutes.js";
@@ -36,15 +41,15 @@ app.use(helmet());
 const corsOptions = {
   origin: process.env.FRONTEND_URL || "http://localhost:5173",
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'Cookie',
-    'X-Requested-With',
-    'Accept',
+    "Content-Type",
+    "Authorization",
+    "Cookie",
+    "X-Requested-With",
+    "Accept",
   ],
-  exposedHeaders: ['Set-Cookie'],
+  exposedHeaders: ["Set-Cookie"],
   maxAge: 86400, // 24 hours
   optionsSuccessStatus: 200,
 };
@@ -63,6 +68,10 @@ if (process.env.NODE_ENV === "development") {
 } else {
   app.use(morgan("combined"));
 }
+
+// Serve uploaded files as static assets
+const uploadsPath = path.join(__dirname, "../uploads");
+app.use("/uploads", express.static(uploadsPath));
 
 // Health check route
 app.get("/health", (req, res) => {

@@ -18,11 +18,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Upload, Loader2, AlertCircle, FileCheck, Edit, Plus, X } from "lucide-react";
+import {
+  Upload,
+  Loader2,
+  AlertCircle,
+  FileCheck,
+  Edit,
+  Plus,
+  X,
+} from "lucide-react";
 
 const CONTRACT_TYPES = [
   { value: "long_term_variable", label: "LONG TERM GARBAGE VARIABLE CHARGE" },
-  { value: "long_term_fixed", label: "LONG TERM GARBAGE FIXED CHARGE (MORE THAN 50,000 PHP / MONTH)" },
+  {
+    value: "long_term_fixed",
+    label: "LONG TERM GARBAGE FIXED CHARGE (MORE THAN 50,000 PHP / MONTH)",
+  },
   { value: "fixed_rate_term", label: "FIXED RATE TERM" },
   { value: "garbage_bins", label: "GARBAGE BINS" },
   { value: "garbage_bins_disposal", label: "GARBAGE BINS WITH DISPOSAL" },
@@ -36,12 +47,18 @@ const COLLECTION_SCHEDULES = [
   { value: "other", label: "Others (specify)" },
 ];
 
-export function UploadContractDialog({ open, onOpenChange, contract, users, onConfirm }) {
+export function UploadContractDialog({
+  open,
+  onOpenChange,
+  contract,
+  users,
+  onConfirm,
+}) {
   const [pdfFile, setPdfFile] = useState(null);
   const [adminNotes, setAdminNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  
+
   // Editable contract data
   const [editedData, setEditedData] = useState({});
   const [originalData, setOriginalData] = useState({});
@@ -50,14 +67,15 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
   useEffect(() => {
     if (contract && open) {
       const contractData = contract.contract || {};
-      
+
       // Parse signatories
       let signatories = [];
       if (contractData.signatories) {
         try {
-          signatories = typeof contractData.signatories === 'string' 
-            ? JSON.parse(contractData.signatories) 
-            : contractData.signatories;
+          signatories =
+            typeof contractData.signatories === "string"
+              ? JSON.parse(contractData.signatories)
+              : contractData.signatories;
         } catch (e) {
           console.error("Failed to parse signatories:", e);
         }
@@ -76,7 +94,8 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
         collectionScheduleOther: contractData.collectionScheduleOther || "",
         wasteAllowance: contractData.wasteAllowance || "",
         specialClauses: contractData.specialClauses || "",
-        signatories: signatories.length > 0 ? signatories : [{ name: "", position: "" }],
+        signatories:
+          signatories.length > 0 ? signatories : [{ name: "", position: "" }],
         ratePerKg: contractData.ratePerKg || "",
         clientRequests: contractData.clientRequests || "",
         requestNotes: contractData.requestNotes || "",
@@ -109,17 +128,17 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
   };
 
   const handleChange = (field, value) => {
-    setEditedData(prev => ({ ...prev, [field]: value }));
+    setEditedData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSignatoryChange = (index, field, value) => {
     const newSignatories = [...editedData.signatories];
     newSignatories[index][field] = value;
-    setEditedData(prev => ({ ...prev, signatories: newSignatories }));
+    setEditedData((prev) => ({ ...prev, signatories: newSignatories }));
   };
 
   const addSignatory = () => {
-    setEditedData(prev => ({
+    setEditedData((prev) => ({
       ...prev,
       signatories: [...prev.signatories, { name: "", position: "" }],
     }));
@@ -127,15 +146,17 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
 
   const removeSignatory = (index) => {
     if (editedData.signatories.length > 1) {
-      const newSignatories = editedData.signatories.filter((_, i) => i !== index);
-      setEditedData(prev => ({ ...prev, signatories: newSignatories }));
+      const newSignatories = editedData.signatories.filter(
+        (_, i) => i !== index,
+      );
+      setEditedData((prev) => ({ ...prev, signatories: newSignatories }));
     }
   };
 
   // Generate change log for admin notes
   const generateChangeLog = () => {
     const changes = [];
-    
+
     const fieldLabels = {
       contractType: "Contract Type",
       clientName: "Client Name",
@@ -153,9 +174,11 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
       clientRequests: "Client Requests",
     };
 
-    Object.keys(fieldLabels).forEach(field => {
+    Object.keys(fieldLabels).forEach((field) => {
       if (editedData[field] !== originalData[field]) {
-        changes.push(`${fieldLabels[field]}: "${originalData[field]}" → "${editedData[field]}"`);
+        changes.push(
+          `${fieldLabels[field]}: "${originalData[field]}" → "${editedData[field]}"`,
+        );
       }
     });
 
@@ -167,7 +190,11 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
     }
 
     if (changes.length > 0) {
-      return "Admin made the following changes:\n" + changes.map(c => `• ${c}`).join("\n") + "\n\n";
+      return (
+        "Admin made the following changes:\n" +
+        changes.map((c) => `• ${c}`).join("\n") +
+        "\n\n"
+      );
     }
     return "";
   };
@@ -182,9 +209,9 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
     try {
       const changeLog = generateChangeLog();
       const finalNotes = changeLog + adminNotes;
-      
+
       await onConfirm(pdfFile, finalNotes, sendToSales, editedData);
-      
+
       // Reset on success
       setPdfFile(null);
       setAdminNotes("");
@@ -207,7 +234,9 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
 
   if (!contract) return null;
 
-  const salesPerson = users.find((u) => u.id === contract.proposal?.requestedBy);
+  const salesPerson = users.find(
+    (u) => u.id === contract.proposal?.requestedBy,
+  );
   const salesPersonName = salesPerson
     ? `${salesPerson.firstName} ${salesPerson.lastName}`
     : "Unknown";
@@ -226,7 +255,10 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
         </DialogHeader>
 
         {/* Two Column Layout */}
-        <div className="grid gap-6 overflow-hidden flex-1" style={{ gridTemplateColumns: '2fr 1fr' }}>
+        <div
+          className="grid gap-6 overflow-hidden flex-1"
+          style={{ gridTemplateColumns: "2fr 1fr" }}
+        >
           {/* LEFT COLUMN - Editable Contract Details */}
           <div className="border-r pr-6 overflow-y-auto">
             <div className="space-y-4">
@@ -245,12 +277,69 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
                 </div>
               </div>
 
+              {/* Custom Template Alert (if provided) */}
+              {contract?.contract?.customTemplateUrl && (
+                <div className="bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-100 mb-1">
+                        Client Custom Template Provided
+                      </h4>
+                      <p className="text-xs text-purple-700 dark:text-purple-300 mb-2">
+                        The client has provided their own contract template.
+                        Download and use it to create the contract.
+                      </p>
+                      <a
+                        href={`${(import.meta.env.VITE_API_URL || "http://localhost:5000/api").replace("/api", "")}${contract.contract.customTemplateUrl}`}
+                        download
+                        className="inline-flex items-center gap-2 text-sm font-medium text-purple-700 dark:text-purple-300 hover:underline"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+                          />
+                        </svg>
+                        Download Template
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Editable Fields */}
               <div className="space-y-4">
                 {/* Contract Type */}
                 <div>
                   <Label htmlFor="contractType">Contract Type *</Label>
-                  <Select value={editedData.contractType} onValueChange={(value) => handleChange("contractType", value)}>
+                  <Select
+                    value={editedData.contractType}
+                    onValueChange={(value) =>
+                      handleChange("contractType", value)
+                    }
+                  >
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select contract type" />
                     </SelectTrigger>
@@ -271,7 +360,9 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
                     <Input
                       id="clientName"
                       value={editedData.clientName}
-                      onChange={(e) => handleChange("clientName", e.target.value)}
+                      onChange={(e) =>
+                        handleChange("clientName", e.target.value)
+                      }
                       className="mt-1"
                     />
                   </div>
@@ -280,7 +371,9 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
                     <Input
                       id="companyName"
                       value={editedData.companyName}
-                      onChange={(e) => handleChange("companyName", e.target.value)}
+                      onChange={(e) =>
+                        handleChange("companyName", e.target.value)
+                      }
                       className="mt-1"
                     />
                   </div>
@@ -293,7 +386,9 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
                       id="clientEmailContract"
                       type="email"
                       value={editedData.clientEmailContract}
-                      onChange={(e) => handleChange("clientEmailContract", e.target.value)}
+                      onChange={(e) =>
+                        handleChange("clientEmailContract", e.target.value)
+                      }
                       className="mt-1"
                     />
                   </div>
@@ -302,7 +397,9 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
                     <Input
                       id="clientAddress"
                       value={editedData.clientAddress}
-                      onChange={(e) => handleChange("clientAddress", e.target.value)}
+                      onChange={(e) =>
+                        handleChange("clientAddress", e.target.value)
+                      }
                       className="mt-1"
                     />
                   </div>
@@ -314,7 +411,9 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
                   <Input
                     id="contractDuration"
                     value={editedData.contractDuration}
-                    onChange={(e) => handleChange("contractDuration", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("contractDuration", e.target.value)
+                    }
                     placeholder="e.g., January 1, 2024 - December 31, 2024"
                     className="mt-1"
                   />
@@ -328,14 +427,18 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
                       type="number"
                       step="any"
                       value={editedData.serviceLatitude}
-                      onChange={(e) => handleChange("serviceLatitude", e.target.value)}
+                      onChange={(e) =>
+                        handleChange("serviceLatitude", e.target.value)
+                      }
                       placeholder="Latitude"
                     />
                     <Input
                       type="number"
                       step="any"
                       value={editedData.serviceLongitude}
-                      onChange={(e) => handleChange("serviceLongitude", e.target.value)}
+                      onChange={(e) =>
+                        handleChange("serviceLongitude", e.target.value)
+                      }
                       placeholder="Longitude"
                     />
                   </div>
@@ -343,8 +446,15 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
 
                 {/* Collection Schedule */}
                 <div>
-                  <Label htmlFor="collectionSchedule">Collection Schedule *</Label>
-                  <Select value={editedData.collectionSchedule} onValueChange={(value) => handleChange("collectionSchedule", value)}>
+                  <Label htmlFor="collectionSchedule">
+                    Collection Schedule *
+                  </Label>
+                  <Select
+                    value={editedData.collectionSchedule}
+                    onValueChange={(value) =>
+                      handleChange("collectionSchedule", value)
+                    }
+                  >
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select schedule" />
                     </SelectTrigger>
@@ -359,7 +469,9 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
                   {editedData.collectionSchedule === "other" && (
                     <Input
                       value={editedData.collectionScheduleOther}
-                      onChange={(e) => handleChange("collectionScheduleOther", e.target.value)}
+                      onChange={(e) =>
+                        handleChange("collectionScheduleOther", e.target.value)
+                      }
                       placeholder="Specify schedule"
                       className="mt-2"
                     />
@@ -373,7 +485,9 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
                     <Input
                       id="wasteAllowance"
                       value={editedData.wasteAllowance}
-                      onChange={(e) => handleChange("wasteAllowance", e.target.value)}
+                      onChange={(e) =>
+                        handleChange("wasteAllowance", e.target.value)
+                      }
                       className="mt-1"
                     />
                   </div>
@@ -382,7 +496,9 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
                     <Input
                       id="ratePerKg"
                       value={editedData.ratePerKg}
-                      onChange={(e) => handleChange("ratePerKg", e.target.value)}
+                      onChange={(e) =>
+                        handleChange("ratePerKg", e.target.value)
+                      }
                       className="mt-1"
                     />
                   </div>
@@ -392,17 +508,28 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
                 <div>
                   <Label>Signatories *</Label>
                   <div className="space-y-2 mt-2">
-                    {editedData.signatories?.map((signatory, index) => (
+                    {(Array.isArray(editedData.signatories)
+                      ? editedData.signatories
+                      : []
+                    ).map((signatory, index) => (
                       <div key={index} className="flex gap-2">
                         <Input
                           value={signatory.name}
-                          onChange={(e) => handleSignatoryChange(index, "name", e.target.value)}
+                          onChange={(e) =>
+                            handleSignatoryChange(index, "name", e.target.value)
+                          }
                           placeholder="Name"
                           className="flex-1"
                         />
                         <Input
                           value={signatory.position}
-                          onChange={(e) => handleSignatoryChange(index, "position", e.target.value)}
+                          onChange={(e) =>
+                            handleSignatoryChange(
+                              index,
+                              "position",
+                              e.target.value,
+                            )
+                          }
                           placeholder="Position"
                           className="flex-1"
                         />
@@ -437,7 +564,9 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
                   <Textarea
                     id="specialClauses"
                     value={editedData.specialClauses}
-                    onChange={(e) => handleChange("specialClauses", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("specialClauses", e.target.value)
+                    }
                     rows={3}
                     className="mt-1"
                   />
@@ -449,7 +578,9 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
                   <Textarea
                     id="clientRequests"
                     value={editedData.clientRequests}
-                    onChange={(e) => handleChange("clientRequests", e.target.value)}
+                    onChange={(e) =>
+                      handleChange("clientRequests", e.target.value)
+                    }
                     rows={3}
                     className="mt-1"
                   />
@@ -460,7 +591,9 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
                   <div>
                     <Label>Request Notes from Sales</Label>
                     <div className="mt-1 p-3 bg-muted rounded-lg">
-                      <p className="text-sm whitespace-pre-wrap">{editedData.requestNotes}</p>
+                      <p className="text-sm whitespace-pre-wrap">
+                        {editedData.requestNotes}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -494,7 +627,8 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
                 {pdfFile && (
                   <div className="mt-2 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
                     <FileCheck className="h-4 w-4" />
-                    {pdfFile.name} ({(pdfFile.size / 1024 / 1024).toFixed(2)} MB)
+                    {pdfFile.name} ({(pdfFile.size / 1024 / 1024).toFixed(2)}{" "}
+                    MB)
                   </div>
                 )}
                 {error && (
@@ -508,7 +642,8 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
               {/* Admin Notes */}
               <div>
                 <Label htmlFor="adminNotes">
-                  Additional Notes for Sales <span className="text-muted-foreground">(Optional)</span>
+                  Additional Notes for Sales{" "}
+                  <span className="text-muted-foreground">(Optional)</span>
                 </Label>
                 <Textarea
                   id="adminNotes"
@@ -526,7 +661,8 @@ export function UploadContractDialog({ open, onOpenChange, contract, users, onCo
               {/* Info */}
               <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
                 <p className="text-sm text-blue-900 dark:text-blue-100">
-                  <strong>Note:</strong> All changes will be tracked and sent to sales automatically.
+                  <strong>Note:</strong> All changes will be tracked and sent to
+                  sales automatically.
                 </p>
               </div>
             </div>

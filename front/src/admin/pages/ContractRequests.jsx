@@ -150,9 +150,16 @@ export default function ContractRequests() {
     setIsViewDetailsDialogOpen(true);
   };
 
-  const confirmRequestContract = async (contractDetails) => {
+  const confirmRequestContract = async (
+    contractDetails,
+    customTemplateFile,
+  ) => {
     try {
-      await api.requestContract(selectedContract.contract.id, contractDetails);
+      await api.requestContract(
+        selectedContract.contract.id,
+        contractDetails,
+        customTemplateFile,
+      );
       toast.success("Contract requested successfully");
       setIsRequestDialogOpen(false);
       fetchContracts();

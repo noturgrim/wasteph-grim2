@@ -445,11 +445,40 @@ class ApiClient {
     return this.request(`/contracts/${id}`);
   }
 
-  async requestContract(id, contractDetails) {
-    return this.request(`/contracts/${id}/request`, {
-      method: "POST",
-      body: JSON.stringify(contractDetails),
-    });
+  async requestContract(id, contractDetails, customTemplateFile = null) {
+    if (customTemplateFile) {
+      // Use FormData if file is included
+      const formData = new FormData();
+      formData.append("customTemplate", customTemplateFile);
+
+      // Append all contract details as individual form fields
+      Object.keys(contractDetails).forEach((key) => {
+        if (key === "signatories") {
+          formData.append(key, JSON.stringify(contractDetails[key]));
+        } else {
+          formData.append(key, contractDetails[key]);
+        }
+      });
+
+      const response = await fetch(`${this.baseURL}/contracts/${id}/request`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to request contract");
+      }
+
+      return await response.json();
+    } else {
+      // Use regular JSON if no file
+      return this.request(`/contracts/${id}/request`, {
+        method: "POST",
+        body: JSON.stringify(contractDetails),
+      });
+    }
   }
 
   async uploadContractPdf(id, pdfFile, adminNotes, editedData = null) {
