@@ -118,7 +118,7 @@ export function EditInquiryDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Inquiry</DialogTitle>
           <DialogDescription>
@@ -126,11 +126,11 @@ export function EditInquiryDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div className="grid grid-cols-[120px_1fr] items-start gap-4">
-            <Label htmlFor="edit-name" className="text-right pt-2">
-              Name
-            </Label>
-            <div className="flex-1">
+          {/* 2-column grid for most fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Name */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Name *</Label>
               <Input
                 id="edit-name"
                 value={formData.name}
@@ -143,16 +143,13 @@ export function EditInquiryDialog({
                 className={formErrors.name ? "border-red-500" : ""}
               />
               {formErrors.name && (
-                <p className="text-sm text-red-500 mt-1">{formErrors.name}</p>
+                <p className="text-sm text-red-500">{formErrors.name}</p>
               )}
             </div>
-          </div>
 
-          <div className="grid grid-cols-[120px_1fr] items-start gap-4">
-            <Label htmlFor="edit-email" className="text-right pt-2">
-              Email
-            </Label>
-            <div className="flex-1">
+            {/* Email */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email *</Label>
               <Input
                 id="edit-email"
                 type="email"
@@ -166,188 +163,177 @@ export function EditInquiryDialog({
                 className={formErrors.email ? "border-red-500" : ""}
               />
               {formErrors.email && (
-                <p className="text-sm text-red-500 mt-1">{formErrors.email}</p>
+                <p className="text-sm text-red-500">{formErrors.email}</p>
               )}
             </div>
-          </div>
 
-          <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-            <Label htmlFor="edit-phone" className="text-right">
-              Phone Number
-            </Label>
-            <Input
-              id="edit-phone"
-              value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
-            />
-          </div>
+            {/* Phone */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">Phone Number</Label>
+              <Input
+                id="edit-phone"
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+              />
+            </div>
 
-          <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-            <Label htmlFor="edit-company" className="text-right">
-              Company
-            </Label>
-            <Input
-              id="edit-company"
-              value={formData.company}
-              onChange={(e) =>
-                setFormData({ ...formData, company: e.target.value })
-              }
-            />
-          </div>
+            {/* Company */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-company">Company</Label>
+              <Input
+                id="edit-company"
+                value={formData.company}
+                onChange={(e) =>
+                  setFormData({ ...formData, company: e.target.value })
+                }
+              />
+            </div>
 
-          <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-            <Label htmlFor="edit-location" className="text-right">
-              Location
-            </Label>
-            <Input
-              id="edit-location"
-              value={formData.location}
-              onChange={(e) =>
-                setFormData({ ...formData, location: e.target.value })
-              }
-              placeholder="City, Province or Address"
-            />
-          </div>
+            {/* Location */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-location">Location</Label>
+              <Input
+                id="edit-location"
+                value={formData.location}
+                onChange={(e) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
+                placeholder="City, Province or Address"
+              />
+            </div>
 
-          <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-            <Label htmlFor="edit-service" className="text-right">
-              Service
-            </Label>
-            <Select
-              value={formData.serviceId}
-              onValueChange={(val) =>
-                setFormData({ ...formData, serviceId: val })
-              }
-            >
-              <SelectTrigger id="edit-service">
-                <SelectValue placeholder="Select service type" />
-              </SelectTrigger>
-              <SelectContent>
-                {services.length === 0 ? (
-                  <div className="p-2 text-sm text-muted-foreground">
-                    No services found
-                  </div>
-                ) : (
-                  services.map((service) => (
-                    <SelectItem key={service.id} value={service.id}>
-                      {service.name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-            <Label htmlFor="edit-source" className="text-right">
-              Source
-            </Label>
-            <Select
-              value={formData.source}
-              onValueChange={(val) => setFormData({ ...formData, source: val })}
-            >
-              <SelectTrigger id="edit-source">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="website">Website</SelectItem>
-                <SelectItem value="phone">Phone</SelectItem>
-                <SelectItem value="facebook">Facebook</SelectItem>
-                <SelectItem value="email">Email</SelectItem>
-                <SelectItem value="walk-in">Walk-in</SelectItem>
-                <SelectItem value="cold-approach">Cold Approach</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-            <Label htmlFor="edit-status" className="text-right">
-              Status
-            </Label>
-            <Select
-              value={formData.status}
-              onValueChange={(val) => setFormData({ ...formData, status: val })}
-            >
-              <SelectTrigger id="edit-status">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="submitted_proposal">
-                  Submitted Proposal
-                </SelectItem>
-                <SelectItem value="initial_comms">Initial Comms</SelectItem>
-                <SelectItem value="negotiating">Negotiating</SelectItem>
-                <SelectItem value="to_call">To Call</SelectItem>
-                <SelectItem value="submitted_company_profile">
-                  Submitted Company Profile
-                </SelectItem>
-                <SelectItem value="na">N/A</SelectItem>
-                <SelectItem value="waiting_for_feedback">
-                  Waiting for Feedback
-                </SelectItem>
-                <SelectItem value="declined">Declined</SelectItem>
-                <SelectItem value="on_boarded">On Boarded</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Only show Assigned To field for Master Sales */}
-          {isMasterSales && (
-            <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-              <Label htmlFor="edit-assigned" className="text-right">
-                Assigned To
-              </Label>
+            {/* Service */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-service">Service</Label>
               <Select
-                value={formData.assignedTo}
+                value={formData.serviceId}
                 onValueChange={(val) =>
-                  setFormData({ ...formData, assignedTo: val })
+                  setFormData({ ...formData, serviceId: val })
                 }
               >
-                <SelectTrigger id="edit-assigned">
-                  <SelectValue placeholder="Select team member" />
+                <SelectTrigger id="edit-service">
+                  <SelectValue placeholder="Select service type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {users.length === 0 ? (
+                  {services.length === 0 ? (
                     <div className="p-2 text-sm text-muted-foreground">
-                      No users found
+                      No services found
                     </div>
                   ) : (
-                    users.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {user.firstName} {user.lastName} ({user.role})
+                    services.map((service) => (
+                      <SelectItem key={service.id} value={service.id}>
+                        {service.name}
                       </SelectItem>
                     ))
                   )}
                 </SelectContent>
               </Select>
             </div>
-          )}
 
-          <div className="grid grid-cols-[120px_1fr] items-start gap-4">
-            <Label htmlFor="edit-message" className="text-right pt-2">
-              Message
-            </Label>
-            <div className="flex-1">
-              <Textarea
-                id="edit-message"
-                rows={4}
-                value={formData.message}
-                onChange={(e) => {
-                  setFormData({ ...formData, message: e.target.value });
-                  if (formErrors.message) {
-                    setFormErrors({ ...formErrors, message: null });
-                  }
-                }}
-                className={formErrors.message ? "border-red-500" : ""}
-              />
-              {formErrors.message && (
-                <p className="text-sm text-red-500 mt-1">
-                  {formErrors.message}
-                </p>
-              )}
+            {/* Source */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-source">Source</Label>
+              <Select
+                value={formData.source}
+                onValueChange={(val) => setFormData({ ...formData, source: val })}
+              >
+                <SelectTrigger id="edit-source">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="website">Website</SelectItem>
+                  <SelectItem value="phone">Phone</SelectItem>
+                  <SelectItem value="facebook">Facebook</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="walk-in">Walk-in</SelectItem>
+                  <SelectItem value="cold-approach">Cold Approach</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+
+            {/* Status */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-status">Status</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(val) => setFormData({ ...formData, status: val })}
+              >
+                <SelectTrigger id="edit-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="submitted_proposal">
+                    Submitted Proposal
+                  </SelectItem>
+                  <SelectItem value="initial_comms">Initial Comms</SelectItem>
+                  <SelectItem value="negotiating">Negotiating</SelectItem>
+                  <SelectItem value="to_call">To Call</SelectItem>
+                  <SelectItem value="submitted_company_profile">
+                    Submitted Company Profile
+                  </SelectItem>
+                  <SelectItem value="na">N/A</SelectItem>
+                  <SelectItem value="waiting_for_feedback">
+                    Waiting for Feedback
+                  </SelectItem>
+                  <SelectItem value="declined">Declined</SelectItem>
+                  <SelectItem value="on_boarded">On Boarded</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Assigned To - Only for Master Sales */}
+            {isMasterSales && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-assigned">Assigned To</Label>
+                <Select
+                  value={formData.assignedTo}
+                  onValueChange={(val) =>
+                    setFormData({ ...formData, assignedTo: val })
+                  }
+                >
+                  <SelectTrigger id="edit-assigned">
+                    <SelectValue placeholder="Select team member" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {users.length === 0 ? (
+                      <div className="p-2 text-sm text-muted-foreground">
+                        No users found
+                      </div>
+                    ) : (
+                      users.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.firstName} {user.lastName} ({user.role})
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {/* Message - Full width */}
+          <div className="space-y-2">
+            <Label htmlFor="edit-message">Message *</Label>
+            <Textarea
+              id="edit-message"
+              rows={3}
+              value={formData.message}
+              onChange={(e) => {
+                setFormData({ ...formData, message: e.target.value });
+                if (formErrors.message) {
+                  setFormErrors({ ...formErrors, message: null });
+                }
+              }}
+              className={formErrors.message ? "border-red-500" : ""}
+            />
+            {formErrors.message && (
+              <p className="text-sm text-red-500">
+                {formErrors.message}
+              </p>
+            )}
           </div>
 
           {/* Information Complete Checkbox */}
@@ -383,29 +369,27 @@ export function EditInquiryDialog({
 
           {/* Deprecated: Notes field - use timeline instead */}
           {formData.notes && (
-            <div className="grid grid-cols-[120px_1fr] items-start gap-4 opacity-50">
-              <Label htmlFor="edit-notes" className="text-right pt-2">
+            <div className="space-y-2 opacity-50">
+              <Label htmlFor="edit-notes">
                 Legacy Notes
-                <span className="block text-xs text-muted-foreground font-normal">
+                <span className="text-xs text-muted-foreground font-normal ml-2">
                   (Read-only)
                 </span>
               </Label>
-              <div className="space-y-1">
-                <Textarea
-                  id="edit-notes"
-                  rows={3}
-                  value={formData.notes}
-                  disabled
-                  className="bg-muted cursor-not-allowed"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Use the timeline in View Details to add new notes
-                </p>
-              </div>
+              <Textarea
+                id="edit-notes"
+                rows={2}
+                value={formData.notes}
+                disabled
+                className="bg-muted cursor-not-allowed"
+              />
+              <p className="text-xs text-muted-foreground">
+                Use the timeline in View Details to add new notes
+              </p>
             </div>
           )}
 
-          <div className="mt-6 flex flex-col gap-2">
+          <div className="mt-6 flex flex-col sm:flex-row gap-2">
             <Button
               type="button"
               variant="outline"
