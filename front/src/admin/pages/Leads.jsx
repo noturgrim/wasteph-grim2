@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
 import { toast } from "../utils/toast";
-import { Plus, SlidersHorizontal, X } from "lucide-react";
+import { Plus, SlidersHorizontal, X, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -73,8 +73,10 @@ export default function Leads() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [isClaimDialogOpen, setIsClaimDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
+  const [selectedLeads, setSelectedLeads] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [claimSource, setClaimSource] = useState("");
 
@@ -194,6 +196,68 @@ export default function Leads() {
     }
   };
 
+  const handleBulkDelete = () => {
+    // Filter to only unclaimed leads
+    const unclaimedSelected = selectedLeads.filter(id => {
+      const lead = leads.find(l => l.id === id);
+      return lead && !lead.isClaimed;
+    });
+
+    if (unclaimedSelected.length === 0) {
+      toast.error("No unclaimed leads selected");
+      return;
+    }
+
+    setIsBulkDeleteDialogOpen(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    try {
+      // Filter to only unclaimed leads
+      const unclaimedSelected = selectedLeads.filter(id => {
+        const lead = leads.find(l => l.id === id);
+        return lead && !lead.isClaimed;
+      });
+
+      const result = await api.bulkDeleteLeads(unclaimedSelected);
+      
+      if (result.deleted > 0) {
+        toast.success(`Successfully deleted ${result.deleted} lead(s)`);
+      }
+      
+      if (result.failed > 0) {
+        toast.error(`Failed to delete ${result.failed} lead(s)`);
+      }
+
+      setSelectedLeads([]);
+      fetchAllLeads();
+      fetchLeads();
+    } catch (error) {
+      toast.error(error.message || "Failed to delete leads");
+      throw error;
+    }
+  };
+
+  const handleSelectLead = (leadId, isSelected) => {
+    setSelectedLeads(prev => 
+      isSelected 
+        ? [...prev, leadId]
+        : prev.filter(id => id !== leadId)
+    );
+  };
+
+  const handleSelectAll = (isSelected) => {
+    if (isSelected) {
+      // Only select unclaimed leads
+      const unclaimedLeadIds = leads
+        .filter(lead => !lead.isClaimed)
+        .map(lead => lead.id);
+      setSelectedLeads(unclaimedLeadIds);
+    } else {
+      setSelectedLeads([]);
+    }
+  };
+
   const allColumns = createColumns({
     onView: (lead) => {
       setSelectedLead(lead);
@@ -203,6 +267,9 @@ export default function Leads() {
     onClaim: handleClaimLead,
     onDelete: handleDeleteLead,
     isMasterSales,
+    selectedLeads,
+    onSelectLead: handleSelectLead,
+    onSelectAll: handleSelectAll,
   });
 
   const columns = allColumns.filter(column => {
@@ -246,6 +313,18 @@ export default function Leads() {
             >
               Reset
               <X className="ml-2 h-4 w-4" />
+            </Button>
+          )}
+
+          {isMasterSales && selectedLeads.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleBulkDelete}
+              className="h-8 px-2 lg:px-3"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete ({selectedLeads.length})
             </Button>
           )}
         </div>
@@ -455,6 +534,21 @@ export default function Leads() {
           "This cannot be undone"
         ]}
         warningMessage="This action cannot be undone."
+      />
+
+      <DeleteConfirmationModal
+        open={isBulkDeleteDialogOpen}
+        onOpenChange={setIsBulkDeleteDialogOpen}
+        onConfirm={confirmBulkDelete}
+        title="Delete Multiple Leads"
+        itemName={`${selectedLeads.length} lead(s)`}
+        itemType="leads"
+        actionsList={[
+          `Delete ${selectedLeads.length} selected unclaimed lead(s)`,
+          "Claimed leads will be skipped automatically",
+          "This action cannot be undone"
+        ]}
+        warningMessage="Only unclaimed leads will be deleted. Claimed leads will be skipped."
       />
     </div>
   );

@@ -6,8 +6,9 @@ import {
   updateLead,
   claimLead,
   deleteLead,
+  bulkDeleteLeads,
 } from "../controllers/leadController.js";
-import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireAuth, requireMasterSales } from "../middleware/auth.js";
 import { leadValidation, validate } from "../middleware/validation.js";
 
 const router = express.Router();
@@ -20,6 +21,9 @@ router.get("/", getAllLeads);
 router.get("/:id", getLeadById);
 router.patch("/:id", updateLead);
 router.post("/:id/claim", claimLead);
-router.delete("/:id", requireRole("admin", "manager"), deleteLead);
+
+// Master Sales only routes
+router.delete("/:id", requireMasterSales, deleteLead);
+router.post("/bulk-delete", requireMasterSales, bulkDeleteLeads);
 
 export default router;

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +11,48 @@ import {
 import { MoreHorizontal, Eye, Pencil, Trash2, UserPlus, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 
-export const createColumns = ({ onView, onEdit, onClaim, onDelete, isMasterSales }) => [
+export const createColumns = ({ onView, onEdit, onClaim, onDelete, isMasterSales, selectedLeads = [], onSelectLead, onSelectAll }) => {
+  const columns = [];
+
+  // Add checkbox column for Master Sales
+  if (isMasterSales) {
+    columns.push({
+      id: "select",
+      header: ({ table }) => {
+        const allUnclaimed = table.getFilteredRowModel().rows.filter(row => !row.original.isClaimed);
+        const allUnclaimedIds = allUnclaimed.map(row => row.original.id);
+        const allSelected = allUnclaimed.length > 0 && allUnclaimedIds.every(id => selectedLeads.includes(id));
+        const someSelected = allUnclaimedIds.some(id => selectedLeads.includes(id));
+
+        return (
+          <Checkbox
+            checked={allSelected}
+            {...(someSelected && !allSelected ? { indeterminate: true } : {})}
+            onCheckedChange={(checked) => onSelectAll?.(checked)}
+            aria-label="Select all unclaimed leads"
+          />
+        );
+      },
+      cell: ({ row }) => {
+        const lead = row.original;
+        const isUnclaimed = !lead.isClaimed;
+        
+        if (!isUnclaimed) return null;
+
+        return (
+          <Checkbox
+            checked={selectedLeads.includes(lead.id)}
+            onCheckedChange={(checked) => onSelectLead?.(lead.id, checked)}
+            aria-label={`Select ${lead.clientName}`}
+          />
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+    });
+  }
+
+  columns.push(
   {
     accessorKey: "clientName",
     header: ({ column }) => {
@@ -184,13 +226,15 @@ export const createColumns = ({ onView, onEdit, onClaim, onDelete, isMasterSales
 
                   <DropdownMenuSeparator />
 
-                  <DropdownMenuItem
-                    onClick={() => onDelete(lead)}
-                    className="text-destructive cursor-pointer"
-                  >
-                    <span className="flex-1">Delete</span>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </DropdownMenuItem>
+                  {isUnclaimed && (
+                    <DropdownMenuItem
+                      onClick={() => onDelete(lead)}
+                      className="text-destructive cursor-pointer"
+                    >
+                      <span className="flex-1">Delete</span>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </DropdownMenuItem>
+                  )}
                 </>
               )}
 
@@ -207,5 +251,7 @@ export const createColumns = ({ onView, onEdit, onClaim, onDelete, isMasterSales
         </div>
       );
     },
-  },
-];
+  });
+
+  return columns;
+};

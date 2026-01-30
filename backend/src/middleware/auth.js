@@ -59,6 +59,25 @@ export const requireRole = (...allowedRoles) => {
   };
 };
 
+export const requireMasterSales = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized",
+    });
+  }
+
+  // Check if user is master sales
+  if (!req.user.isMasterSales) {
+    return res.status(403).json({
+      success: false,
+      message: "Forbidden - Master Sales permission required",
+    });
+  }
+
+  next();
+};
+
 export const optionalAuth = async (req, res, next) => {
   const sessionId = req.cookies?.auth_session;
 

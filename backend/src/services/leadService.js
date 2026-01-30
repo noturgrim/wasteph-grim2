@@ -280,14 +280,21 @@ class LeadService {
   }
 
   /**
-   * Delete lead
+   * Delete lead (only if unclaimed)
    * @param {string} leadId - Lead UUID
    * @param {string} userId - User performing the deletion
    * @param {Object} metadata - Request metadata (ip, userAgent)
    * @returns {Promise<Object>} Deleted lead
-   * @throws {AppError} If lead not found
+   * @throws {AppError} If lead not found or already claimed
    */
   async deleteLead(leadId, userId, metadata = {}) {
+    // Check if lead exists and is unclaimed
+    const existingLead = await this.getLeadById(leadId);
+
+    if (existingLead.isClaimed) {
+      throw new AppError("Cannot delete claimed lead", 400);
+    }
+
     const [lead] = await db
       .delete(leadTable)
       .where(eq(leadTable.id, leadId))
@@ -308,6 +315,67 @@ class LeadService {
     });
 
     return lead;
+  }
+
+  /**
+   * Bulk delete leads (only unclaimed)
+   * @param {Array<string>} leadIds - Array of lead UUIDs to delete
+   * @param {string} userId - User performing the deletion
+   * @param {Object} metadata - Request metadata (ip, userAgent)
+   * @returns {Promise<Object>} Result object with success and failure counts
+   */
+  async bulkDeleteLeads(leadIds, userId, metadata = {}) {
+    if (!Array.isArray(leadIds) || leadIds.length === 0) {
+      throw new AppError("Lead IDs must be a non-empty array", 400);
+    }
+
+    const results = {
+      totalRequested: leadIds.length,
+      deleted: 0,
+      failed: 0,
+      errors: [],
+    };
+
+    for (const leadId of leadIds) {
+      try {
+        // Check if lead exists and is unclaimed
+        const lead = await this.getLeadById(leadId);
+
+        if (lead.isClaimed) {
+          results.failed++;
+          results.errors.push({
+            leadId,
+            reason: "Lead is already claimed and cannot be deleted",
+          });
+          continue;
+        }
+
+        // Delete the lead
+        await db
+          .delete(leadTable)
+          .where(eq(leadTable.id, leadId));
+
+        // Log activity
+        await this.logActivity({
+          userId,
+          action: "lead_deleted_bulk",
+          entityType: "lead",
+          entityId: leadId,
+          ipAddress: metadata.ipAddress,
+          userAgent: metadata.userAgent,
+        });
+
+        results.deleted++;
+      } catch (error) {
+        results.failed++;
+        results.errors.push({
+          leadId,
+          reason: error.message || "Failed to delete lead",
+        });
+      }
+    }
+
+    return results;
   }
 
   /**

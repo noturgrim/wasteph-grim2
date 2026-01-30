@@ -131,7 +131,7 @@ export const claimLead = async (req, res, next) => {
 /**
  * Controller: Delete lead
  * Route: DELETE /api/leads/:id
- * Access: Protected (admin, manager only)
+ * Access: Protected (Master Sales only)
  */
 export const deleteLead = async (req, res, next) => {
   try {
@@ -146,6 +146,38 @@ export const deleteLead = async (req, res, next) => {
     res.json({
       success: true,
       message: "Lead deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Controller: Bulk delete leads
+ * Route: POST /api/leads/bulk-delete
+ * Access: Protected (Master Sales only)
+ */
+export const bulkDeleteLeads = async (req, res, next) => {
+  try {
+    const { leadIds } = req.body;
+    const userId = req.user.id;
+
+    if (!leadIds || !Array.isArray(leadIds)) {
+      return res.status(400).json({
+        success: false,
+        message: "leadIds must be an array",
+      });
+    }
+
+    const result = await leadService.bulkDeleteLeads(leadIds, userId, {
+      ipAddress: req.ip,
+      userAgent: req.get("user-agent"),
+    });
+
+    res.json({
+      success: true,
+      message: `Bulk delete completed: ${result.deleted} deleted, ${result.failed} failed`,
+      data: result,
     });
   } catch (error) {
     next(error);
