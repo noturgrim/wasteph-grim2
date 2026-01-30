@@ -1,127 +1,250 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fixed Monthly Rate Proposal</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: 'Arial', 'Helvetica', sans-serif;
-      font-size: 11pt;
-      line-height: 1.5;
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
       color: #000;
-      padding: 20px;
-      max-width: 210mm;
+      max-width: 800px;
       margin: 0 auto;
+      padding: 20px;
     }
 
     .header {
-      text-align: right;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
       margin-bottom: 30px;
-      border-bottom: 3px solid #003333;
-      padding-bottom: 10px;
+      padding-bottom: 15px;
     }
 
-    .header h1 {
-      font-size: 24pt;
+    .logo {
+      flex: 1;
+    }
+
+    .logo h1 {
+      color: #104806;
+      font-size: 32px;
       font-weight: bold;
-      color: #003333;
       margin: 0;
       letter-spacing: 2px;
     }
 
-    .header .tagline {
-      font-size: 9pt;
-      color: #003333;
-      margin-bottom: 5px;
+    .logo h1 .dot {
+      color: #104806;
     }
 
-    .header .contact-info {
-      font-size: 8pt;
-      color: #666;
+    .logo p {
+      color: #2a6b1f;
+      font-size: 11px;
+      margin: 5px 0 0 0;
+      letter-spacing: 1px;
+    }
+
+    .contact-info {
+      text-align: right;
+      font-size: 9px;
+      color: #2a6b1f;
       line-height: 1.4;
     }
 
-    .client-info {
-      margin-bottom: 20px;
-    }
-
-    .client-info p {
-      margin-bottom: 2px;
+    .date {
+      margin: 20px 0;
       font-weight: bold;
     }
 
-    .salutation {
+    .recipient {
+      margin: 20px 0;
+      line-height: 1.8;
+    }
+
+    .recipient p {
+      margin: 2px 0;
+      font-weight: bold;
+    }
+
+    .greeting {
       margin: 20px 0;
     }
 
-    h2 {
-      font-size: 12pt;
-      font-weight: bold;
-      margin-top: 20px;
-      margin-bottom: 10px;
-      color: #003333;
-    }
-
-    p {
-      margin-bottom: 10px;
+    .intro {
+      margin: 20px 0;
       text-align: justify;
     }
 
+    .section-title {
+      font-weight: bold;
+      margin: 25px 0 15px 0;
+      font-size: 16px;
+    }
+
+    .subsection-title {
+      font-weight: bold;
+      margin: 20px 0 10px 0;
+      font-size: 14px;
+    }
+
     .pricing-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 15px 0 20px 0;
+      width: 100% !important;
+      border-collapse: collapse !important;
+      margin: 15px 0 !important;
+      display: table !important;
     }
 
     .pricing-table thead {
-      background-color: #003333;
-      color: white;
+      background-color: #104806 !important;
+      color: white !important;
+      display: table-header-group !important;
+    }
+
+    .pricing-table tbody {
+      display: table-row-group !important;
+    }
+
+    .pricing-table tr {
+      display: table-row !important;
     }
 
     .pricing-table th,
     .pricing-table td {
-      border: 1px solid #000;
-      padding: 8px 10px;
-      text-align: left;
+      border: 1px solid #000 !important;
+      padding: 10px !important;
+      text-align: left !important;
+      display: table-cell !important;
     }
 
     .pricing-table th {
+      font-weight: bold !important;
+    }
+
+    .note {
+      font-style: italic;
+      margin: 10px 0;
+      padding: 10px;
+      background-color: #f5f5f5;
+    }
+
+    .terms-section {
+      margin: 20px 0;
+    }
+
+    .terms-title {
       font-weight: bold;
-      font-size: 10pt;
+      margin: 15px 0 5px 0;
     }
 
-    .pricing-table td {
-      font-size: 10pt;
+    ul {
+      margin: 5px 0;
+      padding-left: 30px;
     }
 
-    .pricing-table tbody tr:nth-child(even) {
-      background-color: #f9f9f9;
+    ul ul {
+      list-style-type: circle;
+      margin: 5px 0;
+    }
+
+    li {
+      margin: 5px 0;
+    }
+
+    .guarantees {
+      margin: 25px 0;
+    }
+
+    .guarantee-item {
+      margin: 15px 0;
+    }
+
+    .guarantee-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .guarantee-content {
+      text-align: justify;
+      margin-left: 20px;
+    }
+
+    .disposal-section {
+      margin: 25px 0;
+      text-align: justify;
+    }
+
+    .process-list {
+      margin: 15px 0;
+    }
+
+    .process-item {
+      margin: 10px 0;
+      text-align: justify;
+    }
+
+    .process-item strong {
+      display: inline-block;
+      margin-right: 5px;
+    }
+
+    .closing {
+      margin: 30px 0 20px 0;
+      text-align: justify;
+    }
+
+    .signature-section {
+      margin: 40px 0;
+    }
+
+    .signature-block {
+      margin: 30px 0;
+    }
+
+    .signature-block p {
+      margin: 2px 0;
+    }
+
+    .footer-logo {
+      text-align: center;
+      margin: 40px 0 20px 0;
+    }
+
+    .footer-logo img {
+      width: 40px;
+      height: 40px;
+    }
+
+    hr {
+      border: none;
+      border-top: 2px solid #104806;
+      margin: 20px 0;
     }
 
     strong {
       font-weight: bold;
     }
+
+    p {
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>WASTE • PH</h1>
-    <p class="tagline">PRIVATE WASTE MANAGEMENT</p>
-    <p class="contact-info">
-      UNIT 503, THE MERIDIAN CONDOMINIUM, GOLAM DR., KASAMBAGAN, CEBU CITY, CEBU, 6000<br>
-      ADMIN @WASTE.PH | SALES @WASTE.PH | 0956-246-1503 | 0927-796-6731
-    </p>
+    <div class="logo">
+      <h1>WASTE <span class="dot">•</span> PH</h1>
+      <p>PRIVATE WASTE MANAGEMENT</p>
+    </div>
+    <div class="contact-info">
+      <strong>UNIT 503, THE MERIDIAN CONDOMINIUM, GOCHAN DR., KASAMBAGAN, CEBU CITY, CEBU, 6000</strong><br>
+      ADMIN @WASTE.PH&nbsp;&nbsp;&nbsp;&nbsp;SALES @WASTE.PH&nbsp;&nbsp;&nbsp;&nbsp;0956-246-1503&nbsp;&nbsp;&nbsp;&nbsp;0927-796-6751
+    </div>
   </div>
 
-  <div class="client-info">
-    <p>{{proposalDate}}</p>
+  <div class="date">
+    <strong>{{proposalDate}}</strong>
+  </div>
+
+  <div class="recipient">
     <p>{{clientName}}</p>
     {{#if clientPosition}}
     <p>{{clientPosition}}</p>
@@ -134,38 +257,57 @@
     {{/if}}
   </div>
 
-  <div class="salutation">
+  <div class="greeting">
     <p>Dear Sir/Madam,</p>
   </div>
 
-  <p>
-    This is in reference to the work specification for <strong>Fixed Monthly Rate Waste Collection</strong> for your business establishment.
-  </p>
+  <div class="intro">
+    <p>This is in reference to the work specification for <strong>Fixed Monthly Rate Waste Collection</strong> for your business establishment.</p>
+  </div>
 
-  <h2>SCOPE OF WORK - FIXED MONTHLY SERVICE</h2>
+  <div class="section-title">SCOPE OF WORK</div>
+
+  <div class="subsection-title">1. Garbage Collection</div>
 
   <table class="pricing-table">
     <thead>
       <tr>
-        <th>Service Description</th>
-        <th>Price (in PHP)</th>
+        <th>Solid Waste Classification</th>
+        <th>Price per month (in PHP)</th>
+        <th>Waste Allowance</th>
       </tr>
     </thead>
     <tbody>
-      {{#each services}}
       <tr>
-        <td>{{this.name}}</td>
-        <td>₱ {{currency this.unitPrice}}</td>
+        <td>Mixed Solid Waste(General Waste) and Food Waste</td>
+        <td>₱ {{pricing.monthlyRate}}</td>
+        <td>{{pricing.wasteAllowance}} kg</td>
       </tr>
-      {{/each}}
     </tbody>
   </table>
 
-  <p><strong>Total Amount:</strong> ₱{{currency pricing.total}}</p>
+  <div class="note">
+    <strong>Note:</strong> {{pricing.excessRate}} php per kg shall be billed upon excess of the allocated Waste Allowance of {{pricing.wasteAllowance}} kg.
+  </div>
 
-  <p>Thank you for considering our services.</p>
+  <div class="closing">
+    <p>Thank you for considering our services.</p>
+  </div>
 
-  <p>Sincerely,</p>
-  <p><strong>WASTE PH</strong></p>
+  <div class="signature-section">
+    <p>Sincerely,</p>
+    <br>
+    <div class="signature-block">
+      <p><strong>Adrian Kim S. Balila</strong></p>
+      <p>Chief Marketing Officer</p>
+      <p><strong>WASTE PH</strong></p>
+    </div>
+
+    <div class="signature-block">
+      <p><strong>Accepted By:</strong></p>
+    </div>
+  </div>
+
+  <hr>
 </body>
 </html>
