@@ -16,6 +16,7 @@ import Settings from "./pages/Settings";
 import ProposalTemplates from "./pages/ProposalTemplates";
 import Proposals from "./pages/Proposals";
 import ContractRequests from "./pages/ContractRequests";
+import ContractTemplates from "./pages/ContractTemplates";
 import Showcase from "./pages/Showcase";
 import ClientsShowcase from "./pages/ClientsShowcase";
 import InAppBrowserBanner from "../components/common/InAppBrowserBanner";
@@ -48,6 +49,7 @@ const CRMApp = () => {
 
             {/* Tools - Master Sales only */}
             <Route path="proposal-templates" element={<ProposalTemplates />} />
+            <Route path="contract-templates" element={<ContractTemplates />} />
 
             {/* Admin only routes */}
             <Route

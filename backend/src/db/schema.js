@@ -484,6 +484,11 @@ export const contractsTable = pgTable("contracts", {
   clientRequests: text("client_requests"), // Client requests for modifications
   customTemplateUrl: text("custom_template_url"), // Path to client's custom contract template (if provided)
 
+  // Template-based Contract Generation
+  templateId: uuid("template_id").references(() => contractTemplatesTable.id), // System template used (if not using custom template)
+  contractData: text("contract_data"), // JSON with all contract data (for template rendering)
+  editedHtmlContent: text("edited_html_content"), // Pre-rendered HTML if admin edited contract
+
   // Admin Contract Upload
   contractUploadedBy: text("contract_uploaded_by")
     .references(() => userTable.id), // Admin who uploaded
@@ -513,6 +518,27 @@ export const contractsTable = pgTable("contracts", {
   proposalIdIdx: index("contracts_proposal_id_idx").on(table.proposalId),
   statusIdx: index("contracts_status_idx").on(table.status),
   requestedByIdx: index("contracts_requested_by_idx").on(table.requestedBy),
+}));
+
+// Contract Templates - Templates for generating contracts
+export const contractTemplatesTable = pgTable("contract_templates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  htmlTemplate: text("html_template").notNull(),
+  templateType: contractTypeEnum("template_type"), // Links to contract type
+  isActive: boolean("is_active").notNull().default(true),
+  isDefault: boolean("is_default").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (table) => ({
+  nameIdx: index("contract_templates_name_idx").on(table.name),
+  typeIdx: index("contract_templates_type_idx").on(table.templateType),
+  isActiveIdx: index("contract_templates_is_active_idx").on(table.isActive),
 }));
 
 // Showcase Table

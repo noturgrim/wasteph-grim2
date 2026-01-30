@@ -10,6 +10,8 @@ import { eq, desc, and, or, like, count } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 import emailService from "./emailService.js";
 import inquiryService from "./inquiryService.js";
+import contractTemplateService from "./contractTemplateService.js";
+import pdfService from "./pdfService.js";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -222,8 +224,21 @@ class ContractService {
 
     // Save custom template if provided
     let customTemplateUrl = null;
+    let templateId = null;
+
     if (customTemplateBuffer) {
+      // Custom template provided - save it
       customTemplateUrl = await this.saveCustomTemplate(customTemplateBuffer, contractId);
+    } else {
+      // No custom template - use system template
+      const { contractType } = contractDetails;
+      try {
+        const suggestedTemplate = await contractTemplateService.suggestTemplateForContract(contractType);
+        templateId = suggestedTemplate.id;
+      } catch (error) {
+        console.error("Failed to suggest template:", error);
+        // Continue without template - admin can upload PDF manually
+      }
     }
 
     // Extract contract details
@@ -245,6 +260,25 @@ class ContractService {
       clientRequests,
       requestNotes,
     } = contractDetails;
+
+    // Prepare contract data for template rendering (if using template)
+    const contractDataForTemplate = {
+      contractType,
+      clientName,
+      companyName,
+      clientEmailContract,
+      clientAddress,
+      contractDuration,
+      serviceLatitude,
+      serviceLongitude,
+      collectionSchedule,
+      collectionScheduleOther,
+      wasteAllowance,
+      specialClauses,
+      signatories,
+      ratePerKg,
+      clientRequests,
+    };
 
     // Update contract with details
     const [updatedContract] = await db
@@ -271,6 +305,9 @@ class ContractService {
         ratePerKg,
         clientRequests,
         customTemplateUrl,
+        // Template-related fields
+        templateId,
+        contractData: templateId ? JSON.stringify(contractDataForTemplate) : null,
         updatedAt: new Date(),
       })
       .where(eq(contractsTable.id, contractId))
@@ -371,6 +408,147 @@ class ContractService {
       entityId: contractId,
       details: { 
         pdfUrl, 
+        adminNotes,
+        dataEdited: editedData ? true : false,
+      },
+      ipAddress: metadata.ipAddress,
+      userAgent: metadata.userAgent,
+    });
+
+    return updatedContract;
+  }
+
+  /**
+   * Generate contract from template (admin action)
+   * @param {string} contractId - Contract UUID
+   * @param {Object} editedData - Edited contract data (optional)
+   * @param {string} adminNotes - Admin notes (optional)
+   * @param {string} userId - Admin user ID
+   * @param {Object} metadata - Request metadata
+   * @returns {Promise<Object>} Updated contract with PDF
+   */
+  async generateContractFromTemplate(
+    contractId,
+    editedData = null,
+    adminNotes = null,
+    userId,
+    metadata = {}
+  ) {
+    // Get contract
+    const contractData = await this.getContractById(contractId);
+    const contract = contractData.contract;
+
+    // Validate status
+    if (
+      contract.status !== "requested" &&
+      contract.status !== "ready_for_sales"
+    ) {
+      throw new AppError(
+        "Can only generate contract when status is requested or ready_for_sales",
+        400
+      );
+    }
+
+    // Validate that contract has a template
+    if (!contract.templateId) {
+      throw new AppError(
+        "Contract does not have a template. Use upload PDF instead.",
+        400
+      );
+    }
+
+    // Get template
+    const template = await contractTemplateService.getTemplateById(
+      contract.templateId
+    );
+
+    // Get contract data - use edited data if provided, otherwise use stored data
+    let contractDataForPdf;
+    if (editedData) {
+      contractDataForPdf = editedData;
+    } else {
+      // Parse stored contract data
+      try {
+        contractDataForPdf = JSON.parse(contract.contractData || "{}");
+      } catch (error) {
+        throw new AppError("Invalid contract data", 400);
+      }
+    }
+
+    // Add contract number if available
+    contractDataForPdf.contractNumber = contractData.proposal.proposalNumber
+      ? contractData.proposal.proposalNumber.replace("PROP-", "CONT-")
+      : "PENDING";
+
+    // Generate PDF from template
+    let pdfBuffer;
+    if (contract.editedHtmlContent) {
+      // Use pre-rendered HTML if available
+      pdfBuffer = await pdfService.generateContractFromHTML(
+        contract.editedHtmlContent
+      );
+    } else {
+      // Generate from template
+      pdfBuffer = await pdfService.generateContractPDF(
+        contractDataForPdf,
+        template.htmlTemplate
+      );
+    }
+
+    // Save PDF
+    const pdfUrl = await this.saveContractPdf(pdfBuffer, contractId);
+
+    // Prepare update object
+    const updateData = {
+      status: "ready_for_sales",
+      contractUploadedBy: userId,
+      contractUploadedAt: new Date(),
+      contractPdfUrl: pdfUrl,
+      adminNotes,
+      updatedAt: new Date(),
+    };
+
+    // If admin edited contract data, update it
+    if (editedData) {
+      Object.assign(updateData, {
+        contractType: editedData.contractType,
+        clientName: editedData.clientName,
+        companyName: editedData.companyName,
+        clientEmailContract: editedData.clientEmailContract,
+        clientAddress: editedData.clientAddress,
+        contractDuration: editedData.contractDuration,
+        serviceLatitude: editedData.serviceLatitude,
+        serviceLongitude: editedData.serviceLongitude,
+        collectionSchedule: editedData.collectionSchedule,
+        collectionScheduleOther: editedData.collectionScheduleOther,
+        wasteAllowance: editedData.wasteAllowance,
+        specialClauses: editedData.specialClauses,
+        signatories: editedData.signatories
+          ? JSON.stringify(editedData.signatories)
+          : null,
+        ratePerKg: editedData.ratePerKg,
+        clientRequests: editedData.clientRequests,
+        contractData: JSON.stringify(editedData), // Update stored data
+      });
+    }
+
+    // Update contract
+    const [updatedContract] = await db
+      .update(contractsTable)
+      .set(updateData)
+      .where(eq(contractsTable.id, contractId))
+      .returning();
+
+    // Log activity
+    await this.logActivity({
+      userId,
+      action: "contract_generated_from_template",
+      entityType: "contract",
+      entityId: contractId,
+      details: {
+        templateId: template.id,
+        templateName: template.name,
+        pdfUrl,
         adminNotes,
         dataEdited: editedData ? true : false,
       },

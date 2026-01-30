@@ -49,6 +49,7 @@ export const createColumns = ({
   userRole,
   onRequestContract,
   onUploadContract,
+  onGenerateContract,
   onSendToSales,
   onSendToClient,
   onViewContract,
@@ -159,6 +160,35 @@ export const createColumns = ({
     },
   },
   {
+    accessorKey: "source",
+    header: "Source",
+    cell: ({ row }) => {
+      const contract = row.original;
+      const hasTemplateId = contract.contract?.templateId;
+      const hasCustomTemplate = contract.contract?.customTemplateUrl;
+
+      if (hasCustomTemplate) {
+        return (
+          <Badge variant="outline" className="bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-300 dark:border-purple-700">
+            Custom Template
+          </Badge>
+        );
+      } else if (hasTemplateId) {
+        return (
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-300 dark:border-blue-700">
+            System Template
+          </Badge>
+        );
+      } else {
+        return (
+          <Badge variant="outline" className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-400">
+            Manual
+          </Badge>
+        );
+      }
+    },
+  },
+  {
     id: "actions",
     cell: ({ row }) => {
       const contract = row.original;
@@ -179,24 +209,40 @@ export const createColumns = ({
             </Button>
           )}
 
-          {/* Admin: Upload Contract button (requested) */}
+          {/* Admin: Generate/Upload Contract button (requested) */}
           {userRole === "admin" && status === "requested" && (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => onUploadContract(contract)}
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              Upload Contract
-            </Button>
+            <>
+              {contract.contract?.templateId ? (
+                // Template-based contract: Show Generate button
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => onGenerateContract(contract)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Generate Contract
+                </Button>
+              ) : (
+                // Custom template or manual: Show Upload button
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => onUploadContract(contract)}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload Contract
+                </Button>
+              )}
+            </>
           )}
 
-          {/* Admin: Send to Sales button (ready_for_sales) */}
+          {/* Admin: Send to Sales button (ready_for_sales) - opens generate dialog with PDF loaded */}
           {userRole === "admin" && status === "ready_for_sales" && (
             <Button
               variant="default"
               size="sm"
-              onClick={() => onSendToSales(contract)}
+              onClick={() => onGenerateContract(contract)}
             >
               <Send className="mr-2 h-4 w-4" />
               Send to Sales

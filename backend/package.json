@@ -22,7 +22,10 @@
     "migrate:activity-log-inquiry-id": "node src/scripts/migrateActivityLogInquiryId.js",
     "migrate:contract-service-address": "node src/scripts/migrateContractServiceAddress.js",
     "migrate:custom-template-url": "node src/scripts/migrateCustomTemplateUrl.js",
-    "migrate:backfill-numbers": "node src/scripts/backfillInquiryNumbers.js"
+    "migrate:backfill-numbers": "node src/scripts/backfillInquiryNumbers.js",
+    "migrate:create-contract-templates": "node src/scripts/createContractTemplatesTable.js",
+    "migrate:add-contract-template-fields": "node src/scripts/addContractTemplateFields.js",
+    "seed:contract-templates": "node src/scripts/seedContractTemplates.js"
   },
   "keywords": [],
   "author": "",

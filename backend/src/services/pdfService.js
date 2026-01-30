@@ -231,6 +231,224 @@ class PDFService {
   }
 
   /**
+   * Generate PDF from contract template and data
+   * @param {Object} contractData - Contract data
+   * @param {string} templateHtml - HTML template with Handlebars placeholders
+   * @returns {Promise<Buffer>} PDF buffer
+   */
+  async generateContractPDF(contractData, templateHtml) {
+    let browser;
+
+    try {
+      // Prepare data for template
+      const templateData = this.prepareContractTemplateData(contractData);
+
+      // Compile and render template
+      const template = Handlebars.compile(templateHtml);
+      const html = template(templateData);
+
+      // Launch browser with timeout
+      const launchPromise = puppeteer.launch({
+        headless: "new",
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      });
+
+      browser = await Promise.race([
+        launchPromise,
+        this.timeout(10000, "Browser launch timeout"),
+      ]);
+
+      const page = await browser.newPage();
+
+      // Set content with timeout
+      await Promise.race([
+        page.setContent(html, { waitUntil: "networkidle0" }),
+        this.timeout(15000, "Page load timeout"),
+      ]);
+
+      // Generate PDF with timeout
+      const pdfBuffer = await Promise.race([
+        page.pdf({
+          format: "A4",
+          printBackground: true,
+          margin: {
+            top: "20px",
+            bottom: "20px",
+            left: "20px",
+            right: "20px",
+          },
+        }),
+        this.timeout(30000, "PDF generation timeout"),
+      ]);
+
+      await browser.close();
+
+      return pdfBuffer;
+    } catch (error) {
+      if (browser) {
+        await browser.close().catch(() => {});
+      }
+      throw new AppError(
+        `Contract PDF generation failed: ${error.message}`,
+        500
+      );
+    }
+  }
+
+  /**
+   * Generate PDF from pre-rendered HTML (for edited contracts)
+   * @param {string} html - Pre-rendered HTML content
+   * @returns {Promise<Buffer>} PDF buffer
+   */
+  async generateContractFromHTML(html) {
+    let browser;
+
+    try {
+      // Launch browser with timeout
+      const launchPromise = puppeteer.launch({
+        headless: "new",
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      });
+
+      browser = await Promise.race([
+        launchPromise,
+        this.timeout(10000, "Browser launch timeout"),
+      ]);
+
+      const page = await browser.newPage();
+
+      // Set content with timeout
+      await Promise.race([
+        page.setContent(html, { waitUntil: "networkidle0" }),
+        this.timeout(15000, "Page load timeout"),
+      ]);
+
+      // Generate PDF with timeout
+      const pdfBuffer = await Promise.race([
+        page.pdf({
+          format: "A4",
+          printBackground: true,
+          margin: {
+            top: "20px",
+            bottom: "20px",
+            left: "20px",
+            right: "20px",
+          },
+        }),
+        this.timeout(30000, "PDF generation timeout"),
+      ]);
+
+      await browser.close();
+
+      return pdfBuffer;
+    } catch (error) {
+      if (browser) {
+        await browser.close().catch(() => {});
+      }
+      throw new AppError(
+        `Contract PDF generation failed: ${error.message}`,
+        500
+      );
+    }
+  }
+
+  /**
+   * Prepare contract data for template rendering
+   * @param {Object} contractData - Raw contract data
+   * @returns {Object} Template data
+   */
+  prepareContractTemplateData(contractData) {
+    // Parse signatories if it's a JSON string
+    let signatories = [];
+    if (contractData.signatories) {
+      try {
+        signatories =
+          typeof contractData.signatories === "string"
+            ? JSON.parse(contractData.signatories)
+            : contractData.signatories;
+      } catch (error) {
+        console.error("Failed to parse signatories:", error);
+        signatories = [];
+      }
+    }
+
+    // Format contract date
+    const contractDate = new Date().toLocaleDateString("en-PH", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    return {
+      // Contract identification
+      contractNumber: contractData.contractNumber || "PENDING",
+      contractDate,
+
+      // Client information
+      clientName: contractData.clientName || "",
+      companyName: contractData.companyName || "",
+      clientEmail: contractData.clientEmailContract || contractData.clientEmail || "",
+      clientAddress: contractData.clientAddress || "",
+
+      // Service details
+      contractType: this.formatContractType(contractData.contractType),
+      contractDuration: contractData.contractDuration || "",
+      serviceLatitude: contractData.serviceLatitude || "",
+      serviceLongitude: contractData.serviceLongitude || "",
+
+      // Collection details
+      collectionSchedule: this.formatCollectionSchedule(contractData.collectionSchedule),
+      collectionScheduleOther: contractData.collectionScheduleOther || "",
+      wasteAllowance: contractData.wasteAllowance || "",
+
+      // Pricing
+      ratePerKg: contractData.ratePerKg || "",
+
+      // Terms
+      specialClauses: contractData.specialClauses || "",
+      clientRequests: contractData.clientRequests || "",
+
+      // Signatories
+      signatories,
+
+      // Company info
+      companyLogoUrl: process.env.COMPANY_LOGO_URL || "",
+    };
+  }
+
+  /**
+   * Format contract type for display
+   * @param {string} type - Contract type
+   * @returns {string} Formatted type
+   */
+  formatContractType(type) {
+    const types = {
+      long_term_variable: "Long Term Garbage Variable Charge",
+      long_term_fixed: "Long Term Garbage Fixed Charge (Over 50,000 PHP/month)",
+      fixed_rate_term: "Fixed Rate Term",
+      garbage_bins: "Garbage Bins Rental",
+      garbage_bins_disposal: "Garbage Bins with Disposal Service",
+    };
+    return types[type] || type || "";
+  }
+
+  /**
+   * Format collection schedule for display
+   * @param {string} schedule - Collection schedule
+   * @returns {string} Formatted schedule
+   */
+  formatCollectionSchedule(schedule) {
+    const schedules = {
+      daily: "Daily",
+      weekly: "Weekly",
+      monthly: "Monthly",
+      bi_weekly: "Bi-Weekly",
+      other: "Other",
+    };
+    return schedules[schedule] || schedule || "";
+  }
+
+  /**
    * Register custom Handlebars helpers
    */
   registerHandlebarsHelpers() {

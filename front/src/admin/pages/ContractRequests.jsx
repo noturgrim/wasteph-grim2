@@ -20,7 +20,9 @@ import { SearchInput } from "../components/SearchInput";
 import { createColumns } from "../components/contracts/columns";
 import { RequestContractDialog } from "../components/contracts/RequestContractDialog";
 import { UploadContractDialog } from "../components/contracts/UploadContractDialog";
+import { GenerateContractDialog } from "../components/contracts/GenerateContractDialog";
 import { SendToClientDialog } from "../components/contracts/SendToClientDialog";
+import { SendToSalesDialog } from "../components/contracts/SendToSalesDialog";
 import { ViewContractDetailsDialog } from "../components/contracts/ViewContractDetailsDialog";
 
 export default function ContractRequests() {
@@ -55,9 +57,11 @@ export default function ContractRequests() {
   // Dialogs
   const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
   const [isSendToClientDialogOpen, setIsSendToClientDialogOpen] =
     useState(false);
   const [isViewDetailsDialogOpen, setIsViewDetailsDialogOpen] = useState(false);
+  const [isSendToSalesDialogOpen, setIsSendToSalesDialogOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState(null);
 
   // Fetch users on mount
@@ -120,21 +124,26 @@ export default function ContractRequests() {
     setIsUploadDialogOpen(true);
   };
 
+  const handleGenerateContract = (contract) => {
+    setSelectedContract(contract);
+    setIsGenerateDialogOpen(true);
+  };
+
   const handleSendToClient = (contract) => {
     setSelectedContract(contract);
     setIsSendToClientDialogOpen(true);
   };
 
-  const handleSendToSales = async (contract) => {
-    if (
-      !window.confirm("Are you sure you want to send this contract to sales?")
-    ) {
-      return;
-    }
+  const handleSendToSales = (contract) => {
+    setSelectedContract(contract);
+    setIsSendToSalesDialogOpen(true);
+  };
 
+  const confirmSendToSales = async () => {
     try {
-      await api.sendContractToSales(contract.contract.id);
+      await api.sendContractToSales(selectedContract.contract.id);
       toast.success("Contract sent to sales successfully");
+      setIsSendToSalesDialogOpen(false);
       fetchContracts();
     } catch (error) {
       toast.error(error.message || "Failed to send contract to sales");
@@ -166,6 +175,11 @@ export default function ContractRequests() {
     } catch (error) {
       toast.error(error.message || "Failed to request contract");
     }
+  };
+
+  const confirmGenerateContract = async (response) => {
+    // After successful generation, refresh contracts
+    await fetchContracts();
   };
 
   const confirmUploadContract = async (
@@ -225,6 +239,7 @@ export default function ContractRequests() {
     userRole: user?.role,
     onRequestContract: handleRequestContract,
     onUploadContract: handleUploadContract,
+    onGenerateContract: handleGenerateContract,
     onSendToSales: handleSendToSales,
     onSendToClient: handleSendToClient,
     onViewContract: handleViewContract,
@@ -341,6 +356,23 @@ export default function ContractRequests() {
         contract={selectedContract}
         users={users}
         onConfirm={confirmUploadContract}
+      />
+
+      <GenerateContractDialog
+        open={isGenerateDialogOpen}
+        onOpenChange={setIsGenerateDialogOpen}
+        contract={selectedContract}
+        users={users}
+        onConfirm={confirmGenerateContract}
+        onSendToSales={handleSendToSales}
+      />
+
+      <SendToSalesDialog
+        open={isSendToSalesDialogOpen}
+        onOpenChange={setIsSendToSalesDialogOpen}
+        contract={selectedContract}
+        users={users}
+        onConfirm={confirmSendToSales}
       />
 
       <SendToClientDialog
