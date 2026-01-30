@@ -49,7 +49,7 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestP
       return (
         <button
           onClick={() => onView(inquiry)}
-          className="font-mono text-xs font-semibold text-blue-600 dark:text-blue-400 underline hover:text-blue-700 cursor-pointer"
+          className="font-mono text-sm italic font-normal text-black dark:text-white hover:underline cursor-pointer"
         >
           {inquiryNumber || "-"}
         </button>
