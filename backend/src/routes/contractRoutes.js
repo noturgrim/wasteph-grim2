@@ -64,10 +64,13 @@ router.post(
   uploadPdf.single("contractPdf"),
   controller.uploadContractPdf,
 );
+router.post("/:id/generate-from-template", controller.generateContractFromTemplate);
+router.post("/:id/preview-from-template", controller.previewContractFromTemplate);
 router.post("/:id/send-to-sales", controller.sendToSales);
 
 // PDF OPERATIONS
 router.get("/:id/contract-pdf", controller.downloadContractPdf);
+router.get("/:id/pdf", controller.downloadContractPdf); // Alias for easier access
 router.get("/:id/preview-pdf", controller.previewContractPdf);
 
 export default router;

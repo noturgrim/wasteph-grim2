@@ -149,6 +149,112 @@ export const uploadContractPdf = async (req, res, next) => {
 };
 
 /**
+ * Generate contract from template (admin)
+ * POST /api/contracts/:id/generate-from-template
+ */
+export const generateContractFromTemplate = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { editedData, adminNotes } = req.body;
+
+    // Only admin can generate contracts
+    if (req.user.role !== "admin") {
+      throw new AppError("Only admins can generate contracts", 403);
+    }
+
+    // Parse editedData if it's a string
+    let parsedEditedData = null;
+    if (editedData) {
+      try {
+        parsedEditedData = typeof editedData === 'string' ? JSON.parse(editedData) : editedData;
+      } catch (e) {
+        console.error("Failed to parse editedData:", e);
+      }
+    }
+
+    const metadata = {
+      ipAddress: req.ip,
+      userAgent: req.get("user-agent"),
+    };
+
+    const contract = await contractService.generateContractFromTemplate(
+      id,
+      parsedEditedData,
+      adminNotes,
+      req.user.id,
+      metadata
+    );
+
+    res.status(200).json({
+      success: true,
+      data: contract,
+      message: "Contract generated from template successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Preview contract from template (admin)
+ * POST /api/contracts/:id/preview-from-template
+ */
+export const previewContractFromTemplate = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { editedData } = req.body;
+
+    // Only admin can preview contracts
+    if (req.user.role !== "admin") {
+      throw new AppError("Only admins can preview contracts", 403);
+    }
+
+    // Get contract
+    const contractData = await contractService.getContractById(id);
+    const contract = contractData.contract;
+
+    // Check if contract has a template
+    if (!contract.templateId) {
+      throw new AppError("Contract does not have a template", 400);
+    }
+
+    // Get template
+    const contractTemplateService = (await import("../services/contractTemplateService.js")).default;
+    const template = await contractTemplateService.getTemplateById(contract.templateId);
+
+    // Use edited data if provided, otherwise use stored data
+    let contractDataForPdf;
+    if (editedData) {
+      contractDataForPdf = typeof editedData === 'string' ? JSON.parse(editedData) : editedData;
+    } else {
+      contractDataForPdf = JSON.parse(contract.contractData || "{}");
+    }
+
+    // Add contract number
+    contractDataForPdf.contractNumber = contractData.proposal.proposalNumber
+      ? contractData.proposal.proposalNumber.replace("PROP-", "CONT-")
+      : "PENDING";
+
+    // Generate PDF
+    const pdfService = (await import("../services/pdfService.js")).default;
+    const pdfBuffer = await pdfService.generateContractPDF(
+      contractDataForPdf,
+      template.htmlTemplate
+    );
+
+    // Convert to base64
+    const pdfBase64 = pdfBuffer.toString("base64");
+
+    res.status(200).json({
+      success: true,
+      data: pdfBase64,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Admin sends contract to sales
  * POST /api/contracts/:id/send-to-sales
  */

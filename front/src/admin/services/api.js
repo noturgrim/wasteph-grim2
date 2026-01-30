@@ -525,6 +525,81 @@ class ApiClient {
     window.open(url, "_blank");
   }
 
+  async generateContractFromTemplate(id, editedData = null, adminNotes = null) {
+    return this.request(`/contracts/${id}/generate-from-template`, {
+      method: "POST",
+      body: JSON.stringify({ editedData, adminNotes }),
+    });
+  }
+
+  async previewContractFromTemplate(id, editedData = null) {
+    return this.request(`/contracts/${id}/preview-from-template`, {
+      method: "POST",
+      body: JSON.stringify({ editedData }),
+    });
+  }
+
+  // Contract Template endpoints
+  async getContractTemplates(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.isActive !== undefined)
+      params.append("isActive", filters.isActive);
+    if (filters.templateType) params.append("templateType", filters.templateType);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.page) params.append("page", filters.page);
+    if (filters.limit) params.append("limit", filters.limit);
+
+    const queryString = params.toString();
+    return this.request(
+      `/contract-templates${queryString ? `?${queryString}` : ""}`,
+    );
+  }
+
+  async getContractTemplateById(id) {
+    return this.request(`/contract-templates/${id}`);
+  }
+
+  async getDefaultContractTemplate() {
+    return this.request("/contract-templates/default");
+  }
+
+  async getContractTemplateByType(type) {
+    return this.request(`/contract-templates/type/${type}`);
+  }
+
+  async createContractTemplate(templateData) {
+    return this.request("/contract-templates", {
+      method: "POST",
+      body: JSON.stringify(templateData),
+    });
+  }
+
+  async updateContractTemplate(id, templateData) {
+    return this.request(`/contract-templates/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(templateData),
+    });
+  }
+
+  async setDefaultContractTemplate(id) {
+    return this.request(`/contract-templates/${id}/set-default`, {
+      method: "POST",
+    });
+  }
+
+  async deleteContractTemplate(id) {
+    return this.request(`/contract-templates/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  async previewContractTemplate(templateHtml, sampleData) {
+    return this.request("/contract-templates/preview", {
+      method: "POST",
+      body: JSON.stringify({ templateHtml, sampleData }),
+    });
+  }
+
   // Calendar Event endpoints
   async getCalendarEvents(filters = {}) {
     const params = new URLSearchParams();
