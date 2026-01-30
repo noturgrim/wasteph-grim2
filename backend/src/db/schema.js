@@ -7,6 +7,7 @@ import {
   uuid,
   pgEnum,
   index,
+  unique,
 } from "drizzle-orm/pg-core";
 
 // Enums
@@ -135,6 +136,7 @@ export const sessionTable = pgTable("session", {
 // Business Tables
 export const inquiryTable = pgTable("inquiry", {
   id: uuid("id").primaryKey().defaultRandom(),
+  inquiryNumber: text("inquiry_number").notNull().unique(), // Format: INQ-YYYYMMDD-NNNN
   name: text("name").notNull(),
   email: text("email").notNull(),
   phone: text("phone"),
@@ -153,7 +155,9 @@ export const inquiryTable = pgTable("inquiry", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => ({
+  inquiryNumberIdx: index("inquiry_number_idx").on(table.inquiryNumber),
+}));
 
 export const inquiryNotesTable = pgTable("inquiry_notes", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -380,6 +384,7 @@ export const proposalTemplateTable = pgTable("proposal_template", {
 // Proposals
 export const proposalTable = pgTable("proposal", {
   id: uuid("id").primaryKey().defaultRandom(),
+  proposalNumber: text("proposal_number").notNull().unique(), // Format: PROP-YYYYMMDD-NNNN
 
   // Relationships
   inquiryId: uuid("inquiry_id")
@@ -428,6 +433,7 @@ export const proposalTable = pgTable("proposal", {
     .notNull()
     .defaultNow(),
 }, (table) => ({
+  proposalNumberIdx: index("proposal_number_idx").on(table.proposalNumber),
   inquiryIdIdx: index("proposal_inquiry_id_idx").on(table.inquiryId),
   templateIdIdx: index("proposal_template_id_idx").on(table.templateId),
   statusIdx: index("proposal_status_idx").on(table.status),
@@ -603,6 +609,24 @@ export const blogPostTable = pgTable("blog_post", {
   statusIdx: index("blog_post_status_idx").on(table.status),
   categoryIdx: index("blog_post_category_idx").on(table.category),
   publishedAtIdx: index("blog_post_published_at_idx").on(table.publishedAt),
+}));
+
+// Counters Table - For generating sequential numbers (INQ-YYYYMMDD-NNNN, PROP-YYYYMMDD-NNNN)
+export const countersTable = pgTable("counters", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  entityType: text("entity_type").notNull(), // 'inquiry', 'proposal'
+  date: text("date").notNull(), // 'YYYY-MM-DD' format
+  currentValue: integer("current_value").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (table) => ({
+  uniqueEntityDate: unique("counters_entity_date_unique").on(table.entityType, table.date),
+  entityTypeIdx: index("counters_entity_type_idx").on(table.entityType),
+  dateIdx: index("counters_date_idx").on(table.date),
 }));
 
 // Activity Log

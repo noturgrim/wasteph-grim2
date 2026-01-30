@@ -163,8 +163,8 @@ export default function Inquiries() {
 
   // Column visibility
   const [columnVisibility, setColumnVisibility] = useState({
+    inquiryNumber: true,
     name: true,
-    email: true,
     company: true,
     source: true,
     service: true,
@@ -498,12 +498,13 @@ export default function Inquiries() {
               .filter((column) => column.accessorKey)
               .map((column) => {
                 const columnLabels = {
-                  name: "Name",
-                  email: "Email",
+                  inquiryNumber: "Inquiry #",
+                  name: "Client Info",
                   company: "Company",
                   source: "Source",
                   service: "Service",
                   status: "Status",
+                  proposalStatus: "Proposal",
                   assignedTo: "Assigned To",
                   createdAt: "Date",
                 };

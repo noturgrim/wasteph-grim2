@@ -13,6 +13,50 @@ import { Badge } from "@/components/ui/badge";
 
 export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestProposal, onSendToClient, userRole }) => [
   {
+    accessorKey: "inquiryNumber",
+    header: ({ column }) => {
+      const isSorted = column.getIsSorted();
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              Inquiry #
+              {isSorted === "asc" ? (
+                <ArrowUp className="ml-2 h-4 w-4" />
+              ) : isSorted === "desc" ? (
+                <ArrowDown className="ml-2 h-4 w-4" />
+              ) : (
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => column.toggleSorting(false)}>
+              <ArrowUp className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
+              Asc
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => column.toggleSorting(true)}>
+              <ArrowDown className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
+              Desc
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
+    cell: ({ row }) => {
+      const inquiry = row.original;
+      const inquiryNumber = inquiry.inquiryNumber;
+      return (
+        <button
+          onClick={() => onView(inquiry)}
+          className="font-mono text-sm italic font-normal text-black dark:text-white hover:underline cursor-pointer"
+        >
+          {inquiryNumber || "-"}
+        </button>
+      );
+    },
+  },
+  {
     accessorKey: "name",
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
@@ -20,7 +64,7 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestP
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm">
-              Name
+              Client Info
               {isSorted === "asc" ? (
                 <ArrowUp className="ml-2 h-4 w-4" />
               ) : isSorted === "desc" ? (
@@ -46,18 +90,12 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestP
     cell: ({ row }) => {
       const inquiry = row.original;
       return (
-        <button
-          onClick={() => onView(inquiry)}
-          className="font-bold underline hover:text-primary cursor-pointer text-left"
-        >
-          {inquiry.name}
-        </button>
+        <div className="flex flex-col gap-0.5">
+          <span className="font-semibold">{inquiry.name}</span>
+          <span className="text-sm text-muted-foreground">{inquiry.email}</span>
+        </div>
       );
     },
-  },
-  {
-    accessorKey: "email",
-    header: "Email",
   },
   {
     accessorKey: "company",
@@ -107,6 +145,7 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestP
     header: "Proposal",
     cell: ({ row }) => {
       const proposalStatus = row.original.proposalStatus;
+      const proposalNumber = row.original.proposalNumber;
 
       if (!proposalStatus) {
         return (
@@ -141,9 +180,16 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestP
       };
 
       return (
-        <Badge variant="outline" className={config.className}>
-          {config.label}
-        </Badge>
+        <div className="flex flex-col gap-1">
+          <Badge variant="outline" className={config.className}>
+            {config.label}
+          </Badge>
+          {proposalNumber && (
+            <span className="font-mono text-xs text-muted-foreground">
+              {proposalNumber}
+            </span>
+          )}
+        </div>
       );
     },
   },

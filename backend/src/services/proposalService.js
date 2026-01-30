@@ -6,6 +6,7 @@ import inquiryService from "./inquiryService.js";
 import proposalTemplateService from "./proposalTemplateService.js";
 import emailService from "./emailService.js";
 import pdfService from "./pdfService.js";
+import counterService from "./counterService.js";
 import fs from "fs/promises";
 import path from "path";
 import crypto from "crypto";
@@ -42,10 +43,14 @@ class ProposalService {
       wasTemplateSuggested = true;
     }
 
+    // Generate proposal number (format: PROP-YYYYMMDD-NNNN)
+    const proposalNumber = await counterService.getNextProposalNumber();
+
     // Create proposal
     const [proposal] = await db
       .insert(proposalTable)
       .values({
+        proposalNumber,
         inquiryId,
         templateId: template.id,
         requestedBy: userId,
@@ -90,6 +95,7 @@ class ProposalService {
     let query = db
       .select({
         id: proposalTable.id,
+        proposalNumber: proposalTable.proposalNumber,
         inquiryId: proposalTable.inquiryId,
         templateId: proposalTable.templateId,
         requestedBy: proposalTable.requestedBy,

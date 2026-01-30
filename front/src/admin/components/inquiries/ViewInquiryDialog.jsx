@@ -56,12 +56,24 @@ export function ViewInquiryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[85vw]! max-w-[900px]! max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+      <DialogContent className="w-[85vw]! max-w-[900px]! max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden [&>button]:hidden">
         <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
-          <DialogTitle>Inquiry Details</DialogTitle>
-          <DialogDescription>
-            View complete inquiry information
-          </DialogDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <DialogTitle>Inquiry Details</DialogTitle>
+              <DialogDescription>
+                View complete inquiry information
+              </DialogDescription>
+            </div>
+            {inquiry.inquiryNumber && (
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground">Inquiry Number</p>
+                <p className="font-mono text-sm italic font-normal text-black dark:text-white">
+                  {inquiry.inquiryNumber}
+                </p>
+              </div>
+            )}
+          </div>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6 min-h-0">
