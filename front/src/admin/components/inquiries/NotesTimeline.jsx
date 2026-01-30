@@ -429,22 +429,18 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
 
             {/* Show report for completed events */}
             {activityInfo.showReport && activityInfo.reportContent && (
-              <div className="mt-3 p-3 bg-muted/30 rounded-md border border-border">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-muted-foreground">Event Report</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => navigate("/admin/calendar")}
-                    className="h-6 px-2 text-xs"
-                  >
-                    View in Calendar
-                    <ExternalLink className="ml-1 h-3 w-3" />
-                  </Button>
-                </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
-                  {activityInfo.reportContent}
-                </p>
+              <div className="mt-2 flex items-center gap-2 text-sm">
+                <FileText className="h-4 w-4 text-blue-500" />
+                <span className="text-gray-600 dark:text-gray-300">Event Report available</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => navigate("/admin/calendar", { state: { openEventId: activityInfo.eventId } })}
+                  className="h-7 px-3 text-xs"
+                >
+                  View Report
+                  <ExternalLink className="ml-1.5 h-3 w-3" />
+                </Button>
               </div>
             )}
           </div>

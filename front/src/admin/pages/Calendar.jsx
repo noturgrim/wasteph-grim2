@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useLocation } from "react-router-dom";
 import { api } from "../services/api";
 import { toast } from "../utils/toast";
 import {
@@ -33,6 +34,7 @@ import { ViewEventDialog } from "../components/calendar/ViewEventDialog";
 
 export default function Calendar() {
   const { user } = useAuth();
+  const location = useLocation();
   const isMasterSales = user?.isMasterSales || false;
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState([]);
@@ -44,6 +46,18 @@ export default function Calendar() {
   useEffect(() => {
     fetchEvents();
   }, [currentDate]);
+
+  // Handle opening event from timeline navigation
+  useEffect(() => {
+    if (location.state?.openEventId && events.length > 0) {
+      const eventToOpen = events.find(e => e.id === location.state.openEventId);
+      if (eventToOpen) {
+        handleEventClick(eventToOpen);
+        // Clear the state so it doesn't reopen on subsequent renders
+        window.history.replaceState({}, document.title);
+      }
+    }
+  }, [location.state, events]);
 
   const fetchEvents = async () => {
     try {
