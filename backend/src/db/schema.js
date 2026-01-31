@@ -73,7 +73,9 @@ export const contractStatusEnum = pgEnum("contract_status", [
   "requested",         // Sales requested contract from Admin
   "ready_for_sales",   // Admin uploaded contract, not sent to Sales yet
   "sent_to_sales",     // Admin sent to Sales, waiting for Sales to send to client
-  "sent_to_client",    // Sales sent to client (final status)
+  "sent_to_client",    // Sales sent to client, waiting for client to upload signed copy
+  "signed",            // Client uploaded signed contract, client record auto-created
+  "hardbound_received", // Admin uploaded scanned hardbound copy (terminal status)
 ]);
 
 // Contract type enum
@@ -508,6 +510,19 @@ export const contractsTable = pgTable("contracts", {
     .references(() => userTable.id), // Sales who sent to client
   sentToClientAt: timestamp("sent_to_client_at", { withTimezone: true }),
   clientEmail: text("client_email"), // Email address used to send (keep existing field)
+
+  // Client Submission (token-based upload from email link)
+  clientSubmissionToken: text("client_submission_token"), // Secure token for upload link
+  signedContractUrl: text("signed_contract_url"), // S3 key of client's signed PDF upload
+  signedAt: timestamp("signed_at", { withTimezone: true }),
+  signedByIp: text("signed_by_ip"), // Client IP for audit trail
+  clientId: uuid("client_id").references(() => clientTable.id), // Auto-created client record
+
+  // Hardbound Contract (admin uploads scanned physical copy)
+  hardboundContractUrl: text("hardbound_contract_url"), // S3 key of scanned hardbound PDF
+  hardboundUploadedBy: text("hardbound_uploaded_by")
+    .references(() => userTable.id),
+  hardboundUploadedAt: timestamp("hardbound_uploaded_at", { withTimezone: true }),
 
   // Timestamps
   createdAt: timestamp("created_at", { withTimezone: true })

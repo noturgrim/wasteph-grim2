@@ -132,6 +132,8 @@ export function ReviewGeneratedContractDialog({
       ready_for_sales: { label: "Ready for Sales", variant: "success" },
       sent_to_sales: { label: "Sent to Sales", variant: "success" },
       sent_to_client: { label: "Sent to Client", variant: "success" },
+      signed: { label: "Signed", variant: "success" },
+      hardbound_received: { label: "Hardbound Received", variant: "success" },
     };
 
     const config = statusConfig[status] || { label: status, variant: "secondary" };

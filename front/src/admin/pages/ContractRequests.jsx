@@ -134,6 +134,35 @@ export default function ContractRequests() {
     setIsSendToClientDialogOpen(true);
   };
 
+  const handleUploadHardbound = async (contract) => {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "application/pdf";
+    fileInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (file.type !== "application/pdf") {
+        toast.error("Only PDF files are allowed");
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("File size must be less than 10MB");
+        return;
+      }
+
+      try {
+        await api.uploadHardboundContract(contract.contract.id, file);
+        toast.success("Hardbound contract uploaded successfully");
+        fetchContracts();
+      } catch (error) {
+        toast.error(error.message || "Failed to upload hardbound contract");
+      }
+    };
+    fileInput.click();
+  };
+
   const handleSendToSales = (contract) => {
     setSelectedContract(contract);
     setIsSendToSalesDialogOpen(true);
@@ -242,6 +271,7 @@ export default function ContractRequests() {
     onGenerateContract: handleGenerateContract,
     onSendToSales: handleSendToSales,
     onSendToClient: handleSendToClient,
+    onUploadHardbound: handleUploadHardbound,
     onViewContract: handleViewContract,
     onViewDetails: handleViewDetails,
   });
@@ -281,6 +311,8 @@ export default function ContractRequests() {
               { value: "ready_for_sales", label: "Ready for Sales" },
               { value: "sent_to_sales", label: "Sent to Sales" },
               { value: "sent_to_client", label: "Sent to Client" },
+              { value: "signed", label: "Signed" },
+              { value: "hardbound_received", label: "Hardbound Received" },
             ]}
             selectedValues={statusFilter}
             onSelectionChange={setStatusFilter}

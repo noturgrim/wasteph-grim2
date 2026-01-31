@@ -26,6 +26,8 @@ const getStatusBadge = (status) => {
     ready_for_sales: { label: "Ready for Sales", variant: "success" },
     sent_to_sales: { label: "Sent to Sales", variant: "success" },
     sent_to_client: { label: "Sent to Client", variant: "success" },
+    signed: { label: "Signed", variant: "success" },
+    hardbound_received: { label: "Hardbound Received", variant: "success" },
   };
 
   const config = statusConfig[status] || { label: status, variant: "secondary" };
@@ -52,6 +54,7 @@ export const createColumns = ({
   onGenerateContract,
   onSendToSales,
   onSendToClient,
+  onUploadHardbound,
   onViewContract,
   onViewDetails,
 }) => [
@@ -258,6 +261,18 @@ export const createColumns = ({
             >
               <Send className="mr-2 h-4 w-4" />
               Send to Client
+            </Button>
+          )}
+
+          {/* Admin: Upload Hardbound button (signed) */}
+          {userRole === "admin" && status === "signed" && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => onUploadHardbound(contract)}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Upload Hardbound
             </Button>
           )}
 

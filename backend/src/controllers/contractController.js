@@ -1,5 +1,5 @@
 import contractService from "../services/contractService.js";
-import { getObject } from "../services/s3Service.js";
+import { getObject, uploadObject } from "../services/s3Service.js";
 import { AppError } from "../middleware/errorHandler.js";
 
 /**
@@ -442,6 +442,115 @@ export const downloadCustomTemplate = async (req, res, next) => {
       `attachment; filename="${filename}"`
     );
     res.send(buffer);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get contract status for client-facing page (public, token-based)
+ * GET /api/contracts/public/:id/status?token=...
+ */
+export const getContractStatusPublic = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { token } = req.query;
+
+    if (!token) {
+      throw new AppError("Missing authentication token", 400);
+    }
+
+    const contractData = await contractService.validateSubmissionToken(id, token);
+    const contract = contractData.contract;
+    const inquiry = contractData.inquiry;
+
+    res.json({
+      success: true,
+      data: {
+        contractId: contract.id,
+        clientName: contract.clientName || inquiry?.name,
+        companyName: contract.companyName || inquiry?.company,
+        sentAt: contract.sentToClientAt,
+        status: contract.status,
+        alreadySigned: !!contract.signedAt,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Handle client signed contract submission (public, token-based)
+ * POST /api/contracts/public/:id/submit?token=...
+ */
+export const handleClientSubmission = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { token } = req.query;
+
+    if (!token) {
+      throw new AppError("Missing authentication token", 400);
+    }
+
+    // Validate token (also checks status is sent_to_client)
+    await contractService.validateSubmissionToken(id, token);
+
+    // Validate file
+    if (!req.file) {
+      throw new AppError("Please upload your signed contract PDF", 400);
+    }
+
+    // Upload signed contract to S3
+    const dateFolder = new Date().toISOString().split("T")[0];
+    const key = `signed-contracts/${dateFolder}/${id}-signed.pdf`;
+    await uploadObject(key, req.file.buffer, "application/pdf");
+
+    // Record signing + auto-create client
+    await contractService.recordClientSigning(id, key, req.ip);
+
+    res.json({
+      success: true,
+      message: "Thank you! Your signed contract has been received successfully.",
+      data: {
+        contractId: id,
+        signedAt: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Upload hardbound scanned contract (admin only, requires auth)
+ * POST /api/contracts/:id/upload-hardbound
+ */
+export const uploadHardboundContract = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (req.user.role !== "admin") {
+      throw new AppError("Only admin users can upload hardbound contracts", 403);
+    }
+
+    if (!req.file) {
+      throw new AppError("Please upload the hardbound contract PDF", 400);
+    }
+
+    // Upload to S3
+    const dateFolder = new Date().toISOString().split("T")[0];
+    const key = `hardbound-contracts/${dateFolder}/${id}-hardbound.pdf`;
+    await uploadObject(key, req.file.buffer, "application/pdf");
+
+    // Update contract status
+    const contract = await contractService.uploadHardboundContract(id, key, req.user.id);
+
+    res.json({
+      success: true,
+      message: "Hardbound contract uploaded successfully",
+      data: contract,
+    });
   } catch (error) {
     next(error);
   }

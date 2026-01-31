@@ -11,8 +11,11 @@ import { AppError } from "../middleware/errorHandler.js";
 import emailService from "./emailService.js";
 import inquiryService from "./inquiryService.js";
 import contractTemplateService from "./contractTemplateService.js";
+import ClientService from "./clientService.js";
+const clientService = new ClientService();
 import pdfService from "./pdfService.js";
 import { uploadObject, getObject } from "./s3Service.js";
+import crypto from "crypto";
 
 /**
  * ContractService - Business logic for contract operations
@@ -641,12 +644,17 @@ class ContractService {
         ? JSON.parse(proposal.proposalData)
         : proposal.proposalData;
 
-    // Send email with contract PDF
+    // Generate secure token for client submission link
+    const submissionToken = crypto.randomBytes(32).toString("hex");
+
+    // Send email with contract PDF and submission link
     await emailService.sendContractToClientEmail(
       clientEmail,
       proposalData,
       inquiry,
       pdfBuffer,
+      contractId,
+      submissionToken,
     );
 
     // Update contract
@@ -657,6 +665,7 @@ class ContractService {
         sentToClientBy: userId,
         sentToClientAt: new Date(),
         clientEmail,
+        clientSubmissionToken: submissionToken,
         updatedAt: new Date(),
       })
       .where(eq(contractsTable.id, contractId))
@@ -733,6 +742,129 @@ class ContractService {
     } catch (error) {
       throw new AppError("Failed to read contract PDF from S3", 500);
     }
+  }
+
+  /**
+   * Validate the client submission token for a contract
+   * @param {string} contractId - Contract UUID
+   * @param {string} token - Token from email link
+   * @returns {Promise<Object>} Contract data
+   */
+  async validateSubmissionToken(contractId, token) {
+    const contractData = await this.getContractById(contractId);
+    const contract = contractData.contract;
+
+    if (!contract.clientSubmissionToken) {
+      throw new AppError("This contract does not have a submission token", 400);
+    }
+
+    if (contract.clientSubmissionToken !== token) {
+      throw new AppError("Invalid submission token", 403);
+    }
+
+    if (contract.status !== "sent_to_client") {
+      throw new AppError(
+        contract.signedAt
+          ? "This contract has already been signed"
+          : "This contract is not available for submission",
+        400,
+      );
+    }
+
+    return contractData;
+  }
+
+  /**
+   * Record client signing — uploads signed contract, transitions to signed, auto-creates client
+   * @param {string} contractId - Contract UUID
+   * @param {string} signedUrl - S3 key of uploaded signed contract
+   * @param {string} ip - Client IP address
+   * @returns {Promise<Object>} Updated contract
+   */
+  async recordClientSigning(contractId, signedUrl, ip) {
+    const contractData = await this.getContractById(contractId);
+    const contract = contractData.contract;
+    const inquiry = contractData.inquiry;
+
+    // Auto-create client record first (if this fails, status stays at sent_to_client so client can retry)
+    const clientData = {
+      companyName: contract.companyName || inquiry?.company || "Unknown",
+      contactPerson: contract.clientName || inquiry?.name || "Unknown",
+      email: contract.clientEmailContract || inquiry?.email || contract.clientEmail,
+      phone: inquiry?.phone || "",
+      address: contract.clientAddress || "",
+      city: "",
+      province: "",
+    };
+
+    const client = await clientService.createClient(clientData, contract.requestedBy || contract.sentToClientBy, {});
+
+    // Update contract status + link client (only after client creation succeeds)
+    const [updatedContract] = await db
+      .update(contractsTable)
+      .set({
+        status: "signed",
+        signedContractUrl: signedUrl,
+        signedAt: new Date(),
+        signedByIp: ip,
+        clientId: client.id,
+        updatedAt: new Date(),
+      })
+      .where(eq(contractsTable.id, contractId))
+      .returning();
+
+    // Log activity
+    await this.logActivity({
+      userId: contract.requestedBy || contract.sentToClientBy,
+      action: "contract_signed_by_client",
+      entityType: "contract",
+      entityId: contractId,
+      details: { clientId: client.id, signedUrl },
+      ipAddress: ip,
+    });
+
+    return updatedContract;
+  }
+
+  /**
+   * Upload hardbound scanned contract (admin)
+   * @param {string} contractId - Contract UUID
+   * @param {string} hardboundUrl - S3 key of uploaded hardbound PDF
+   * @param {string} userId - Admin user ID
+   * @returns {Promise<Object>} Updated contract
+   */
+  async uploadHardboundContract(contractId, hardboundUrl, userId) {
+    const contractData = await this.getContractById(contractId);
+    const contract = contractData.contract;
+
+    if (contract.status !== "signed") {
+      throw new AppError(
+        "Can only upload hardbound contract after client has signed",
+        400,
+      );
+    }
+
+    const [updatedContract] = await db
+      .update(contractsTable)
+      .set({
+        status: "hardbound_received",
+        hardboundContractUrl: hardboundUrl,
+        hardboundUploadedBy: userId,
+        hardboundUploadedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(contractsTable.id, contractId))
+      .returning();
+
+    await this.logActivity({
+      userId,
+      action: "hardbound_contract_uploaded",
+      entityType: "contract",
+      entityId: contractId,
+      details: { hardboundUrl },
+    });
+
+    return updatedContract;
   }
 
   /**

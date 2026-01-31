@@ -502,6 +502,24 @@ class ApiClient {
     return response.json();
   }
 
+  async uploadHardboundContract(id, pdfFile) {
+    const formData = new FormData();
+    formData.append("hardboundContract", pdfFile);
+
+    const response = await fetch(`${this.baseURL}/contracts/${id}/upload-hardbound`, {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to upload hardbound contract");
+    }
+
+    return response.json();
+  }
+
   async sendContractToSales(id) {
     return this.request(`/contracts/${id}/send-to-sales`, {
       method: "POST",

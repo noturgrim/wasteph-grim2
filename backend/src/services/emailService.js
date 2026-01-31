@@ -607,7 +607,7 @@ class EmailService {
    * @param {Buffer} pdfBuffer - Contract PDF buffer
    * @returns {Promise<Object>} Email result
    */
-  async sendContractToClientEmail(to, proposalData, inquiryData, pdfBuffer) {
+  async sendContractToClientEmail(to, proposalData, inquiryData, pdfBuffer, contractId, responseToken) {
     try {
       // Handle both old format and new format
       const isNewFormat = !!proposalData.editedHtmlContent;
@@ -616,7 +616,7 @@ class EmailService {
         : inquiryData.name;
 
       // Generate email HTML
-      const htmlContent = this.generateContractEmailHTML(clientName);
+      const htmlContent = this.generateContractEmailHTML(clientName, contractId, responseToken);
 
       // Send email with PDF attachment
       console.log(`📤 Sending contract email to: ${to}`);
@@ -659,7 +659,8 @@ class EmailService {
    * @param {string} clientName - Client name
    * @returns {string} HTML content
    */
-  generateContractEmailHTML(clientName) {
+  generateContractEmailHTML(clientName, contractId, responseToken) {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     return `
 <!DOCTYPE html>
 <html lang="en">
@@ -716,6 +717,21 @@ class EmailService {
       margin: 0;
       color: #166534;
     }
+    .action-buttons {
+      text-align: center;
+      margin: 25px 0;
+    }
+    .btn-upload {
+      display: inline-block;
+      background-color: #106934;
+      color: #ffffff;
+      text-decoration: none;
+      padding: 14px 32px;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 5px;
+    }
     .footer {
       margin-top: 40px;
       padding-top: 20px;
@@ -749,7 +765,13 @@ class EmailService {
         <p style="margin-top: 10px; font-size: 14px;">Please review the contract carefully and contact us if you have any questions.</p>
       </div>
 
-      <p>If you would like to proceed with the services outlined in the contract, please sign and return the contract to us at your earliest convenience.</p>
+      <p>Once you have reviewed and signed the contract, please upload your signed copy using the button below:</p>
+
+      <div class="action-buttons">
+        <a href="${frontendUrl}/contract-response/${contractId}?token=${responseToken}" class="btn-upload">📄 Upload Signed Contract</a>
+      </div>
+
+      <p style="font-size: 13px; color: #888;">You will be taken to a secure page where you can upload your signed contract document.</p>
 
       <p>We look forward to serving you and providing excellent waste management solutions for your needs.</p>
 
