@@ -24,7 +24,6 @@ import {
   FileCheck,
   Plus,
   X,
-  Send,
   Edit,
   Code2,
   RefreshCw,
@@ -58,7 +57,6 @@ export function GenerateContractDialog({
   contract,
   users,
   onConfirm,
-  onSendToSales,
 }) {
   const [adminNotes, setAdminNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -122,7 +120,7 @@ export function GenerateContractDialog({
       setHasUnsavedHtmlChanges(false);
 
       // If contract already has a generated PDF, mark as generated and load it
-      if (contractData.contractPdfUrl || contractData.status === "ready_for_sales") {
+      if (contractData.contractPdfUrl) {
         setIsGenerated(true);
         // Auto-load the existing PDF
         setTimeout(() => {
@@ -250,17 +248,6 @@ export function GenerateContractDialog({
       console.error("Failed to load PDF:", error);
       toast.error("Failed to load contract PDF");
       setIsLoadingPdf(false);
-    }
-  };
-
-  const handleSendToSales = async () => {
-    try {
-      if (onSendToSales) {
-        await onSendToSales(contract);
-        onOpenChange(false);
-      }
-    } catch (error) {
-      console.error("Failed to send to sales:", error);
     }
   };
 
@@ -718,16 +705,7 @@ export function GenerateContractDialog({
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
           >
-            Cancel
-          </Button>
-
-          <Button
-            onClick={handleSendToSales}
-            className="bg-green-600 hover:bg-green-700"
-            disabled={!isGenerated}
-          >
-            <Send className="mr-2 h-4 w-4" />
-            Send to Sales
+            Close
           </Button>
         </DialogFooter>
       </DialogContent>

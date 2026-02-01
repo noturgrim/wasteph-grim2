@@ -23,7 +23,6 @@ const getStatusBadge = (status) => {
   const statusConfig = {
     pending_request: { label: "Pending Request", variant: "secondary" },
     requested: { label: "Requested", variant: "default" },
-    ready_for_sales: { label: "Ready for Sales", variant: "success" },
     sent_to_sales: { label: "Sent to Sales", variant: "success" },
     sent_to_client: { label: "Sent to Client", variant: "success" },
     signed: { label: "Signed", variant: "success" },
@@ -50,9 +49,7 @@ export const createColumns = ({
   users = [],
   userRole,
   onRequestContract,
-  onUploadContract,
-  onGenerateContract,
-  onSendToSales,
+  onSubmitContract,
   onSendToClient,
   onUploadHardbound,
   onViewContract,
@@ -212,43 +209,16 @@ export const createColumns = ({
             </Button>
           )}
 
-          {/* Admin: Generate/Upload Contract button (requested) */}
+          {/* Admin: Submit Contract button (requested) */}
           {(userRole === "admin" || userRole === "super_admin") && status === "requested" && (
-            <>
-              {contract.contract?.templateId ? (
-                // Template-based contract: Show Generate button
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => onGenerateContract(contract)}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Generate Contract
-                </Button>
-              ) : (
-                // Custom template or manual: Show Upload button
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => onUploadContract(contract)}
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload Contract
-                </Button>
-              )}
-            </>
-          )}
-
-          {/* Admin: Send to Sales button (ready_for_sales) - opens generate dialog with PDF loaded */}
-          {(userRole === "admin" || userRole === "super_admin") && status === "ready_for_sales" && (
             <Button
               variant="default"
               size="sm"
-              onClick={() => onGenerateContract(contract)}
+              onClick={() => onSubmitContract(contract)}
+              className="bg-blue-600 hover:bg-blue-700"
             >
-              <Send className="mr-2 h-4 w-4" />
-              Send to Sales
+              <FileText className="mr-2 h-4 w-4" />
+              Submit Contract
             </Button>
           )}
 
@@ -307,11 +277,11 @@ export const createColumns = ({
                 </>
               )}
 
-              {/* Admin: Re-upload if ready_for_sales or sent_to_sales */}
-              {(userRole === "admin" || userRole === "super_admin") && (status === "ready_for_sales" || status === "sent_to_sales") && (
-                <DropdownMenuItem onClick={() => onUploadContract(contract)}>
+              {/* Admin: Re-submit if sent_to_sales */}
+              {(userRole === "admin" || userRole === "super_admin") && status === "sent_to_sales" && (
+                <DropdownMenuItem onClick={() => onSubmitContract(contract)}>
                   <Upload className="mr-2 h-4 w-4" />
-                  Re-upload Contract
+                  Re-submit Contract
                 </DropdownMenuItem>
               )}
 

@@ -675,20 +675,12 @@ export function UploadContractDialog({
             Cancel
           </Button>
           <Button
-            variant="secondary"
-            onClick={() => handleSubmit(false)}
-            disabled={isSubmitting || !pdfFile}
-          >
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Draft
-          </Button>
-          <Button
             onClick={() => handleSubmit(true)}
             disabled={isSubmitting || !pdfFile}
             className="bg-blue-600 hover:bg-blue-700"
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? "Uploading..." : "Save & Send to Sales"}
+            {isSubmitting ? "Submitting..." : "Submit Contract"}
           </Button>
         </DialogFooter>
       </DialogContent>

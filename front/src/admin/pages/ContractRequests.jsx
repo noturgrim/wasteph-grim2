@@ -22,7 +22,6 @@ import { RequestContractDialog } from "../components/contracts/RequestContractDi
 import { UploadContractDialog } from "../components/contracts/UploadContractDialog";
 import { GenerateContractDialog } from "../components/contracts/GenerateContractDialog";
 import { SendToClientDialog } from "../components/contracts/SendToClientDialog";
-import { SendToSalesDialog } from "../components/contracts/SendToSalesDialog";
 import { ViewContractDetailsDialog } from "../components/contracts/ViewContractDetailsDialog";
 
 export default function ContractRequests() {
@@ -61,7 +60,6 @@ export default function ContractRequests() {
   const [isSendToClientDialogOpen, setIsSendToClientDialogOpen] =
     useState(false);
   const [isViewDetailsDialogOpen, setIsViewDetailsDialogOpen] = useState(false);
-  const [isSendToSalesDialogOpen, setIsSendToSalesDialogOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState(null);
 
   // Fetch users on mount
@@ -119,14 +117,13 @@ export default function ContractRequests() {
     setIsRequestDialogOpen(true);
   };
 
-  const handleUploadContract = (contract) => {
+  const handleSubmitContract = (contract) => {
     setSelectedContract(contract);
-    setIsUploadDialogOpen(true);
-  };
-
-  const handleGenerateContract = (contract) => {
-    setSelectedContract(contract);
-    setIsGenerateDialogOpen(true);
+    if (contract.contract?.templateId) {
+      setIsGenerateDialogOpen(true);
+    } else {
+      setIsUploadDialogOpen(true);
+    }
   };
 
   const handleSendToClient = (contract) => {
@@ -161,22 +158,6 @@ export default function ContractRequests() {
       }
     };
     fileInput.click();
-  };
-
-  const handleSendToSales = (contract) => {
-    setSelectedContract(contract);
-    setIsSendToSalesDialogOpen(true);
-  };
-
-  const confirmSendToSales = async () => {
-    try {
-      await api.sendContractToSales(selectedContract.contract.id);
-      toast.success("Contract sent to sales successfully");
-      setIsSendToSalesDialogOpen(false);
-      fetchContracts();
-    } catch (error) {
-      toast.error(error.message || "Failed to send contract to sales");
-    }
   };
 
   const handleViewContract = (contract) => {
@@ -214,7 +195,7 @@ export default function ContractRequests() {
   const confirmUploadContract = async (
     pdfFile,
     adminNotes,
-    sendToSales,
+    _sendToSales,
     editedData,
   ) => {
     try {
@@ -225,13 +206,7 @@ export default function ContractRequests() {
         editedData,
       );
 
-      if (sendToSales) {
-        await api.sendContractToSales(selectedContract.contract.id);
-        toast.success("Contract uploaded and sent to sales successfully");
-      } else {
-        toast.success("Contract uploaded successfully");
-      }
-
+      toast.success("Contract submitted successfully");
       setIsUploadDialogOpen(false);
       fetchContracts();
     } catch (error) {
@@ -267,9 +242,7 @@ export default function ContractRequests() {
     users,
     userRole: user?.role,
     onRequestContract: handleRequestContract,
-    onUploadContract: handleUploadContract,
-    onGenerateContract: handleGenerateContract,
-    onSendToSales: handleSendToSales,
+    onSubmitContract: handleSubmitContract,
     onSendToClient: handleSendToClient,
     onUploadHardbound: handleUploadHardbound,
     onViewContract: handleViewContract,
@@ -308,7 +281,6 @@ export default function ContractRequests() {
             options={[
               { value: "pending_request", label: "Pending Request" },
               { value: "requested", label: "Requested" },
-              { value: "ready_for_sales", label: "Ready for Sales" },
               { value: "sent_to_sales", label: "Sent to Sales" },
               { value: "sent_to_client", label: "Sent to Client" },
               { value: "signed", label: "Signed" },
@@ -396,15 +368,6 @@ export default function ContractRequests() {
         contract={selectedContract}
         users={users}
         onConfirm={confirmGenerateContract}
-        onSendToSales={handleSendToSales}
-      />
-
-      <SendToSalesDialog
-        open={isSendToSalesDialogOpen}
-        onOpenChange={setIsSendToSalesDialogOpen}
-        contract={selectedContract}
-        users={users}
-        onConfirm={confirmSendToSales}
       />
 
       <SendToClientDialog
