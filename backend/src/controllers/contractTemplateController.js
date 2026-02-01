@@ -15,7 +15,7 @@ import { AppError } from "../middleware/errorHandler.js";
 export const createTemplate = async (req, res, next) => {
   try {
     // Only admin can create templates
-    if (req.user.role !== "admin") {
+    if (req.user.role !== "admin" && req.user.role !== "super_admin") {
       throw new AppError("Only admins can create contract templates", 403);
     }
 
@@ -126,7 +126,7 @@ export const getTemplateByType = async (req, res, next) => {
 export const updateTemplate = async (req, res, next) => {
   try {
     // Only admin can update templates
-    if (req.user.role !== "admin") {
+    if (req.user.role !== "admin" && req.user.role !== "super_admin") {
       throw new AppError("Only admins can update contract templates", 403);
     }
 
@@ -161,7 +161,7 @@ export const updateTemplate = async (req, res, next) => {
 export const setDefaultTemplate = async (req, res, next) => {
   try {
     // Only admin can set default
-    if (req.user.role !== "admin") {
+    if (req.user.role !== "admin" && req.user.role !== "super_admin") {
       throw new AppError("Only admins can set default templates", 403);
     }
 
@@ -195,7 +195,7 @@ export const setDefaultTemplate = async (req, res, next) => {
 export const deleteTemplate = async (req, res, next) => {
   try {
     // Only admin can delete templates
-    if (req.user.role !== "admin") {
+    if (req.user.role !== "admin" && req.user.role !== "super_admin") {
       throw new AppError("Only admins can delete contract templates", 403);
     }
 

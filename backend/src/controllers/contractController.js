@@ -106,7 +106,7 @@ export const uploadContractPdf = async (req, res, next) => {
     const { adminNotes, editedData } = req.body;
 
     // Only admin can upload contracts
-    if (req.user.role !== "admin") {
+    if (req.user.role !== "admin" && req.user.role !== "super_admin") {
       throw new AppError("Only admins can upload contracts", 403);
     }
 
@@ -156,10 +156,10 @@ export const uploadContractPdf = async (req, res, next) => {
 export const generateContractFromTemplate = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { editedData, adminNotes } = req.body;
+    const { editedData, adminNotes, editedHtmlContent } = req.body;
 
     // Only admin can generate contracts
-    if (req.user.role !== "admin") {
+    if (req.user.role !== "admin" && req.user.role !== "super_admin") {
       throw new AppError("Only admins can generate contracts", 403);
     }
 
@@ -182,6 +182,7 @@ export const generateContractFromTemplate = async (req, res, next) => {
       id,
       parsedEditedData,
       adminNotes,
+      editedHtmlContent || null,
       req.user.id,
       metadata
     );
@@ -206,7 +207,7 @@ export const previewContractFromTemplate = async (req, res, next) => {
     const { editedData } = req.body;
 
     // Only admin can preview contracts
-    if (req.user.role !== "admin") {
+    if (req.user.role !== "admin" && req.user.role !== "super_admin") {
       throw new AppError("Only admins can preview contracts", 403);
     }
 
@@ -256,6 +257,62 @@ export const previewContractFromTemplate = async (req, res, next) => {
 };
 
 /**
+ * Get rendered HTML of a contract (compiled Handlebars template)
+ * GET /api/contracts/:id/rendered-html
+ */
+export const getRenderedHtml = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (req.user.role !== "admin" && req.user.role !== "super_admin") {
+      throw new AppError("Only admins can access rendered contract HTML", 403);
+    }
+
+    const contractData = await contractService.getContractById(id);
+    const contract = contractData.contract;
+
+    // If previously edited HTML exists, return it directly
+    if (contract.editedHtmlContent) {
+      return res.status(200).json({
+        success: true,
+        data: { html: contract.editedHtmlContent },
+      });
+    }
+
+    if (!contract.templateId) {
+      throw new AppError("Contract does not have a template", 400);
+    }
+
+    const contractTemplateService = (await import("../services/contractTemplateService.js")).default;
+    const template = await contractTemplateService.getTemplateById(contract.templateId);
+
+    let contractDataForRender;
+    try {
+      contractDataForRender = JSON.parse(contract.contractData || "{}");
+    } catch (error) {
+      throw new AppError("Invalid contract data", 400);
+    }
+
+    contractDataForRender.contractNumber = contractData.proposal.proposalNumber
+      ? contractData.proposal.proposalNumber.replace("PROP-", "CONT-")
+      : "PENDING";
+
+    const pdfService = (await import("../services/pdfService.js")).default;
+    const html = pdfService.renderContractTemplate(
+      contractDataForRender,
+      template.htmlTemplate
+    );
+
+    res.status(200).json({
+      success: true,
+      data: { html },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Admin sends contract to sales
  * POST /api/contracts/:id/send-to-sales
  */
@@ -264,7 +321,7 @@ export const sendToSales = async (req, res, next) => {
     const { id } = req.params;
 
     // Only admin can send to sales
-    if (req.user.role !== "admin") {
+    if (req.user.role !== "admin" && req.user.role !== "super_admin") {
       throw new AppError("Only admins can send contracts to sales", 403);
     }
 
@@ -530,7 +587,7 @@ export const uploadHardboundContract = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    if (req.user.role !== "admin") {
+    if (req.user.role !== "admin" && req.user.role !== "super_admin") {
       throw new AppError("Only admin users can upload hardbound contracts", 403);
     }
 

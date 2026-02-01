@@ -175,7 +175,7 @@ export const createClientColumns = ({ userRole, onView, onEdit, onDelete }) => [
               <Eye className="mr-2 h-4 w-4" />
               View Details
             </DropdownMenuItem>
-            {userRole === "admin" && (
+            {(userRole === "admin" || userRole === "super_admin") && (
               <>
                 <DropdownMenuItem onClick={() => onEdit(client)}>
                   <Pencil className="mr-2 h-4 w-4" />

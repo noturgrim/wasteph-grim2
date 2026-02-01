@@ -66,7 +66,7 @@ export const getEventById = async (req, res, next) => {
     const event = await calendarEventService.getEventById(id);
 
     // Check if user has access
-    if (event.userId !== req.user.id && req.user.role !== "admin") {
+    if (event.userId !== req.user.id && req.user.role !== "admin" && req.user.role !== "super_admin") {
       return res.status(403).json({
         success: false,
         message: "You don't have permission to view this event",

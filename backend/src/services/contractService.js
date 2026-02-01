@@ -428,6 +428,7 @@ class ContractService {
     contractId,
     editedData = null,
     adminNotes = null,
+    editedHtmlContent = null,
     userId,
     metadata = {}
   ) {
@@ -479,11 +480,10 @@ class ContractService {
 
     // Generate PDF from template
     let pdfBuffer;
-    if (contract.editedHtmlContent) {
-      // Use pre-rendered HTML if available
-      pdfBuffer = await pdfService.generateContractFromHTML(
-        contract.editedHtmlContent
-      );
+    const htmlToUse = editedHtmlContent || contract.editedHtmlContent;
+    if (htmlToUse) {
+      // Use pre-rendered HTML if available (from request body or previously saved)
+      pdfBuffer = await pdfService.generateContractFromHTML(htmlToUse);
     } else {
       // Generate from template
       pdfBuffer = await pdfService.generateContractPDF(
@@ -504,6 +504,11 @@ class ContractService {
       adminNotes,
       updatedAt: new Date(),
     };
+
+    // Save edited HTML content if provided
+    if (editedHtmlContent) {
+      updateData.editedHtmlContent = editedHtmlContent;
+    }
 
     // If admin edited contract data, update it
     if (editedData) {

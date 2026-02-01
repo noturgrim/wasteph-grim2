@@ -103,4 +103,9 @@ export const updateShowcaseSchema = z.object({
     .optional(),
 
   isActive: z.boolean().optional(),
-});
+}); 
+
+
+
+
+

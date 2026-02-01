@@ -296,6 +296,19 @@ class PDFService {
   }
 
   /**
+   * Render contract template to HTML string (without generating PDF).
+   * Reuses the same data preparation and Handlebars compilation as generateContractPDF.
+   * @param {Object} contractData - Contract data
+   * @param {string} templateHtml - HTML template with Handlebars placeholders
+   * @returns {string} Rendered HTML string
+   */
+  renderContractTemplate(contractData, templateHtml) {
+    const templateData = this.prepareContractTemplateData(contractData);
+    const template = Handlebars.compile(templateHtml);
+    return template(templateData);
+  }
+
+  /**
    * Generate PDF from pre-rendered HTML (for edited contracts)
    * @param {string} html - Pre-rendered HTML content
    * @returns {Promise<Buffer>} PDF buffer

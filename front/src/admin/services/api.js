@@ -567,10 +567,10 @@ class ApiClient {
     window.open(url, "_blank");
   }
 
-  async generateContractFromTemplate(id, editedData = null, adminNotes = null) {
+  async generateContractFromTemplate(id, editedData = null, adminNotes = null, editedHtmlContent = null) {
     return this.request(`/contracts/${id}/generate-from-template`, {
       method: "POST",
-      body: JSON.stringify({ editedData, adminNotes }),
+      body: JSON.stringify({ editedData, adminNotes, editedHtmlContent }),
     });
   }
 
@@ -579,6 +579,10 @@ class ApiClient {
       method: "POST",
       body: JSON.stringify({ editedData }),
     });
+  }
+
+  async getRenderedContractHtml(id) {
+    return this.request(`/contracts/${id}/rendered-html`);
   }
 
   // Contract Template endpoints

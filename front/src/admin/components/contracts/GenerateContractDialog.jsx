@@ -26,9 +26,12 @@ import {
   X,
   Send,
   Edit,
+  Code2,
+  RefreshCw,
 } from "lucide-react";
 import { api } from "../../services/api";
 import { toast } from "../../utils/toast";
+import ProposalHtmlEditor from "@/components/common/ProposalHtmlEditor";
 
 const CONTRACT_TYPES = [
   { value: "long_term_variable", label: "LONG TERM GARBAGE VARIABLE CHARGE" },
@@ -65,6 +68,11 @@ export function GenerateContractDialog({
   const [isGenerated, setIsGenerated] = useState(false);
   const [editedData, setEditedData] = useState({});
   const [originalData, setOriginalData] = useState({});
+  const [isHtmlEditorMode, setIsHtmlEditorMode] = useState(false);
+  const [renderedHtml, setRenderedHtml] = useState("");
+  const [savedHtml, setSavedHtml] = useState("");
+  const [isLoadingHtml, setIsLoadingHtml] = useState(false);
+  const [hasUnsavedHtmlChanges, setHasUnsavedHtmlChanges] = useState(false);
 
   // Initialize data when dialog opens
   useEffect(() => {
@@ -107,6 +115,10 @@ export function GenerateContractDialog({
       setOriginalData(data);
       setAdminNotes("");
       setPdfPreviewUrl("");
+      setIsHtmlEditorMode(false);
+      setRenderedHtml("");
+      setSavedHtml("");
+      setHasUnsavedHtmlChanges(false);
 
       // If contract already has a generated PDF, mark as generated and load it
       if (contractData.contractPdfUrl || contractData.status === "ready_for_sales") {
@@ -251,6 +263,46 @@ export function GenerateContractDialog({
     }
   };
 
+  const handleEditContract = async () => {
+    try {
+      setIsLoadingHtml(true);
+      const response = await api.getRenderedContractHtml(contract.contract.id);
+      if (response.success) {
+        setRenderedHtml(response.data.html);
+        setSavedHtml(response.data.html);
+        setIsHtmlEditorMode(true);
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to load contract HTML");
+    } finally {
+      setIsLoadingHtml(false);
+    }
+  };
+
+  const handleEditorSave = ({ html }) => {
+    setSavedHtml(html);
+  };
+
+  const handleSaveAndRegenerate = async () => {
+    try {
+      setIsSubmitting(true);
+      await api.generateContractFromTemplate(
+        contract.contract.id,
+        editedData,
+        adminNotes || null,
+        savedHtml
+      );
+      toast.success("Contract regenerated successfully");
+      setIsGenerated(true);
+      setHasUnsavedHtmlChanges(false);
+      await loadGeneratedPdf();
+    } catch (error) {
+      toast.error(error.message || "Failed to regenerate contract");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (!contract) return null;
 
   const salesPerson = users?.find(
@@ -286,20 +338,65 @@ export function GenerateContractDialog({
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                      <Edit className="h-4 w-4" />
-                      Edit Contract Details
+                      {isHtmlEditorMode ? (
+                        <Code2 className="h-4 w-4" />
+                      ) : (
+                        <Edit className="h-4 w-4" />
+                      )}
+                      {isHtmlEditorMode ? "Edit Contract HTML" : "Edit Contract Details"}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-1">
                       Sales Person: {salesPersonName}
                     </p>
                   </div>
-                  {isGenerated && (
-                    <Badge className="bg-green-600">Generated</Badge>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {isGenerated && !isHtmlEditorMode && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleEditContract}
+                        disabled={isLoadingHtml}
+                      >
+                        {isLoadingHtml ? (
+                          <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+                        ) : (
+                          <Code2 className="h-3.5 w-3.5 mr-1" />
+                        )}
+                        Edit Contract
+                      </Button>
+                    )}
+                    {isHtmlEditorMode && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setIsHtmlEditorMode(false);
+                          setHasUnsavedHtmlChanges(false);
+                        }}
+                      >
+                        <Edit className="h-3.5 w-3.5 mr-1" />
+                        Back to Fields
+                      </Button>
+                    )}
+                    {isGenerated && (
+                      <Badge className="bg-green-600">Generated</Badge>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Editable Fields */}
+              {/* Editable Fields / HTML Editor */}
+              {isHtmlEditorMode ? (
+                <ProposalHtmlEditor
+                  content={renderedHtml}
+                  templateStyles=""
+                  onChange={handleEditorSave}
+                  onUnsavedChange={setHasUnsavedHtmlChanges}
+                  className="min-h-[500px]"
+                />
+              ) : (
               <div className="space-y-4">
           {/* Contract Type */}
           <div className="space-y-2">
@@ -555,6 +652,7 @@ export function GenerateContractDialog({
             </p>
           </div>
               </div>
+              )}
             </div>
           </div>
 
@@ -612,6 +710,22 @@ export function GenerateContractDialog({
           >
             Cancel
           </Button>
+
+          {isHtmlEditorMode && (
+            <Button
+              onClick={handleSaveAndRegenerate}
+              variant="outline"
+              disabled={isSubmitting || hasUnsavedHtmlChanges || !savedHtml}
+              className="border-green-600 text-green-700 hover:bg-green-50"
+            >
+              {isSubmitting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 h-4 w-4" />
+              )}
+              Save &amp; Regenerate
+            </Button>
+          )}
 
           <Button
             onClick={handleSendToSales}

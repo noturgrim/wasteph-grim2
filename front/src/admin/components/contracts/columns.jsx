@@ -213,7 +213,7 @@ export const createColumns = ({
           )}
 
           {/* Admin: Generate/Upload Contract button (requested) */}
-          {userRole === "admin" && status === "requested" && (
+          {(userRole === "admin" || userRole === "super_admin") && status === "requested" && (
             <>
               {contract.contract?.templateId ? (
                 // Template-based contract: Show Generate button
@@ -241,7 +241,7 @@ export const createColumns = ({
           )}
 
           {/* Admin: Send to Sales button (ready_for_sales) - opens generate dialog with PDF loaded */}
-          {userRole === "admin" && status === "ready_for_sales" && (
+          {(userRole === "admin" || userRole === "super_admin") && status === "ready_for_sales" && (
             <Button
               variant="default"
               size="sm"
@@ -265,7 +265,7 @@ export const createColumns = ({
           )}
 
           {/* Admin: Upload Hardbound button (signed) */}
-          {userRole === "admin" && status === "signed" && (
+          {(userRole === "admin" || userRole === "super_admin") && status === "signed" && (
             <Button
               variant="default"
               size="sm"
@@ -308,7 +308,7 @@ export const createColumns = ({
               )}
 
               {/* Admin: Re-upload if ready_for_sales or sent_to_sales */}
-              {userRole === "admin" && (status === "ready_for_sales" || status === "sent_to_sales") && (
+              {(userRole === "admin" || userRole === "super_admin") && (status === "ready_for_sales" || status === "sent_to_sales") && (
                 <DropdownMenuItem onClick={() => onUploadContract(contract)}>
                   <Upload className="mr-2 h-4 w-4" />
                   Re-upload Contract

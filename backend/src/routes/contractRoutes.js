@@ -73,6 +73,7 @@ router.post(
 );
 router.post("/:id/generate-from-template", controller.generateContractFromTemplate);
 router.post("/:id/preview-from-template", controller.previewContractFromTemplate);
+router.get("/:id/rendered-html", controller.getRenderedHtml);
 router.post("/:id/send-to-sales", controller.sendToSales);
 
 // PDF OPERATIONS

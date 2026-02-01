@@ -26,6 +26,7 @@ import {
   Edit,
   Plus,
   X,
+  Download,
 } from "lucide-react";
 
 const CONTRACT_TYPES = [
@@ -63,18 +64,15 @@ export function UploadContractDialog({
   const [editedData, setEditedData] = useState({});
   const [originalData, setOriginalData] = useState({});
 
-  // Auto-download custom template when dialog opens
-  useEffect(() => {
-    if (open && contract?.contract?.customTemplateUrl) {
-      const url = `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/contracts/${contract.contract.id}/custom-template`;
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = true;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-  }, [open, contract?.contract?.customTemplateUrl]);
+  const handleDownloadTemplate = () => {
+    const url = `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}/contracts/${contract.contract.id}/custom-template`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = true;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
 
   // Initialize data when dialog opens
   useEffect(() => {
@@ -313,8 +311,15 @@ export function UploadContractDialog({
                         Client Custom Template Provided
                       </h4>
                       <p className="text-xs text-purple-700 dark:text-purple-300">
-                        The client has provided their own contract template.
-                        It has been automatically downloaded for you.
+                        The client has provided their own contract template.{" "}
+                        <button
+                          type="button"
+                          onClick={handleDownloadTemplate}
+                          className="inline-flex items-center gap-1 hover:underline cursor-pointer"
+                        >
+                          Download Template
+                          <Download className="h-3 w-3" />
+                        </button>
                       </p>
                     </div>
                   </div>
