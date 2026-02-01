@@ -17,7 +17,7 @@ const seedAdmin = async () => {
         password: "Admin@123456",
         firstName: "Admin",
         lastName: "User",
-        role: "admin",
+        role: "super_admin",
         isMasterSales: false,
       },
       {

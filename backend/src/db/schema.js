@@ -11,7 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 // Enums
-export const userRoleEnum = pgEnum("user_role", ["admin", "sales"]);
+export const userRoleEnum = pgEnum("user_role", ["admin", "sales", "social_media", "super_admin"]);
 export const inquiryStatusEnum = pgEnum("inquiry_status", [
   "submitted_proposal",
   "initial_comms",

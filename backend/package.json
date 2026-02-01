@@ -26,7 +26,8 @@
     "migrate:create-contract-templates": "node src/scripts/createContractTemplatesTable.js",
     "migrate:add-contract-template-fields": "node src/scripts/addContractTemplateFields.js",
     "seed:contract-templates": "node src/scripts/seedContractTemplates.js",
-    "migrate:to-s3": "node src/scripts/migrateToS3.js"
+    "migrate:to-s3": "node src/scripts/migrateToS3.js",
+    "migrate:admin-to-super-admin": "node src/scripts/migrateAdminToSuperAdmin.js"
   },
   "keywords": [],
   "author": "",

@@ -19,7 +19,9 @@ import {
  * Navigation configuration for different user roles
  *
  * Roles:
- * - admin: Full access to everything including user management
+ * - super_admin: Full access to everything (Management, Content, Administration)
+ * - admin: Management access (Proposals, Contracts, Clients) — no Content or Administration
+ * - social_media: Content management (Blog Posts, Showcase, Clients Showcase)
  * - sales: Access to sales pipeline only
  */
 
@@ -103,8 +105,8 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
     });
   }
 
-  // Admin gets admin-only sections (NO sales pipeline access)
-  if (role === "admin") {
+  // Super Admin gets full access to everything
+  if (role === "super_admin") {
     return [
       {
         label: "General",
@@ -183,6 +185,92 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
             url: "/admin/settings",
             icon: Settings,
             description: "System configuration",
+          },
+        ],
+      },
+    ];
+  }
+
+  // Social Media gets Dashboard + Content only
+  if (role === "social_media") {
+    return [
+      {
+        label: "General",
+        items: [
+          {
+            title: "Dashboard",
+            url: "/admin/dashboard",
+            icon: LayoutDashboard,
+            description: "Overview and statistics",
+          },
+        ],
+      },
+      {
+        label: "Content",
+        items: [
+          {
+            title: "Blog Posts",
+            url: "/admin/blog",
+            icon: BookOpen,
+            description: "Manage blog content",
+          },
+          {
+            title: "Showcase",
+            url: "/admin/showcase",
+            icon: Image,
+            description: "Manage community showcase",
+          },
+          {
+            title: "Clients Showcase",
+            url: "/admin/clients-showcase",
+            icon: Users,
+            description: "Manage client success stories",
+          },
+        ],
+      },
+    ];
+  }
+
+  // Admin gets Management only (no Content, no Administration)
+  if (role === "admin") {
+    return [
+      {
+        label: "General",
+        items: [
+          {
+            title: "Dashboard",
+            url: "/admin/dashboard",
+            icon: LayoutDashboard,
+            description: "Overview and statistics",
+          },
+        ],
+      },
+      {
+        label: "Management",
+        items: [
+          {
+            title: "Proposals",
+            url: "/admin/proposals",
+            icon: ScrollText,
+            description: "Review and approve proposals",
+          },
+          {
+            title: "Contract Requests",
+            url: "/admin/contract-requests",
+            icon: FileSignature,
+            description: "Manage contract requests",
+          },
+          {
+            title: "Contract Templates",
+            url: "/admin/contract-templates",
+            icon: FileSignature,
+            description: "Manage contract templates",
+          },
+          {
+            title: "Clients",
+            url: "/admin/clients",
+            icon: UserCheck,
+            description: "Manage contracted clients",
           },
         ],
       },

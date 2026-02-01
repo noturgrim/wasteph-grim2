@@ -244,6 +244,30 @@ class ApiClient {
     return this.request(`/users${queryString ? `?${queryString}` : ""}`);
   }
 
+  async getAllUsers() {
+    return this.request("/users?includeInactive=true");
+  }
+
+  async createUser(data) {
+    return this.request("/users", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateUser(id, data) {
+    return this.request(`/users/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteUser(id) {
+    return this.request(`/users/${id}`, {
+      method: "DELETE",
+    });
+  }
+
   // Service endpoints
   async getServices() {
     return this.request("/services");
