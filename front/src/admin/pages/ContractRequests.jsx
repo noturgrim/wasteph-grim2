@@ -23,6 +23,7 @@ import { UploadContractDialog } from "../components/contracts/UploadContractDial
 import { GenerateContractDialog } from "../components/contracts/GenerateContractDialog";
 import { SendToClientDialog } from "../components/contracts/SendToClientDialog";
 import { ViewContractDetailsDialog } from "../components/contracts/ViewContractDetailsDialog";
+import { UploadHardboundDialog } from "../components/contracts/UploadHardboundDialog";
 import { PDFViewer } from "../components/PDFViewer";
 
 export default function ContractRequests() {
@@ -61,6 +62,7 @@ export default function ContractRequests() {
   const [isSendToClientDialogOpen, setIsSendToClientDialogOpen] =
     useState(false);
   const [isViewDetailsDialogOpen, setIsViewDetailsDialogOpen] = useState(false);
+  const [isUploadHardboundDialogOpen, setIsUploadHardboundDialogOpen] = useState(false);
   const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [pdfViewerUrl, setPdfViewerUrl] = useState("");
   const [pdfViewerName, setPdfViewerName] = useState("");
@@ -135,33 +137,20 @@ export default function ContractRequests() {
     setIsSendToClientDialogOpen(true);
   };
 
-  const handleUploadHardbound = async (contract) => {
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "application/pdf";
-    fileInput.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+  const handleUploadHardbound = (contract) => {
+    setSelectedContract(contract);
+    setIsUploadHardboundDialogOpen(true);
+  };
 
-      if (file.type !== "application/pdf") {
-        toast.error("Only PDF files are allowed");
-        return;
-      }
-
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("File size must be less than 10MB");
-        return;
-      }
-
-      try {
-        await api.uploadHardboundContract(contract.contract.id, file);
-        toast.success("Hardbound contract uploaded successfully");
-        fetchContracts();
-      } catch (error) {
-        toast.error(error.message || "Failed to upload hardbound contract");
-      }
-    };
-    fileInput.click();
+  const confirmUploadHardbound = async (file) => {
+    try {
+      await api.uploadHardboundContract(selectedContract.contract.id, file);
+      toast.success("Hardbound contract uploaded successfully");
+      setIsUploadHardboundDialogOpen(false);
+      fetchContracts();
+    } catch (error) {
+      toast.error(error.message || "Failed to upload hardbound contract");
+    }
   };
 
   const handleViewContract = async (contract) => {
@@ -393,6 +382,13 @@ export default function ContractRequests() {
         onOpenChange={setIsViewDetailsDialogOpen}
         contract={selectedContract}
         users={users}
+      />
+
+      <UploadHardboundDialog
+        open={isUploadHardboundDialogOpen}
+        onOpenChange={setIsUploadHardboundDialogOpen}
+        contract={selectedContract}
+        onConfirm={confirmUploadHardbound}
       />
 
       {showPdfViewer && pdfViewerUrl && (
