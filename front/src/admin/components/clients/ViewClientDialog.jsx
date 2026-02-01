@@ -50,6 +50,23 @@ export function ViewClientDialog({ open, onOpenChange, client, users }) {
               </div>
               {getStatusBadge(client.status)}
             </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Contract</p>
+              <div className="flex gap-1 mt-0.5">
+                {client.contractStatus === "signed" && (
+                  <Badge className="bg-green-600 text-white text-xs">Signed</Badge>
+                )}
+                {client.contractStatus === "hardbound_received" && (
+                  <>
+                    <Badge className="bg-green-600 text-white text-xs">Signed</Badge>
+                    <Badge className="bg-emerald-700 text-white text-xs">Hardbound Received</Badge>
+                  </>
+                )}
+                {client.contractStatus !== "signed" && client.contractStatus !== "hardbound_received" && (
+                  <span className="text-sm text-muted-foreground">—</span>
+                )}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-sm text-muted-foreground">Contact Person</p>

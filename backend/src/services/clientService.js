@@ -1,5 +1,5 @@
 import { db } from "../db/index.js";
-import { clientTable, activityLogTable } from "../db/schema.js";
+import { clientTable, contractsTable, activityLogTable } from "../db/schema.js";
 import { eq, desc } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 
@@ -70,12 +70,19 @@ class ClientService {
    * @returns {Promise<Array>} Array of clients
    */
   async getAllClients() {
-    const clients = await db
-      .select()
+    const rows = await db
+      .select({
+        client: clientTable,
+        contractStatus: contractsTable.status,
+      })
       .from(clientTable)
+      .leftJoin(contractsTable, eq(contractsTable.clientId, clientTable.id))
       .orderBy(desc(clientTable.createdAt));
 
-    return clients;
+    return rows.map((row) => ({
+      ...row.client,
+      contractStatus: row.contractStatus || null,
+    }));
   }
 
   /**

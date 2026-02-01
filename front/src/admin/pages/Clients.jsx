@@ -36,10 +36,10 @@ export default function Clients() {
     contactPerson: true,
     email: true,
     phone: true,
-    location: true,
+    industry: true,
     status: true,
+    contractStatus: true,
     contractDates: true,
-    accountManager: true,
     createdAt: true,
   });
 
@@ -144,7 +144,6 @@ export default function Clients() {
   };
 
   const allColumns = createClientColumns({
-    users,
     onView: handleView,
     onEdit: handleEdit,
     onDelete: handleDelete,

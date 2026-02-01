@@ -26,7 +26,7 @@ const getStatusBadge = (status) => {
   );
 };
 
-export const createClientColumns = ({ users = [], onView, onEdit, onDelete }) => [
+export const createClientColumns = ({ onView, onEdit, onDelete }) => [
   {
     accessorKey: "companyName",
     header: ({ column }) => {
@@ -82,18 +82,33 @@ export const createClientColumns = ({ users = [], onView, onEdit, onDelete }) =>
     cell: ({ row }) => row.original.phone || "-",
   },
   {
-    accessorKey: "location",
-    header: "Location",
-    cell: ({ row }) => {
-      const { city, province } = row.original;
-      if (city && province) return `${city}, ${province}`;
-      return city || province || "-";
-    },
+    accessorKey: "industry",
+    header: "Industry",
+    cell: ({ row }) => row.original.industry || "-",
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => getStatusBadge(row.original.status),
+  },
+  {
+    accessorKey: "contractStatus",
+    header: "Contract",
+    cell: ({ row }) => {
+      const cs = row.original.contractStatus;
+      if (cs === "hardbound_received") {
+        return (
+          <div className="flex flex-col gap-1">
+            <Badge className="bg-green-600 text-white text-xs">Signed</Badge>
+            <Badge className="bg-emerald-700 text-white text-xs">Hardbound Received</Badge>
+          </div>
+        );
+      }
+      if (cs === "signed") {
+        return <Badge className="bg-green-600 text-white text-xs">Signed</Badge>;
+      }
+      return <span className="text-muted-foreground text-sm">—</span>;
+    },
   },
   {
     accessorKey: "contractDates",
@@ -105,14 +120,6 @@ export const createClientColumns = ({ users = [], onView, onEdit, onDelete }) =>
       if (start && end) return `${start} – ${end}`;
       if (start) return `From ${start}`;
       return "-";
-    },
-  },
-  {
-    accessorKey: "accountManager",
-    header: "Account Manager",
-    cell: ({ row }) => {
-      const manager = users.find((u) => u.id === row.original.accountManager);
-      return manager ? `${manager.firstName} ${manager.lastName}` : "-";
     },
   },
   {
