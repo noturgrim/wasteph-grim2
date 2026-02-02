@@ -36,6 +36,34 @@ export const clientStatusEnum = pgEnum("client_status", [
   "inactive",
   "suspended",
 ]);
+export const ticketStatusEnum = pgEnum("ticket_status", [
+  "open",
+  "in_progress",
+  "resolved",
+  "closed",
+]);
+export const ticketCategoryEnum = pgEnum("ticket_category", [
+  "technical_issue",
+  "billing_payment",
+  "feature_request",
+  "complaint",
+  "feedback",
+  "contract_legal",
+  "other",
+]);
+export const ticketPriorityEnum = pgEnum("ticket_priority", [
+  "low",
+  "medium",
+  "high",
+  "urgent",
+]);
+export const clientInteractionTypeEnum = pgEnum("client_interaction_type", [
+  "phone_call",
+  "site_visit",
+  "email",
+  "meeting",
+  "other",
+]);
 // Removed serviceTypeEnum - now using service table instead
 export const serviceModeEnum = pgEnum("service_mode", [
   "one_time",
@@ -691,3 +719,105 @@ export const activityLogTable = pgTable("activity_log", {
     .notNull()
     .defaultNow(),
 });
+
+// Client Tickets - Support ticketing system for contracted clients
+export const clientTicketsTable = pgTable("client_tickets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ticketNumber: text("ticket_number").notNull().unique(), // Format: TKT-YYYYMMDD-NNNN
+  clientId: uuid("client_id")
+    .notNull()
+    .references(() => clientTable.id, { onDelete: "cascade" }),
+  category: ticketCategoryEnum("category").notNull(),
+  priority: ticketPriorityEnum("priority").notNull().default("medium"),
+  subject: text("subject").notNull(),
+  description: text("description").notNull(),
+  status: ticketStatusEnum("status").notNull().default("open"),
+  
+  // Sales who created the ticket
+  createdBy: text("created_by")
+    .notNull()
+    .references(() => userTable.id),
+  
+  // Admin who resolved the ticket
+  resolvedBy: text("resolved_by").references(() => userTable.id),
+  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+  resolutionNotes: text("resolution_notes"),
+  
+  // Timestamps
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (table) => ({
+  ticketNumberIdx: index("client_tickets_ticket_number_idx").on(table.ticketNumber),
+  clientIdIdx: index("client_tickets_client_id_idx").on(table.clientId),
+  statusIdx: index("client_tickets_status_idx").on(table.status),
+  createdByIdx: index("client_tickets_created_by_idx").on(table.createdBy),
+  categoryIdx: index("client_tickets_category_idx").on(table.category),
+  priorityIdx: index("client_tickets_priority_idx").on(table.priority),
+}));
+
+// Ticket Attachments - Files attached to tickets
+export const ticketAttachmentsTable = pgTable("ticket_attachments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ticketId: uuid("ticket_id")
+    .notNull()
+    .references(() => clientTicketsTable.id, { onDelete: "cascade" }),
+  fileName: text("file_name").notNull(),
+  fileUrl: text("file_url").notNull(), // S3 key
+  fileSize: integer("file_size"), // in bytes
+  fileType: text("file_type"), // mime type
+  uploadedBy: text("uploaded_by")
+    .notNull()
+    .references(() => userTable.id),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (table) => ({
+  ticketIdIdx: index("ticket_attachments_ticket_id_idx").on(table.ticketId),
+}));
+
+// Ticket Comments - Comments/updates on tickets
+export const ticketCommentsTable = pgTable("ticket_comments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ticketId: uuid("ticket_id")
+    .notNull()
+    .references(() => clientTicketsTable.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  createdBy: text("created_by")
+    .notNull()
+    .references(() => userTable.id),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (table) => ({
+  ticketIdIdx: index("ticket_comments_ticket_id_idx").on(table.ticketId),
+  createdAtIdx: index("ticket_comments_created_at_idx").on(table.createdAt),
+}));
+
+// Client Notes - Activity log for client interactions
+export const clientNotesTable = pgTable("client_notes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  clientId: uuid("client_id")
+    .notNull()
+    .references(() => clientTable.id, { onDelete: "cascade" }),
+  interactionType: clientInteractionTypeEnum("interaction_type").notNull(),
+  subject: text("subject").notNull(),
+  content: text("content").notNull(),
+  interactionDate: timestamp("interaction_date", { withTimezone: true }).notNull(), // When the interaction happened
+  createdBy: text("created_by")
+    .notNull()
+    .references(() => userTable.id),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (table) => ({
+  clientIdIdx: index("client_notes_client_id_idx").on(table.clientId),
+  interactionDateIdx: index("client_notes_interaction_date_idx").on(table.interactionDate),
+  createdByIdx: index("client_notes_created_by_idx").on(table.createdBy),
+}));

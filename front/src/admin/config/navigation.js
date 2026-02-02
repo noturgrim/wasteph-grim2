@@ -13,6 +13,7 @@ import {
   Image,
   FileSignature,
   Calendar,
+  Ticket,
 } from "lucide-react";
 
 /**
@@ -149,6 +150,17 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
         ],
       },
       {
+        label: "Support",
+        items: [
+          {
+            title: "Tickets",
+            url: "/admin/tickets",
+            icon: Ticket,
+            description: "Manage client support tickets",
+          },
+        ],
+      },
+      {
         label: "Content",
         items: [
           {
@@ -274,6 +286,17 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
           },
         ],
       },
+      {
+        label: "Support",
+        items: [
+          {
+            title: "Tickets",
+            url: "/admin/tickets",
+            icon: Ticket,
+            description: "Manage client support tickets",
+          },
+        ],
+      },
     ];
   }
 
@@ -290,8 +313,8 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
  */
 export const hasAccess = (role, path, isMasterSales = false) => {
   const navigation = getNavigationByRole(role, isMasterSales);
-  const allItems = navigation.flatMap(group => group.items);
-  return allItems.some(item => path.startsWith(item.url));
+  const allItems = navigation.flatMap((group) => group.items);
+  return allItems.some((item) => path.startsWith(item.url));
 };
 
 /**

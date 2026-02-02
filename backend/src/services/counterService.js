@@ -45,7 +45,20 @@ class CounterService {
         .returning();
 
       // Determine prefix based on entity type
-      const prefix = entityType === 'inquiry' ? 'INQ' : 'PROP';
+      let prefix;
+      switch (entityType) {
+        case 'inquiry':
+          prefix = 'INQ';
+          break;
+        case 'proposal':
+          prefix = 'PROP';
+          break;
+        case 'ticket':
+          prefix = 'TKT';
+          break;
+        default:
+          prefix = 'UNK';
+      }
 
       // Pad number to 4 digits (0001, 0002, ..., 9999)
       const paddedNumber = String(counter.currentValue).padStart(4, '0');
@@ -72,6 +85,14 @@ class CounterService {
    */
   async getNextProposalNumber() {
     return this.getNextNumber('proposal');
+  }
+
+  /**
+   * Generate ticket number
+   * @returns {Promise<string>} Format: TKT-YYYYMMDD-NNNN
+   */
+  async getNextTicketNumber() {
+    return this.getNextNumber('ticket');
   }
 
   /**

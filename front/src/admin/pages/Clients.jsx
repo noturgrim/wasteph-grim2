@@ -18,7 +18,7 @@ import { DataTable } from "../components/DataTable";
 import { FacetedFilter } from "../components/FacetedFilter";
 import { SearchInput } from "../components/SearchInput";
 import { createClientColumns } from "../components/clients/columns";
-import { ViewClientDialog } from "../components/clients/ViewClientDialog";
+import { ClientDetailDialog } from "../components/clients/ClientDetailDialog";
 import { EditClientDialog } from "../components/clients/EditClientDialog";
 import { DeleteConfirmationModal } from "../components/modals/DeleteConfirmationModal";
 
@@ -183,7 +183,9 @@ export default function Clients() {
             ]}
             selectedValues={statusFilter}
             onSelectionChange={setStatusFilter}
-            getCount={(status) => clients.filter((c) => c.status === status).length}
+            getCount={(status) =>
+              clients.filter((c) => c.status === status).length
+            }
           />
 
           {(statusFilter.length > 0 || searchTerm) && (
@@ -237,7 +239,7 @@ export default function Clients() {
       />
 
       {/* Dialogs */}
-      <ViewClientDialog
+      <ClientDetailDialog
         open={isViewDialogOpen}
         onOpenChange={setIsViewDialogOpen}
         client={selectedClient}

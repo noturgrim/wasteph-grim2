@@ -709,6 +709,99 @@ class ApiClient {
       method: "DELETE",
     });
   }
+
+  // Ticket endpoints
+  async createTicket(ticketData) {
+    return this.request("/tickets", {
+      method: "POST",
+      body: JSON.stringify(ticketData),
+    });
+  }
+
+  async getTickets(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.clientId) params.append("clientId", filters.clientId);
+    if (filters.status) params.append("status", filters.status);
+    if (filters.category) params.append("category", filters.category);
+    if (filters.priority) params.append("priority", filters.priority);
+    if (filters.createdBy) params.append("createdBy", filters.createdBy);
+
+    const queryString = params.toString();
+    return this.request(`/tickets${queryString ? `?${queryString}` : ""}`);
+  }
+
+  async getTicketById(id) {
+    return this.request(`/tickets/${id}`);
+  }
+
+  async updateTicketStatus(id, status, resolutionNotes) {
+    return this.request(`/tickets/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status, resolutionNotes }),
+    });
+  }
+
+  async addTicketComment(ticketId, content) {
+    return this.request(`/tickets/${ticketId}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  async uploadTicketAttachment(ticketId, file) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return this.request(`/tickets/${ticketId}/attachments`, {
+      method: "POST",
+      headers: {}, // Let browser set Content-Type for multipart/form-data
+      body: formData,
+      credentials: "include",
+    });
+  }
+
+  // Client Notes endpoints
+  async createClientNote(noteData) {
+    return this.request("/client-notes", {
+      method: "POST",
+      body: JSON.stringify(noteData),
+    });
+  }
+
+  async getClientNotes(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.clientId) params.append("clientId", filters.clientId);
+    if (filters.interactionType)
+      params.append("interactionType", filters.interactionType);
+    if (filters.startDate) params.append("startDate", filters.startDate);
+    if (filters.endDate) params.append("endDate", filters.endDate);
+
+    const queryString = params.toString();
+    return this.request(
+      `/client-notes${queryString ? `?${queryString}` : ""}`
+    );
+  }
+
+  async getClientNoteById(id) {
+    return this.request(`/client-notes/${id}`);
+  }
+
+  async updateClientNote(id, updateData) {
+    return this.request(`/client-notes/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(updateData),
+    });
+  }
+
+  async deleteClientNote(id) {
+    return this.request(`/client-notes/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  async getClientTimeline(clientId) {
+    return this.request(`/client-notes/client/${clientId}/timeline`);
+  }
 }
 
 // Export singleton instance
