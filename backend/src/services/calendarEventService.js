@@ -3,6 +3,7 @@ import {
   calendarEventTable,
   activityLogTable,
   inquiryTable,
+  clientTable,
   userTable,
 } from "../db/schema.js";
 import { eq, and, gte, lte, desc, count, sql } from "drizzle-orm";
@@ -35,6 +36,7 @@ class CalendarEventService {
       startTime,
       endTime,
       inquiryId,
+      clientId,
       notes,
     } = eventData;
 
@@ -43,6 +45,7 @@ class CalendarEventService {
       .values({
         userId,
         inquiryId: inquiryId || null,
+        clientId: clientId || null,
         title,
         description: description || null,
         eventType: eventType || null,
@@ -57,7 +60,7 @@ class CalendarEventService {
     // Log activity
     await this.logActivity({
       userId,
-      inquiryId: event.inquiryId, // Link to inquiry for timeline
+      inquiryId: event.inquiryId, // Link to inquiry for timeline (if applicable)
       action: "calendar_event_created",
       entityType: "calendar_event",
       entityId: event.id,
@@ -66,6 +69,7 @@ class CalendarEventService {
         eventType: event.eventType,
         scheduledDate: event.scheduledDate,
         inquiryId: event.inquiryId,
+        clientId: event.clientId,
       },
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent,
@@ -86,6 +90,7 @@ class CalendarEventService {
       endDate,
       status,
       inquiryId,
+      clientId,
       page = 1,
       limit = 50,
     } = options;
@@ -121,12 +126,18 @@ class CalendarEventService {
       conditions.push(eq(calendarEventTable.inquiryId, inquiryId));
     }
 
+    // Client filter
+    if (clientId) {
+      conditions.push(eq(calendarEventTable.clientId, clientId));
+    }
+
     // Build query with joins
     let query = db
       .select({
         id: calendarEventTable.id,
         userId: calendarEventTable.userId,
         inquiryId: calendarEventTable.inquiryId,
+        clientId: calendarEventTable.clientId,
         title: calendarEventTable.title,
         description: calendarEventTable.description,
         eventType: calendarEventTable.eventType,
@@ -146,12 +157,20 @@ class CalendarEventService {
         inquiryName: inquiryTable.name,
         inquiryCompany: inquiryTable.company,
         inquiryStatus: inquiryTable.status,
+        // Include client info (flattened)
+        clientCompanyName: clientTable.companyName,
+        clientContactPerson: clientTable.contactPerson,
+        clientStatus: clientTable.status,
       })
       .from(calendarEventTable)
       .leftJoin(userTable, eq(calendarEventTable.userId, userTable.id))
       .leftJoin(
         inquiryTable,
         eq(calendarEventTable.inquiryId, inquiryTable.id),
+      )
+      .leftJoin(
+        clientTable,
+        eq(calendarEventTable.clientId, clientTable.id),
       );
 
     if (conditions.length > 0) {

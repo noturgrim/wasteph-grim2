@@ -9,7 +9,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Ticket as TicketIcon, FileText, Plus } from "lucide-react";
+import {
+  Users,
+  Ticket as TicketIcon,
+  FileText,
+  Plus,
+  Calendar as CalendarIcon,
+} from "lucide-react";
 import { format } from "date-fns";
 import { api } from "../../services/api";
 import { toast } from "../../utils/toast";
@@ -22,6 +28,9 @@ import { TicketsList } from "../tickets/TicketsList";
 // Notes components
 import { CreateNoteDialog } from "../clientNotes/CreateNoteDialog";
 import { NotesTimeline } from "../clientNotes/NotesTimeline";
+
+// Calendar components
+import { ScheduleEventDialog } from "../calendar/ScheduleEventDialog";
 
 const getStatusBadge = (status) => {
   const statusConfig = {
@@ -38,10 +47,13 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
   const [activeTab, setActiveTab] = useState("overview");
   const [tickets, setTickets] = useState([]);
   const [notes, setNotes] = useState([]);
+  const [events, setEvents] = useState([]);
   const [isLoadingTickets, setIsLoadingTickets] = useState(false);
   const [isLoadingNotes, setIsLoadingNotes] = useState(false);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
   const [isCreateNoteOpen, setIsCreateNoteOpen] = useState(false);
+  const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
 
   useEffect(() => {
     if (open && client) {
@@ -49,6 +61,8 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
         fetchTickets();
       } else if (activeTab === "notes") {
         fetchNotes();
+      } else if (activeTab === "calendar") {
+        fetchEvents();
       }
     }
   }, [open, client, activeTab]);
@@ -76,6 +90,19 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
       console.error("Fetch notes error:", error);
     } finally {
       setIsLoadingNotes(false);
+    }
+  };
+
+  const fetchEvents = async () => {
+    setIsLoadingEvents(true);
+    try {
+      const response = await api.getCalendarEvents({ clientId: client.id });
+      setEvents(response.data || []);
+    } catch (error) {
+      toast.error("Failed to fetch events");
+      console.error("Fetch events error:", error);
+    } finally {
+      setIsLoadingEvents(false);
     }
   };
 
@@ -123,6 +150,17 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
     }
   };
 
+  const handleCreateEvent = async (eventData) => {
+    try {
+      await api.createCalendarEvent({ ...eventData, clientId: client.id });
+      toast.success("Event created successfully");
+      fetchEvents();
+    } catch (error) {
+      toast.error("Failed to create event");
+      throw error;
+    }
+  };
+
   if (!client) return null;
 
   const manager = users?.find((u) => u.id === client.accountManager);
@@ -142,11 +180,17 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
               <Users className="h-5 w-5 text-green-600" />
               {client.companyName}
             </DialogTitle>
-            <DialogDescription>Manage client information, tickets, and activity notes</DialogDescription>
+            <DialogDescription>
+              Manage client information, tickets, notes, and calendar events
+            </DialogDescription>
           </DialogHeader>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="overview">
                 <Users className="h-4 w-4 mr-2" />
                 Overview
@@ -159,6 +203,10 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
                 <FileText className="h-4 w-4 mr-2" />
                 Notes
               </TabsTrigger>
+              <TabsTrigger value="calendar">
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                Calendar
+              </TabsTrigger>
             </TabsList>
 
             <div className="mt-4 max-h-[calc(90vh-200px)] overflow-y-auto">
@@ -168,17 +216,25 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Company</p>
-                      <p className="text-lg font-semibold">{client.companyName}</p>
+                      <p className="text-lg font-semibold">
+                        {client.companyName}
+                      </p>
                     </div>
                     {getStatusBadge(client.status)}
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <p className="text-sm text-muted-foreground">Contact Person</p>
-                      <p className="font-medium">{client.contactPerson || "-"}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Contact Person
+                      </p>
+                      <p className="font-medium">
+                        {client.contactPerson || "-"}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Account Manager</p>
+                      <p className="text-sm text-muted-foreground">
+                        Account Manager
+                      </p>
                       <p className="font-medium">{managerName}</p>
                     </div>
                   </div>
@@ -229,7 +285,9 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
                       <p className="text-sm">{client.industry || "-"}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Waste Types</p>
+                      <p className="text-sm text-muted-foreground">
+                        Waste Types
+                      </p>
                       <p className="text-sm">{client.wasteTypes || "-"}</p>
                     </div>
                   </div>
@@ -242,12 +300,18 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
                   </h4>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <p className="text-sm text-muted-foreground">Start Date</p>
-                      <p className="text-sm">{formatDate(client.contractStartDate)}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Start Date
+                      </p>
+                      <p className="text-sm">
+                        {formatDate(client.contractStartDate)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">End Date</p>
-                      <p className="text-sm">{formatDate(client.contractEndDate)}</p>
+                      <p className="text-sm">
+                        {formatDate(client.contractEndDate)}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -258,7 +322,9 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
                     <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                       Additional Notes
                     </h4>
-                    <p className="text-sm whitespace-pre-wrap">{client.notes}</p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {client.notes}
+                    </p>
                   </div>
                 )}
               </TabsContent>
@@ -305,6 +371,82 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
                   />
                 )}
               </TabsContent>
+
+              <TabsContent value="calendar" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Scheduled Events</h3>
+                  <Button size="sm" onClick={() => setIsCreateEventOpen(true)}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Schedule Event
+                  </Button>
+                </div>
+
+                {isLoadingEvents ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Loading events...
+                  </div>
+                ) : events.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>No events scheduled</p>
+                    <p className="text-sm mt-2">
+                      Create an event to schedule site visits, meetings, or
+                      follow-ups
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {events.map((event) => (
+                      <div
+                        key={event.id}
+                        className="p-4 border rounded-lg hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1 flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold">{event.title}</h4>
+                              <Badge
+                                variant={
+                                  event.status === "completed"
+                                    ? "default"
+                                    : event.status === "cancelled"
+                                    ? "destructive"
+                                    : "outline"
+                                }
+                              >
+                                {event.status}
+                              </Badge>
+                            </div>
+                            {event.description && (
+                              <p className="text-sm text-muted-foreground">
+                                {event.description}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span>
+                                {format(
+                                  new Date(event.scheduledDate),
+                                  "MMM dd, yyyy"
+                                )}
+                              </span>
+                              {event.startTime && (
+                                <span>
+                                  {event.startTime}
+                                  {event.endTime && ` - ${event.endTime}`}
+                                </span>
+                              )}
+                              {event.eventType && (
+                                <span className="capitalize">
+                                  {event.eventType.replace(/_/g, " ")}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
             </div>
           </Tabs>
         </DialogContent>
@@ -322,6 +464,13 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
         onOpenChange={setIsCreateNoteOpen}
         clientId={client?.id}
         onSuccess={handleCreateNote}
+      />
+
+      <ScheduleEventDialog
+        open={isCreateEventOpen}
+        onOpenChange={setIsCreateEventOpen}
+        onEventScheduled={handleCreateEvent}
+        prefilledData={{ clientId: client?.id }}
       />
     </>
   );

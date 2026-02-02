@@ -214,6 +214,7 @@ export const calendarEventTable = pgTable("calendar_event", {
     .notNull()
     .references(() => userTable.id, { onDelete: "cascade" }),
   inquiryId: uuid("inquiry_id").references(() => inquiryTable.id, { onDelete: "set null" }),
+  clientId: uuid("client_id").references(() => clientTable.id, { onDelete: "set null" }),
   title: text("title").notNull(),
   description: text("description"),
   eventType: text("event_type"), // site_visit, call, meeting, follow_up, etc. (fully customizable)
@@ -233,6 +234,7 @@ export const calendarEventTable = pgTable("calendar_event", {
   userIdIdx: index("calendar_event_user_id_idx").on(table.userId),
   scheduledDateIdx: index("calendar_event_scheduled_date_idx").on(table.scheduledDate),
   inquiryIdIdx: index("calendar_event_inquiry_id_idx").on(table.inquiryId),
+  clientIdIdx: index("calendar_event_client_id_idx").on(table.clientId),
 }));
 
 export const leadTable = pgTable("lead", {

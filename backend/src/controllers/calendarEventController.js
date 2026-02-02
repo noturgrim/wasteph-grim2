@@ -33,7 +33,7 @@ export const getEvents = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const isMasterSales = req.user.isMasterSales; // Use isMasterSales field from database
-    const { startDate, endDate, status, inquiryId, viewAll, page, limit } =
+    const { startDate, endDate, status, inquiryId, clientId, viewAll, page, limit } =
       req.query;
 
     const result = await calendarEventService.getEvents({
@@ -43,6 +43,7 @@ export const getEvents = async (req, res, next) => {
       endDate,
       status,
       inquiryId,
+      clientId,
       page: page ? parseInt(page) : 1,
       limit: limit ? parseInt(limit) : 50,
     });
