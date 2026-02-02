@@ -10,7 +10,7 @@ import { sanitizeString } from "../utils/sanitize.js";
 const urlSchema = z
   .string()
   .url("Invalid URL format")
-  .max(500, "URL must be less than 500 characters")
+  .max(2000, "URL must be less than 2000 characters")
   .optional()
   .or(z.literal(""));
 

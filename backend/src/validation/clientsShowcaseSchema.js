@@ -10,7 +10,7 @@ import { sanitizeString, sanitizeArray } from "../utils/sanitize.js";
 const urlSchema = z
   .string()
   .url("Invalid URL format")
-  .max(500, "URL must be less than 500 characters")
+  .max(2000, "URL must be less than 2000 characters")
   .optional()
   .or(z.literal(""));
 
@@ -73,7 +73,7 @@ export const createClientShowcaseSchema = z.object({
       invalid_type_error: "Logo URL must be a string",
     })
     .url("Invalid URL format")
-    .max(500, "Logo URL must be less than 500 characters")
+    .max(2000, "Logo URL must be less than 2000 characters")
     .transform((val) => sanitizeString(val)),
 
   location: z
