@@ -34,18 +34,18 @@ export const fetchShowcases = async (limit = 6) => {
  * @returns {Promise<Array>} Array of showcase objects
  */
 export const fetchAllShowcases = async () => {
-  const cacheKey = 'fetchAllShowcases';
-  
+  const cacheKey = "fetchAllShowcases";
+
   // Check if there's already a pending request
   if (pendingRequests.has(cacheKey)) {
-    console.log('🔄 Deduplicating request - returning existing promise');
+    // console.log('🔄 Deduplicating request - returning existing promise');
     return pendingRequests.get(cacheKey);
   }
 
   // Create new request
   const requestPromise = (async () => {
     try {
-      console.log('🚀 Making API call to /showcases/all');
+      // console.log('🚀 Making API call to /showcases/all');
       const response = await fetch(`${API_URL}/showcases/all`, {
         credentials: "include",
       });
@@ -69,7 +69,7 @@ export const fetchAllShowcases = async () => {
 
   // Store the pending request
   pendingRequests.set(cacheKey, requestPromise);
-  
+
   return requestPromise;
 };
 
@@ -93,8 +93,10 @@ export const createShowcase = async (showcaseData) => {
       const error = await response.json();
       // Include detailed validation errors if present
       if (error.errors && Array.isArray(error.errors)) {
-        const errorList = error.errors.map(e => e.message).join(' • ');
-        throw new Error(`${error.message || "Validation failed"}: ${errorList}`);
+        const errorList = error.errors.map((e) => e.message).join(" • ");
+        throw new Error(
+          `${error.message || "Validation failed"}: ${errorList}`
+        );
       }
       throw new Error(error.message || "Failed to create showcase");
     }
@@ -128,8 +130,10 @@ export const updateShowcase = async (id, showcaseData) => {
       const error = await response.json();
       // Include detailed validation errors if present
       if (error.errors && Array.isArray(error.errors)) {
-        const errorList = error.errors.map(e => e.message).join(' • ');
-        throw new Error(`${error.message || "Validation failed"}: ${errorList}`);
+        const errorList = error.errors.map((e) => e.message).join(" • ");
+        throw new Error(
+          `${error.message || "Validation failed"}: ${errorList}`
+        );
       }
       throw new Error(error.message || "Failed to update showcase");
     }

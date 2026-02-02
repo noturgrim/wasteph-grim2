@@ -17,7 +17,9 @@ export const fetchClientsShowcase = async () => {
     const response = await fetch(`${API_URL}/clients-showcase`);
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch clients showcase: ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch clients showcase: ${response.statusText}`
+      );
     }
 
     const data = await response.json();
@@ -33,24 +35,26 @@ export const fetchClientsShowcase = async () => {
  * @returns {Promise<Array>} Array of client showcase objects
  */
 export const fetchAllClientsShowcase = async () => {
-  const cacheKey = 'fetchAllClientsShowcase';
-  
+  const cacheKey = "fetchAllClientsShowcase";
+
   // Check if there's already a pending request
   if (pendingRequests.has(cacheKey)) {
-    console.log('🔄 Deduplicating request - returning existing promise');
+    // console.log('🔄 Deduplicating request - returning existing promise');
     return pendingRequests.get(cacheKey);
   }
 
   // Create new request
   const requestPromise = (async () => {
     try {
-      console.log('🚀 Making API call to /clients-showcase/all');
+      // console.log('🚀 Making API call to /clients-showcase/all');
       const response = await fetch(`${API_URL}/clients-showcase/all`, {
         credentials: "include",
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch clients showcase: ${response.statusText}`);
+        throw new Error(
+          `Failed to fetch clients showcase: ${response.statusText}`
+        );
       }
 
       const data = await response.json();
@@ -68,7 +72,7 @@ export const fetchAllClientsShowcase = async () => {
 
   // Store the pending request
   pendingRequests.set(cacheKey, requestPromise);
-  
+
   return requestPromise;
 };
 
@@ -92,8 +96,10 @@ export const createClientShowcase = async (clientData) => {
       const error = await response.json();
       // Include detailed validation errors if present
       if (error.errors && Array.isArray(error.errors)) {
-        const errorList = error.errors.map(e => e.message).join(' • ');
-        throw new Error(`${error.message || "Validation failed"}: ${errorList}`);
+        const errorList = error.errors.map((e) => e.message).join(" • ");
+        throw new Error(
+          `${error.message || "Validation failed"}: ${errorList}`
+        );
       }
       throw new Error(error.message || "Failed to create client showcase");
     }
@@ -127,8 +133,10 @@ export const updateClientShowcase = async (id, clientData) => {
       const error = await response.json();
       // Include detailed validation errors if present
       if (error.errors && Array.isArray(error.errors)) {
-        const errorList = error.errors.map(e => e.message).join(' • ');
-        throw new Error(`${error.message || "Validation failed"}: ${errorList}`);
+        const errorList = error.errors.map((e) => e.message).join(" • ");
+        throw new Error(
+          `${error.message || "Validation failed"}: ${errorList}`
+        );
       }
       throw new Error(error.message || "Failed to update client showcase");
     }
@@ -180,7 +188,9 @@ export const toggleClientShowcaseStatus = async (id) => {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || "Failed to toggle client showcase status");
+      throw new Error(
+        error.message || "Failed to toggle client showcase status"
+      );
     }
 
     const data = await response.json();
