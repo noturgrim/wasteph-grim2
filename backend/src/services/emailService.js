@@ -230,30 +230,37 @@ class EmailService {
       color: #106934;
     }
     .action-buttons {
-      text-align: center;
       margin: 30px 0;
-      padding: 20px 0;
     }
-    .btn {
-      display: inline-block;
-      padding: 14px 35px;
-      margin: 0 10px;
+    .action-buttons p {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #666;
+    }
+    .btn-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .btn-table a {
+      display: block;
+      width: 100%;
+      padding: 14px 0;
       text-decoration: none;
-      border-radius: 6px;
       font-weight: bold;
       font-size: 16px;
-      transition: opacity 0.3s;
+      color: #ffffff !important;
+      text-align: center;
+      border-radius: 6px;
+      box-sizing: border-box;
     }
-    .btn:hover {
-      opacity: 0.8;
+    .btn-table .btn-approve {
+      background-color: #16a34a;
     }
-    .btn-approve {
-      background-color: #10b981;
-      color: #ffffff;
+    .btn-table .btn-reject {
+      background-color: #dc2626;
     }
-    .btn-reject {
-      background-color: #ef4444;
-      color: #ffffff;
+    .btn-table tr + tr td {
+      padding-top: 10px;
     }
   </style>
 </head>
@@ -289,9 +296,19 @@ class EmailService {
     </div>
 
     <div class="action-buttons">
-      <p style="margin-bottom: 20px; color: #666;">Please review the attached proposal and let us know your decision:</p>
-      <a href="${frontendUrl}/proposal-response/${proposalId}/approve?token=${responseToken}" class="btn btn-approve">✓ Approve Proposal</a>
-      <a href="${frontendUrl}/proposal-response/${proposalId}/reject?token=${responseToken}" class="btn btn-reject">✗ Reject Proposal</a>
+      <p>Please review the attached proposal and let us know your decision:</p>
+      <table class="btn-table" role="presentation" cellpadding="0" cellspacing="0">
+        <tr>
+          <td>
+            <a href="${frontendUrl}/proposal-response/${proposalId}/approve?token=${responseToken}" class="btn-approve">✓ Approve Proposal</a>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <a href="${frontendUrl}/proposal-response/${proposalId}/reject?token=${responseToken}" class="btn-reject">✗ Reject Proposal</a>
+          </td>
+        </tr>
+      </table>
     </div>
 
     <div class="footer">
@@ -429,30 +446,37 @@ class EmailService {
       color: #2c5282;
     }
     .action-buttons {
-      text-align: center;
       margin: 30px 0;
-      padding: 20px 0;
     }
-    .btn {
-      display: inline-block;
-      padding: 14px 35px;
-      margin: 0 10px;
+    .action-buttons p {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #666;
+    }
+    .btn-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .btn-table a {
+      display: block;
+      width: 100%;
+      padding: 14px 0;
       text-decoration: none;
-      border-radius: 6px;
       font-weight: bold;
       font-size: 16px;
-      transition: opacity 0.3s;
+      color: #ffffff !important;
+      text-align: center;
+      border-radius: 6px;
+      box-sizing: border-box;
     }
-    .btn:hover {
-      opacity: 0.8;
+    .btn-table .btn-approve {
+      background-color: #16a34a;
     }
-    .btn-approve {
-      background-color: #10b981;
-      color: #ffffff;
+    .btn-table .btn-reject {
+      background-color: #dc2626;
     }
-    .btn-reject {
-      background-color: #ef4444;
-      color: #ffffff;
+    .btn-table tr + tr td {
+      padding-top: 10px;
     }
   </style>
 </head>
@@ -496,9 +520,19 @@ class EmailService {
     </div>
 
     <div class="action-buttons">
-      <p style="margin-bottom: 20px; color: #666;">Please review the attached proposal and let us know your decision:</p>
-      <a href="${frontendUrl}/proposal-response/${proposalId}/approve?token=${responseToken}" class="btn btn-approve">✓ Approve Proposal</a>
-      <a href="${frontendUrl}/proposal-response/${proposalId}/reject?token=${responseToken}" class="btn btn-reject">✗ Reject Proposal</a>
+      <p>Please review the attached proposal and let us know your decision:</p>
+      <table class="btn-table" role="presentation" cellpadding="0" cellspacing="0">
+        <tr>
+          <td>
+            <a href="${frontendUrl}/proposal-response/${proposalId}/approve?token=${responseToken}" class="btn-approve">✓ Approve Proposal</a>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <a href="${frontendUrl}/proposal-response/${proposalId}/reject?token=${responseToken}" class="btn-reject">✗ Reject Proposal</a>
+          </td>
+        </tr>
+      </table>
     </div>
 
     <div class="footer">
