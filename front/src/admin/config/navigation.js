@@ -27,7 +27,7 @@ import {
  */
 
 // Sales Pipeline items (accessible by all roles)
-// Order: Leads (pool) → Inquiries (claimed) → Clients
+// Order: Leads → Inquiries → Proposals → Contract Requests → Clients
 const salesPipelineItems = [
   {
     title: "Leads",
@@ -46,6 +46,12 @@ const salesPipelineItems = [
     url: "/admin/proposals",
     icon: ScrollText,
     description: "Your proposal requests",
+  },
+  {
+    title: "Contract Requests",
+    url: "/admin/contract-requests",
+    icon: FileSignature,
+    description: "Manage contract requests",
   },
   {
     title: "Clients",
@@ -98,20 +104,9 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
       label: "Support",
       items: supportItems,
     },
-    {
-      label: "Contracts",
-      items: [
-        {
-          title: "Contract Requests",
-          url: "/admin/contract-requests",
-          icon: FileSignature,
-          description: "Manage contract requests",
-        },
-      ],
-    },
   ];
 
-  // Master Sales gets Tools section
+  // Master Sales gets Tools section with Proposal Templates
   if (isMasterSales) {
     baseNavigation.push({
       label: "Tools",
@@ -156,27 +151,27 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
             description: "Manage contract requests",
           },
           {
-            title: "Contract Templates",
-            url: "/admin/contract-templates",
-            icon: FileSignature,
-            description: "Manage contract templates",
-          },
-          {
             title: "Clients",
             url: "/admin/clients",
             icon: UserCheck,
             description: "Manage contracted clients",
           },
-        ],
-      },
-      {
-        label: "Support",
-        items: [
           {
             title: "Tickets",
             url: "/admin/tickets",
             icon: Ticket,
             description: "Manage client support tickets",
+          },
+        ],
+      },
+      {
+        label: "Tools",
+        items: [
+          {
+            title: "Contract Templates",
+            url: "/admin/contract-templates",
+            icon: FileSignature,
+            description: "Manage contract templates",
           },
         ],
       },
@@ -263,7 +258,7 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
     ];
   }
 
-  // Admin gets Management only (no Content, no Administration)
+  // Admin gets Management + Tools (no Content, no Administration)
   if (role === "admin") {
     return [
       {
@@ -293,27 +288,27 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
             description: "Manage contract requests",
           },
           {
-            title: "Contract Templates",
-            url: "/admin/contract-templates",
-            icon: FileSignature,
-            description: "Manage contract templates",
-          },
-          {
             title: "Clients",
             url: "/admin/clients",
             icon: UserCheck,
             description: "Manage contracted clients",
           },
-        ],
-      },
-      {
-        label: "Support",
-        items: [
           {
             title: "Tickets",
             url: "/admin/tickets",
             icon: Ticket,
             description: "Manage client support tickets",
+          },
+        ],
+      },
+      {
+        label: "Tools",
+        items: [
+          {
+            title: "Contract Templates",
+            url: "/admin/contract-templates",
+            icon: FileSignature,
+            description: "Manage contract templates",
           },
         ],
       },
