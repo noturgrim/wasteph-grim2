@@ -11,13 +11,13 @@ import { Badge } from "@/components/ui/badge";
 
 const getRoleBadge = (role) => {
   const roleConfig = {
-    super_admin: { label: "Super Admin", className: "bg-purple-600 text-white" },
-    admin: { label: "Admin", className: "bg-blue-600 text-white" },
-    sales: { label: "Sales", className: "bg-green-600 text-white" },
-    social_media: { label: "Social Media", className: "bg-orange-500 text-white" },
+    super_admin: { label: "Super Admin", className: "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700" },
+    admin: { label: "Admin", className: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700" },
+    sales: { label: "Sales", className: "bg-green-100 text-green-700 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-700" },
+    social_media: { label: "Social Media", className: "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900 dark:text-orange-300 dark:border-orange-700" },
   };
   const config = roleConfig[role] || { label: role, className: "" };
-  return <Badge className={config.className}>{config.label}</Badge>;
+  return <Badge variant="outline" className={config.className}>{config.label}</Badge>;
 };
 
 export function ViewUserDialog({ open, onOpenChange, user }) {
@@ -50,7 +50,7 @@ export function ViewUserDialog({ open, onOpenChange, user }) {
               </div>
               <div className="flex gap-2 items-center">
                 {getRoleBadge(user.role)}
-                <Badge className={user.isActive ? "bg-green-600 text-white" : "bg-gray-200 text-gray-700"}>
+                <Badge variant="outline" className={user.isActive ? "bg-green-100 text-green-700 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-700" : "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600"}>
                   {user.isActive ? "Active" : "Inactive"}
                 </Badge>
               </div>

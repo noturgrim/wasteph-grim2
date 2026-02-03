@@ -145,7 +145,7 @@ export function ViewInquiryDialog({
                   {inquiry.isInformationComplete === false && (
                     <Badge
                       variant="outline"
-                      className="bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-300 dark:border-amber-700 text-xs"
+                      className="bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900 dark:text-amber-300 dark:border-amber-700 text-xs"
                     >
                       Info Needed
                     </Badge>
@@ -158,43 +158,12 @@ export function ViewInquiryDialog({
                   {!inquiry.proposalStatus ? (
                     <Badge
                       variant="outline"
-                      className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-400"
+                      className="bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600"
                     >
                       No Proposal
                     </Badge>
                   ) : (
-                    <Badge
-                      variant="outline"
-                      className={
-                        inquiry.proposalStatus === "pending"
-                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-200 border-yellow-300"
-                          : inquiry.proposalStatus === "approved"
-                            ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200 border-green-300"
-                            : inquiry.proposalStatus === "disapproved"
-                              ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200 border-red-300"
-                              : inquiry.proposalStatus === "sent"
-                                ? "bg-gray-100 text-gray-800 dark:bg-gray-950 dark:text-gray-200 border-gray-300"
-                                : inquiry.proposalStatus === "accepted"
-                                  ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-200 border-green-300"
-                                  : inquiry.proposalStatus === "rejected"
-                                    ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200 border-red-300"
-                                    : "bg-gray-100 text-gray-800"
-                      }
-                    >
-                      {inquiry.proposalStatus === "pending"
-                        ? "Pending Review"
-                        : inquiry.proposalStatus === "approved"
-                          ? "Approved"
-                          : inquiry.proposalStatus === "disapproved"
-                            ? "Disapproved"
-                            : inquiry.proposalStatus === "sent"
-                              ? "Sent"
-                              : inquiry.proposalStatus === "accepted"
-                                ? "Client Accepted"
-                                : inquiry.proposalStatus === "rejected"
-                                  ? "Client Rejected"
-                                  : inquiry.proposalStatus}
-                    </Badge>
+                    <StatusBadge status={inquiry.proposalStatus} />
                   )}
                 </div>
               </div>

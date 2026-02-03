@@ -33,27 +33,24 @@ import { useAuth } from "../../contexts/AuthContext";
 
 const getPriorityBadge = (priority) => {
   const config = {
-    low: { label: "Low", className: "bg-blue-100 text-blue-700" },
-    medium: { label: "Medium", className: "bg-yellow-100 text-yellow-700" },
-    high: { label: "High", className: "bg-orange-100 text-orange-700" },
-    urgent: { label: "Urgent", className: "bg-red-600 text-white" },
+    low: { label: "Low", className: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700" },
+    medium: { label: "Medium", className: "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-700" },
+    high: { label: "High", className: "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900 dark:text-orange-300 dark:border-orange-700" },
+    urgent: { label: "Urgent", className: "bg-red-100 text-red-700 border-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-700" },
   };
   const { label, className } = config[priority] || config.medium;
-  return <Badge className={className}>{label}</Badge>;
+  return <Badge variant="outline" className={className}>{label}</Badge>;
 };
 
 const getStatusBadge = (status) => {
   const config = {
-    open: { label: "Open", className: "bg-blue-600 text-white" },
-    in_progress: {
-      label: "In Progress",
-      className: "bg-purple-600 text-white",
-    },
-    resolved: { label: "Resolved", className: "bg-green-600 text-white" },
-    closed: { label: "Closed", className: "bg-gray-500 text-white" },
+    open: { label: "Open", className: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700" },
+    in_progress: { label: "In Progress", className: "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700" },
+    resolved: { label: "Resolved", className: "bg-green-100 text-green-700 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-700" },
+    closed: { label: "Closed", className: "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600" },
   };
   const { label, className } = config[status] || config.open;
-  return <Badge className={className}>{label}</Badge>;
+  return <Badge variant="outline" className={className}>{label}</Badge>;
 };
 
 const getCategoryLabel = (category) => {

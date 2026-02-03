@@ -27,64 +27,64 @@
 const defaultColorMap = {
   // COLD - Needs information (Blue)
   initial_comms:
-    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
+    "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700",
   waiting_for_feedback:
-    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
+    "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700",
   submitted_company_profile:
-    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
+    "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700",
 
   // WARM - In progress (Orange)
   to_call:
-    "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800",
+    "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900 dark:text-orange-300 dark:border-orange-700",
 
   // AWAITING RESPONSE (Yellow)
   submitted_proposal:
-    "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-800",
+    "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-700",
 
   // HOT - Ready to close (Purple/Red)
   negotiating:
-    "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
+    "bg-red-100 text-red-700 border-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-700",
   proposal_created:
-    "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800",
+    "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700",
 
   // WON - Deal closed (Green)
   on_boarded:
-    "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
+    "bg-green-100 text-green-700 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-700",
 
   // NEUTRAL - Inactive/Closed (Gray)
-  na: "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700",
+  na: "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600",
 
   // LOST - Explicitly declined (Red)
   declined:
-    "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
+    "bg-red-100 text-red-700 border-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-700",
 
   // Lead statuses
-  new: "bg-blue-50 text-blue-700 border-blue-200",
-  contacted: "bg-purple-50 text-purple-700 border-purple-200",
-  proposal_sent: "bg-blue-50 text-blue-700 border-blue-200",
-  won: "bg-green-50 text-green-700 border-green-200",
-  lost: "bg-red-50 text-red-700 border-red-200",
+  new: "bg-blue-100 text-blue-700 border-blue-300",
+  contacted: "bg-purple-100 text-purple-700 border-purple-300",
+  proposal_sent: "bg-blue-100 text-blue-700 border-blue-300",
+  won: "bg-green-100 text-green-700 border-green-300",
+  lost: "bg-red-100 text-red-700 border-red-300",
 
   // User/Generic statuses
-  active: "bg-green-50 text-green-700 border-green-200",
-  inactive: "bg-gray-50 text-gray-700 border-gray-200",
-  suspended: "bg-red-50 text-red-700 border-red-200",
+  active: "bg-green-100 text-green-700 border-green-300",
+  inactive: "bg-gray-100 text-gray-700 border-gray-300",
+  suspended: "bg-red-100 text-red-700 border-red-300",
 
   // Proposal statuses
   pending:
-    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
+    "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700",
   approved:
-    "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800",
+    "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700",
   disapproved:
-    "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800",
+    "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900 dark:text-orange-300 dark:border-orange-700",
   sent:
-    "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-800",
+    "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-700",
   accepted:
-    "bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800",
+    "bg-green-100 text-green-700 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-700",
   rejected:
-    "bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800",
+    "bg-red-100 text-red-700 border-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-700",
   expired:
-    "bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:border-gray-700",
+    "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600",
 };
 
 const statusLabels = {

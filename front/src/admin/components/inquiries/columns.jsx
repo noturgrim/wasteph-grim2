@@ -132,7 +132,7 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestP
         <div className="flex items-center gap-2">
           <StatusBadge status={status} />
           {isIncomplete && (
-            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 text-xs">
+            <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900 dark:text-amber-300 dark:border-amber-700 text-xs">
               Info Needed
             </Badge>
           )}

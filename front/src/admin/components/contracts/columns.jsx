@@ -21,25 +21,18 @@ import { Badge } from "@/components/ui/badge";
 
 const getStatusBadge = (status) => {
   const statusConfig = {
-    pending_request: { label: "Pending Request", variant: "secondary" },
-    requested: { label: "Requested", variant: "default" },
-    sent_to_sales: { label: "Sent to Sales", variant: "success" },
-    sent_to_client: { label: "Sent to Client", variant: "success" },
-    signed: { label: "Signed", variant: "success" },
-    hardbound_received: { label: "Hardbound Received", variant: "success" },
+    pending_request: { label: "Pending Request", className: "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-700" },
+    requested: { label: "Requested", className: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700" },
+    sent_to_sales: { label: "Sent to Sales", className: "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900 dark:text-orange-300 dark:border-orange-700" },
+    sent_to_client: { label: "Sent to Client", className: "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700" },
+    signed: { label: "Signed", className: "bg-green-100 text-green-700 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-700" },
+    hardbound_received: { label: "Hardbound Received", className: "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900 dark:text-emerald-300 dark:border-emerald-700" },
   };
 
-  const config = statusConfig[status] || { label: status, variant: "secondary" };
+  const config = statusConfig[status] || { label: status, className: "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600" };
 
   return (
-    <Badge
-      variant={config.variant}
-      className={
-        config.variant === "success"
-          ? "bg-green-600 hover:bg-green-700 text-white"
-          : ""
-      }
-    >
+    <Badge variant="outline" className={config.className}>
       {config.label}
     </Badge>
   );
@@ -169,19 +162,19 @@ export const createColumns = ({
 
       if (hasCustomTemplate) {
         return (
-          <Badge variant="outline" className="bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-300 dark:border-purple-700">
+          <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900 dark:text-purple-300 dark:border-purple-700">
             Custom Template
           </Badge>
         );
       } else if (hasTemplateId) {
         return (
-          <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-300 dark:border-blue-700">
+          <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700">
             System Template
           </Badge>
         );
       } else {
         return (
-          <Badge variant="outline" className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-400">
+          <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600">
             Manual
           </Badge>
         );
