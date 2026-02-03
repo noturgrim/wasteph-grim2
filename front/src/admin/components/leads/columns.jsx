@@ -102,11 +102,11 @@ export const createColumns = ({ onView, onEdit, onClaim, onDelete, isMasterSales
     cell: ({ row }) => {
       const isClaimed = row.original.isClaimed;
       return isClaimed ? (
-        <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
           Claimed
         </Badge>
       ) : (
-        <Badge variant="default" className="bg-green-100 text-green-700">
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800">
           Available
         </Badge>
       );
