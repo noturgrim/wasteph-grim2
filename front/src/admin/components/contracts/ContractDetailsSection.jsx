@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 const CONTRACT_TYPE_LABELS = {
   long_term_variable: "LONG TERM GARBAGE VARIABLE CHARGE",
@@ -101,8 +102,13 @@ export function ContractDetailsSection({ contract }) {
         </h4>
         <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 space-y-1">
           <DetailRow
-            label="Contract Duration"
-            value={contractData.contractDuration}
+            label="Contract Start"
+            value={contractData.contractStartDate ? format(new Date(contractData.contractStartDate), "MMM dd, yyyy") : null}
+            required
+          />
+          <DetailRow
+            label="Contract End"
+            value={contractData.contractEndDate ? format(new Date(contractData.contractEndDate), "MMM dd, yyyy") : null}
             required
           />
           <DetailRow

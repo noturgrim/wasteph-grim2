@@ -40,6 +40,7 @@ export default function Calendar() {
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [schedulePrefilledDate, setSchedulePrefilledDate] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
@@ -108,6 +109,16 @@ export default function Calendar() {
   const handleEventDeleted = () => {
     fetchEvents();
     setIsViewDialogOpen(false);
+  };
+
+  const handleDateClick = (date) => {
+    setSchedulePrefilledDate(date);
+    setIsScheduleDialogOpen(true);
+  };
+
+  const handleScheduleDialogClose = (open) => {
+    setIsScheduleDialogOpen(open);
+    if (!open) setSchedulePrefilledDate(null);
   };
 
   // Generate calendar days
@@ -220,14 +231,24 @@ export default function Calendar() {
               return (
                 <div
                   key={idx}
-                  className={`min-h-[120px] p-2 border-b border-r last:border-r-0 ${
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleDateClick(day)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleDateClick(day);
+                    }
+                  }}
+                  className={`min-h-[120px] p-2 border-b border-r last:border-r-0 cursor-pointer hover:bg-accent/50 transition-colors ${
                     !isCurrentMonth ? "bg-muted/30" : ""
                   }`}
+                  aria-label={`Create event on ${format(day, "MMMM d, yyyy")}`}
                 >
                   <div
-                    className={`text-sm font-medium mb-2 ${
+                    className={`text-sm font-medium mb-2 w-7 h-7 rounded-full flex items-center justify-center ${
                       isDayToday
-                        ? "inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground"
+                        ? "bg-primary text-primary-foreground"
                         : isCurrentMonth
                           ? "text-foreground"
                           : "text-muted-foreground"
@@ -243,7 +264,11 @@ export default function Calendar() {
                       return (
                         <button
                           key={event.id}
-                          onClick={() => handleEventClick(event)}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEventClick(event);
+                          }}
                           className={`w-full text-left p-1.5 rounded text-xs ${getStatusColor(
                             event.status,
                           )} hover:opacity-80 transition-opacity`}
@@ -299,8 +324,13 @@ export default function Calendar() {
       {/* Dialogs */}
       <ScheduleEventDialog
         open={isScheduleDialogOpen}
-        onOpenChange={setIsScheduleDialogOpen}
+        onOpenChange={handleScheduleDialogClose}
         onSuccess={handleEventCreated}
+        prefilledData={
+          schedulePrefilledDate
+            ? { scheduledDate: schedulePrefilledDate }
+            : {}
+        }
       />
 
       <ViewEventDialog

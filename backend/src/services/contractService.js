@@ -18,6 +18,17 @@ import { uploadObject, getObject } from "./s3Service.js";
 import crypto from "crypto";
 
 /**
+ * Format two ISO date strings into a human-readable range for PDF templates.
+ * e.g. "January 1, 2024 – December 31, 2024"
+ */
+function formatDateRange(startISO, endISO) {
+  const opts = { year: "numeric", month: "long", day: "numeric" };
+  const start = new Date(startISO).toLocaleDateString("en-US", opts);
+  const end = new Date(endISO).toLocaleDateString("en-US", opts);
+  return `${start} – ${end}`;
+}
+
+/**
  * ContractService - Business logic for contract operations
  * Follows: Route → Controller → Service → DB architecture
  */
@@ -112,11 +123,12 @@ class ContractService {
 
     // Search by client name or email
     if (search) {
+      const escaped = search.replace(/[%_\\]/g, "\\$&");
       conditions.push(
         or(
-          like(inquiryTable.name, `%${search}%`),
-          like(inquiryTable.email, `%${search}%`),
-          like(inquiryTable.company, `%${search}%`),
+          like(inquiryTable.name, `%${escaped}%`),
+          like(inquiryTable.email, `%${escaped}%`),
+          like(inquiryTable.company, `%${escaped}%`),
         ),
       );
     }
@@ -247,7 +259,8 @@ class ContractService {
       companyName,
       clientEmailContract,
       clientAddress,
-      contractDuration,
+      contractStartDate,
+      contractEndDate,
       serviceLatitude,
       serviceLongitude,
       collectionSchedule,
@@ -259,6 +272,9 @@ class ContractService {
       clientRequests,
       requestNotes,
     } = contractDetails;
+
+    // Derive the display string used by PDF Handlebars templates
+    const contractDuration = formatDateRange(contractStartDate, contractEndDate);
 
     // Prepare contract data for template rendering (if using template)
     const contractDataForTemplate = {
@@ -293,6 +309,8 @@ class ContractService {
         companyName,
         clientEmailContract,
         clientAddress,
+        contractStartDate: new Date(contractStartDate),
+        contractEndDate: new Date(contractEndDate),
         contractDuration,
         serviceLatitude,
         serviceLongitude,
@@ -375,13 +393,18 @@ class ContractService {
 
     // If admin edited contract data, include it in the update
     if (editedData) {
+      const derived = editedData.contractStartDate && editedData.contractEndDate
+        ? formatDateRange(editedData.contractStartDate, editedData.contractEndDate)
+        : editedData.contractDuration;
       Object.assign(updateData, {
         contractType: editedData.contractType,
         clientName: editedData.clientName,
         companyName: editedData.companyName,
         clientEmailContract: editedData.clientEmailContract,
         clientAddress: editedData.clientAddress,
-        contractDuration: editedData.contractDuration,
+        contractStartDate: editedData.contractStartDate ? new Date(editedData.contractStartDate) : null,
+        contractEndDate: editedData.contractEndDate ? new Date(editedData.contractEndDate) : null,
+        contractDuration: derived,
         serviceLatitude: editedData.serviceLatitude,
         serviceLongitude: editedData.serviceLongitude,
         collectionSchedule: editedData.collectionSchedule,
@@ -518,13 +541,20 @@ class ContractService {
 
     // If admin edited contract data, update it
     if (editedData) {
+      const derived = editedData.contractStartDate && editedData.contractEndDate
+        ? formatDateRange(editedData.contractStartDate, editedData.contractEndDate)
+        : editedData.contractDuration;
+      // Ensure the stored JSON also carries the derived display string for template re-renders
+      const templateData = { ...editedData, contractDuration: derived };
       Object.assign(updateData, {
         contractType: editedData.contractType,
         clientName: editedData.clientName,
         companyName: editedData.companyName,
         clientEmailContract: editedData.clientEmailContract,
         clientAddress: editedData.clientAddress,
-        contractDuration: editedData.contractDuration,
+        contractStartDate: editedData.contractStartDate ? new Date(editedData.contractStartDate) : null,
+        contractEndDate: editedData.contractEndDate ? new Date(editedData.contractEndDate) : null,
+        contractDuration: derived,
         serviceLatitude: editedData.serviceLatitude,
         serviceLongitude: editedData.serviceLongitude,
         collectionSchedule: editedData.collectionSchedule,
@@ -536,7 +566,7 @@ class ContractService {
           : null,
         ratePerKg: editedData.ratePerKg,
         clientRequests: editedData.clientRequests,
-        contractData: JSON.stringify(editedData), // Update stored data
+        contractData: JSON.stringify(templateData),
       });
     }
 
@@ -568,41 +598,39 @@ class ContractService {
   }
 
   /**
-   * Admin sends contract to sales
+   * Save edited HTML content without changing contract status
    * @param {string} contractId - Contract UUID
+   * @param {string} editedHtmlContent - The edited HTML to persist
    * @param {string} userId - Admin user ID
    * @param {Object} metadata - Request metadata
    * @returns {Promise<Object>} Updated contract
    */
-  async sendToSales(contractId, userId, metadata = {}) {
-    // Get contract
+  async saveEditedHtml(contractId, editedHtmlContent, userId, metadata = {}) {
     const contractData = await this.getContractById(contractId);
     const contract = contractData.contract;
 
-    // Validate status
-    if (contract.status !== "ready_for_sales") {
-      throw new AppError("Can only send to sales when contract is ready", 400);
+    if (contract.status !== "requested" && contract.status !== "sent_to_sales") {
+      throw new AppError(
+        "Can only edit contract when status is requested or sent_to_sales",
+        400
+      );
     }
 
-    // Update contract
     const [updatedContract] = await db
       .update(contractsTable)
       .set({
-        status: "sent_to_sales",
-        sentToSalesBy: userId,
-        sentToSalesAt: new Date(),
+        editedHtmlContent,
         updatedAt: new Date(),
       })
       .where(eq(contractsTable.id, contractId))
       .returning();
 
-    // Log activity
     await this.logActivity({
       userId,
-      action: "contract_sent_to_sales",
+      action: "contract_html_edited",
       entityType: "contract",
       entityId: contractId,
-      details: {},
+      details: { saved: true },
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent,
     });
@@ -769,7 +797,12 @@ class ContractService {
       throw new AppError("This contract does not have a submission token", 400);
     }
 
-    if (contract.clientSubmissionToken !== token) {
+    const storedToken = Buffer.from(contract.clientSubmissionToken, "hex");
+    const providedToken = Buffer.from(token, "hex");
+    if (
+      storedToken.length !== providedToken.length ||
+      !crypto.timingSafeEqual(storedToken, providedToken)
+    ) {
       throw new AppError("Invalid submission token", 403);
     }
 
@@ -806,6 +839,8 @@ class ContractService {
       address: contract.clientAddress || "",
       city: "",
       province: "",
+      contractStartDate: contract.contractStartDate || null,
+      contractEndDate: contract.contractEndDate || null,
     };
 
     const client = await clientService.createClient(clientData, contract.requestedBy || contract.sentToClientBy, {});

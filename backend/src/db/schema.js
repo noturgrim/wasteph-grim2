@@ -507,7 +507,9 @@ export const contractsTable = pgTable("contracts", {
   companyName: text("company_name"), // Full corporate name (optional)
   clientEmailContract: text("client_email_contract"), // Client email for contract form
   clientAddress: text("client_address"), // Client address
-  contractDuration: text("contract_duration"), // Effectivity of contract duration
+  contractDuration: text("contract_duration"), // Derived display string kept for PDF templates
+  contractStartDate: timestamp("contract_start_date", { withTimezone: true }),
+  contractEndDate: timestamp("contract_end_date", { withTimezone: true }),
   serviceLatitude: text("service_latitude"), // Service location latitude
   serviceLongitude: text("service_longitude"), // Service location longitude
   collectionSchedule: collectionScheduleEnum("collection_schedule"),

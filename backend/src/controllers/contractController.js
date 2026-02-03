@@ -68,8 +68,8 @@ export const requestContract = async (req, res, next) => {
     const contractDetails = req.body; // All contract details from form
     const customTemplateFile = req.file; // Optional custom template file
 
-    // Only sales can request contracts
-    if (req.user.role !== "sales") {
+    // Only sales (or super_admin) can request contracts
+    if (req.user.role !== "sales" && req.user.role !== "super_admin") {
       throw new AppError("Only sales users can request contracts", 403);
     }
 
@@ -198,13 +198,52 @@ export const generateContractFromTemplate = async (req, res, next) => {
 };
 
 /**
+ * Save edited HTML content without submitting (admin)
+ * PUT /api/contracts/:id/save-edited-html
+ */
+export const saveEditedHtml = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { editedHtmlContent } = req.body;
+
+    if (req.user.role !== "admin" && req.user.role !== "super_admin") {
+      throw new AppError("Only admins can save contract edits", 403);
+    }
+
+    if (!editedHtmlContent) {
+      throw new AppError("Edited HTML content is required", 400);
+    }
+
+    const metadata = {
+      ipAddress: req.ip,
+      userAgent: req.get("user-agent"),
+    };
+
+    const contract = await contractService.saveEditedHtml(
+      id,
+      editedHtmlContent,
+      req.user.id,
+      metadata
+    );
+
+    res.status(200).json({
+      success: true,
+      data: contract,
+      message: "Contract edits saved successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Preview contract from template (admin)
  * POST /api/contracts/:id/preview-from-template
  */
 export const previewContractFromTemplate = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { editedData } = req.body;
+    const { editedData, editedHtmlContent } = req.body;
 
     // Only admin can preview contracts
     if (req.user.role !== "admin" && req.user.role !== "super_admin") {
@@ -220,29 +259,34 @@ export const previewContractFromTemplate = async (req, res, next) => {
       throw new AppError("Contract does not have a template", 400);
     }
 
-    // Get template
-    const contractTemplateService = (await import("../services/contractTemplateService.js")).default;
-    const template = await contractTemplateService.getTemplateById(contract.templateId);
-
-    // Use edited data if provided, otherwise use stored data
-    let contractDataForPdf;
-    if (editedData) {
-      contractDataForPdf = typeof editedData === 'string' ? JSON.parse(editedData) : editedData;
-    } else {
-      contractDataForPdf = JSON.parse(contract.contractData || "{}");
-    }
-
-    // Add contract number
-    contractDataForPdf.contractNumber = contractData.proposal.proposalNumber
-      ? contractData.proposal.proposalNumber.replace("PROP-", "CONT-")
-      : "PENDING";
-
-    // Generate PDF
     const pdfService = (await import("../services/pdfService.js")).default;
-    const pdfBuffer = await pdfService.generateContractPDF(
-      contractDataForPdf,
-      template.htmlTemplate
-    );
+
+    // If edited HTML is provided (or previously saved), generate PDF directly from it
+    const htmlToUse = editedHtmlContent || contract.editedHtmlContent;
+    let pdfBuffer;
+    if (htmlToUse) {
+      pdfBuffer = await pdfService.generateContractFromHTML(htmlToUse);
+    } else {
+      // Get template and render from scratch
+      const contractTemplateService = (await import("../services/contractTemplateService.js")).default;
+      const template = await contractTemplateService.getTemplateById(contract.templateId);
+
+      let contractDataForPdf;
+      if (editedData) {
+        contractDataForPdf = typeof editedData === 'string' ? JSON.parse(editedData) : editedData;
+      } else {
+        contractDataForPdf = JSON.parse(contract.contractData || "{}");
+      }
+
+      contractDataForPdf.contractNumber = contractData.proposal.proposalNumber
+        ? contractData.proposal.proposalNumber.replace("PROP-", "CONT-")
+        : "PENDING";
+
+      pdfBuffer = await pdfService.generateContractPDF(
+        contractDataForPdf,
+        template.htmlTemplate
+      );
+    }
 
     // Convert to base64
     const pdfBase64 = pdfBuffer.toString("base64");
@@ -313,40 +357,6 @@ export const getRenderedHtml = async (req, res, next) => {
 };
 
 /**
- * Admin sends contract to sales
- * POST /api/contracts/:id/send-to-sales
- */
-export const sendToSales = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-
-    // Only admin can send to sales
-    if (req.user.role !== "admin" && req.user.role !== "super_admin") {
-      throw new AppError("Only admins can send contracts to sales", 403);
-    }
-
-    const metadata = {
-      ipAddress: req.ip,
-      userAgent: req.get("user-agent"),
-    };
-
-    const contract = await contractService.sendToSales(
-      id,
-      req.user.id,
-      metadata
-    );
-
-    res.status(200).json({
-      success: true,
-      data: contract,
-      message: "Contract sent to sales successfully",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-/**
  * Sales sends contract to client
  * POST /api/contracts/:id/send-to-client
  */
@@ -355,8 +365,8 @@ export const sendToClient = async (req, res, next) => {
     const { id } = req.params;
     const { clientEmail } = req.body;
 
-    // Only sales can send to client
-    if (req.user.role !== "sales") {
+    // Only sales (or super_admin) can send to client
+    if (req.user.role !== "sales" && req.user.role !== "super_admin") {
       throw new AppError("Only sales users can send contracts to clients", 403);
     }
 

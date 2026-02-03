@@ -28,8 +28,6 @@ import {
   Eye,
   Loader2,
   Pencil,
-  ChevronDown,
-  ChevronRight,
 } from "lucide-react";
 import { api } from "../../services/api";
 import { toast } from "../../utils/toast";
@@ -99,7 +97,6 @@ export const ViewTicketDialog = ({
   const [viewerFileName, setViewerFileName] = useState("");
   const [viewerFileType, setViewerFileType] = useState("");
   const [isLoadingViewUrl, setIsLoadingViewUrl] = useState(null);
-  const [commentsExpanded, setCommentsExpanded] = useState(true);
 
   const isAdmin = user?.role === "admin" || user?.role === "super_admin";
 
@@ -190,7 +187,7 @@ export const ViewTicketDialog = ({
           if (viewerOpen) e.preventDefault();
         }}
       >
-        <DialogHeader className="pr-10">
+        <DialogHeader>
           <div className="flex items-start justify-between gap-4">
             <div>
               <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -373,64 +370,43 @@ export const ViewTicketDialog = ({
 
             {/* Comments */}
             <div className="space-y-3">
-              <button
-                type="button"
-                onClick={() => setCommentsExpanded((prev) => !prev)}
-                className="flex items-center gap-2 w-full text-left text-sm font-semibold text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors"
-                aria-expanded={commentsExpanded}
-                aria-label={commentsExpanded ? "Collapse comments" : "Expand comments"}
-              >
-                <MessageSquare className="h-4 w-4 shrink-0" />
+              <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
                 Comments ({ticket.comments?.length || 0})
-                {commentsExpanded ? (
-                  <ChevronDown className="h-4 w-4 shrink-0 ml-1" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 shrink-0 ml-1" />
-                )}
-              </button>
+              </h4>
 
-              {commentsExpanded && (
-                <>
-                  {ticket.comments && ticket.comments.length > 0 ? (
-                    <ScrollArea className="h-[200px] rounded-lg border">
-                      <div className="space-y-3 p-3">
-                        {ticket.comments.map((comment) => (
-                          <div
-                            key={comment.id}
-                            className="p-3 border rounded-lg space-y-2 bg-muted/30"
-                          >
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <p className="text-sm font-medium">
-                                  {comment.firstName} {comment.lastName}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {format(
-                                    new Date(comment.createdAt),
-                                    "MMM dd, yyyy HH:mm"
-                                  )}
-                                </p>
-                              </div>
-                              <Badge variant="outline" className="text-xs">
-                                {comment.role}
-                              </Badge>
-                            </div>
-                            <p className="text-sm whitespace-pre-wrap">
-                              {comment.content}
-                            </p>
-                          </div>
-                        ))}
+              {ticket.comments && ticket.comments.length > 0 && (
+                <div className="space-y-3">
+                  {ticket.comments.map((comment) => (
+                    <div
+                      key={comment.id}
+                      className="p-3 border rounded-lg space-y-2"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-sm font-medium">
+                            {comment.firstName} {comment.lastName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(
+                              new Date(comment.createdAt),
+                              "MMM dd, yyyy HH:mm"
+                            )}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="text-xs">
+                          {comment.role}
+                        </Badge>
                       </div>
-                    </ScrollArea>
-                  ) : (
-                    <p className="text-sm text-muted-foreground py-2">
-                      No comments yet.
-                    </p>
-                  )}
-                </>
+                      <p className="text-sm whitespace-pre-wrap">
+                        {comment.content}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               )}
 
-              {/* Add Comment - always visible */}
+              {/* Add Comment */}
               <div className="space-y-2">
                 <Label>Add Comment</Label>
                 <Textarea

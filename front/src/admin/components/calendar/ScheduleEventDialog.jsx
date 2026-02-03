@@ -19,8 +19,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
+import { TimePicker } from "@/components/ui/time-picker";
 import { Loader2 } from "lucide-react";
-import { format } from "date-fns";
 import { api } from "../../services/api";
 import { toast } from "../../utils/toast";
 
@@ -71,11 +71,14 @@ export function ScheduleEventDialog({
   // Reset form when dialog opens
   useEffect(() => {
     if (open) {
+      const initialDate = prefilledData?.scheduledDate
+        ? new Date(prefilledData.scheduledDate)
+        : new Date();
       setFormData({
         title: "",
         description: "",
         eventType: "",
-        scheduledDate: new Date(),
+        scheduledDate: initialDate,
         startTime: "",
         endTime: "",
         inquiryId: inquiryId || prefilledData?.inquiryId || "",
@@ -85,7 +88,7 @@ export function ScheduleEventDialog({
       setFormErrors({});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, inquiryId]);
+  }, [open, inquiryId, prefilledData?.scheduledDate]);
 
   const validateForm = () => {
     const errors = {};
@@ -239,25 +242,23 @@ export function ScheduleEventDialog({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="startTime">Start Time</Label>
-                <Input
-                  id="startTime"
-                  type="time"
+                <TimePicker
                   value={formData.startTime}
-                  onChange={(e) =>
-                    setFormData({ ...formData, startTime: e.target.value })
+                  onChange={(value) =>
+                    setFormData({ ...formData, startTime: value })
                   }
+                  placeholder="Select start time"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="endTime">End Time</Label>
-                <Input
-                  id="endTime"
-                  type="time"
+                <TimePicker
                   value={formData.endTime}
-                  onChange={(e) =>
-                    setFormData({ ...formData, endTime: e.target.value })
+                  onChange={(value) =>
+                    setFormData({ ...formData, endTime: value })
                   }
+                  placeholder="Select end time"
                 />
               </div>
             </div>

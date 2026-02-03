@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Select,
   SelectContent,
@@ -162,18 +164,22 @@ export function EditClientDialog({ open, onOpenChange, client, onConfirm }) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label>Contract Start Date</Label>
-              <Input
-                type="date"
-                value={formData.contractStartDate}
-                onChange={(e) => handleChange("contractStartDate", e.target.value)}
+              <DatePicker
+                date={formData.contractStartDate ? new Date(formData.contractStartDate) : undefined}
+                onDateChange={(date) =>
+                  handleChange("contractStartDate", date ? format(date, "yyyy-MM-dd") : "")
+                }
+                placeholder="dd/mm/yyyy"
               />
             </div>
             <div className="space-y-1">
               <Label>Contract End Date</Label>
-              <Input
-                type="date"
-                value={formData.contractEndDate}
-                onChange={(e) => handleChange("contractEndDate", e.target.value)}
+              <DatePicker
+                date={formData.contractEndDate ? new Date(formData.contractEndDate) : undefined}
+                onDateChange={(date) =>
+                  handleChange("contractEndDate", date ? format(date, "yyyy-MM-dd") : "")
+                }
+                placeholder="dd/mm/yyyy"
               />
             </div>
           </div>

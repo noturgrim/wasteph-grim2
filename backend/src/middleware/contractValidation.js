@@ -32,14 +32,15 @@ const requestContractSchema = z.object({
     .email("Invalid email format")
     .min(1, "Client email is required"),
   clientAddress: z.string().min(1, "Client address is required"),
-  contractDuration: z.string().min(1, "Contract duration is required"),
+  contractStartDate: z.string().min(1, "Contract start date is required"),
+  contractEndDate: z.string().min(1, "Contract end date is required"),
   serviceLatitude: z.string().min(1, "Service latitude is required"),
   serviceLongitude: z.string().min(1, "Service longitude is required"),
   collectionSchedule: z.enum(
     ["daily", "weekly", "monthly", "bi_weekly", "other"],
     { errorMap: () => ({ message: "Invalid collection schedule" }) },
   ),
-  collectionScheduleOther: z.string().optional(), // Required if collectionSchedule is "other"
+  collectionScheduleOther: z.string().optional(),
   wasteAllowance: z.string().min(1, "Waste allowance is required"),
   specialClauses: z.string().min(1, "Special clauses are required"),
   signatories: z
@@ -48,6 +49,14 @@ const requestContractSchema = z.object({
   ratePerKg: z.string().min(1, "Rate per kg specification is required"),
   clientRequests: z.string().min(1, "Client requests are required"),
   requestNotes: z.string().min(1, "Request notes are required"),
+}).superRefine((data, ctx) => {
+  if (data.collectionSchedule === "other" && (!data.collectionScheduleOther || data.collectionScheduleOther.trim() === "")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["collectionScheduleOther"],
+      message: "Please specify the collection schedule when 'other' is selected",
+    });
+  }
 });
 
 /**

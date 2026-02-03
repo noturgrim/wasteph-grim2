@@ -50,6 +50,7 @@ export const createColumns = ({
 }) => [
   {
     accessorKey: "clientName",
+    accessorFn: (row) => row.inquiry?.name || "",
     header: ({ column }) => {
       const isSorted = column.getIsSorted();
       return (

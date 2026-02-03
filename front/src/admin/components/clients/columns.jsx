@@ -71,9 +71,7 @@ export const createClientColumns = ({ userRole, onView, onEdit, onDelete }) => [
     accessorKey: "email",
     header: "Email",
     cell: ({ row }) => (
-      <a href={`mailto:${row.original.email}`} className="text-blue-600 hover:underline text-sm">
-        {row.original.email}
-      </a>
+      <span className="text-sm">{row.original.email || "-"}</span>
     ),
   },
   {

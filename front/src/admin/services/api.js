@@ -575,12 +575,6 @@ class ApiClient {
     return response.json();
   }
 
-  async sendContractToSales(id) {
-    return this.request(`/contracts/${id}/send-to-sales`, {
-      method: "POST",
-    });
-  }
-
   async sendContractToClient(id, clientEmail) {
     return this.request(`/contracts/${id}/send-to-client`, {
       method: "POST",
@@ -613,10 +607,17 @@ class ApiClient {
     });
   }
 
-  async previewContractFromTemplate(id, editedData = null) {
+  async previewContractFromTemplate(id, editedData = null, editedHtmlContent = null) {
     return this.request(`/contracts/${id}/preview-from-template`, {
       method: "POST",
-      body: JSON.stringify({ editedData }),
+      body: JSON.stringify({ editedData, editedHtmlContent }),
+    });
+  }
+
+  async saveEditedHtml(id, editedHtmlContent) {
+    return this.request(`/contracts/${id}/save-edited-html`, {
+      method: "PUT",
+      body: JSON.stringify({ editedHtmlContent }),
     });
   }
 

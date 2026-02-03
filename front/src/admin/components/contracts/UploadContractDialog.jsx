@@ -28,6 +28,8 @@ import {
   X,
   Download,
 } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
+import { format } from "date-fns";
 
 const CONTRACT_TYPES = [
   { value: "long_term_variable", label: "LONG TERM GARBAGE VARIABLE CHARGE" },
@@ -100,7 +102,8 @@ export function UploadContractDialog({
         companyName: contractData.companyName || "",
         clientEmailContract: contractData.clientEmailContract || "",
         clientAddress: contractData.clientAddress || "",
-        contractDuration: contractData.contractDuration || "",
+        contractStartDate: contractData.contractStartDate ? contractData.contractStartDate.slice(0, 10) : "",
+        contractEndDate: contractData.contractEndDate ? contractData.contractEndDate.slice(0, 10) : "",
         serviceLatitude: contractData.serviceLatitude || "",
         serviceLongitude: contractData.serviceLongitude || "",
         collectionSchedule: contractData.collectionSchedule || "",
@@ -192,7 +195,8 @@ export function UploadContractDialog({
       companyName: "Company Name",
       clientEmailContract: "Client Email",
       clientAddress: "Client Address",
-      contractDuration: "Contract Duration",
+      contractStartDate: "Contract Start Date",
+      contractEndDate: "Contract End Date",
       serviceLatitude: "Service Latitude",
       serviceLongitude: "Service Longitude",
       collectionSchedule: "Collection Schedule",
@@ -433,16 +437,31 @@ export function UploadContractDialog({
                         </div>
                       </div>
 
-                      {/* Contract Duration */}
-                      <div>
-                        <Label>Contract Duration *</Label>
-                        <Input
-                          value={d.contractDuration || ""}
-                          onChange={(e) => handleChange("contractDuration", e.target.value)}
-                          placeholder="e.g., January 1, 2024 - December 31, 2024"
-                          disabled={!isEditing}
-                          className="mt-1"
-                        />
+                      {/* Contract Period */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Contract Start *</Label>
+                          <div className="mt-1">
+                            <DatePicker
+                              date={d.contractStartDate ? new Date(d.contractStartDate + "T00:00:00") : undefined}
+                              onDateChange={(date) => handleChange("contractStartDate", date ? format(date, "yyyy-MM-dd") : "")}
+                              placeholder="Pick start date"
+                              disabled={!isEditing}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label>Contract End *</Label>
+                          <div className="mt-1">
+                            <DatePicker
+                              date={d.contractEndDate ? new Date(d.contractEndDate + "T00:00:00") : undefined}
+                              onDateChange={(date) => handleChange("contractEndDate", date ? format(date, "yyyy-MM-dd") : "")}
+                              placeholder="Pick end date"
+                              disabled={!isEditing}
+                              fromDate={d.contractStartDate ? new Date(d.contractStartDate + "T00:00:00") : undefined}
+                            />
+                          </div>
+                        </div>
                       </div>
 
                       {/* Service Address (Lat/Long) */}

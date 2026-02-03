@@ -20,7 +20,29 @@ import {
 } from "@/components/ui/select";
 import { FileText, Loader2, Plus, X, Upload, FileCheck, AlertCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DatePicker } from "@/components/ui/date-picker";
+import { format } from "date-fns";
 import { toast } from "../../utils/toast";
+
+const INITIAL_FORM_STATE = {
+  contractType: "",
+  clientName: "",
+  companyName: "",
+  clientEmailContract: "",
+  clientAddress: "",
+  contractStartDate: "",
+  contractEndDate: "",
+  serviceLatitude: "",
+  serviceLongitude: "",
+  collectionSchedule: "",
+  collectionScheduleOther: "",
+  wasteAllowance: "",
+  specialClauses: "",
+  signatories: [{ name: "", position: "" }],
+  ratePerKg: "",
+  clientRequests: "",
+  requestNotes: "",
+};
 
 const CONTRACT_TYPES = [
   { value: "long_term_variable", label: "LONG TERM GARBAGE VARIABLE CHARGE" },
@@ -50,24 +72,7 @@ export function RequestContractDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasCustomTemplate, setHasCustomTemplate] = useState(false);
   const [customTemplateFile, setCustomTemplateFile] = useState(null);
-  const [formData, setFormData] = useState({
-    contractType: "",
-    clientName: "",
-    companyName: "",
-    clientEmailContract: "",
-    clientAddress: "",
-    contractDuration: "",
-    serviceLatitude: "",
-    serviceLongitude: "",
-    collectionSchedule: "",
-    collectionScheduleOther: "",
-    wasteAllowance: "",
-    specialClauses: "",
-    signatories: [{ name: "", position: "" }],
-    ratePerKg: "",
-    clientRequests: "",
-    requestNotes: "",
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
   // Auto-fill data from proposal/inquiry when dialog opens
   useEffect(() => {
@@ -130,8 +135,8 @@ export function RequestContractDialog({
     if (!formData.companyName) errors.push("Company name is required");
     if (!formData.clientEmailContract) errors.push("Client email is required");
     if (!formData.clientAddress) errors.push("Client address is required");
-    if (!formData.contractDuration)
-      errors.push("Contract duration is required");
+    if (!formData.contractStartDate) errors.push("Contract start date is required");
+    if (!formData.contractEndDate) errors.push("Contract end date is required");
     if (!formData.serviceLatitude) errors.push("Service latitude is required");
     if (!formData.serviceLongitude)
       errors.push("Service longitude is required");
@@ -204,24 +209,7 @@ export function RequestContractDialog({
       // Reset form after successful submission
       setHasCustomTemplate(false);
       setCustomTemplateFile(null);
-      setFormData({
-        contractType: "",
-        clientName: "",
-        companyName: "",
-        clientEmailContract: "",
-        clientAddress: "",
-        contractDuration: "",
-        serviceLatitude: "",
-        serviceLongitude: "",
-        collectionSchedule: "",
-        collectionScheduleOther: "",
-        wasteAllowance: "",
-        specialClauses: "",
-        signatories: [{ name: "", position: "" }],
-        ratePerKg: "",
-        clientRequests: "",
-        requestNotes: "",
-      });
+      setFormData(INITIAL_FORM_STATE);
     } finally {
       setIsSubmitting(false);
     }
@@ -230,24 +218,7 @@ export function RequestContractDialog({
   const handleClose = (isOpen) => {
     if (!isOpen && !isSubmitting) {
       // Reset form on close
-      setFormData({
-        contractType: "",
-        clientName: "",
-        companyName: "",
-        clientEmailContract: "",
-        clientAddress: "",
-        contractDuration: "",
-        serviceLatitude: "",
-        serviceLongitude: "",
-        collectionSchedule: "",
-        collectionScheduleOther: "",
-        wasteAllowance: "",
-        specialClauses: "",
-        signatories: [{ name: "", position: "" }],
-        ratePerKg: "",
-        clientRequests: "",
-        requestNotes: "",
-      });
+      setFormData(INITIAL_FORM_STATE);
       setHasCustomTemplate(false);
       setCustomTemplateFile(null);
     }
@@ -363,23 +334,30 @@ export function RequestContractDialog({
             </p>
           </div>
 
-          {/* Contract Duration - Required */}
+          {/* Contract Period - Required */}
           <div>
-            <Label htmlFor="contractDuration">
-              Effectivity of Contract Duration{" "}
-              <span className="text-red-500">*</span>
+            <Label>
+              Contract Period <span className="text-red-500">*</span>
             </Label>
-            <Input
-              id="contractDuration"
-              value={formData.contractDuration}
-              onChange={(e) => handleChange("contractDuration", e.target.value)}
-              placeholder="e.g., January 1, 2024 - December 31, 2024"
-              className="mt-1"
-              required
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Duration or length of when contract is to be live and ends
-            </p>
+            <div className="grid grid-cols-2 gap-4 mt-1">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Start Date</p>
+                <DatePicker
+                  date={formData.contractStartDate ? new Date(formData.contractStartDate + "T00:00:00") : undefined}
+                  onDateChange={(date) => handleChange("contractStartDate", date ? format(date, "yyyy-MM-dd") : "")}
+                  placeholder="Pick start date"
+                />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">End Date</p>
+                <DatePicker
+                  date={formData.contractEndDate ? new Date(formData.contractEndDate + "T00:00:00") : undefined}
+                  onDateChange={(date) => handleChange("contractEndDate", date ? format(date, "yyyy-MM-dd") : "")}
+                  placeholder="Pick end date"
+                  fromDate={formData.contractStartDate ? new Date(formData.contractStartDate + "T00:00:00") : undefined}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Service Address (Latitude/Longitude) - Required */}

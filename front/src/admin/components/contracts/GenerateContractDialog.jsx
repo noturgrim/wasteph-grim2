@@ -28,6 +28,8 @@ import {
   Code2,
   RefreshCw,
 } from "lucide-react";
+import { DatePicker } from "@/components/ui/date-picker";
+import { format } from "date-fns";
 import { api } from "../../services/api";
 import { toast } from "../../utils/toast";
 import ProposalHtmlEditor from "@/components/common/ProposalHtmlEditor";
@@ -61,6 +63,7 @@ export function GenerateContractDialog({
 }) {
   const [adminNotes, setAdminNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [isLoadingPdf, setIsLoadingPdf] = useState(false);
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState("");
@@ -102,7 +105,8 @@ export function GenerateContractDialog({
         companyName: contractData.companyName || "",
         clientEmailContract: contractData.clientEmailContract || "",
         clientAddress: contractData.clientAddress || "",
-        contractDuration: contractData.contractDuration || "",
+        contractStartDate: contractData.contractStartDate ? contractData.contractStartDate.slice(0, 10) : "",
+        contractEndDate: contractData.contractEndDate ? contractData.contractEndDate.slice(0, 10) : "",
         serviceLatitude: contractData.serviceLatitude || "",
         serviceLongitude: contractData.serviceLongitude || "",
         collectionSchedule: contractData.collectionSchedule || "",
@@ -344,22 +348,28 @@ export function GenerateContractDialog({
 
   const handleSaveAndRegenerate = async () => {
     try {
-      setIsSubmitting(true);
-      await api.generateContractFromTemplate(
+      setIsRegenerating(true);
+      // Persist the edited HTML without changing status
+      await api.saveEditedHtml(contract.contract.id, savedHtml);
+
+      // Regenerate preview PDF from the saved HTML
+      const response = await api.previewContractFromTemplate(
         contract.contract.id,
         editedData,
-        adminNotes || null,
         savedHtml
       );
+
+      if (response.success) {
+        setPdfPreviewUrl(`data:application/pdf;base64,${response.data}`);
+      }
+
       toast.success("Contract regenerated successfully");
-      setIsGenerated(true);
       setHasUnsavedHtmlChanges(false);
       setIsEditModalOpen(false);
-      await loadGeneratedPdf();
     } catch (error) {
       toast.error(error.message || "Failed to regenerate contract");
     } finally {
-      setIsSubmitting(false);
+      setIsRegenerating(false);
     }
   };
 
@@ -483,12 +493,22 @@ export function GenerateContractDialog({
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Contract Duration *</Label>
-                          <Input
-                            value={d.contractDuration || ""}
-                            onChange={(e) => handleFieldChange("contractDuration", e.target.value)}
-                            placeholder="e.g., 12 months"
+                          <Label>Contract Start *</Label>
+                          <DatePicker
+                            date={d.contractStartDate ? new Date(d.contractStartDate + "T00:00:00") : undefined}
+                            onDateChange={(date) => handleFieldChange("contractStartDate", date ? format(date, "yyyy-MM-dd") : "")}
+                            placeholder="Pick start date"
                             disabled={!isEditing}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Contract End *</Label>
+                          <DatePicker
+                            date={d.contractEndDate ? new Date(d.contractEndDate + "T00:00:00") : undefined}
+                            onDateChange={(date) => handleFieldChange("contractEndDate", date ? format(date, "yyyy-MM-dd") : "")}
+                            placeholder="Pick end date"
+                            disabled={!isEditing}
+                            fromDate={d.contractStartDate ? new Date(d.contractStartDate + "T00:00:00") : undefined}
                           />
                         </div>
                       </div>
@@ -689,7 +709,7 @@ export function GenerateContractDialog({
                     Refresh
                   </Button>
                 )}
-                {isGenerated && (
+                {pdfPreviewUrl && (
                   <Button
                     type="button"
                     variant="outline"
@@ -795,7 +815,7 @@ export function GenerateContractDialog({
         </div>
 
         <div className="text-xs text-gray-500 mt-3 px-1">
-          <strong>Save Changes</strong> confirms your edits in the editor above. <strong>Save &amp; Regenerate</strong> then submits the saved content and regenerates the contract PDF.
+          <strong>Save Changes</strong> confirms your edits in the editor above. <strong>Save &amp; Regenerate</strong> persists your edits and regenerates the contract PDF preview.
         </div>
 
         <DialogFooter className="gap-2 mt-2">
@@ -805,17 +825,17 @@ export function GenerateContractDialog({
               setIsEditModalOpen(false);
               setHasUnsavedHtmlChanges(false);
             }}
-            disabled={isSubmitting}
+            disabled={isRegenerating}
           >
             Cancel
           </Button>
           <Button
             onClick={handleSaveAndRegenerate}
             variant="outline"
-            disabled={isSubmitting || hasUnsavedHtmlChanges || !savedHtml}
+            disabled={isRegenerating || hasUnsavedHtmlChanges || !savedHtml}
             className="border-green-600 text-green-700 hover:bg-green-50"
           >
-            {isSubmitting ? (
+            {isRegenerating ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <RefreshCw className="mr-2 h-4 w-4" />

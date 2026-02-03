@@ -235,12 +235,7 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <p className="text-sm text-muted-foreground">Email</p>
-                      <a
-                        href={`mailto:${client.email}`}
-                        className="text-blue-600 hover:underline text-sm"
-                      >
-                        {client.email}
-                      </a>
+                      <span className="text-sm">{client.email}</span>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Phone</p>
