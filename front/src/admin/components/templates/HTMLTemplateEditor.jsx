@@ -49,72 +49,7 @@ export function HTMLTemplateEditor({ content, onChange, onFullPreview }) {
   const textareaRef = useRef(null);
   const debounceRef = useRef(null);
 
-  // Isolate HTML styles to prevent them from affecting the page
-  const isolateHTMLStyles = (htmlContent) => {
-    if (!htmlContent) return "";
-
-    // Create a unique ID for scoping
-    const scopeId = "template-preview-scope";
-    let processed = htmlContent;
-
-    // Extract styles from head first (before removing head)
-    let extractedStyles = "";
-    const headMatch = processed.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
-    if (headMatch) {
-      const headContent = headMatch[1];
-      const styleMatches = headContent.match(/<style[^>]*>[\s\S]*?<\/style>/gi);
-      if (styleMatches) {
-        extractedStyles = styleMatches.join("\n");
-      }
-    }
-
-    // Remove entire head section
-    processed = processed.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, "");
-
-    // Extract body content if it's a full HTML document
-    const bodyMatch = processed.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-    if (bodyMatch) {
-      processed = bodyMatch[1];
-    }
-
-    // Combine extracted styles with any styles in body
-    const allStyles = extractedStyles + "\n" + processed;
-
-    // Process style tags to scope them
-    const scopedContent = allStyles.replace(/<style([^>]*)>([\s\S]*?)<\/style>/gi, (match, attrs, styles) => {
-      let scopedStyles = styles
-        // Scope universal selector
-        .replace(/\*\s*\{/g, `#${scopeId} *{`)
-        // Scope html selector
-        .replace(/html\s*\{/g, `#${scopeId}{`)
-        // Scope body selector
-        .replace(/body\s*\{/g, `#${scopeId}{`)
-        // Scope other selectors (but preserve @rules)
-        .replace(/(^|\n|\r)([a-zA-Z0-9_\-.#\[\]:\s,>+~]+)\s*\{/g, (m, prefix, selector) => {
-          const trimmed = selector.trim();
-          // Skip @rules (@media, @keyframes, etc.)
-          if (trimmed.startsWith("@")) {
-            return m;
-          }
-          // Don't double-scope
-          if (trimmed.includes(`#${scopeId}`)) {
-            return m;
-          }
-          // Scope the selector
-          return `${prefix}#${scopeId} ${trimmed}{`;
-        });
-
-      return `<style${attrs}>${scopedStyles}</style>`;
-    });
-
-    // Get body content without styles
-    const bodyContent = processed.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
-
-    // Wrap in scoped container with styles at the top
-    return `<div id="${scopeId}">${scopedContent}${bodyContent}</div>`;
-  };
-
-  // Generate preview with debouncing
+  // Generate preview with debouncing — server-side Handlebars via /render endpoint
   const generatePreview = useCallback(
     async (htmlContent) => {
       if (!htmlContent || !htmlContent.trim()) {
@@ -124,25 +59,13 @@ export function HTMLTemplateEditor({ content, onChange, onFullPreview }) {
 
       setIsGeneratingPreview(true);
       try {
-        // Sample data for preview - includes all common placeholders
         const sampleData = {
-          // Client info
           clientName: "John Doe",
           clientEmail: "john.doe@example.com",
           clientPhone: "+63 912 345 6789",
-          company: "ABC Corporation",
           clientCompany: "ABC Corporation",
-          position: "Operations Manager",
           clientPosition: "Operations Manager",
-          address: "123 Business St, Metro Manila",
           clientAddress: "123 Business St, Metro Manila",
-
-          // Dates
-          date: new Date().toLocaleDateString("en-PH", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          }),
           proposalDate: new Date().toLocaleDateString("en-PH", {
             year: "numeric",
             month: "long",
@@ -153,65 +76,28 @@ export function HTMLTemplateEditor({ content, onChange, onFullPreview }) {
             month: "long",
             day: "numeric",
           }),
-
-          // Pricing data
+          services: [
+            { name: "Fixed Monthly Collection", quantity: 1, unitPrice: 5000, subtotal: 5000 },
+          ],
           pricing: {
-            monthlyRate: "5,000.00",
-            wasteAllowance: "1,000.00",
-            excessRate: "4.00",
-            total: "5,000.00"
-          }
+            subtotal: 5000,
+            tax: 500,
+            discount: 0,
+            total: 5500,
+            monthlyRate: 5000,
+            wasteAllowance: 1000,
+            excessRate: 4,
+          },
+          terms: "Standard terms and conditions apply.",
         };
 
-        // Use the existing preview API
-        const response = await api.previewProposalTemplate(htmlContent, sampleData);
-
-        if (response.success || response.data) {
-          // Since backend now returns base64 PDF, we need to handle HTML preview differently
-          // For now, we'll render the HTML directly using Handlebars on client side
-          // Or show a message that preview will be in PDF format
-
-          // Simple client-side preview with support for nested objects
-          let rendered = htmlContent;
-
-          // Helper function to replace placeholders (including nested ones like pricing.monthlyRate)
-          const replacePlaceholders = (html, data, prefix = "") => {
-            let result = html;
-
-            Object.keys(data).forEach((key) => {
-              const value = data[key];
-              const fullKey = prefix ? `${prefix}.${key}` : key;
-
-              if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-                // Recursively handle nested objects
-                result = replacePlaceholders(result, value, fullKey);
-              } else if (typeof value === "string" || typeof value === "number") {
-                // Replace the placeholder
-                result = result.replace(new RegExp(`\\{\\{${fullKey}\\}\\}`, "g"), value);
-              }
-            });
-
-            return result;
-          };
-
-          // Replace all placeholders
-          rendered = replacePlaceholders(rendered, sampleData);
-
-          // Remove any remaining Handlebars syntax that we don't support
-          // Use a single comprehensive regex to remove ALL {{...}} patterns
-          rendered = rendered.replace(/\{\{[^{}]*\}\}/g, "");
-
-          // Isolate styles to prevent them from affecting the page
-          rendered = isolateHTMLStyles(rendered);
-
-          setPreviewHtml(rendered);
+        const response = await api.renderProposalTemplate(htmlContent, sampleData);
+        if (response.success && response.data?.html) {
+          setPreviewHtml(response.data.html);
         }
       } catch (error) {
         console.error("Error generating preview:", error);
-        // Fallback - clean up Handlebars and show raw HTML
-        let fallback = htmlContent;
-        fallback = fallback.replace(/\{\{[^{}]*\}\}/g, "");
-        setPreviewHtml(isolateHTMLStyles(fallback));
+        setPreviewHtml("");
       } finally {
         setIsGeneratingPreview(false);
       }
@@ -407,20 +293,17 @@ export function HTMLTemplateEditor({ content, onChange, onFullPreview }) {
               <span className="text-xs text-green-600 animate-pulse">Updating...</span>
             )}
           </div>
-          <div className="flex-1 p-6 overflow-auto bg-white min-h-0">
+          <div className="flex-1 overflow-hidden bg-white min-h-0">
             {previewHtml ? (
-              <div
-                style={{
-                  wordBreak: "break-word",
-                  overflowWrap: "break-word",
-                  maxWidth: "100%",
-                  isolation: "isolate",
-                  position: "relative"
-                }}
-                dangerouslySetInnerHTML={{ __html: previewHtml }}
+              <iframe
+                srcdoc={previewHtml}
+                title="Template Preview"
+                sandbox="allow-same-origin"
+                className="w-full h-full border-0"
+                style={{ minHeight: "460px" }}
               />
             ) : (
-              <div className="h-full flex items-center justify-center">
+              <div className="h-full flex items-center justify-center" style={{ minHeight: "460px" }}>
                 <div className="text-center text-gray-400">
                   <Eye className="w-12 h-12 mx-auto mb-3 opacity-30" />
                   <p className="text-sm font-medium">Preview will appear here</p>

@@ -216,14 +216,12 @@ export const previewTemplate = async (req, res, next) => {
       );
     }
 
-    // Render HTML with Handlebars
-    const renderedHtml = proposalTemplateService.renderTemplate(
-      templateHtml,
-      sampleData
-    );
+    const pdfService = (await import("../services/pdfService.js")).default;
+
+    // Render HTML server-side (handles {{#each}}, helpers like {{currency}}, etc.)
+    const renderedHtml = pdfService.renderProposalTemplate(sampleData, templateHtml);
 
     // Convert to PDF
-    const pdfService = (await import("../services/pdfService.js")).default;
     const pdfBuffer = await pdfService.generatePDFFromHTML(renderedHtml);
 
     // Convert to base64
@@ -291,6 +289,36 @@ export const suggestTemplateForInquiry = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: template,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Render a proposal template to HTML with provided data (no PDF).
+ * Used by the proposal creation flow to get server-side Handlebars output
+ * (so {{#each services}} tables etc. are rendered) before loading into the editor.
+ * POST /api/proposal-templates/render
+ */
+export const renderTemplate = async (req, res, next) => {
+  try {
+    const { templateHtml, data } = req.body;
+
+    if (!templateHtml) {
+      throw new AppError("templateHtml is required", 400);
+    }
+
+    if (!data || typeof data !== "object") {
+      throw new AppError("data object is required", 400);
+    }
+
+    const pdfService = (await import("../services/pdfService.js")).default;
+    const html = pdfService.renderProposalTemplate(data, templateHtml);
+
+    res.status(200).json({
+      success: true,
+      data: { html },
     });
   } catch (error) {
     next(error);

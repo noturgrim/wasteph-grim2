@@ -2,60 +2,11 @@ import { db } from "../db/index.js";
 import { contractTemplatesTable, activityLogTable } from "../db/schema.js";
 import { eq, desc, and, or, like, count, inArray, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
-import Handlebars from "handlebars";
 
 /**
  * ContractTemplateService - Business logic for contract template operations
  */
 class ContractTemplateService {
-  /**
-   * Register Handlebars helpers for template rendering
-   */
-  registerHandlebarsHelpers() {
-    // Currency formatter - Philippine Peso
-    Handlebars.registerHelper("currency", function (value) {
-      const num = Number(value) || 0;
-      return `₱${num.toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`;
-    });
-
-    // Date formatter
-    Handlebars.registerHelper("formatDate", function (date) {
-      if (!date) return "";
-      return new Date(date).toLocaleDateString("en-PH", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    });
-
-    // Conditional helpers
-    Handlebars.registerHelper("ifEquals", function (arg1, arg2, options) {
-      return arg1 === arg2 ? options.fn(this) : options.inverse(this);
-    });
-
-    Handlebars.registerHelper("ifGreaterThan", function (arg1, arg2, options) {
-      return Number(arg1) > Number(arg2)
-        ? options.fn(this)
-        : options.inverse(this);
-    });
-
-    // Mathematical helpers
-    Handlebars.registerHelper("multiply", function (a, b) {
-      return Number(a) * Number(b);
-    });
-
-    Handlebars.registerHelper("add", function (a, b) {
-      return Number(a) + Number(b);
-    });
-
-    Handlebars.registerHelper("subtract", function (a, b) {
-      return Number(a) - Number(b);
-    });
-  }
-
   /**
    * Create a new contract template
    * @param {Object} templateData - Template data
@@ -458,34 +409,6 @@ class ContractTemplateService {
       // If no template found for type, return default
       return this.getDefaultTemplate();
     }
-  }
-
-  /**
-   * Render template with contract data
-   * @param {string} templateId - Template ID
-   * @param {Object} contractData - Contract data for rendering
-   * @returns {Promise<string>} Rendered HTML
-   */
-  async renderTemplate(templateId, contractData) {
-    const template = await this.getTemplateById(templateId);
-
-    // Register Handlebars helpers
-    this.registerHandlebarsHelpers();
-
-    // Compile template
-    const compiledTemplate = Handlebars.compile(template.htmlTemplate);
-
-    // Prepare data for rendering
-    const renderData = {
-      ...contractData,
-      contractDate:
-        contractData.contractDate || new Date().toLocaleDateString("en-PH"),
-    };
-
-    // Render HTML
-    const html = compiledTemplate(renderData);
-
-    return html;
   }
 
   /**

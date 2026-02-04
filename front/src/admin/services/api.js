@@ -472,6 +472,13 @@ class ApiClient {
     });
   }
 
+  async renderProposalTemplate(templateHtml, data) {
+    return this.request("/proposal-templates/render", {
+      method: "POST",
+      body: JSON.stringify({ templateHtml, data }),
+    });
+  }
+
   async getTemplatesByCategory() {
     return this.request("/proposal-templates/by-category");
   }

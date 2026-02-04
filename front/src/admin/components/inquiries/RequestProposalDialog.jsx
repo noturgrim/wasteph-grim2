@@ -303,7 +303,7 @@ export function RequestProposalDialog({
     await loadTemplateFromService(serviceId);
   };
 
-  // Render template with client data and load into editor
+  // Render template server-side and load into editor
   const prepareEditorContent = async () => {
     if (!template?.htmlTemplate) {
       toast.error("Template not loaded");
@@ -312,7 +312,6 @@ export function RequestProposalDialog({
 
     setIsLoadingEditor(true);
     try {
-      // Prepare data for template
       const formattedDate = new Date(formData.proposalDate).toLocaleDateString(
         "en-PH",
         {
@@ -322,8 +321,10 @@ export function RequestProposalDialog({
         }
       );
 
+      // Build data payload matching template placeholders.
+      // services/pricing are empty at this stage — sales fills them in the editor.
+      // The table structure (thead, styling) still renders; only the body rows are empty.
       const templateData = {
-        // Main fields
         clientName: formData.clientName || "Client Name",
         clientEmail: formData.clientEmail || "",
         clientPhone: formData.clientPhone || "",
@@ -331,6 +332,13 @@ export function RequestProposalDialog({
         clientPosition: formData.clientPosition || "",
         clientAddress: formData.clientAddress || "",
         proposalDate: formattedDate,
+        validUntilDate: new Date(
+          Date.now() + (formData.validityDays || 30) * 24 * 60 * 60 * 1000
+        ).toLocaleDateString("en-PH", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
 
         // Aliases for common template variations
         name: formData.clientName || "Client Name",
@@ -340,45 +348,30 @@ export function RequestProposalDialog({
         position: formData.clientPosition || "",
         address: formData.clientAddress || "",
         date: formattedDate,
+
+        // Structured data — empty so {{#each}} renders structure only
+        services: [],
+        pricing: { subtotal: 0, tax: 0, discount: 0, total: 0, taxRate: 12 },
+        terms: {
+          paymentTerms: "Net 30",
+          validityDays: formData.validityDays || 30,
+          notes: formData.notes || "",
+        },
       };
 
-      let rendered = template.htmlTemplate;
+      // Server-side Handlebars compilation — handles {{#each}}, {{#if}}, helpers like {{currency}}
+      const response = await api.renderProposalTemplate(template.htmlTemplate, templateData);
+      if (!response.success) {
+        throw new Error("Template rendering failed");
+      }
+      const rendered = response.data.html;
 
-      // Handle {{#if fieldName}} ... {{/if}} conditionals
-      Object.keys(templateData).forEach((key) => {
-        const ifRegex = new RegExp(
-          `\\{\\{#if ${key}\\}\\}([\\s\\S]*?)\\{\\{/if\\}\\}`,
-          "g"
-        );
-        if (templateData[key]) {
-          rendered = rendered.replace(ifRegex, "$1");
-        } else {
-          rendered = rendered.replace(ifRegex, "");
-        }
-      });
-
-      // Replace simple {{fieldName}} placeholders
-      Object.keys(templateData).forEach((key) => {
-        const regex = new RegExp(`\\{\\{${key}\\}\\}`, "g");
-        rendered = rendered.replace(regex, templateData[key] || "");
-      });
-
-      // Handle {{#each services}} blocks - remove for now
-      rendered = rendered.replace(
-        /\{\{#each\s+[\w.]+\}\}[\s\S]*?\{\{\/each\}\}/g,
-        ""
-      );
-
-      // Strip any remaining Handlebars syntax
-      rendered = rendered.replace(/\{\{[^{}]*\}\}/g, "");
-
-      // Extract template structure (head with styles)
+      // Extract template structure (head with styles) for the contentEditable editor
       const headMatch = rendered.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
       const bodyTagMatch = rendered.match(/<body[^>]*>/i);
       const bodyMatch = rendered.match(/<body[^>]*>([\s\S]*)<\/body>/i);
 
       if (headMatch && bodyMatch) {
-        // Extract inline styles from head
         const styleMatch = headMatch[0].match(
           /<style[^>]*>([\s\S]*?)<\/style>/gi
         );
@@ -386,20 +379,17 @@ export function RequestProposalDialog({
           ? styleMatch.map((s) => s.replace(/<\/?style[^>]*>/gi, "")).join("\n")
           : "";
 
-        // Store template structure for later reconstruction
         templateStructureRef.current = {
           head: headMatch[0],
           bodyTag: bodyTagMatch ? bodyTagMatch[0] : "<body>",
           styles: inlineStyles,
         };
 
-        // Extract only body content for editor
-        const bodyContent = bodyMatch[1];
-
-        setEditorInitialContent(bodyContent);
-        setSavedEditorContent({ html: rendered, json: null }); // Store full HTML initially
+        setEditorInitialContent(bodyMatch[1]);
+        setSavedEditorContent({ html: rendered, json: null });
       } else {
-        // Fallback: no proper HTML structure, use as-is
+        // Fallback: no head/body structure, use as-is
+        templateStructureRef.current = { head: "", bodyTag: "", styles: "" };
         setEditorInitialContent(rendered);
         setSavedEditorContent({ html: rendered, json: null });
       }

@@ -2,7 +2,6 @@ import { db } from "../db/index.js";
 import { proposalTemplateTable, activityLogTable, serviceTable } from "../db/schema.js";
 import { eq, desc, and, or, like, count, inArray } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
-import Handlebars from "handlebars";
 
 /**
  * ProposalTemplateService - Business logic for proposal template operations
@@ -389,53 +388,6 @@ class ProposalTemplateService {
 
       return acc;
     }, {});
-  }
-
-  /**
-   * Render template with data using Handlebars
-   * @param {string} templateHtml - Template HTML string with {{placeholders}}
-   * @param {Object} data - Data to inject into template
-   * @returns {string} Rendered HTML
-   */
-  renderTemplate(templateHtml, data) {
-    try {
-      // Register Handlebars helpers
-      this.registerHandlebarsHelpers();
-
-      const template = Handlebars.compile(templateHtml);
-      return template(data);
-    } catch (error) {
-      throw new AppError(
-        `Template rendering failed: ${error.message}`,
-        500
-      );
-    }
-  }
-
-  /**
-   * Register custom Handlebars helpers
-   */
-  registerHandlebarsHelpers() {
-    // Helper for formatting currency with commas
-    Handlebars.registerHelper("currency", function (value) {
-      const number = Number(value);
-      if (isNaN(number)) return "0.00";
-      return number.toLocaleString("en-PH", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-    });
-
-    // Helper for formatting dates
-    Handlebars.registerHelper("formatDate", function (date) {
-      if (!date) return "N/A";
-      return new Date(date).toLocaleDateString("en-PH");
-    });
-
-    // Helper for conditional display
-    Handlebars.registerHelper("ifEquals", function (arg1, arg2, options) {
-      return arg1 === arg2 ? options.fn(this) : options.inverse(this);
-    });
   }
 
   /**

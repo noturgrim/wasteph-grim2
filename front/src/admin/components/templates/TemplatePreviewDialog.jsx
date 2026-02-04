@@ -8,77 +8,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-
-// Isolate HTML styles to prevent them from affecting the page
-const isolateHTMLStyles = (htmlContent) => {
-  if (!htmlContent) return "";
-
-  // Create a unique ID for scoping
-  const scopeId = "template-preview-scope";
-  let processed = htmlContent;
-
-  // Extract styles from head first (before removing head)
-  let extractedStyles = "";
-  const headMatch = processed.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
-  if (headMatch) {
-    const headContent = headMatch[1];
-    const styleMatches = headContent.match(/<style[^>]*>[\s\S]*?<\/style>/gi);
-    if (styleMatches) {
-      extractedStyles = styleMatches.join("\n");
-    }
-  }
-
-  // Remove entire head section
-  processed = processed.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, "");
-
-  // Extract body content if it's a full HTML document
-  const bodyMatch = processed.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-  if (bodyMatch) {
-    processed = bodyMatch[1];
-  }
-
-  // Combine extracted styles with any styles in body
-  const allStyles = extractedStyles + "\n" + processed;
-
-  // Process style tags to scope them
-  const scopedContent = allStyles.replace(/<style([^>]*)>([\s\S]*?)<\/style>/gi, (match, attrs, styles) => {
-    let scopedStyles = styles
-      // Scope universal selector
-      .replace(/\*\s*\{/g, `#${scopeId} *{`)
-      // Scope html selector
-      .replace(/html\s*\{/g, `#${scopeId}{`)
-      // Scope body selector
-      .replace(/body\s*\{/g, `#${scopeId}{`)
-      // Scope other selectors (but preserve @rules)
-      .replace(/(^|\n|\r)([a-zA-Z0-9_\-.#\[\]:\s,>+~]+)\s*\{/g, (m, prefix, selector) => {
-        const trimmed = selector.trim();
-        // Skip @rules (@media, @keyframes, etc.)
-        if (trimmed.startsWith("@")) {
-          return m;
-        }
-        // Don't double-scope
-        if (trimmed.includes(`#${scopeId}`)) {
-          return m;
-        }
-        // Scope the selector
-        return `${prefix}#${scopeId} ${trimmed}{`;
-      });
-
-    return `<style${attrs}>${scopedStyles}</style>`;
-  });
-
-  // Get body content without styles
-  const bodyContent = processed.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
-
-  // Wrap in scoped container with styles at the top
-  return `<div id="${scopeId}">${scopedContent}${bodyContent}</div>`;
-};
+import { api } from "../../services/api";
 
 export function TemplatePreviewDialog({ open, onOpenChange, template, htmlContent }) {
   const [previewHtml, setPreviewHtml] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Generate preview when modal opens
+  // Generate preview when modal opens — server-side Handlebars via /render endpoint
   useEffect(() => {
     const generatePreview = async () => {
       const content = htmlContent || template?.htmlTemplate || template?.html_content;
@@ -89,25 +25,13 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, htmlConten
 
       setIsLoading(true);
       try {
-        // Sample data for preview - comprehensive with all common placeholders
         const sampleData = {
-          // Client info
           clientName: "John Doe",
           clientEmail: "john.doe@example.com",
           clientPhone: "+63 912 345 6789",
-          company: "ABC Corporation",
           clientCompany: "ABC Corporation",
-          position: "Operations Manager",
           clientPosition: "Operations Manager",
-          address: "123 Business St, Metro Manila",
           clientAddress: "123 Business St, Metro Manila",
-
-          // Dates
-          date: new Date().toLocaleDateString("en-PH", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          }),
           proposalDate: new Date().toLocaleDateString("en-PH", {
             year: "numeric",
             month: "long",
@@ -118,87 +42,35 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, htmlConten
             month: "long",
             day: "numeric",
           }),
-
-          // Company info
           companyName: "WASTE • PH",
           companyTagline: "PRIVATE WASTE MANAGEMENT",
           companyAddress: "UNIT 503, THE MERIDIAN CONDOMINIUM, GOLAM DR., KASAMBAGAN, CEBU CITY",
-
-          // Services
           services: [
-            {
-              name: "Waste Collection Service",
-              description: "Regular waste collection and transportation",
-              quantity: 1,
-              unitPrice: 5000,
-              subtotal: 5000,
-            },
-            {
-              name: "Disposal Service",
-              description: "Proper waste disposal at accredited facilities",
-              quantity: 1,
-              unitPrice: 3000,
-              subtotal: 3000,
-            },
+            { name: "Waste Collection Service", quantity: 1, unitPrice: 5000, subtotal: 5000 },
+            { name: "Disposal Service", quantity: 1, unitPrice: 3000, subtotal: 3000 },
           ],
-
-          // Pricing data (for Fixed Monthly Rate and other templates)
           pricing: {
             subtotal: 8000,
             tax: 960,
             discount: 0,
-            total: "8,960.00",
+            total: 8960,
             taxRate: 12,
-            monthlyRate: "5,000.00",
-            wasteAllowance: "1,000.00",
-            excessRate: "4.00",
+            monthlyRate: 5000,
+            wasteAllowance: 1000,
+            excessRate: 4,
           },
-
-          // Terms
-          terms: {
-            paymentTerms: "Net 30 days from invoice date",
-            notes: "All prices are subject to change without prior notice.",
-          },
-
-          // Other fields
-          wasteAllowance: "1,000.00",
-          excessRate: "4.00",
+          terms: "Standard terms and conditions apply.",
+          wasteAllowance: 1000,
+          excessRate: 4,
         };
 
-        // Helper function to replace placeholders (including nested ones like pricing.monthlyRate)
-        const replacePlaceholders = (html, data, prefix = "") => {
-          let result = html;
-
-          Object.keys(data).forEach((key) => {
-            const value = data[key];
-            const fullKey = prefix ? `${prefix}.${key}` : key;
-
-            if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-              // Recursively handle nested objects
-              result = replacePlaceholders(result, value, fullKey);
-            } else if (typeof value === "string" || typeof value === "number") {
-              // Replace the placeholder
-              result = result.replace(new RegExp(`\\{\\{${fullKey}\\}\\}`, "g"), value);
-            }
-          });
-
-          return result;
-        };
-
-        // Replace all placeholders
-        let rendered = replacePlaceholders(content, sampleData);
-
-        // Remove any remaining Handlebars syntax that we don't support
-        rendered = rendered.replace(/\{\{[^{}]*\}\}/g, "");
-
-        // Isolate styles to prevent them from affecting the page
-        rendered = isolateHTMLStyles(rendered);
-
-        setPreviewHtml(rendered);
+        const response = await api.renderProposalTemplate(content, sampleData);
+        if (response.success && response.data?.html) {
+          setPreviewHtml(response.data.html);
+        }
       } catch (error) {
         console.error("Error generating preview:", error);
-        // Fallback to raw HTML with isolated styles
-        setPreviewHtml(isolateHTMLStyles(content));
+        setPreviewHtml("");
       } finally {
         setIsLoading(false);
       }
@@ -296,7 +168,7 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, htmlConten
               <span className="text-xs text-gray-400">(with sample data)</span>
             </div>
           </div>
-          <div className="flex-1 overflow-auto border border-t-0 border-gray-200 rounded-b-lg bg-white">
+          <div className="flex-1 overflow-hidden border border-t-0 border-gray-200 rounded-b-lg bg-white">
             {isLoading ? (
               <div className="flex items-center justify-center h-full min-h-[400px]">
                 <div className="flex flex-col items-center gap-3">
@@ -305,16 +177,12 @@ export function TemplatePreviewDialog({ open, onOpenChange, template, htmlConten
                 </div>
               </div>
             ) : previewHtml ? (
-              <div
-                className="p-6 prose prose-sm max-w-none prose-headings:text-gray-800 prose-p:text-gray-600"
-                style={{
-                  wordBreak: "break-word",
-                  overflowWrap: "break-word",
-                  maxWidth: "100%",
-                  isolation: "isolate",
-                  position: "relative"
-                }}
-                dangerouslySetInnerHTML={{ __html: previewHtml }}
+              <iframe
+                srcdoc={previewHtml}
+                title="Template Preview"
+                sandbox="allow-same-origin"
+                className="w-full h-full border-0"
+                style={{ minHeight: "400px" }}
               />
             ) : (
               <div className="flex items-center justify-center h-full min-h-[400px]">

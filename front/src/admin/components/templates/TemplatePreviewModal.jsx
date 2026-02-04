@@ -8,60 +8,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-
-// Isolate HTML styles to prevent them from affecting the page
-const isolateHTMLStyles = (htmlContent) => {
-  if (!htmlContent) return "";
-  
-  // Create a unique ID for scoping
-  const scopeId = "template-preview-scope";
-  let processed = htmlContent;
-  
-  // Extract and remove head content (meta, title, etc.)
-  processed = processed.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, "");
-  
-  // Extract body content if it's a full HTML document
-  const bodyMatch = processed.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-  if (bodyMatch) {
-    processed = bodyMatch[1];
-  }
-  
-  // Process style tags to scope them
-  processed = processed.replace(/<style([^>]*)>([\s\S]*?)<\/style>/gi, (match, attrs, styles) => {
-    let scopedStyles = styles
-      // Scope universal selector
-      .replace(/\*\s*\{/g, `#${scopeId} *{`)
-      // Scope html selector
-      .replace(/html\s*\{/g, `#${scopeId}{`)
-      // Scope body selector
-      .replace(/body\s*\{/g, `#${scopeId}{`)
-      // Scope other selectors (but preserve @rules)
-      .replace(/(^|\n|\r)([a-zA-Z0-9_\-.#\[\]:\s,>+~]+)\s*\{/g, (m, prefix, selector) => {
-        const trimmed = selector.trim();
-        // Skip @rules (@media, @keyframes, etc.)
-        if (trimmed.startsWith("@")) {
-          return m;
-        }
-        // Don't double-scope
-        if (trimmed.includes(`#${scopeId}`)) {
-          return m;
-        }
-        // Scope the selector
-        return `${prefix}#${scopeId} ${trimmed}{`;
-      });
-    
-    return `<style${attrs}>${scopedStyles}</style>`;
-  });
-  
-  // Wrap in scoped container
-  return `<div id="${scopeId}">${processed}</div>`;
-};
+import { api } from "../../services/api";
 
 export function TemplatePreviewModal({ open, onClose, template, htmlContent }) {
   const [previewHtml, setPreviewHtml] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Generate preview when modal opens
+  // Generate preview when modal opens — server-side Handlebars via /render endpoint
   useEffect(() => {
     const generatePreview = async () => {
       const content = htmlContent || template?.htmlTemplate || template?.html_content;
@@ -72,7 +25,6 @@ export function TemplatePreviewModal({ open, onClose, template, htmlContent }) {
 
       setIsLoading(true);
       try {
-        // Simple sample data for preview
         const sampleData = {
           clientName: "John Doe",
           clientEmail: "john.doe@example.com",
@@ -90,31 +42,28 @@ export function TemplatePreviewModal({ open, onClose, template, htmlContent }) {
             month: "long",
             day: "numeric",
           }),
+          services: [
+            { name: "Fixed Monthly Collection", quantity: 1, unitPrice: 5000, subtotal: 5000 },
+          ],
+          pricing: {
+            subtotal: 5000,
+            tax: 500,
+            discount: 0,
+            total: 5500,
+            monthlyRate: 5000,
+            wasteAllowance: 1000,
+            excessRate: 4,
+          },
+          terms: "Standard terms and conditions apply.",
         };
 
-        // Replace simple placeholders with sample data
-        let rendered = content;
-        Object.keys(sampleData).forEach((key) => {
-          const value = sampleData[key];
-          if (typeof value === "string" || typeof value === "number") {
-            rendered = rendered.replace(new RegExp(`{{${key}}}`, "g"), value);
-          }
-        });
-
-        // Remove any remaining Handlebars syntax that we don't support
-        // Use a single comprehensive regex to remove ALL {{...}} patterns
-        rendered = rendered.replace(/\{\{[^{}]*\}\}/g, "");
-
-        // Isolate styles to prevent them from affecting the page
-        rendered = isolateHTMLStyles(rendered);
-
-        setPreviewHtml(rendered);
+        const response = await api.renderProposalTemplate(content, sampleData);
+        if (response.success && response.data?.html) {
+          setPreviewHtml(response.data.html);
+        }
       } catch (error) {
         console.error("Error generating preview:", error);
-        // Fallback - clean up and show raw HTML
-        let fallback = content;
-        fallback = fallback.replace(/\{\{[^{}]*\}\}/g, "");
-        setPreviewHtml(isolateHTMLStyles(fallback));
+        setPreviewHtml("");
       } finally {
         setIsLoading(false);
       }
@@ -212,7 +161,7 @@ export function TemplatePreviewModal({ open, onClose, template, htmlContent }) {
               <span className="text-xs text-gray-400">(with sample data)</span>
             </div>
           </div>
-          <div className="flex-1 overflow-auto border border-t-0 border-gray-200 rounded-b-lg bg-white">
+          <div className="flex-1 overflow-hidden border border-t-0 border-gray-200 rounded-b-lg bg-white">
             {isLoading ? (
               <div className="flex items-center justify-center h-full min-h-[400px]">
                 <div className="flex flex-col items-center gap-3">
@@ -221,17 +170,12 @@ export function TemplatePreviewModal({ open, onClose, template, htmlContent }) {
                 </div>
               </div>
             ) : previewHtml ? (
-              <div
-                className="p-6 prose prose-sm max-w-none prose-headings:text-gray-800 prose-p:text-gray-600"
-                style={{
-                  wordBreak: "break-word",
-                  overflowWrap: "break-word",
-                  maxWidth: "100%",
-                  isolation: "isolate",
-                  contain: "layout style paint",
-                  position: "relative"
-                }}
-                dangerouslySetInnerHTML={{ __html: previewHtml }}
+              <iframe
+                srcdoc={previewHtml}
+                title="Template Preview"
+                sandbox="allow-same-origin"
+                className="w-full h-full border-0"
+                style={{ minHeight: "400px" }}
               />
             ) : (
               <div className="flex items-center justify-center h-full min-h-[400px]">

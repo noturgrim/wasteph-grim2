@@ -12,6 +12,7 @@ import {
   getTemplateByType,
   getTemplatesByCategory,
   suggestTemplateForInquiry,
+  renderTemplate,
 } from "../controllers/proposalTemplateController.js";
 import {
   validateCreateTemplate,
@@ -41,6 +42,9 @@ router.get("/suggest/:inquiryId", requireAuth, suggestTemplateForInquiry);
 
 // Preview template rendering
 router.post("/preview", requireAuth, validatePreviewTemplate, previewTemplate);
+
+// Render template to HTML (server-side Handlebars, no PDF)
+router.post("/render", requireAuth, renderTemplate);
 
 // Create template (Admin only)
 router.post("/", requireAuth, validateCreateTemplate, createTemplate);

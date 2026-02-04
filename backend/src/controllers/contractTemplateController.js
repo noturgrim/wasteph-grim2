@@ -236,13 +236,8 @@ export const previewTemplate = async (req, res, next) => {
       );
     }
 
-    // Register Handlebars helpers
-    contractTemplateService.registerHandlebarsHelpers();
-
-    // Compile template with sample data
-    const Handlebars = (await import("handlebars")).default;
-    const template = Handlebars.compile(templateHtml);
-    const html = template(sampleData);
+    // Render HTML server-side (helpers like {{currency}} are registered at startup)
+    const html = pdfService.renderProposalTemplate(sampleData, templateHtml);
 
     // Generate PDF
     const pdfBuffer = await pdfService.generateContractFromHTML(html);
