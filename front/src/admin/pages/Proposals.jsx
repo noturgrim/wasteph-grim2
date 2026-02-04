@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
 import { toast } from "../utils/toast";
+import proposalSocketService from "../services/proposalSocketService";
 import { SlidersHorizontal, X } from "lucide-react";
 import {
   Select,
@@ -84,6 +85,32 @@ export default function Proposals() {
     setPagination(prev => ({ ...prev, page: 1 })); // Reset to page 1 on filter change
     fetchProposals(1);
   }, [statusFilter, searchTerm]);
+
+  // Subscribe to proposal socket events
+  useEffect(() => {
+    const handleProposalEvent = () => {
+      // Refresh proposals on any proposal event
+      fetchProposals();
+    };
+
+    // Subscribe to all proposal events
+    proposalSocketService.on("proposalRequested", handleProposalEvent);
+    proposalSocketService.on("proposalApproved", handleProposalEvent);
+    proposalSocketService.on("proposalRejected", handleProposalEvent);
+    proposalSocketService.on("proposalSent", handleProposalEvent);
+    proposalSocketService.on("proposalAccepted", handleProposalEvent);
+    proposalSocketService.on("proposalDeclined", handleProposalEvent);
+
+    // Cleanup on unmount
+    return () => {
+      proposalSocketService.off("proposalRequested", handleProposalEvent);
+      proposalSocketService.off("proposalApproved", handleProposalEvent);
+      proposalSocketService.off("proposalRejected", handleProposalEvent);
+      proposalSocketService.off("proposalSent", handleProposalEvent);
+      proposalSocketService.off("proposalAccepted", handleProposalEvent);
+      proposalSocketService.off("proposalDeclined", handleProposalEvent);
+    };
+  }, []);
 
   const fetchUsers = async () => {
     try {

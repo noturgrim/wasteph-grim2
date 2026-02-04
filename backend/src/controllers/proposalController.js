@@ -1,4 +1,4 @@
-import proposalService from "../services/proposalService.js";
+import proposalServiceWithSocket from "../services/proposalServiceWithSocket.js";
 import { AppError } from "../middleware/errorHandler.js";
 
 /**
@@ -17,7 +17,7 @@ export const createProposal = async (req, res, next) => {
       userAgent: req.get("user-agent"),
     };
 
-    const proposal = await proposalService.createProposal(
+    const proposal = await proposalServiceWithSocket.createProposal(
       req.body,
       req.user.id,
       metadata
@@ -40,7 +40,7 @@ export const getAllProposals = async (req, res, next) => {
   try {
     const { status, inquiryId, search, page, limit } = req.query;
 
-    const result = await proposalService.getAllProposals(
+    const result = await proposalServiceWithSocket.getProposals(
       { status, inquiryId, search, page, limit },
       req.user.id,
       req.user.role,
@@ -63,7 +63,7 @@ export const getAllProposals = async (req, res, next) => {
 export const getProposalById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const proposal = await proposalService.getProposalById(id);
+    const proposal = await proposalServiceWithSocket.getProposalById(id);
 
     // Permission check: sales can only see their own proposals
     if (
@@ -96,7 +96,7 @@ export const updateProposal = async (req, res, next) => {
     };
 
     // Check if user has permission to update
-    const existing = await proposalService.getProposalById(id);
+    const existing = await proposalServiceWithSocket.getProposalById(id);
     if (
       req.user.role === "sales" &&
       !req.user.isMasterSales &&
@@ -105,7 +105,7 @@ export const updateProposal = async (req, res, next) => {
       throw new AppError("Access denied", 403);
     }
 
-    const proposal = await proposalService.updateProposal(
+    const proposal = await proposalServiceWithSocket.updateProposal(
       id,
       req.body,
       req.user.id,
@@ -139,7 +139,7 @@ export const approveProposal = async (req, res, next) => {
       throw new AppError("Only admins can approve proposals", 403);
     }
 
-    const proposal = await proposalService.approveProposal(
+    const proposal = await proposalServiceWithSocket.approveProposal(
       id,
       req.user.id,
       adminNotes,
@@ -178,7 +178,7 @@ export const rejectProposal = async (req, res, next) => {
       throw new AppError("Rejection reason is required", 400);
     }
 
-    const proposal = await proposalService.rejectProposal(
+    const proposal = await proposalServiceWithSocket.rejectProposal(
       id,
       req.user.id,
       rejectionReason,
@@ -240,7 +240,7 @@ export const cancelProposal = async (req, res, next) => {
       userAgent: req.get("user-agent"),
     };
 
-    const proposal = await proposalService.cancelProposal(
+    const proposal = await proposalServiceWithSocket.cancelProposal(
       id,
       req.user.id,
       metadata
@@ -295,7 +295,7 @@ export const retryProposalEmail = async (req, res, next) => {
 export const downloadProposalPDF = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const proposal = await proposalService.getProposalById(id);
+    const proposal = await proposalServiceWithSocket.getProposalById(id);
 
     // Permission check
     if (
@@ -331,7 +331,7 @@ export const downloadProposalPDF = async (req, res, next) => {
 export const previewProposalPDF = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const proposal = await proposalService.getProposalById(id);
+    const proposal = await proposalServiceWithSocket.getProposalById(id);
 
     // Permission check - only creator can preview
     if (

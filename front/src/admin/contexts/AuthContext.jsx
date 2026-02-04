@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { api } from "../services/api";
 import socketService from "../services/socketService";
 import ticketSocketService from "../services/ticketSocketService";
+import proposalSocketService from "../services/proposalSocketService";
 
 const AuthContext = createContext(null);
 
@@ -18,6 +19,7 @@ export const AuthProvider = ({ children }) => {
     return () => {
       if (socketService.isSocketConnected()) {
         ticketSocketService.cleanup();
+        proposalSocketService.cleanup();
         socketService.disconnect();
       }
     };
@@ -29,6 +31,7 @@ export const AuthProvider = ({ children }) => {
       initializeSocket();
     } else if (!user && socketService.isSocketConnected()) {
       ticketSocketService.cleanup();
+      proposalSocketService.cleanup();
       socketService.disconnect();
       setIsSocketConnected(false);
     }
@@ -44,6 +47,7 @@ export const AuthProvider = ({ children }) => {
 
         // Initialize feature-specific socket services
         ticketSocketService.initialize();
+        proposalSocketService.initialize();
       });
 
       // Handle connection failure
@@ -91,6 +95,7 @@ export const AuthProvider = ({ children }) => {
       // Cleanup socket before logout
       if (socketService.isSocketConnected()) {
         ticketSocketService.cleanup();
+        proposalSocketService.cleanup();
         socketService.disconnect();
       }
 

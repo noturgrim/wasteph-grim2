@@ -121,13 +121,18 @@ const startServer = async () => {
       process.exit(1);
     }
 
+    // Initialize notification service
+    const notificationService = (await import("./services/notificationService.js")).default;
+
     // Initialize socket events for ticket service
     const ticketService = (await import("./services/ticketServiceWithSocket.js")).default;
     ticketService.initializeSocketEvents();
-
-    // Initialize notification service for ticket events
-    const notificationService = (await import("./services/notificationService.js")).default;
     ticketService.ticketEvents.setNotificationService(notificationService);
+
+    // Initialize socket events for proposal service
+    const proposalService = (await import("./services/proposalServiceWithSocket.js")).default;
+    proposalService.initializeSocket(socketServer);
+    proposalService.setNotificationService(notificationService);
 
     httpServer.listen(PORT, () => {
       console.log(`\n🚀 Server is running on port ${PORT}`);
