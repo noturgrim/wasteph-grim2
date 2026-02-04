@@ -84,7 +84,7 @@ export default function Leads() {
   }, []);
 
   useEffect(() => {
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
     fetchLeads(1);
   }, [searchTerm, statusFilter]);
 
@@ -98,7 +98,10 @@ export default function Leads() {
     }
   };
 
-  const fetchLeads = async (page = pagination.page, limit = pagination.limit) => {
+  const fetchLeads = async (
+    page = pagination.page,
+    limit = pagination.limit
+  ) => {
     const currentFetchId = ++fetchIdRef.current;
     setIsLoading(true);
     try {
@@ -118,7 +121,9 @@ export default function Leads() {
       if (currentFetchId !== fetchIdRef.current) return;
 
       setLeads(response.data || []);
-      setPagination(response.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 });
+      setPagination(
+        response.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 }
+      );
     } catch (error) {
       if (currentFetchId !== fetchIdRef.current) return;
       toast.error(error.message || "Failed to fetch leads");
@@ -171,16 +176,21 @@ export default function Leads() {
   };
 
   const confirmClaim = async () => {
+    setIsSubmitting(true);
     try {
       // Pass source only if user selected one
       await api.claimLead(selectedLead.id, claimSource || undefined);
-      toast.success("Lead claimed successfully! Check Inquiries page to manage it.");
+      toast.success(
+        "Lead claimed successfully! Check Inquiries page to manage it."
+      );
       setIsClaimDialogOpen(false);
       setClaimSource("");
       fetchAllLeads();
       fetchLeads();
     } catch (error) {
       toast.error(error.message || "Failed to claim lead");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -203,8 +213,8 @@ export default function Leads() {
 
   const handleBulkDelete = () => {
     // Filter to only unclaimed leads
-    const unclaimedSelected = selectedLeads.filter(id => {
-      const lead = leads.find(l => l.id === id);
+    const unclaimedSelected = selectedLeads.filter((id) => {
+      const lead = leads.find((l) => l.id === id);
       return lead && !lead.isClaimed;
     });
 
@@ -219,17 +229,17 @@ export default function Leads() {
   const confirmBulkDelete = async () => {
     try {
       // Filter to only unclaimed leads
-      const unclaimedSelected = selectedLeads.filter(id => {
-        const lead = leads.find(l => l.id === id);
+      const unclaimedSelected = selectedLeads.filter((id) => {
+        const lead = leads.find((l) => l.id === id);
         return lead && !lead.isClaimed;
       });
 
       const result = await api.bulkDeleteLeads(unclaimedSelected);
-      
+
       if (result.deleted > 0) {
         toast.success(`Successfully deleted ${result.deleted} lead(s)`);
       }
-      
+
       if (result.failed > 0) {
         toast.error(`Failed to delete ${result.failed} lead(s)`);
       }
@@ -244,10 +254,8 @@ export default function Leads() {
   };
 
   const handleSelectLead = (leadId, isSelected) => {
-    setSelectedLeads(prev => 
-      isSelected 
-        ? [...prev, leadId]
-        : prev.filter(id => id !== leadId)
+    setSelectedLeads((prev) =>
+      isSelected ? [...prev, leadId] : prev.filter((id) => id !== leadId)
     );
   };
 
@@ -255,8 +263,8 @@ export default function Leads() {
     if (isSelected) {
       // Only select unclaimed leads
       const unclaimedLeadIds = leads
-        .filter(lead => !lead.isClaimed)
-        .map(lead => lead.id);
+        .filter((lead) => !lead.isClaimed)
+        .map((lead) => lead.id);
       setSelectedLeads(unclaimedLeadIds);
     } else {
       setSelectedLeads([]);
@@ -277,7 +285,7 @@ export default function Leads() {
     onSelectAll: handleSelectAll,
   });
 
-  const columns = allColumns.filter(column => {
+  const columns = allColumns.filter((column) => {
     if (!column.accessorKey) return true;
     return columnVisibility[column.accessorKey];
   });
@@ -342,7 +350,9 @@ export default function Leads() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[180px]">
-            <DropdownMenuLabel className="font-bold">Toggle columns</DropdownMenuLabel>
+            <DropdownMenuLabel className="font-bold">
+              Toggle columns
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             {allColumns
               .filter((column) => column.accessorKey)
@@ -373,7 +383,11 @@ export default function Leads() {
         </DropdownMenu>
       </div>
 
-      <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-full">
+      <Tabs
+        value={statusFilter}
+        onValueChange={setStatusFilter}
+        className="w-full"
+      >
         <TabsList>
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="unclaimed">Available</TabsTrigger>
@@ -402,7 +416,7 @@ export default function Leads() {
             value={pagination.limit.toString()}
             onValueChange={(value) => {
               const newLimit = parseInt(value);
-              setPagination(prev => ({ ...prev, limit: newLimit, page: 1 }));
+              setPagination((prev) => ({ ...prev, limit: newLimit, page: 1 }));
               fetchLeads(1, newLimit);
             }}
           >
@@ -424,28 +438,94 @@ export default function Leads() {
         </span>
 
         <div className="flex items-center gap-1">
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => fetchLeads(1)} disabled={pagination.page === 1 || isLoading}>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => fetchLeads(1)}
+            disabled={pagination.page === 1 || isLoading}
+          >
             <span className="sr-only">First page</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polyline points="11 17 6 12 11 7" />
               <polyline points="18 17 13 12 18 7" />
             </svg>
           </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => fetchLeads(Math.max(pagination.page - 1, 1))} disabled={pagination.page === 1 || isLoading}>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => fetchLeads(Math.max(pagination.page - 1, 1))}
+            disabled={pagination.page === 1 || isLoading}
+          >
             <span className="sr-only">Previous page</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => fetchLeads(Math.min(pagination.page + 1, pagination.totalPages))} disabled={pagination.page >= pagination.totalPages || isLoading}>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() =>
+              fetchLeads(Math.min(pagination.page + 1, pagination.totalPages))
+            }
+            disabled={pagination.page >= pagination.totalPages || isLoading}
+          >
             <span className="sr-only">Next page</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </Button>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => fetchLeads(pagination.totalPages)} disabled={pagination.page >= pagination.totalPages || isLoading}>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => fetchLeads(pagination.totalPages)}
+            disabled={pagination.page >= pagination.totalPages || isLoading}
+          >
             <span className="sr-only">Last page</span>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <polyline points="13 17 18 12 13 7" />
               <polyline points="6 17 11 12 6 7" />
             </svg>
@@ -481,12 +561,15 @@ export default function Leads() {
             <AlertDialogDescription asChild>
               <div>
                 <p>
-                  By claiming this lead, it will be converted to an inquiry and assigned to you.
-                  You'll be able to manage it in the Inquiries page. This action cannot be undone.
+                  By claiming this lead, it will be converted to an inquiry and
+                  assigned to you. You'll be able to manage it in the Inquiries
+                  page. This action cannot be undone.
                 </p>
                 <div className="mt-4 p-3 bg-muted rounded-md">
                   <p className="font-semibold">{selectedLead?.clientName}</p>
-                  <p className="text-sm text-muted-foreground">{selectedLead?.company}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedLead?.company}
+                  </p>
                 </div>
                 <div className="mt-4">
                   <label className="text-sm font-medium text-foreground">
@@ -495,7 +578,11 @@ export default function Leads() {
                   <p className="text-xs text-muted-foreground mb-2">
                     How did this lead reach out?
                   </p>
-                  <Select value={claimSource} onValueChange={setClaimSource}>
+                  <Select
+                    value={claimSource}
+                    onValueChange={setClaimSource}
+                    disabled={isSubmitting}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select source (optional)" />
                     </SelectTrigger>
@@ -505,7 +592,9 @@ export default function Leads() {
                       <SelectItem value="email">Email</SelectItem>
                       <SelectItem value="phone">Phone</SelectItem>
                       <SelectItem value="walk-in">Walk-in</SelectItem>
-                      <SelectItem value="cold-approach">Cold Approach</SelectItem>
+                      <SelectItem value="cold-approach">
+                        Cold Approach
+                      </SelectItem>
                       <SelectItem value="referral">Referral</SelectItem>
                     </SelectContent>
                   </Select>
@@ -514,9 +603,17 @@ export default function Leads() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmClaim}>
-              Claim Lead
+            <AlertDialogCancel disabled={isSubmitting}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                confirmClaim();
+              }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Claiming..." : "Claim Lead"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -532,7 +629,7 @@ export default function Leads() {
         actionsList={[
           "Permanently delete this lead from the pool",
           "Remove all associated data",
-          "This cannot be undone"
+          "This cannot be undone",
         ]}
         warningMessage="This action cannot be undone."
       />
@@ -547,7 +644,7 @@ export default function Leads() {
         actionsList={[
           `Delete ${selectedLeads.length} selected unclaimed lead(s)`,
           "Claimed leads will be skipped automatically",
-          "This action cannot be undone"
+          "This action cannot be undone",
         ]}
         warningMessage="Only unclaimed leads will be deleted. Claimed leads will be skipped."
       />

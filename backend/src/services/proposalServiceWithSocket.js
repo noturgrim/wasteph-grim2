@@ -46,25 +46,76 @@ class ProposalServiceWithSocket {
     );
 
     // Emit socket event if initialized
-    if (this.proposalEvents) {
-      // Get user details
-      const { db } = await import("../db/index.js");
-      const { usersTable } = await import("../db/schema.js");
-      const { eq } = await import("drizzle-orm");
+    if (this.proposalEvents && proposal?.id) {
+      try {
+        // Get full proposal with inquiry data for socket emission
+        const { db } = await import("../db/index.js");
+        const { proposalTable, inquiryTable, usersTable } = await import(
+          "../db/schema.js"
+        );
+        const { eq } = await import("drizzle-orm");
 
-      const [user] = await db
-        .select({
-          id: usersTable.id,
-          firstName: usersTable.firstName,
-          lastName: usersTable.lastName,
-          email: usersTable.email,
-          role: usersTable.role,
-        })
-        .from(usersTable)
-        .where(eq(usersTable.id, userId));
+        console.log(
+          `🔍 Fetching proposal ${proposal.id} for socket emission...`
+        );
 
-      if (user) {
-        await this.proposalEvents.emitProposalRequested(proposal, user);
+        const fullProposalResult = await db
+          .select({
+            id: proposalTable.id,
+            proposalNumber: proposalTable.proposalNumber,
+            inquiryId: proposalTable.inquiryId,
+            status: proposalTable.status,
+            requestedBy: proposalTable.requestedBy,
+            createdAt: proposalTable.createdAt,
+            // Inquiry details
+            inquiryName: inquiryTable.name,
+            inquiryEmail: inquiryTable.email,
+            inquiryCompany: inquiryTable.company,
+            inquiryNumber: inquiryTable.inquiryNumber,
+          })
+          .from(proposalTable)
+          .leftJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id))
+          .where(eq(proposalTable.id, proposal.id))
+          .limit(1);
+
+        const fullProposal = fullProposalResult[0];
+
+        if (!fullProposal) {
+          console.warn(`⚠️ Full proposal not found: ${proposal.id}`);
+          return proposal;
+        }
+
+        console.log(`✅ Found proposal: ${fullProposal.proposalNumber}`);
+
+        // Get user details
+        console.log(`🔍 Fetching user ${userId} for socket emission...`);
+
+        const userResult = await db
+          .select({
+            id: usersTable.id,
+            firstName: usersTable.firstName,
+            lastName: usersTable.lastName,
+            email: usersTable.email,
+            role: usersTable.role,
+          })
+          .from(usersTable)
+          .where(eq(usersTable.id, userId));
+
+        const user = userResult[0];
+
+        if (!user) {
+          console.warn(`⚠️ User not found for proposal emission: ${userId}`);
+          return proposal;
+        }
+
+        console.log(`✅ Found user: ${user.email}`);
+
+        // Emit the event
+        await this.proposalEvents.emitProposalRequested(fullProposal, user);
+        console.log(`✅ Proposal requested event emitted successfully`);
+      } catch (error) {
+        console.error("❌ Error emitting proposal requested event:", error);
+        // Don't throw - proposal was created successfully, just log the socket error
       }
     }
 
@@ -86,22 +137,30 @@ class ProposalServiceWithSocket {
     );
 
     // Emit socket event
-    if (this.proposalEvents) {
-      const { db } = await import("../db/index.js");
-      const { usersTable } = await import("../db/schema.js");
-      const { eq } = await import("drizzle-orm");
+    if (this.proposalEvents && proposal) {
+      try {
+        const { db } = await import("../db/index.js");
+        const { usersTable } = await import("../db/schema.js");
+        const { eq } = await import("drizzle-orm");
 
-      const [user] = await db
-        .select({
-          id: usersTable.id,
-          firstName: usersTable.firstName,
-          lastName: usersTable.lastName,
-        })
-        .from(usersTable)
-        .where(eq(usersTable.id, userId));
+        const [user] = await db
+          .select({
+            id: usersTable.id,
+            firstName: usersTable.firstName,
+            lastName: usersTable.lastName,
+          })
+          .from(usersTable)
+          .where(eq(usersTable.id, userId));
 
-      if (user) {
-        await this.proposalEvents.emitProposalApproved(proposal, user);
+        if (user) {
+          await this.proposalEvents.emitProposalApproved(proposal, user);
+        } else {
+          console.warn(
+            `User not found for proposal approval emission: ${userId}`
+          );
+        }
+      } catch (error) {
+        console.error("Error emitting proposal approved event:", error);
       }
     }
 
@@ -123,22 +182,30 @@ class ProposalServiceWithSocket {
     );
 
     // Emit socket event
-    if (this.proposalEvents) {
-      const { db } = await import("../db/index.js");
-      const { usersTable } = await import("../db/schema.js");
-      const { eq } = await import("drizzle-orm");
+    if (this.proposalEvents && proposal) {
+      try {
+        const { db } = await import("../db/index.js");
+        const { usersTable } = await import("../db/schema.js");
+        const { eq } = await import("drizzle-orm");
 
-      const [user] = await db
-        .select({
-          id: usersTable.id,
-          firstName: usersTable.firstName,
-          lastName: usersTable.lastName,
-        })
-        .from(usersTable)
-        .where(eq(usersTable.id, userId));
+        const [user] = await db
+          .select({
+            id: usersTable.id,
+            firstName: usersTable.firstName,
+            lastName: usersTable.lastName,
+          })
+          .from(usersTable)
+          .where(eq(usersTable.id, userId));
 
-      if (user) {
-        await this.proposalEvents.emitProposalRejected(proposal, user);
+        if (user) {
+          await this.proposalEvents.emitProposalRejected(proposal, user);
+        } else {
+          console.warn(
+            `User not found for proposal rejection emission: ${userId}`
+          );
+        }
+      } catch (error) {
+        console.error("Error emitting proposal rejected event:", error);
       }
     }
 
@@ -160,22 +227,28 @@ class ProposalServiceWithSocket {
     );
 
     // Emit socket event
-    if (this.proposalEvents) {
-      const { db } = await import("../db/index.js");
-      const { usersTable } = await import("../db/schema.js");
-      const { eq } = await import("drizzle-orm");
+    if (this.proposalEvents && proposal) {
+      try {
+        const { db } = await import("../db/index.js");
+        const { usersTable } = await import("../db/schema.js");
+        const { eq } = await import("drizzle-orm");
 
-      const [user] = await db
-        .select({
-          id: usersTable.id,
-          firstName: usersTable.firstName,
-          lastName: usersTable.lastName,
-        })
-        .from(usersTable)
-        .where(eq(usersTable.id, userId));
+        const [user] = await db
+          .select({
+            id: usersTable.id,
+            firstName: usersTable.firstName,
+            lastName: usersTable.lastName,
+          })
+          .from(usersTable)
+          .where(eq(usersTable.id, userId));
 
-      if (user) {
-        await this.proposalEvents.emitProposalSent(proposal, user);
+        if (user) {
+          await this.proposalEvents.emitProposalSent(proposal, user);
+        } else {
+          console.warn(`User not found for proposal sent emission: ${userId}`);
+        }
+      } catch (error) {
+        console.error("Error emitting proposal sent event:", error);
       }
     }
 

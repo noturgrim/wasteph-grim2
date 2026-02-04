@@ -118,7 +118,10 @@ export function EditInquiryDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Edit Inquiry</DialogTitle>
           <DialogDescription>
@@ -237,7 +240,9 @@ export function EditInquiryDialog({
               <Label htmlFor="edit-source">Source</Label>
               <Select
                 value={formData.source}
-                onValueChange={(val) => setFormData({ ...formData, source: val })}
+                onValueChange={(val) =>
+                  setFormData({ ...formData, source: val })
+                }
               >
                 <SelectTrigger id="edit-source">
                   <SelectValue />
@@ -258,7 +263,9 @@ export function EditInquiryDialog({
               <Label htmlFor="edit-status">Status</Label>
               <Select
                 value={formData.status}
-                onValueChange={(val) => setFormData({ ...formData, status: val })}
+                onValueChange={(val) =>
+                  setFormData({ ...formData, status: val })
+                }
               >
                 <SelectTrigger id="edit-status">
                   <SelectValue />
@@ -330,9 +337,7 @@ export function EditInquiryDialog({
               className={formErrors.message ? "border-red-500" : ""}
             />
             {formErrors.message && (
-              <p className="text-sm text-red-500">
-                {formErrors.message}
-              </p>
+              <p className="text-sm text-red-500">{formErrors.message}</p>
             )}
           </div>
 
