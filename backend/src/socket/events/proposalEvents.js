@@ -87,9 +87,9 @@ class ProposalEventEmitter {
         const adminIds = await this._getAdminUserIds();
 
         // Create bulk notifications
-        await this.notificationService.createBulkNotifications({
-          userIds: adminIds,
+        await this.notificationService.createBulkNotifications(adminIds, {
           type: "proposal_requested",
+          title: "New Proposal Request",
           message,
           entityType: "proposal",
           entityId: proposal.id,
@@ -149,6 +149,7 @@ class ProposalEventEmitter {
           await this.notificationService.createNotification({
             userId: proposal.requestedBy,
             type: "proposal_approved",
+            title: "Proposal Approved",
             message: `${approverName} approved proposal ${proposal.proposalNumber}`,
             entityType: "proposal",
             entityId: proposal.id,
@@ -206,6 +207,7 @@ class ProposalEventEmitter {
           await this.notificationService.createNotification({
             userId: proposal.requestedBy,
             type: "proposal_rejected",
+            title: "Proposal Rejected",
             message: `${rejectorName} rejected proposal ${proposal.proposalNumber}`,
             entityType: "proposal",
             entityId: proposal.id,
@@ -262,9 +264,9 @@ class ProposalEventEmitter {
         const senderName = `${user.firstName} ${user.lastName}`;
         const adminIds = await this._getAdminUserIds();
 
-        await this.notificationService.createBulkNotifications({
-          userIds: adminIds,
+        await this.notificationService.createBulkNotifications(adminIds, {
           type: "proposal_sent",
+          title: "Proposal Sent to Client",
           message: `${senderName} sent proposal ${proposal.proposalNumber} to client`,
           entityType: "proposal",
           entityId: proposal.id,

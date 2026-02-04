@@ -255,8 +255,13 @@ class ProposalServiceWithSocket {
   }
 
   // Proxy all other methods to core service
-  async getProposals(filters) {
-    return this.proposalService.getProposals(filters);
+  async getProposals(options, userId, userRole, isMasterSales) {
+    return this.proposalService.getAllProposals(
+      options,
+      userId,
+      userRole,
+      isMasterSales
+    );
   }
 
   async getProposalById(proposalId) {

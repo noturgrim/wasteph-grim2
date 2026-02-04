@@ -11,7 +11,12 @@ import {
 } from "drizzle-orm/pg-core";
 
 // Enums
-export const userRoleEnum = pgEnum("user_role", ["admin", "sales", "social_media", "super_admin"]);
+export const userRoleEnum = pgEnum("user_role", [
+  "admin",
+  "sales",
+  "social_media",
+  "super_admin",
+]);
 export const inquiryStatusEnum = pgEnum("inquiry_status", [
   "submitted_proposal",
   "initial_comms",
@@ -86,33 +91,33 @@ export const priorityLevelEnum = pgEnum("priority_level", [
   "high",
 ]);
 export const proposalStatusEnum = pgEnum("proposal_status", [
-  "pending",      // Sales created, waiting for admin review
-  "approved",     // Admin approved, waiting for sales to send
-  "disapproved",  // Admin disapproved, sales can revise
-  "sent",         // Sales sent to client, waiting for client response
-  "accepted",     // Client accepted the proposal
-  "rejected",     // Client rejected the proposal
-  "cancelled",    // Cancelled by sales or admin
-  "expired",      // Proposal passed its validity period without client response
+  "pending", // Sales created, waiting for admin review
+  "approved", // Admin approved, waiting for sales to send
+  "disapproved", // Admin disapproved, sales can revise
+  "sent", // Sales sent to client, waiting for client response
+  "accepted", // Client accepted the proposal
+  "rejected", // Client rejected the proposal
+  "cancelled", // Cancelled by sales or admin
+  "expired", // Proposal passed its validity period without client response
 ]);
 
 // Contract status - tracks contract request workflow
 export const contractStatusEnum = pgEnum("contract_status", [
-  "pending_request",   // Auto-created, waiting for Sales to request
-  "requested",         // Sales requested contract from Admin
-  "ready_for_sales",   // Admin uploaded contract, not sent to Sales yet
-  "sent_to_sales",     // Admin sent to Sales, waiting for Sales to send to client
-  "sent_to_client",    // Sales sent to client, waiting for client to upload signed copy
-  "signed",            // Client uploaded signed contract, client record auto-created
+  "pending_request", // Auto-created, waiting for Sales to request
+  "requested", // Sales requested contract from Admin
+  "ready_for_sales", // Admin uploaded contract, not sent to Sales yet
+  "sent_to_sales", // Admin sent to Sales, waiting for Sales to send to client
+  "sent_to_client", // Sales sent to client, waiting for client to upload signed copy
+  "signed", // Client uploaded signed contract, client record auto-created
   "hardbound_received", // Admin uploaded scanned hardbound copy (terminal status)
 ]);
 
 // Contract type enum
 export const contractTypeEnum = pgEnum("contract_type", [
-  "long_term_variable",  // LONG TERM GARBAGE VARIABLE CHARGE
-  "long_term_fixed",     // LONG TERM GARBAGE FIXED CHARGE (MORE THAN 50,000 PHP / MONTH)
-  "fixed_rate_term",     // FIXED RATE TERM
-  "garbage_bins",        // GARBAGE BINS
+  "long_term_variable", // LONG TERM GARBAGE VARIABLE CHARGE
+  "long_term_fixed", // LONG TERM GARBAGE FIXED CHARGE (MORE THAN 50,000 PHP / MONTH)
+  "fixed_rate_term", // FIXED RATE TERM
+  "garbage_bins", // GARBAGE BINS
   "garbage_bins_disposal", // GARBAGE BINS WITH DISPOSAL
 ]);
 
@@ -133,7 +138,7 @@ export const proposalTemplateTypeEnum = pgEnum("proposal_template_type", [
   "clearing_project",
   "one_time_hauling",
   "long_term",
-  "recyclables_purchase"
+  "recyclables_purchase",
 ]);
 
 // Lucia Auth Tables
@@ -166,77 +171,99 @@ export const sessionTable = pgTable("session", {
 });
 
 // Business Tables
-export const inquiryTable = pgTable("inquiry", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  inquiryNumber: text("inquiry_number").notNull().unique(), // Format: INQ-YYYYMMDD-NNNN
-  name: text("name").notNull(),
-  email: text("email").notNull(),
-  phone: text("phone"),
-  company: text("company"),
-  location: text("location"),
-  message: text("message").notNull(),
-  serviceId: uuid("service_id").references(() => serviceTable.id),
-  status: inquiryStatusEnum("status").notNull().default("initial_comms"),
-  source: text("source").default("website"),
-  assignedTo: text("assigned_to").references(() => userTable.id),
-  notes: text("notes"),
-  isInformationComplete: boolean("is_information_complete").notNull().default(true),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  inquiryNumberIdx: index("inquiry_number_idx").on(table.inquiryNumber),
-}));
+export const inquiryTable = pgTable(
+  "inquiry",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    inquiryNumber: text("inquiry_number").notNull().unique(), // Format: INQ-YYYYMMDD-NNNN
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    phone: text("phone"),
+    company: text("company"),
+    location: text("location"),
+    message: text("message").notNull(),
+    serviceId: uuid("service_id").references(() => serviceTable.id),
+    status: inquiryStatusEnum("status").notNull().default("initial_comms"),
+    source: text("source").default("website"),
+    assignedTo: text("assigned_to").references(() => userTable.id),
+    notes: text("notes"),
+    isInformationComplete: boolean("is_information_complete")
+      .notNull()
+      .default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    inquiryNumberIdx: index("inquiry_number_idx").on(table.inquiryNumber),
+  })
+);
 
-export const inquiryNotesTable = pgTable("inquiry_notes", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  inquiryId: uuid("inquiry_id")
-    .notNull()
-    .references(() => inquiryTable.id, { onDelete: "cascade" }),
-  content: text("content").notNull(),
-  createdBy: text("created_by")
-    .notNull()
-    .references(() => userTable.id),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  inquiryIdIdx: index("inquiry_notes_inquiry_id_idx").on(table.inquiryId),
-  createdAtIdx: index("inquiry_notes_created_at_idx").on(table.createdAt),
-}));
+export const inquiryNotesTable = pgTable(
+  "inquiry_notes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    inquiryId: uuid("inquiry_id")
+      .notNull()
+      .references(() => inquiryTable.id, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => userTable.id),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    inquiryIdIdx: index("inquiry_notes_inquiry_id_idx").on(table.inquiryId),
+    createdAtIdx: index("inquiry_notes_created_at_idx").on(table.createdAt),
+  })
+);
 
 // Calendar Events Table
-export const calendarEventTable = pgTable("calendar_event", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => userTable.id, { onDelete: "cascade" }),
-  inquiryId: uuid("inquiry_id").references(() => inquiryTable.id, { onDelete: "set null" }),
-  clientId: uuid("client_id").references(() => clientTable.id, { onDelete: "set null" }),
-  title: text("title").notNull(),
-  description: text("description"),
-  eventType: text("event_type"), // site_visit, call, meeting, follow_up, etc. (fully customizable)
-  scheduledDate: timestamp("scheduled_date", { withTimezone: true }).notNull(),
-  startTime: text("start_time"), // HH:MM format (optional)
-  endTime: text("end_time"), // HH:MM format (optional)
-  status: text("status").notNull().default("scheduled"), // scheduled, completed, cancelled
-  completedAt: timestamp("completed_at", { withTimezone: true }),
-  notes: text("notes"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  userIdIdx: index("calendar_event_user_id_idx").on(table.userId),
-  scheduledDateIdx: index("calendar_event_scheduled_date_idx").on(table.scheduledDate),
-  inquiryIdIdx: index("calendar_event_inquiry_id_idx").on(table.inquiryId),
-  clientIdIdx: index("calendar_event_client_id_idx").on(table.clientId),
-}));
+export const calendarEventTable = pgTable(
+  "calendar_event",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => userTable.id, { onDelete: "cascade" }),
+    inquiryId: uuid("inquiry_id").references(() => inquiryTable.id, {
+      onDelete: "set null",
+    }),
+    clientId: uuid("client_id").references(() => clientTable.id, {
+      onDelete: "set null",
+    }),
+    title: text("title").notNull(),
+    description: text("description"),
+    eventType: text("event_type"), // site_visit, call, meeting, follow_up, etc. (fully customizable)
+    scheduledDate: timestamp("scheduled_date", {
+      withTimezone: true,
+    }).notNull(),
+    startTime: text("start_time"), // HH:MM format (optional)
+    endTime: text("end_time"), // HH:MM format (optional)
+    status: text("status").notNull().default("scheduled"), // scheduled, completed, cancelled
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    userIdIdx: index("calendar_event_user_id_idx").on(table.userId),
+    scheduledDateIdx: index("calendar_event_scheduled_date_idx").on(
+      table.scheduledDate
+    ),
+    inquiryIdIdx: index("calendar_event_inquiry_id_idx").on(table.inquiryId),
+    clientIdIdx: index("calendar_event_client_id_idx").on(table.clientId),
+  })
+);
 
 export const leadTable = pgTable("lead", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -315,7 +342,9 @@ export const serviceRequestTable = pgTable("service_request", {
     .references(() => leadTable.id, { onDelete: "cascade" }),
 
   // Common fields for all service types
-  serviceId: uuid("service_id").notNull().references(() => serviceTable.id),
+  serviceId: uuid("service_id")
+    .notNull()
+    .references(() => serviceTable.id),
   serviceMode: serviceModeEnum("service_mode").notNull(),
   serviceLocation: text("service_location").notNull(),
   city: text("city"),
@@ -348,7 +377,9 @@ export const serviceRequestTable = pgTable("service_request", {
   // One-time Hauling specific fields
   materialType: text("material_type"), // construction debris, junk, etc.
   loadSize: text("load_size"),
-  preferredPickupDate: timestamp("preferred_pickup_date", { withTimezone: true }),
+  preferredPickupDate: timestamp("preferred_pickup_date", {
+    withTimezone: true,
+  }),
   loadingConstraints: text("loading_constraints"),
   haulingPhoto: text("hauling_photo"),
 
@@ -365,7 +396,9 @@ export const serviceTable = pgTable("service", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull().unique(),
   description: text("description"),
-  defaultTemplateId: uuid("default_template_id").references(() => proposalTemplateTable.id),
+  defaultTemplateId: uuid("default_template_id").references(
+    () => proposalTemplateTable.id
+  ),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -393,261 +426,286 @@ export const provinceTable = pgTable("province", {
 });
 
 // Proposal Templates
-export const proposalTemplateTable = pgTable("proposal_template", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull().unique(),
-  description: text("description"),
-  htmlTemplate: text("html_template").notNull(),
-  templateType: proposalTemplateTypeEnum("template_type"),
-  category: text("category"), // "waste_collection", "hazardous", "recyclables"
-  templateConfig: text("template_config"), // JSON: {hasWasteAllowance, hasEquipment, etc.}
-  isActive: boolean("is_active").notNull().default(true),
-  isDefault: boolean("is_default").notNull().default(false),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  nameIdx: index("proposal_template_name_idx").on(table.name),
-  isDefaultIdx: index("proposal_template_is_default_idx").on(table.isDefault),
-  templateTypeIdx: index("proposal_template_type_idx").on(table.templateType),
-}));
+export const proposalTemplateTable = pgTable(
+  "proposal_template",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull().unique(),
+    description: text("description"),
+    htmlTemplate: text("html_template").notNull(),
+    templateType: proposalTemplateTypeEnum("template_type"),
+    category: text("category"), // "waste_collection", "hazardous", "recyclables"
+    templateConfig: text("template_config"), // JSON: {hasWasteAllowance, hasEquipment, etc.}
+    isActive: boolean("is_active").notNull().default(true),
+    isDefault: boolean("is_default").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    nameIdx: index("proposal_template_name_idx").on(table.name),
+    isDefaultIdx: index("proposal_template_is_default_idx").on(table.isDefault),
+    templateTypeIdx: index("proposal_template_type_idx").on(table.templateType),
+  })
+);
 
 // Proposals
-export const proposalTable = pgTable("proposal", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  proposalNumber: text("proposal_number").notNull().unique(), // Format: PROP-YYYYMMDD-NNNN
+export const proposalTable = pgTable(
+  "proposal",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    proposalNumber: text("proposal_number").notNull().unique(), // Format: PROP-YYYYMMDD-NNNN
 
-  // Relationships
-  inquiryId: uuid("inquiry_id")
-    .notNull()
-    .references(() => inquiryTable.id, { onDelete: "cascade" }),
-  templateId: uuid("template_id")
-    .notNull()
-    .references(() => proposalTemplateTable.id),
-  requestedBy: text("requested_by")
-    .notNull()
-    .references(() => userTable.id),
-  reviewedBy: text("reviewed_by").references(() => userTable.id),
+    // Relationships
+    inquiryId: uuid("inquiry_id")
+      .notNull()
+      .references(() => inquiryTable.id, { onDelete: "cascade" }),
+    templateId: uuid("template_id")
+      .notNull()
+      .references(() => proposalTemplateTable.id),
+    requestedBy: text("requested_by")
+      .notNull()
+      .references(() => userTable.id),
+    reviewedBy: text("reviewed_by").references(() => userTable.id),
 
-  // Proposal Data (JSON - services, pricing, terms)
-  proposalData: text("proposal_data").notNull(),
+    // Proposal Data (JSON - services, pricing, terms)
+    proposalData: text("proposal_data").notNull(),
 
-  // Workflow Status
-  status: proposalStatusEnum("status").notNull().default("pending"),
-  wasTemplateSuggested: boolean("was_template_suggested").default(false),
+    // Workflow Status
+    status: proposalStatusEnum("status").notNull().default("pending"),
+    wasTemplateSuggested: boolean("was_template_suggested").default(false),
 
-  // Review Details
-  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
-  rejectionReason: text("rejection_reason"),
-  adminNotes: text("admin_notes"),
+    // Review Details
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    rejectionReason: text("rejection_reason"),
+    adminNotes: text("admin_notes"),
 
-  // Email Tracking
-  sentBy: text("sent_by").references(() => userTable.id), // Sales user who sent to client
-  sentAt: timestamp("sent_at", { withTimezone: true }), // When sent to client
-  emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
-  emailStatus: text("email_status"), // "sent", "failed"
-  expiresAt: timestamp("expires_at", { withTimezone: true }), // sentAt + validityDays
+    // Email Tracking
+    sentBy: text("sent_by").references(() => userTable.id), // Sales user who sent to client
+    sentAt: timestamp("sent_at", { withTimezone: true }), // When sent to client
+    emailSentAt: timestamp("email_sent_at", { withTimezone: true }),
+    emailStatus: text("email_status"), // "sent", "failed"
+    expiresAt: timestamp("expires_at", { withTimezone: true }), // sentAt + validityDays
 
-  // Client Response (from email buttons)
-  clientResponse: text("client_response"), // "approved", "rejected", null
-  clientResponseAt: timestamp("client_response_at", { withTimezone: true }),
-  clientResponseToken: text("client_response_token"), // Secure token for email links
-  clientResponseIp: text("client_response_ip"),
+    // Client Response (from email buttons)
+    clientResponse: text("client_response"), // "approved", "rejected", null
+    clientResponseAt: timestamp("client_response_at", { withTimezone: true }),
+    clientResponseToken: text("client_response_token"), // Secure token for email links
+    clientResponseIp: text("client_response_ip"),
 
-  // PDF Storage
-  pdfUrl: text("pdf_url"),
+    // PDF Storage
+    pdfUrl: text("pdf_url"),
 
-  // Timestamps
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  proposalNumberIdx: index("proposal_number_idx").on(table.proposalNumber),
-  inquiryIdIdx: index("proposal_inquiry_id_idx").on(table.inquiryId),
-  templateIdIdx: index("proposal_template_id_idx").on(table.templateId),
-  statusIdx: index("proposal_status_idx").on(table.status),
-  requestedByIdx: index("proposal_requested_by_idx").on(table.requestedBy),
-  reviewedByIdx: index("proposal_reviewed_by_idx").on(table.reviewedBy),
-  statusRequestedByIdx: index("proposal_status_requested_by_idx").on(
-    table.status,
-    table.requestedBy
-  ),
-}));
+    // Timestamps
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    proposalNumberIdx: index("proposal_number_idx").on(table.proposalNumber),
+    inquiryIdIdx: index("proposal_inquiry_id_idx").on(table.inquiryId),
+    templateIdIdx: index("proposal_template_id_idx").on(table.templateId),
+    statusIdx: index("proposal_status_idx").on(table.status),
+    requestedByIdx: index("proposal_requested_by_idx").on(table.requestedBy),
+    reviewedByIdx: index("proposal_reviewed_by_idx").on(table.reviewedBy),
+    statusRequestedByIdx: index("proposal_status_requested_by_idx").on(
+      table.status,
+      table.requestedBy
+    ),
+  })
+);
 
 // Contracts - Contract requests from approved proposals
-export const contractsTable = pgTable("contracts", {
-  id: uuid("id").primaryKey().defaultRandom(),
+export const contractsTable = pgTable(
+  "contracts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
 
-  // Link to original proposal (one-to-one relationship)
-  proposalId: uuid("proposal_id")
-    .notNull()
-    .unique()
-    .references(() => proposalTable.id, { onDelete: "cascade" }),
+    // Link to original proposal (one-to-one relationship)
+    proposalId: uuid("proposal_id")
+      .notNull()
+      .unique()
+      .references(() => proposalTable.id, { onDelete: "cascade" }),
 
-  // Contract Status
-  status: contractStatusEnum("status")
-    .notNull()
-    .default("pending_request"),
+    // Contract Status
+    status: contractStatusEnum("status").notNull().default("pending_request"),
 
-  // Sales Request
-  requestedBy: text("requested_by")
-    .references(() => userTable.id), // Sales user who requested
-  requestedAt: timestamp("requested_at", { withTimezone: true }),
-  requestNotes: text("request_notes"), // Sales notes when requesting
+    // Sales Request
+    requestedBy: text("requested_by").references(() => userTable.id), // Sales user who requested
+    requestedAt: timestamp("requested_at", { withTimezone: true }),
+    requestNotes: text("request_notes"), // Sales notes when requesting
 
-  // Contract Details (filled by Sales when requesting)
-  contractType: contractTypeEnum("contract_type"), // Type of contract
-  clientName: text("client_name"), // Contact person name
-  companyName: text("company_name"), // Full corporate name (optional)
-  clientEmailContract: text("client_email_contract"), // Client email for contract form
-  clientAddress: text("client_address"), // Client address
-  contractDuration: text("contract_duration"), // Derived display string kept for PDF templates
-  contractStartDate: timestamp("contract_start_date", { withTimezone: true }),
-  contractEndDate: timestamp("contract_end_date", { withTimezone: true }),
-  serviceLatitude: text("service_latitude"), // Service location latitude
-  serviceLongitude: text("service_longitude"), // Service location longitude
-  collectionSchedule: collectionScheduleEnum("collection_schedule"),
-  collectionScheduleOther: text("collection_schedule_other"), // If "other" is selected
-  wasteAllowance: text("waste_allowance"), // Allocated amount for fixed clients
-  specialClauses: text("special_clauses"), // Special clauses or requests
-  signatories: text("signatories"), // JSON array of signatories with positions
-  ratePerKg: text("rate_per_kg"), // Rate specifications (e.g., "PHP 3.50/kg food - VAT ex.")
-  clientRequests: text("client_requests"), // Client requests for modifications
-  customTemplateUrl: text("custom_template_url"), // Path to client's custom contract template (if provided)
+    // Contract Details (filled by Sales when requesting)
+    contractType: contractTypeEnum("contract_type"), // Type of contract
+    clientName: text("client_name"), // Contact person name
+    companyName: text("company_name"), // Full corporate name (optional)
+    clientEmailContract: text("client_email_contract"), // Client email for contract form
+    clientAddress: text("client_address"), // Client address
+    contractDuration: text("contract_duration"), // Derived display string kept for PDF templates
+    contractStartDate: timestamp("contract_start_date", { withTimezone: true }),
+    contractEndDate: timestamp("contract_end_date", { withTimezone: true }),
+    serviceLatitude: text("service_latitude"), // Service location latitude
+    serviceLongitude: text("service_longitude"), // Service location longitude
+    collectionSchedule: collectionScheduleEnum("collection_schedule"),
+    collectionScheduleOther: text("collection_schedule_other"), // If "other" is selected
+    wasteAllowance: text("waste_allowance"), // Allocated amount for fixed clients
+    specialClauses: text("special_clauses"), // Special clauses or requests
+    signatories: text("signatories"), // JSON array of signatories with positions
+    ratePerKg: text("rate_per_kg"), // Rate specifications (e.g., "PHP 3.50/kg food - VAT ex.")
+    clientRequests: text("client_requests"), // Client requests for modifications
+    customTemplateUrl: text("custom_template_url"), // Path to client's custom contract template (if provided)
 
-  // Template-based Contract Generation
-  templateId: uuid("template_id").references(() => contractTemplatesTable.id), // System template used (if not using custom template)
-  contractData: text("contract_data"), // JSON with all contract data (for template rendering)
-  editedHtmlContent: text("edited_html_content"), // Pre-rendered HTML if admin edited contract
+    // Template-based Contract Generation
+    templateId: uuid("template_id").references(() => contractTemplatesTable.id), // System template used (if not using custom template)
+    contractData: text("contract_data"), // JSON with all contract data (for template rendering)
+    editedHtmlContent: text("edited_html_content"), // Pre-rendered HTML if admin edited contract
 
-  // Admin Contract Upload
-  contractUploadedBy: text("contract_uploaded_by")
-    .references(() => userTable.id), // Admin who uploaded
-  contractUploadedAt: timestamp("contract_uploaded_at", { withTimezone: true }),
-  contractPdfUrl: text("contract_pdf_url"), // Path to uploaded PDF
-  adminNotes: text("admin_notes"), // Admin notes for Sales
+    // Admin Contract Upload
+    contractUploadedBy: text("contract_uploaded_by").references(
+      () => userTable.id
+    ), // Admin who uploaded
+    contractUploadedAt: timestamp("contract_uploaded_at", {
+      withTimezone: true,
+    }),
+    contractPdfUrl: text("contract_pdf_url"), // Path to uploaded PDF
+    adminNotes: text("admin_notes"), // Admin notes for Sales
 
-  // Send to Sales
-  sentToSalesBy: text("sent_to_sales_by")
-    .references(() => userTable.id), // Admin who sent to Sales
-  sentToSalesAt: timestamp("sent_to_sales_at", { withTimezone: true }),
+    // Send to Sales
+    sentToSalesBy: text("sent_to_sales_by").references(() => userTable.id), // Admin who sent to Sales
+    sentToSalesAt: timestamp("sent_to_sales_at", { withTimezone: true }),
 
-  // Send to Client
-  sentToClientBy: text("sent_to_client_by")
-    .references(() => userTable.id), // Sales who sent to client
-  sentToClientAt: timestamp("sent_to_client_at", { withTimezone: true }),
-  clientEmail: text("client_email"), // Email address used to send (keep existing field)
+    // Send to Client
+    sentToClientBy: text("sent_to_client_by").references(() => userTable.id), // Sales who sent to client
+    sentToClientAt: timestamp("sent_to_client_at", { withTimezone: true }),
+    clientEmail: text("client_email"), // Email address used to send (keep existing field)
 
-  // Client Submission (token-based upload from email link)
-  clientSubmissionToken: text("client_submission_token"), // Secure token for upload link
-  signedContractUrl: text("signed_contract_url"), // S3 key of client's signed PDF upload
-  signedAt: timestamp("signed_at", { withTimezone: true }),
-  signedByIp: text("signed_by_ip"), // Client IP for audit trail
-  clientId: uuid("client_id").references(() => clientTable.id), // Auto-created client record
+    // Client Submission (token-based upload from email link)
+    clientSubmissionToken: text("client_submission_token"), // Secure token for upload link
+    signedContractUrl: text("signed_contract_url"), // S3 key of client's signed PDF upload
+    signedAt: timestamp("signed_at", { withTimezone: true }),
+    signedByIp: text("signed_by_ip"), // Client IP for audit trail
+    clientId: uuid("client_id").references(() => clientTable.id), // Auto-created client record
 
-  // Hardbound Contract (admin uploads scanned physical copy)
-  hardboundContractUrl: text("hardbound_contract_url"), // S3 key of scanned hardbound PDF
-  hardboundUploadedBy: text("hardbound_uploaded_by")
-    .references(() => userTable.id),
-  hardboundUploadedAt: timestamp("hardbound_uploaded_at", { withTimezone: true }),
+    // Hardbound Contract (admin uploads scanned physical copy)
+    hardboundContractUrl: text("hardbound_contract_url"), // S3 key of scanned hardbound PDF
+    hardboundUploadedBy: text("hardbound_uploaded_by").references(
+      () => userTable.id
+    ),
+    hardboundUploadedAt: timestamp("hardbound_uploaded_at", {
+      withTimezone: true,
+    }),
 
-  // Timestamps
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  proposalIdIdx: index("contracts_proposal_id_idx").on(table.proposalId),
-  statusIdx: index("contracts_status_idx").on(table.status),
-  requestedByIdx: index("contracts_requested_by_idx").on(table.requestedBy),
-}));
+    // Timestamps
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    proposalIdIdx: index("contracts_proposal_id_idx").on(table.proposalId),
+    statusIdx: index("contracts_status_idx").on(table.status),
+    requestedByIdx: index("contracts_requested_by_idx").on(table.requestedBy),
+  })
+);
 
 // Contract Templates - Templates for generating contracts
-export const contractTemplatesTable = pgTable("contract_templates", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull().unique(),
-  description: text("description"),
-  htmlTemplate: text("html_template").notNull(),
-  templateType: contractTypeEnum("template_type"), // Links to contract type
-  isActive: boolean("is_active").notNull().default(true),
-  isDefault: boolean("is_default").notNull().default(false),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  nameIdx: index("contract_templates_name_idx").on(table.name),
-  typeIdx: index("contract_templates_type_idx").on(table.templateType),
-  isActiveIdx: index("contract_templates_is_active_idx").on(table.isActive),
-}));
+export const contractTemplatesTable = pgTable(
+  "contract_templates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull().unique(),
+    description: text("description"),
+    htmlTemplate: text("html_template").notNull(),
+    templateType: contractTypeEnum("template_type"), // Links to contract type
+    isActive: boolean("is_active").notNull().default(true),
+    isDefault: boolean("is_default").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    nameIdx: index("contract_templates_name_idx").on(table.name),
+    typeIdx: index("contract_templates_type_idx").on(table.templateType),
+    isActiveIdx: index("contract_templates_is_active_idx").on(table.isActive),
+  })
+);
 
 // Showcase Table
-export const showcaseTable = pgTable("showcase", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  title: text("title").notNull(),
-  tagline: text("tagline"),
-  description: text("description").notNull(),
-  image: text("image"),
-  link: text("link"),
-  displayOrder: integer("display_order").default(0),
-  isActive: boolean("is_active").notNull().default(true),
-  createdBy: text("created_by")
-    .notNull()
-    .references(() => userTable.id),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  displayOrderIdx: index("showcase_display_order_idx").on(table.displayOrder),
-  isActiveIdx: index("showcase_is_active_idx").on(table.isActive),
-}));
+export const showcaseTable = pgTable(
+  "showcase",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    tagline: text("tagline"),
+    description: text("description").notNull(),
+    image: text("image"),
+    link: text("link"),
+    displayOrder: integer("display_order").default(0),
+    isActive: boolean("is_active").notNull().default(true),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => userTable.id),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    displayOrderIdx: index("showcase_display_order_idx").on(table.displayOrder),
+    isActiveIdx: index("showcase_is_active_idx").on(table.isActive),
+  })
+);
 
 // Clients Showcase Table
-export const clientsShowcaseTable = pgTable("clients_showcase", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  company: text("company").notNull(),
-  logo: text("logo"),
-  industry: text("industry").notNull(),
-  location: text("location"),
-  employees: text("employees"),
-  established: text("established"),
-  background: text("background").notNull(),
-  challenge: text("challenge"),
-  solution: text("solution"),
-  testimonial: text("testimonial").notNull(),
-  author: text("author").notNull(),
-  position: text("position"),
-  rating: integer("rating").default(5),
-  wasteReduction: text("waste_reduction"),
-  partnership: text("partnership"),
-  achievements: text("achievements").array(),
-  isActive: boolean("is_active").notNull().default(true),
-  createdBy: text("created_by")
-    .notNull()
-    .references(() => userTable.id),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  isActiveIdx: index("clients_showcase_is_active_idx").on(table.isActive),
-  companyIdx: index("clients_showcase_company_idx").on(table.company),
-}));
+export const clientsShowcaseTable = pgTable(
+  "clients_showcase",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    company: text("company").notNull(),
+    logo: text("logo"),
+    industry: text("industry").notNull(),
+    location: text("location"),
+    employees: text("employees"),
+    established: text("established"),
+    background: text("background").notNull(),
+    challenge: text("challenge"),
+    solution: text("solution"),
+    testimonial: text("testimonial").notNull(),
+    author: text("author").notNull(),
+    position: text("position"),
+    rating: integer("rating").default(5),
+    wasteReduction: text("waste_reduction"),
+    partnership: text("partnership"),
+    achievements: text("achievements").array(),
+    isActive: boolean("is_active").notNull().default(true),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => userTable.id),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    isActiveIdx: index("clients_showcase_is_active_idx").on(table.isActive),
+    companyIdx: index("clients_showcase_company_idx").on(table.company),
+  })
+);
 
 // Blog Post Status Enum
 export const blogPostStatusEnum = pgEnum("blog_post_status", [
@@ -657,53 +715,64 @@ export const blogPostStatusEnum = pgEnum("blog_post_status", [
 ]);
 
 // Blog Posts
-export const blogPostTable = pgTable("blog_post", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  title: text("title").notNull(),
-  slug: text("slug").notNull().unique(),
-  excerpt: text("excerpt").notNull(),
-  content: text("content").notNull(),
-  coverImage: text("cover_image"),
-  category: text("category").notNull(),
-  tags: text("tags").array(),
-  status: blogPostStatusEnum("status").notNull().default("draft"),
-  author: text("author").notNull(),
-  publishedAt: timestamp("published_at", { withTimezone: true }),
-  views: integer("views").default(0),
-  readTime: text("read_time"),
-  createdBy: text("created_by")
-    .notNull()
-    .references(() => userTable.id),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  slugIdx: index("blog_post_slug_idx").on(table.slug),
-  statusIdx: index("blog_post_status_idx").on(table.status),
-  categoryIdx: index("blog_post_category_idx").on(table.category),
-  publishedAtIdx: index("blog_post_published_at_idx").on(table.publishedAt),
-}));
+export const blogPostTable = pgTable(
+  "blog_post",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    slug: text("slug").notNull().unique(),
+    excerpt: text("excerpt").notNull(),
+    content: text("content").notNull(),
+    coverImage: text("cover_image"),
+    category: text("category").notNull(),
+    tags: text("tags").array(),
+    status: blogPostStatusEnum("status").notNull().default("draft"),
+    author: text("author").notNull(),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    views: integer("views").default(0),
+    readTime: text("read_time"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => userTable.id),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    slugIdx: index("blog_post_slug_idx").on(table.slug),
+    statusIdx: index("blog_post_status_idx").on(table.status),
+    categoryIdx: index("blog_post_category_idx").on(table.category),
+    publishedAtIdx: index("blog_post_published_at_idx").on(table.publishedAt),
+  })
+);
 
 // Counters Table - For generating sequential numbers (INQ-YYYYMMDD-NNNN, PROP-YYYYMMDD-NNNN)
-export const countersTable = pgTable("counters", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  entityType: text("entity_type").notNull(), // 'inquiry', 'proposal'
-  date: text("date").notNull(), // 'YYYY-MM-DD' format
-  currentValue: integer("current_value").notNull().default(0),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  uniqueEntityDate: unique("counters_entity_date_unique").on(table.entityType, table.date),
-  entityTypeIdx: index("counters_entity_type_idx").on(table.entityType),
-  dateIdx: index("counters_date_idx").on(table.date),
-}));
+export const countersTable = pgTable(
+  "counters",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    entityType: text("entity_type").notNull(), // 'inquiry', 'proposal'
+    date: text("date").notNull(), // 'YYYY-MM-DD' format
+    currentValue: integer("current_value").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    uniqueEntityDate: unique("counters_entity_date_unique").on(
+      table.entityType,
+      table.date
+    ),
+    entityTypeIdx: index("counters_entity_type_idx").on(table.entityType),
+    dateIdx: index("counters_date_idx").on(table.date),
+  })
+);
 
 // Activity Log
 export const activityLogTable = pgTable("activity_log", {
@@ -726,106 +795,128 @@ export const activityLogTable = pgTable("activity_log", {
 });
 
 // Client Tickets - Support ticketing system for contracted clients
-export const clientTicketsTable = pgTable("client_tickets", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  ticketNumber: text("ticket_number").notNull().unique(), // Format: TKT-YYYYMMDD-NNNN
-  clientId: uuid("client_id")
-    .notNull()
-    .references(() => clientTable.id, { onDelete: "cascade" }),
-  category: ticketCategoryEnum("category").notNull(),
-  priority: ticketPriorityEnum("priority").notNull().default("medium"),
-  subject: text("subject").notNull(),
-  description: text("description").notNull(),
-  status: ticketStatusEnum("status").notNull().default("open"),
-  
-  // Sales who created the ticket
-  createdBy: text("created_by")
-    .notNull()
-    .references(() => userTable.id),
-  
-  // Admin who resolved the ticket
-  resolvedBy: text("resolved_by").references(() => userTable.id),
-  resolvedAt: timestamp("resolved_at", { withTimezone: true }),
-  resolutionNotes: text("resolution_notes"),
-  
-  // Timestamps
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  ticketNumberIdx: index("client_tickets_ticket_number_idx").on(table.ticketNumber),
-  clientIdIdx: index("client_tickets_client_id_idx").on(table.clientId),
-  statusIdx: index("client_tickets_status_idx").on(table.status),
-  createdByIdx: index("client_tickets_created_by_idx").on(table.createdBy),
-  categoryIdx: index("client_tickets_category_idx").on(table.category),
-  priorityIdx: index("client_tickets_priority_idx").on(table.priority),
-}));
+export const clientTicketsTable = pgTable(
+  "client_tickets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ticketNumber: text("ticket_number").notNull().unique(), // Format: TKT-YYYYMMDD-NNNN
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clientTable.id, { onDelete: "cascade" }),
+    category: ticketCategoryEnum("category").notNull(),
+    priority: ticketPriorityEnum("priority").notNull().default("medium"),
+    subject: text("subject").notNull(),
+    description: text("description").notNull(),
+    status: ticketStatusEnum("status").notNull().default("open"),
+
+    // Sales who created the ticket
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => userTable.id),
+
+    // Admin who resolved the ticket
+    resolvedBy: text("resolved_by").references(() => userTable.id),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    resolutionNotes: text("resolution_notes"),
+
+    // Timestamps
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    ticketNumberIdx: index("client_tickets_ticket_number_idx").on(
+      table.ticketNumber
+    ),
+    clientIdIdx: index("client_tickets_client_id_idx").on(table.clientId),
+    statusIdx: index("client_tickets_status_idx").on(table.status),
+    createdByIdx: index("client_tickets_created_by_idx").on(table.createdBy),
+    categoryIdx: index("client_tickets_category_idx").on(table.category),
+    priorityIdx: index("client_tickets_priority_idx").on(table.priority),
+  })
+);
 
 // Ticket Attachments - Files attached to tickets
-export const ticketAttachmentsTable = pgTable("ticket_attachments", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  ticketId: uuid("ticket_id")
-    .notNull()
-    .references(() => clientTicketsTable.id, { onDelete: "cascade" }),
-  fileName: text("file_name").notNull(),
-  fileUrl: text("file_url").notNull(), // S3 key
-  fileSize: integer("file_size"), // in bytes
-  fileType: text("file_type"), // mime type
-  uploadedBy: text("uploaded_by")
-    .notNull()
-    .references(() => userTable.id),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  ticketIdIdx: index("ticket_attachments_ticket_id_idx").on(table.ticketId),
-}));
+export const ticketAttachmentsTable = pgTable(
+  "ticket_attachments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ticketId: uuid("ticket_id")
+      .notNull()
+      .references(() => clientTicketsTable.id, { onDelete: "cascade" }),
+    fileName: text("file_name").notNull(),
+    fileUrl: text("file_url").notNull(), // S3 key
+    fileSize: integer("file_size"), // in bytes
+    fileType: text("file_type"), // mime type
+    uploadedBy: text("uploaded_by")
+      .notNull()
+      .references(() => userTable.id),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    ticketIdIdx: index("ticket_attachments_ticket_id_idx").on(table.ticketId),
+  })
+);
 
 // Ticket Comments - Comments/updates on tickets
-export const ticketCommentsTable = pgTable("ticket_comments", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  ticketId: uuid("ticket_id")
-    .notNull()
-    .references(() => clientTicketsTable.id, { onDelete: "cascade" }),
-  content: text("content").notNull(),
-  createdBy: text("created_by")
-    .notNull()
-    .references(() => userTable.id),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  ticketIdIdx: index("ticket_comments_ticket_id_idx").on(table.ticketId),
-  createdAtIdx: index("ticket_comments_created_at_idx").on(table.createdAt),
-}));
+export const ticketCommentsTable = pgTable(
+  "ticket_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ticketId: uuid("ticket_id")
+      .notNull()
+      .references(() => clientTicketsTable.id, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => userTable.id),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    ticketIdIdx: index("ticket_comments_ticket_id_idx").on(table.ticketId),
+    createdAtIdx: index("ticket_comments_created_at_idx").on(table.createdAt),
+  })
+);
 
 // Client Notes - Activity log for client interactions
-export const clientNotesTable = pgTable("client_notes", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  clientId: uuid("client_id")
-    .notNull()
-    .references(() => clientTable.id, { onDelete: "cascade" }),
-  interactionType: clientInteractionTypeEnum("interaction_type").notNull(),
-  subject: text("subject").notNull(),
-  content: text("content").notNull(),
-  interactionDate: timestamp("interaction_date", { withTimezone: true }).notNull(), // When the interaction happened
-  createdBy: text("created_by")
-    .notNull()
-    .references(() => userTable.id),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  clientIdIdx: index("client_notes_client_id_idx").on(table.clientId),
-  interactionDateIdx: index("client_notes_interaction_date_idx").on(table.interactionDate),
-  createdByIdx: index("client_notes_created_by_idx").on(table.createdBy),
-}));
+export const clientNotesTable = pgTable(
+  "client_notes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clientTable.id, { onDelete: "cascade" }),
+    interactionType: clientInteractionTypeEnum("interaction_type").notNull(),
+    subject: text("subject").notNull(),
+    content: text("content").notNull(),
+    interactionDate: timestamp("interaction_date", {
+      withTimezone: true,
+    }).notNull(), // When the interaction happened
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => userTable.id),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    clientIdIdx: index("client_notes_client_id_idx").on(table.clientId),
+    interactionDateIdx: index("client_notes_interaction_date_idx").on(
+      table.interactionDate
+    ),
+    createdByIdx: index("client_notes_created_by_idx").on(table.createdBy),
+  })
+);
 
 // Notification Types
 export const notificationTypeEnum = pgEnum("notification_type", [
@@ -835,8 +926,12 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "ticket_comment_added",
   "ticket_attachment_added",
   "proposal_created",
+  "proposal_requested",
   "proposal_approved",
+  "proposal_rejected",
   "proposal_sent",
+  "proposal_accepted",
+  "proposal_declined",
   "contract_requested",
   "contract_signed",
   "inquiry_created",
@@ -844,24 +939,28 @@ export const notificationTypeEnum = pgEnum("notification_type", [
 ]);
 
 // Notifications Table
-export const notificationsTable = pgTable("notifications", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => userTable.id, { onDelete: "cascade" }),
-  type: notificationTypeEnum("type").notNull(),
-  title: text("title").notNull(),
-  message: text("message").notNull(),
-  entityType: text("entity_type"), // "ticket", "proposal", "contract", etc.
-  entityId: uuid("entity_id"), // ID of the related entity
-  metadata: text("metadata"), // JSON string with additional data
-  isRead: boolean("is_read").notNull().default(false),
-  readAt: timestamp("read_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-}, (table) => ({
-  userIdIdx: index("notifications_user_id_idx").on(table.userId),
-  createdAtIdx: index("notifications_created_at_idx").on(table.createdAt),
-  isReadIdx: index("notifications_is_read_idx").on(table.isRead),
-}));
+export const notificationsTable = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => userTable.id, { onDelete: "cascade" }),
+    type: notificationTypeEnum("type").notNull(),
+    title: text("title").notNull(),
+    message: text("message").notNull(),
+    entityType: text("entity_type"), // "ticket", "proposal", "contract", etc.
+    entityId: uuid("entity_id"), // ID of the related entity
+    metadata: text("metadata"), // JSON string with additional data
+    isRead: boolean("is_read").notNull().default(false),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    userIdIdx: index("notifications_user_id_idx").on(table.userId),
+    createdAtIdx: index("notifications_created_at_idx").on(table.createdAt),
+    isReadIdx: index("notifications_is_read_idx").on(table.isRead),
+  })
+);
