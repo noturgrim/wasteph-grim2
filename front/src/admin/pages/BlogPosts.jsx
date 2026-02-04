@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Plus, Search, Edit, Trash2, Eye, Calendar, Tag, Loader2 } from "lucide-react";
-import { useTheme } from "../contexts/ThemeContext";
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Eye,
+  Calendar,
+  Tag,
+  Loader2,
+} from "lucide-react";
 import { toast } from "../utils/toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,9 +96,13 @@ const CATEGORIES = [
 ];
 
 const BlogPosts = () => {
-  const { theme } = useTheme();
   const [posts, setPosts] = useState([]);
-  const [stats, setStats] = useState({ total: 0, published: 0, draft: 0, archived: 0 });
+  const [stats, setStats] = useState({
+    total: 0,
+    published: 0,
+    draft: 0,
+    archived: 0,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -192,7 +204,9 @@ const BlogPosts = () => {
       const postData = {
         ...formData,
         coverImage: null, // Will be uploaded separately
-        tags: formData.tags ? formData.tags.split(",").map((t) => t.trim()) : [],
+        tags: formData.tags
+          ? formData.tags.split(",").map((t) => t.trim())
+          : [],
       };
 
       const newPost = await createPost(postData);
@@ -229,17 +243,19 @@ const BlogPosts = () => {
     } catch (error) {
       console.error("Failed to create post:", error);
       const errorMessage = error.message || "Failed to create blog post";
-      
+
       // Parse and display errors with proper line breaks
-      const parts = errorMessage.split(': ');
-      if (parts.length > 1 && parts[1].includes(' • ')) {
+      const parts = errorMessage.split(": ");
+      if (parts.length > 1 && parts[1].includes(" • ")) {
         const header = parts[0];
-        const errors = parts[1].split(' • ');
+        const errors = parts[1].split(" • ");
         toast.error(
           <div className="space-y-1">
             <div className="font-semibold">{header}:</div>
             {errors.map((err, idx) => (
-              <div key={idx} className="text-sm">• {err}</div>
+              <div key={idx} className="text-sm">
+                • {err}
+              </div>
             ))}
           </div>
         );
@@ -256,7 +272,9 @@ const BlogPosts = () => {
     try {
       const postData = {
         ...formData,
-        tags: formData.tags ? formData.tags.split(",").map((t) => t.trim()) : [],
+        tags: formData.tags
+          ? formData.tags.split(",").map((t) => t.trim())
+          : [],
       };
 
       await updatePost(selectedPost.id, postData);
@@ -284,17 +302,19 @@ const BlogPosts = () => {
     } catch (error) {
       console.error("Failed to update post:", error);
       const errorMessage = error.message || "Failed to update blog post";
-      
+
       // Parse and display errors with proper line breaks
-      const parts = errorMessage.split(': ');
-      if (parts.length > 1 && parts[1].includes(' • ')) {
+      const parts = errorMessage.split(": ");
+      if (parts.length > 1 && parts[1].includes(" • ")) {
         const header = parts[0];
-        const errors = parts[1].split(' • ');
+        const errors = parts[1].split(" • ");
         toast.error(
           <div className="space-y-1">
             <div className="font-semibold">{header}:</div>
             {errors.map((err, idx) => (
-              <div key={idx} className="text-sm">• {err}</div>
+              <div key={idx} className="text-sm">
+                • {err}
+              </div>
             ))}
           </div>
         );
@@ -370,7 +390,7 @@ const BlogPosts = () => {
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+        <Card className="dark:border-white/10 dark:bg-black/40">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Total Posts</CardTitle>
           </CardHeader>
@@ -378,7 +398,7 @@ const BlogPosts = () => {
             <div className="text-3xl font-bold">{stats.total}</div>
           </CardContent>
         </Card>
-        <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+        <Card className="dark:border-white/10 dark:bg-black/40">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Published</CardTitle>
           </CardHeader>
@@ -388,7 +408,7 @@ const BlogPosts = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+        <Card className="dark:border-white/10 dark:bg-black/40">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Drafts</CardTitle>
           </CardHeader>
@@ -398,7 +418,7 @@ const BlogPosts = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+        <Card className="dark:border-white/10 dark:bg-black/40">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Archived</CardTitle>
           </CardHeader>
@@ -411,7 +431,7 @@ const BlogPosts = () => {
       </div>
 
       {/* Main Content Card */}
-      <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+      <Card className="dark:border-white/10 dark:bg-black/40">
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -465,31 +485,19 @@ const BlogPosts = () => {
               filteredPosts.map((post) => (
                 <div
                   key={post.id}
-                  className={`group rounded-lg border p-4 transition-all hover:shadow-lg ${
-                    theme === "dark"
-                      ? "border-white/10 bg-white/5 hover:border-[#15803d]/50"
-                      : "border-slate-200 bg-white hover:border-[#15803d]/50"
-                  }`}
+                  className="group rounded-lg border p-4 transition-all hover:shadow-lg border-slate-200 bg-white hover:border-[#15803d]/50 dark:border-white/10 dark:bg-white/5"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex-1 space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3
-                          className={`text-lg font-bold ${
-                            theme === "dark" ? "text-white" : "text-slate-900"
-                          }`}
-                        >
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                           {post.title}
                         </h3>
                         <Badge className={getStatusColor(post.status)}>
                           {post.status}
                         </Badge>
                       </div>
-                      <p
-                        className={`text-sm ${
-                          theme === "dark" ? "text-white/60" : "text-slate-600"
-                        }`}
-                      >
+                      <p className="text-sm text-slate-600 dark:text-white/60">
                         {post.excerpt}
                       </p>
                       <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
@@ -509,15 +517,17 @@ const BlogPosts = () => {
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-2">
-                        {(Array.isArray(post.tags) ? post.tags : []).map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            #{tag}
-                          </Badge>
-                        ))}
+                        {(Array.isArray(post.tags) ? post.tags : []).map(
+                          (tag) => (
+                            <Badge
+                              key={tag}
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              #{tag}
+                            </Badge>
+                          )
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -568,7 +578,10 @@ const BlogPosts = () => {
           }
         }}
       >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogContent
+          className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]"
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>
               {isCreateDialogOpen ? "Create New Post" : "Edit Post"}
@@ -619,9 +632,7 @@ const BlogPosts = () => {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Cover Image
-              </label>
+              <label className="text-sm font-medium">Cover Image</label>
               <Input
                 type="file"
                 accept="image/jpeg,image/jpg,image/png,image/webp"
@@ -718,8 +729,10 @@ const BlogPosts = () => {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {isCreateDialogOpen ? "Creating..." : "Saving..."}
                 </>
+              ) : isCreateDialogOpen ? (
+                "Create Post"
               ) : (
-                isCreateDialogOpen ? "Create Post" : "Save Changes"
+                "Save Changes"
               )}
             </Button>
           </DialogFooter>

@@ -1,8 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { useTheme } from "../contexts/ThemeContext";
 import { toast } from "../utils/toast";
-import { Plus, Pencil, Trash2, Eye, EyeOff, Calendar, Image as ImageIcon, Loader2, Building2 } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Eye,
+  EyeOff,
+  Calendar,
+  Image as ImageIcon,
+  Loader2,
+  Building2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,8 +39,6 @@ import {
 } from "../../services/clientsShowcaseService";
 
 const ClientsShowcase = () => {
-  const { user } = useAuth();
-  const { theme } = useTheme();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -57,16 +63,21 @@ const ClientsShowcase = () => {
       setLoading(true);
       const data = await fetchAllClientsShowcase();
       setClients(data || []);
-      
+
       // Calculate stats
       const total = data?.length || 0;
-      const active = data?.filter(c => c.isActive).length || 0;
+      const active = data?.filter((c) => c.isActive).length || 0;
       const inactive = total - active;
       setStats({ total, active, inactive });
     } catch (error) {
       console.error("Error loading clients showcase:", error);
-      if (error.message.includes("500") || error.message.includes("Internal Server Error")) {
-        toast.error("Database error. Please run 'npm run db:push' in the backend directory to create the clients_showcase table.");
+      if (
+        error.message.includes("500") ||
+        error.message.includes("Internal Server Error")
+      ) {
+        toast.error(
+          "Database error. Please run 'npm run db:push' in the backend directory to create the clients_showcase table."
+        );
       } else {
         toast.error("Failed to load clients showcase");
       }
@@ -143,14 +154,14 @@ const ClientsShowcase = () => {
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
     // Scroll to top of the list
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+        <Card className="dark:border-white/10 dark:bg-black/40">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
           </CardHeader>
@@ -158,7 +169,7 @@ const ClientsShowcase = () => {
             <div className="text-3xl font-bold">{stats.total}</div>
           </CardContent>
         </Card>
-        <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+        <Card className="dark:border-white/10 dark:bg-black/40">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Active</CardTitle>
           </CardHeader>
@@ -168,7 +179,7 @@ const ClientsShowcase = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+        <Card className="dark:border-white/10 dark:bg-black/40">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Inactive</CardTitle>
           </CardHeader>
@@ -181,7 +192,7 @@ const ClientsShowcase = () => {
       </div>
 
       {/* Main Content Card */}
-      <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+      <Card className="dark:border-white/10 dark:bg-black/40">
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -210,7 +221,8 @@ const ClientsShowcase = () => {
             ) : clients.length === 0 ? (
               <div className="py-12 text-center">
                 <p className="text-muted-foreground">
-                  No clients found. Create your first client showcase to get started.
+                  No clients found. Create your first client showcase to get
+                  started.
                 </p>
               </div>
             ) : (
@@ -220,13 +232,7 @@ const ClientsShowcase = () => {
                   const [imageError, setImageError] = useState(false);
 
                   return (
-                    <div
-                      className={`group overflow-hidden rounded-lg border transition-all hover:shadow-lg ${
-                        theme === "dark"
-                          ? "border-white/10 bg-white/5 hover:border-[#15803d]/50"
-                          : "border-slate-200 bg-white hover:border-[#15803d]/50"
-                      }`}
-                    >
+                    <div className="group overflow-hidden rounded-lg border transition-all hover:shadow-lg border-slate-200 bg-white hover:border-[#15803d]/50 dark:border-white/10 dark:bg-white/5">
                       {/* Logo Header */}
                       {client.logoUrl && !imageError ? (
                         <div className="relative h-32 w-full overflow-hidden bg-white">
@@ -243,9 +249,9 @@ const ClientsShowcase = () => {
                             loading="lazy"
                             decoding="async"
                             className={`block h-full w-full object-cover transition-opacity duration-300 ${
-                              imageLoaded ? 'opacity-100' : 'opacity-0'
+                              imageLoaded ? "opacity-100" : "opacity-0"
                             }`}
-                            style={{ contentVisibility: 'auto' }}
+                            style={{ contentVisibility: "auto" }}
                             onLoad={() => setImageLoaded(true)}
                             onError={() => {
                               setImageError(true);
@@ -265,11 +271,7 @@ const ClientsShowcase = () => {
                           {/* Left Section: Content */}
                           <div className="flex-1 space-y-2">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3
-                                className={`text-lg font-bold ${
-                                  theme === "dark" ? "text-white" : "text-slate-900"
-                                }`}
-                              >
+                              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                                 {client.company}
                               </h3>
                               <Badge
@@ -283,11 +285,7 @@ const ClientsShowcase = () => {
                               </Badge>
                             </div>
                             {client.industry && (
-                              <p
-                                className={`text-sm ${
-                                  theme === "dark" ? "text-white/60" : "text-slate-600"
-                                }`}
-                              >
+                              <p className="text-sm text-slate-600 dark:text-white/60">
                                 {client.industry} • {client.location}
                               </p>
                             )}
@@ -298,7 +296,9 @@ const ClientsShowcase = () => {
                             )}
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <Calendar className="h-3 w-3" />
-                              <span>Created {formatDate(client.createdAt)}</span>
+                              <span>
+                                Created {formatDate(client.createdAt)}
+                              </span>
                             </div>
                           </div>
 
@@ -314,7 +314,9 @@ const ClientsShowcase = () => {
                               {togglingId === client.id ? (
                                 <>
                                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  {client.isActive ? "Deactivating..." : "Activating..."}
+                                  {client.isActive
+                                    ? "Deactivating..."
+                                    : "Activating..."}
                                 </>
                               ) : client.isActive ? (
                                 <>
@@ -366,11 +368,11 @@ const ClientsShowcase = () => {
                 size="sm"
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className={theme === "dark" ? "border-white/10" : ""}
+                className="dark:border-white/10"
               >
                 Previous
               </Button>
-              
+
               <div className="flex gap-1">
                 {[...Array(totalPages)].map((_, index) => {
                   const pageNumber = index + 1;
@@ -378,20 +380,21 @@ const ClientsShowcase = () => {
                   if (
                     pageNumber === 1 ||
                     pageNumber === totalPages ||
-                    (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                    (pageNumber >= currentPage - 1 &&
+                      pageNumber <= currentPage + 1)
                   ) {
                     return (
                       <Button
                         key={pageNumber}
-                        variant={currentPage === pageNumber ? "default" : "outline"}
+                        variant={
+                          currentPage === pageNumber ? "default" : "outline"
+                        }
                         size="sm"
                         onClick={() => handlePageChange(pageNumber)}
                         className={
                           currentPage === pageNumber
                             ? "bg-[#15803d] text-white hover:bg-[#15803d]/90"
-                            : theme === "dark"
-                            ? "border-white/10"
-                            : ""
+                            : "dark:border-white/10"
                         }
                       >
                         {pageNumber}
@@ -401,7 +404,14 @@ const ClientsShowcase = () => {
                     pageNumber === currentPage - 2 ||
                     pageNumber === currentPage + 2
                   ) {
-                    return <span key={pageNumber} className="px-2 text-muted-foreground">...</span>;
+                    return (
+                      <span
+                        key={pageNumber}
+                        className="px-2 text-muted-foreground"
+                      >
+                        ...
+                      </span>
+                    );
                   }
                   return null;
                 })}
@@ -412,7 +422,7 @@ const ClientsShowcase = () => {
                 size="sm"
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className={theme === "dark" ? "border-white/10" : ""}
+                className="dark:border-white/10"
               >
                 Next
               </Button>
@@ -437,12 +447,16 @@ const ClientsShowcase = () => {
         />
       )}
 
-      <Dialog open={!!deletingClient} onOpenChange={() => setDeletingClient(null)}>
+      <Dialog
+        open={!!deletingClient}
+        onOpenChange={() => setDeletingClient(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Client Showcase</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{deletingClient?.company}"? This action cannot be undone.
+              Are you sure you want to delete "{deletingClient?.company}"? This
+              action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

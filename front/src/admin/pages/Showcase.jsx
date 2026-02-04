@@ -1,6 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { useTheme } from "../contexts/ThemeContext";
 import { toast } from "../utils/toast";
 import { Plus, Pencil, Trash2, Eye, EyeOff, Calendar, Image as ImageIcon, Loader2 } from "lucide-react";
 
@@ -31,8 +29,6 @@ import {
 } from "../../services/showcaseService";
 
 const Showcase = () => {
-  const { user } = useAuth();
-  const { theme } = useTheme();
   const [showcases, setShowcases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -137,7 +133,7 @@ const Showcase = () => {
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+        <Card className="dark:border-white/10 dark:bg-black/40">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Total Showcases</CardTitle>
           </CardHeader>
@@ -145,7 +141,7 @@ const Showcase = () => {
             <div className="text-3xl font-bold">{stats.total}</div>
           </CardContent>
         </Card>
-        <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+        <Card className="dark:border-white/10 dark:bg-black/40">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Active</CardTitle>
           </CardHeader>
@@ -155,7 +151,7 @@ const Showcase = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+        <Card className="dark:border-white/10 dark:bg-black/40">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Inactive</CardTitle>
           </CardHeader>
@@ -168,7 +164,7 @@ const Showcase = () => {
       </div>
 
       {/* Main Content Card */}
-      <Card className={theme === "dark" ? "border-white/10 bg-black/40" : ""}>
+      <Card className="dark:border-white/10 dark:bg-black/40">
         <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -204,11 +200,7 @@ const Showcase = () => {
               showcases.map((showcase) => (
                 <div
                   key={showcase.id}
-                  className={`group rounded-lg border p-4 transition-all hover:shadow-lg ${
-                    theme === "dark"
-                      ? "border-white/10 bg-white/5 hover:border-[#15803d]/50"
-                      : "border-slate-200 bg-white hover:border-[#15803d]/50"
-                  }`}
+                  className="group rounded-lg border p-4 transition-all hover:shadow-lg border-slate-200 bg-white hover:border-[#15803d]/50 dark:border-white/10 dark:bg-white/5"
                 >
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     {/* Left Section: Image + Content */}
@@ -230,9 +222,7 @@ const Showcase = () => {
                       <div className="flex-1 space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3
-                            className={`text-lg font-bold ${
-                              theme === "dark" ? "text-white" : "text-slate-900"
-                            }`}
+                            className="text-lg font-bold text-slate-900 dark:text-white"
                           >
                             {showcase.title}
                           </h3>
@@ -248,9 +238,7 @@ const Showcase = () => {
                         </div>
                         {showcase.tagline && (
                           <p
-                            className={`text-sm ${
-                              theme === "dark" ? "text-white/60" : "text-slate-600"
-                            }`}
+                            className="text-sm text-slate-600 dark:text-white/60"
                           >
                             {showcase.tagline}
                           </p>
