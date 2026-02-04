@@ -28,6 +28,7 @@ import blogRoutes from "./routes/blogRoutes.js";
 import calendarEventRoutes from "./routes/calendarEventRoutes.js";
 import ticketRoutes from "./routes/ticketRoutes.js";
 import clientNotesRoutes from "./routes/clientNotesRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 
 dotenv.config();
 
@@ -101,6 +102,7 @@ app.use("/api/blog", blogRoutes);
 app.use("/api/calendar-events", calendarEventRoutes);
 app.use("/api/tickets", ticketRoutes);
 app.use("/api/client-notes", clientNotesRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
@@ -122,6 +124,10 @@ const startServer = async () => {
     // Initialize socket events for ticket service
     const ticketService = (await import("./services/ticketServiceWithSocket.js")).default;
     ticketService.initializeSocketEvents();
+
+    // Initialize notification service for ticket events
+    const notificationService = (await import("./services/notificationService.js")).default;
+    ticketService.ticketEvents.setNotificationService(notificationService);
 
     httpServer.listen(PORT, () => {
       console.log(`\n🚀 Server is running on port ${PORT}`);

@@ -489,7 +489,7 @@ class TicketService {
 
     // Emit socket event
     if (this.ticketEvents && user) {
-      this.ticketEvents.emitCommentAdded(comment, ticket, user);
+      await this.ticketEvents.emitCommentAdded(comment, ticket, user);
     }
 
     return comment;

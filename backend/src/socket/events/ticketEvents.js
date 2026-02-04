@@ -42,6 +42,15 @@ export const TICKET_EVENTS = {
 class TicketEventEmitter {
   constructor(socketServer) {
     this.socketServer = socketServer;
+    this.notificationService = null;
+  }
+
+  /**
+   * Initialize notification service
+   * @param {Object} notificationService - NotificationService instance
+   */
+  setNotificationService(notificationService) {
+    this.notificationService = notificationService;
   }
 
   /**
@@ -81,7 +90,7 @@ class TicketEventEmitter {
    * @param {Object} ticket - Created ticket
    * @param {string} creatorId - User who created the ticket
    */
-  emitTicketCreated(ticket, creatorId) {
+  async emitTicketCreated(ticket, creatorId) {
     // Notify admins and master sales
     this.socketServer.emitToRoles(
       ["admin", "super_admin"],
@@ -91,6 +100,26 @@ class TicketEventEmitter {
         createdBy: creatorId,
       }
     );
+
+    // Create notifications for admins
+    if (this.notificationService) {
+      await this._createNotificationsForRoles(
+        ["admin", "super_admin"],
+        {
+          type: "ticket_created",
+          title: "New Ticket Created",
+          message: `New ticket ${ticket.ticketNumber}: ${ticket.subject}`,
+          entityType: "ticket",
+          entityId: ticket.id,
+          metadata: {
+            ticketNumber: ticket.ticketNumber,
+            priority: ticket.priority,
+            category: ticket.category,
+          },
+        },
+        creatorId
+      );
+    }
 
     console.log(`📨 Ticket created event emitted: ${ticket.ticketNumber}`);
   }
@@ -223,7 +252,7 @@ class TicketEventEmitter {
    * @param {Object} ticket - Ticket data
    * @param {Object} user - User who added comment
    */
-  emitCommentAdded(comment, ticket, user) {
+  async emitCommentAdded(comment, ticket, user) {
     const recipients = this._getTicketRecipients(ticket, {
       excludeUserId: user.id,
     });
@@ -253,6 +282,37 @@ class TicketEventEmitter {
       TICKET_EVENTS.COMMENT_ADDED,
       eventData
     );
+
+    // Create notifications
+    if (this.notificationService) {
+      // Notify ticket creator if they're not the commenter
+      if (recipients.length > 0) {
+        await this.notificationService.createBulkNotifications(recipients, {
+          type: "ticket_comment_added",
+          title: "New Comment on Ticket",
+          message: `${user.firstName} ${user.lastName} commented on ${ticket.ticketNumber}`,
+          entityType: "ticket",
+          entityId: ticket.id,
+          metadata: {
+            ticketNumber: ticket.ticketNumber,
+            commenterName: `${user.firstName} ${user.lastName}`,
+          },
+        });
+      }
+
+      // Notify admins
+      await this._createNotificationsForRoles(["admin", "super_admin"], {
+        type: "ticket_comment_added",
+        title: "New Comment on Ticket",
+        message: `${user.firstName} ${user.lastName} commented on ${ticket.ticketNumber}`,
+        entityType: "ticket",
+        entityId: ticket.id,
+        metadata: {
+          ticketNumber: ticket.ticketNumber,
+          commenterName: `${user.firstName} ${user.lastName}`,
+        },
+      }, user.id);
+    }
 
     console.log(`📨 Comment added to ticket: ${ticket.ticketNumber}`);
   }
@@ -325,6 +385,48 @@ class TicketEventEmitter {
     );
 
     console.log(`📨 Attachment deleted from ticket: ${ticket.ticketNumber}`);
+  }
+
+  /**
+   * Helper: Get all user IDs with specific roles
+   * @param {Array<string>} roles - Array of role names
+   * @returns {Promise<Array<string>>} Array of user IDs
+   */
+  async _getUserIdsByRoles(roles) {
+    const { db } = await import("../../db/index.js");
+    const { userTable } = await import("../../db/schema.js");
+    const { inArray } = await import("drizzle-orm");
+
+    const users = await db
+      .select({ id: userTable.id })
+      .from(userTable)
+      .where(inArray(userTable.role, roles));
+
+    return users.map((u) => u.id);
+  }
+
+  /**
+   * Helper: Create notifications for users with specific roles
+   * @param {Array<string>} roles - Target roles
+   * @param {Object} notificationData - Notification data
+   * @param {string} excludeUserId - User ID to exclude
+   */
+  async _createNotificationsForRoles(
+    roles,
+    notificationData,
+    excludeUserId = null
+  ) {
+    const userIds = await this._getUserIdsByRoles(roles);
+    const filteredIds = excludeUserId
+      ? userIds.filter((id) => id !== excludeUserId)
+      : userIds;
+
+    if (filteredIds.length > 0 && this.notificationService) {
+      await this.notificationService.createBulkNotifications(
+        filteredIds,
+        notificationData
+      );
+    }
   }
 }
 

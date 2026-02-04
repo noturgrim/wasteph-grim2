@@ -1,7 +1,8 @@
-import { Outlet, useLocation, Link } from "react-router-dom";
+import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { Bell, Moon, Sun, Settings, MoreVertical } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useNotifications } from "../../contexts/NotificationContext";
 import { useTheme } from "../../contexts/ThemeContext";
 import {
   SidebarInset,
@@ -29,8 +30,11 @@ import { AppSidebar } from "./AppSidebar";
 
 export default function AppLayout() {
   const { user } = useAuth();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } =
+    useNotifications();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Navigation mapping for breadcrumbs
   const navigationMap = {
@@ -39,31 +43,80 @@ export default function AppLayout() {
     "/admin/leads": { name: "Leads", parent: "/admin/dashboard" },
     "/admin/clients": { name: "Clients", parent: "/admin/dashboard" },
     "/admin/proposals": { name: "Proposals", parent: "/admin/dashboard" },
-    "/admin/contract-requests": { name: "Contract Requests", parent: "/admin/dashboard" },
-    "/admin/proposal-templates": { name: "Proposal Templates", parent: "/admin/dashboard" },
-    "/admin/contract-templates": { name: "Contract Templates", parent: "/admin/dashboard" },
+    "/admin/contract-requests": {
+      name: "Contract Requests",
+      parent: "/admin/dashboard",
+    },
+    "/admin/proposal-templates": {
+      name: "Proposal Templates",
+      parent: "/admin/dashboard",
+    },
+    "/admin/contract-templates": {
+      name: "Contract Templates",
+      parent: "/admin/dashboard",
+    },
     "/admin/blog": { name: "Blog Posts", parent: "/admin/dashboard" },
     "/admin/users": { name: "Users", parent: "/admin/dashboard" },
     "/admin/settings": { name: "Settings", parent: "/admin/dashboard" },
   };
 
   const getCurrentNav = () => {
-    return navigationMap[location.pathname] || { name: "Dashboard", parent: null };
+    return (
+      navigationMap[location.pathname] || { name: "Dashboard", parent: null }
+    );
   };
 
   const currentNav = getCurrentNav();
 
-  // Mock notification count - replace with real data
-  const notificationCount = 3;
+  const handleNotificationClick = (notification) => {
+    // Mark as read
+    if (!notification.isRead) {
+      markAsRead(notification.id);
+    }
 
-  const notifications = [
-    { id: 1, name: "Jackie Monroe", action: "requests permission to change", entity: "Design System", context: "Project", time: "5 min ago", statusDot: "blue" },
-    { id: 2, name: "Chris Graham", action: "has added a new employee", entity: "Mobile App", context: "Employee", time: "28 min ago", statusDot: "blue" },
-    { id: 3, name: "Paul Miller", action: "has uploaded a new file", entity: "Keynote Presentation", context: "Vendor & Client", time: "3 days ago", statusDot: "red" },
-    { id: 4, name: "Sarah Chen", action: "New inquiry received", entity: "", context: "Inquiry", time: "1 hour ago", statusDot: null },
-    { id: 5, name: "System", action: "Lead converted to potential", entity: "", context: "Lead", time: "2 hours ago", statusDot: null },
-    { id: 6, name: "System", action: "Client signed contract", entity: "", context: "Contract", time: "3 hours ago", statusDot: null },
-  ];
+    // Navigate to entity if applicable
+    if (notification.entityType && notification.entityId) {
+      const entityRoutes = {
+        ticket: `/admin/tickets`,
+        proposal: `/admin/proposals`,
+        contract: `/admin/contract-requests`,
+        inquiry: `/admin/inquiries`,
+      };
+
+      const route = entityRoutes[notification.entityType];
+      if (route) {
+        navigate(route);
+      }
+    }
+  };
+
+  const getTimeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return "just now";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
+    const weeks = Math.floor(days / 7);
+    return `${weeks} week${weeks > 1 ? "s" : ""} ago`;
+  };
+
+  const getNotificationIcon = (type) => {
+    // Return initials based on notification type
+    const typeMap = {
+      ticket_created: "TK",
+      ticket_comment_added: "CM",
+      ticket_status_changed: "ST",
+      proposal_created: "PR",
+      system: "SY",
+    };
+    return typeMap[type] || "NO";
+  };
 
   return (
     <SidebarProvider>
@@ -101,7 +154,8 @@ export default function AppLayout() {
                                 : "text-slate-600 hover:text-slate-900"
                             }
                           >
-                            {navigationMap[currentNav.parent]?.name || "Dashboard"}
+                            {navigationMap[currentNav.parent]?.name ||
+                              "Dashboard"}
                           </Link>
                         </BreadcrumbLink>
                       </BreadcrumbItem>
@@ -133,9 +187,9 @@ export default function AppLayout() {
                     aria-label="Notifications"
                   >
                     <Bell className="h-5 w-5 text-green-700 dark:text-green-400" />
-                    {notificationCount > 0 && (
+                    {unreadCount > 0 && (
                       <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
-                        {notificationCount > 99 ? "99+" : notificationCount}
+                        {unreadCount > 99 ? "99+" : unreadCount}
                       </span>
                     )}
                   </Button>
@@ -143,75 +197,115 @@ export default function AppLayout() {
                 <DropdownMenuContent
                   align="end"
                   className={`w-96 p-0 border-0 rounded-xl shadow-lg overflow-hidden ${
-                    theme === "dark"
-                      ? "bg-slate-900"
-                      : "bg-gray-50"
+                    theme === "dark" ? "bg-slate-900" : "bg-gray-50"
                   }`}
                 >
                   {/* Header */}
                   <div className="flex items-center justify-between px-4 py-3">
-                    <h3 className={`font-semibold ${theme === "dark" ? "text-white" : "text-slate-900"}`}>
+                    <h3
+                      className={`font-semibold ${
+                        theme === "dark" ? "text-white" : "text-slate-900"
+                      }`}
+                    >
                       Notifications
                     </h3>
-                    <button
-                      type="button"
-                      className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-800 transition-colors"
-                      aria-label="Notification settings"
-                    >
-                      <Settings className={`h-4 w-4 ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`} />
-                    </button>
+                    {unreadCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={markAllAsRead}
+                        className="text-xs text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 font-medium"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
                   </div>
 
                   {/* Notification list */}
                   <div className="max-h-80 overflow-y-auto">
-                    {notifications.map((notif, index) => (
-                      <div
-                        key={notif.id}
-                        className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-slate-800/50 cursor-pointer transition-colors ${
-                          index > 0 ? "border-t border-gray-200 dark:border-slate-700" : ""
-                        }`}
-                      >
-                        <div className="relative shrink-0">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-gray-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium">
-                              {notif.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
-                          {notif.statusDot && (
-                            <span
-                              className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 ${
-                                theme === "dark" ? "border-slate-900" : "border-gray-50"
-                              } ${
-                                notif.statusDot === "blue" ? "bg-blue-500" : "bg-red-500"
-                              }`}
-                            />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm ${theme === "dark" ? "text-slate-200" : "text-slate-800"}`}>
-                            <span className="font-semibold">{notif.name}</span>
-                            {" "}
-                            {notif.action}
-                            {notif.entity && (
-                              <>
-                                {" "}
-                                <span className="font-semibold">{notif.entity}</span>
-                              </>
-                            )}
-                          </p>
-                          <p className={`text-xs mt-0.5 ${theme === "dark" ? "text-slate-500" : "text-slate-500"}`}>
-                            {notif.context} • {notif.time}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          className="p-1 rounded hover:bg-gray-200 dark:hover:bg-slate-700 shrink-0"
-                          aria-label="More options"
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center">
+                        <Bell
+                          className={`h-12 w-12 mx-auto mb-2 ${
+                            theme === "dark"
+                              ? "text-slate-600"
+                              : "text-slate-300"
+                          }`}
+                        />
+                        <p
+                          className={`text-sm ${
+                            theme === "dark"
+                              ? "text-slate-400"
+                              : "text-slate-500"
+                          }`}
                         >
-                          <MoreVertical className={`h-4 w-4 ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`} />
-                        </button>
+                          No notifications yet
+                        </p>
                       </div>
-                    ))}
+                    ) : (
+                      notifications.map((notif, index) => (
+                        <div
+                          key={notif.id}
+                          onClick={() => handleNotificationClick(notif)}
+                          className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-100 dark:hover:bg-slate-800/50 cursor-pointer transition-colors ${
+                            index > 0
+                              ? "border-t border-gray-200 dark:border-slate-700"
+                              : ""
+                          } ${
+                            !notif.isRead
+                              ? "bg-blue-50 dark:bg-blue-950/20"
+                              : ""
+                          }`}
+                        >
+                          <div className="relative shrink-0">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback
+                                className={`text-sm font-medium ${
+                                  !notif.isRead
+                                    ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
+                                    : "bg-gray-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                                }`}
+                              >
+                                {getNotificationIcon(notif.type)}
+                              </AvatarFallback>
+                            </Avatar>
+                            {!notif.isRead && (
+                              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-gray-50 dark:border-slate-900 bg-blue-500" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p
+                              className={`text-sm ${
+                                !notif.isRead
+                                  ? "font-semibold text-slate-900 dark:text-white"
+                                  : theme === "dark"
+                                  ? "text-slate-200"
+                                  : "text-slate-800"
+                              }`}
+                            >
+                              {notif.title}
+                            </p>
+                            <p
+                              className={`text-xs mt-0.5 ${
+                                theme === "dark"
+                                  ? "text-slate-400"
+                                  : "text-slate-600"
+                              }`}
+                            >
+                              {notif.message}
+                            </p>
+                            <p
+                              className={`text-xs mt-1 ${
+                                theme === "dark"
+                                  ? "text-slate-500"
+                                  : "text-slate-500"
+                              }`}
+                            >
+                              {getTimeAgo(notif.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -223,7 +317,9 @@ export default function AppLayout() {
                 onClick={toggleTheme}
                 className="h-10 w-10 rounded-xl bg-gray-100 hover:bg-gray-200 border-0 shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700"
                 aria-label={
-                  theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"
+                  theme === "dark"
+                    ? "Switch to Light Mode"
+                    : "Switch to Dark Mode"
                 }
               >
                 {theme === "dark" ? (

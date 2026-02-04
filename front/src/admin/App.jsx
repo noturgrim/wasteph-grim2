@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router";
 import { AuthProvider } from "./contexts/AuthContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { Toaster } from "@/components/ui/sonner";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -26,9 +27,10 @@ const CRMApp = () => {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <InAppBrowserBanner />
-        <Toaster position="top-right" />
-        <Routes>
+        <NotificationProvider>
+          <InAppBrowserBanner />
+          <Toaster position="top-right" />
+          <Routes>
           <Route path="login" element={<Login />} />
 
           <Route
@@ -117,6 +119,7 @@ const CRMApp = () => {
             element={<Navigate to="/admin/dashboard" replace />}
           />
         </Routes>
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );

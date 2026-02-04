@@ -887,6 +887,27 @@ class ApiClient {
       credentials: "include",
     });
   }
+
+  // Notifications
+  async getNotifications(params = {}) {
+    return this.request("/notifications", { params });
+  }
+
+  async getUnreadNotificationCount() {
+    return this.request("/notifications/unread-count");
+  }
+
+  async markNotificationAsRead(notificationId) {
+    return this.request(`/notifications/${notificationId}/read`, {
+      method: "PATCH",
+    });
+  }
+
+  async markAllNotificationsAsRead() {
+    return this.request("/notifications/mark-all-read", {
+      method: "PATCH",
+    });
+  }
 }
 
 // Export singleton instance

@@ -826,3 +826,42 @@ export const clientNotesTable = pgTable("client_notes", {
   interactionDateIdx: index("client_notes_interaction_date_idx").on(table.interactionDate),
   createdByIdx: index("client_notes_created_by_idx").on(table.createdBy),
 }));
+
+// Notification Types
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "ticket_created",
+  "ticket_status_changed",
+  "ticket_priority_changed",
+  "ticket_comment_added",
+  "ticket_attachment_added",
+  "proposal_created",
+  "proposal_approved",
+  "proposal_sent",
+  "contract_requested",
+  "contract_signed",
+  "inquiry_created",
+  "system",
+]);
+
+// Notifications Table
+export const notificationsTable = pgTable("notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => userTable.id, { onDelete: "cascade" }),
+  type: notificationTypeEnum("type").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  entityType: text("entity_type"), // "ticket", "proposal", "contract", etc.
+  entityId: uuid("entity_id"), // ID of the related entity
+  metadata: text("metadata"), // JSON string with additional data
+  isRead: boolean("is_read").notNull().default(false),
+  readAt: timestamp("read_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+}, (table) => ({
+  userIdIdx: index("notifications_user_id_idx").on(table.userId),
+  createdAtIdx: index("notifications_created_at_idx").on(table.createdAt),
+  isReadIdx: index("notifications_is_read_idx").on(table.isRead),
+}));
