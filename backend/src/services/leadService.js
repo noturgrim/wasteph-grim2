@@ -276,7 +276,8 @@ class LeadService {
       })
       .returning();
 
-    // Mark lead as claimed
+    // Mark lead as claimed with a WHERE clause to prevent race conditions
+    // This will only update if the lead is still unclaimed
     const [lead] = await db
       .update(leadTable)
       .set({
@@ -285,11 +286,17 @@ class LeadService {
         claimedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(leadTable.id, leadId))
+      .where(and(eq(leadTable.id, leadId), eq(leadTable.isClaimed, false)))
       .returning();
 
+    // If no lead was returned, it means another user already claimed it
     if (!lead) {
-      throw new AppError("Lead not found", 404);
+      // Delete the inquiry we just created since the claim failed
+      await db.delete(inquiryTable).where(eq(inquiryTable.id, inquiry.id));
+      throw new AppError(
+        "Lead has already been claimed by another user. Please refresh the page.",
+        409
+      );
     }
 
     // Log lead claimed activity

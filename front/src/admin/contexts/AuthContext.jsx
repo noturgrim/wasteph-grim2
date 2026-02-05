@@ -4,6 +4,7 @@ import socketService from "../services/socketService";
 import ticketSocketService from "../services/ticketSocketService";
 import proposalSocketService from "../services/proposalSocketService";
 import contractSocketService from "../services/contractSocketService";
+import { leadSocketService } from "../services/leadSocketService";
 
 const AuthContext = createContext(null);
 
@@ -22,6 +23,7 @@ export const AuthProvider = ({ children }) => {
         ticketSocketService.cleanup();
         proposalSocketService.cleanup();
         contractSocketService.cleanup();
+        leadSocketService.unsubscribeFromLeads();
         socketService.disconnect();
       }
     };
@@ -35,6 +37,7 @@ export const AuthProvider = ({ children }) => {
       ticketSocketService.cleanup();
       proposalSocketService.cleanup();
       contractSocketService.cleanup();
+      leadSocketService.unsubscribeFromLeads();
       socketService.disconnect();
       setIsSocketConnected(false);
     }
@@ -52,6 +55,7 @@ export const AuthProvider = ({ children }) => {
         ticketSocketService.initialize();
         proposalSocketService.initialize();
         contractSocketService.initialize();
+        // Note: leadSocketService is initialized per-page, not globally
       });
 
       // Handle connection failure
@@ -96,8 +100,9 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Cleanup socket before logout
+      // Cleanup socket services before logout
       if (socketService.isSocketConnected()) {
+        leadSocketService.unsubscribeFromLeads();
         ticketSocketService.cleanup();
         proposalSocketService.cleanup();
         socketService.disconnect();

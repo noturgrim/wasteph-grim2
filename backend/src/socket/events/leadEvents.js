@@ -22,6 +22,15 @@ export const LEAD_EVENTS = {
 class LeadEventEmitter {
   constructor(socketServer) {
     this.socketServer = socketServer;
+    this.notificationService = null;
+  }
+
+  /**
+   * Initialize notification service
+   * @param {Object} notificationService - NotificationService instance
+   */
+  setNotificationService(notificationService) {
+    this.notificationService = notificationService;
   }
 
   /**
@@ -40,12 +49,33 @@ class LeadEventEmitter {
       "super_admin",
     ]);
 
-    // Emit to all authorized users
+    // Emit to all authorized users (for real-time table updates)
     this.socketServer.emitToUsers(recipients, LEAD_EVENTS.LEAD_CREATED, {
       lead,
       isPublic, // Flag to indicate if this came from landing page
       timestamp: new Date().toISOString(),
     });
+
+    // Create database notifications ONLY for public leads from landing page
+    if (isPublic && this.notificationService && recipients.length > 0) {
+      const leadName = lead.company || lead.clientName;
+
+      await this.notificationService.createBulkNotifications(recipients, {
+        type: "lead_created_public",
+        title: "New Lead from Website",
+        message: `${leadName} submitted an inquiry from the landing page`,
+        entityType: "lead",
+        entityId: lead.id,
+        metadata: {
+          company: lead.company,
+          clientName: lead.clientName,
+          email: lead.email,
+          phone: lead.phone,
+          location: lead.location,
+          isPublic: true,
+        },
+      });
+    }
 
     console.log(
       `📨 Lead created event emitted: ${lead.company || lead.clientName} ${
@@ -61,7 +91,8 @@ class LeadEventEmitter {
    * @param {string} updatedBy - User who updated the lead
    */
   emitLeadUpdated(lead, changes, updatedBy) {
-    // Get all users who can view leads
+    // Emit to all authorized users (for real-time table updates)
+    // No database notification needed - just real-time socket update
     this.socketServer.emitToRoles(
       ["sales", "admin", "super_admin"],
       LEAD_EVENTS.LEAD_UPDATED,
@@ -81,10 +112,11 @@ class LeadEventEmitter {
    * Emit lead claimed event
    * @param {Object} lead - Claimed lead
    * @param {Object} inquiry - Created inquiry from lead
-   * @param {string} claimedBy - User who claimed the lead
+   * @param {Object} user - User who claimed the lead
    */
-  emitLeadClaimed(lead, inquiry, claimedBy) {
-    // Get all users who can view leads
+  async emitLeadClaimed(lead, inquiry, user) {
+    // Emit to all authorized users (for real-time table updates)
+    // No database notification needed - just real-time socket update
     this.socketServer.emitToRoles(
       ["sales", "admin", "super_admin"],
       LEAD_EVENTS.LEAD_CLAIMED,
@@ -92,12 +124,12 @@ class LeadEventEmitter {
         leadId: lead.id,
         lead,
         inquiry,
-        claimedBy,
+        claimedBy: user.id,
         timestamp: new Date().toISOString(),
       }
     );
 
-    console.log(`📨 Lead claimed event emitted: ${lead.id} by ${claimedBy}`);
+    console.log(`📨 Lead claimed event emitted: ${lead.id} by ${user.id}`);
   }
 
   /**
@@ -106,7 +138,8 @@ class LeadEventEmitter {
    * @param {string} deletedBy - User who deleted the lead
    */
   emitLeadDeleted(leadId, deletedBy) {
-    // Get all users who can view leads
+    // Emit to all authorized users (for real-time table updates)
+    // No database notification needed - just real-time socket update
     this.socketServer.emitToRoles(
       ["sales", "admin", "super_admin"],
       LEAD_EVENTS.LEAD_DELETED,

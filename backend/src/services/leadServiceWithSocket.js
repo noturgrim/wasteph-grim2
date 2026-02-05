@@ -21,6 +21,16 @@ class LeadServiceWithSocket extends LeadService {
   }
 
   /**
+   * Set notification service
+   * @param {Object} notificationService - NotificationService instance
+   */
+  setNotificationService(notificationService) {
+    if (this.leadEvents) {
+      this.leadEvents.setNotificationService(notificationService);
+    }
+  }
+
+  /**
    * Create a new lead (override to add socket emission)
    */
   async createLead(leadData, userId, metadata = {}) {
@@ -71,9 +81,25 @@ class LeadServiceWithSocket extends LeadService {
     // Get the updated lead
     const lead = await this.getLeadById(leadId);
 
+    // Get user details for notification
+    const { db } = await import("../db/index.js");
+    const { userTable } = await import("../db/schema.js");
+    const { eq } = await import("drizzle-orm");
+
+    const [user] = await db
+      .select({
+        id: userTable.id,
+        firstName: userTable.firstName,
+        lastName: userTable.lastName,
+        email: userTable.email,
+      })
+      .from(userTable)
+      .where(eq(userTable.id, userId))
+      .limit(1);
+
     // Emit socket event
-    if (this.leadEvents) {
-      this.leadEvents.emitLeadClaimed(lead, inquiry, userId);
+    if (this.leadEvents && user) {
+      await this.leadEvents.emitLeadClaimed(lead, inquiry, user);
     }
 
     return inquiry;

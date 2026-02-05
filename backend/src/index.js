@@ -141,6 +141,7 @@ const startServer = async () => {
     const leadService = (await import("./services/leadServiceWithSocket.js"))
       .default;
     leadService.initializeSocket(socketServer);
+    leadService.setNotificationService(notificationService);
 
     // Initialize socket events for proposal service
     const proposalService = (

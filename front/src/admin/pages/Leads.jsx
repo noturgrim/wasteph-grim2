@@ -83,55 +83,86 @@ export default function Leads() {
   useEffect(() => {
     fetchAllLeads();
 
-    // Subscribe to real-time lead updates
-    leadSocketService.subscribeToLeads({
-      onLeadCreated: (data) => {
-        console.log("🔔 New lead created:", data);
-        
-        // Show toast notification
-        if (data.isPublic) {
-          toast.success("New lead from landing page!", {
-            description: `${data.lead.company} has submitted an inquiry`,
-          });
-        } else {
-          toast.success("New lead created", {
-            description: `${data.lead.company || data.lead.clientName}`,
-          });
-        }
+    // Subscribe to real-time lead updates with retry logic
+    let retryCount = 0;
+    const maxRetries = 5;
+    let subscribeTimeout;
 
-        // Refresh the current page data
-        fetchLeads(pagination.page);
-        fetchAllLeads();
-      },
-      onLeadUpdated: (data) => {
-        console.log("🔔 Lead updated:", data);
-        
-        // Refresh the current page data
-        fetchLeads(pagination.page);
-        fetchAllLeads();
-      },
-      onLeadClaimed: (data) => {
-        console.log("🔔 Lead claimed:", data);
-        
-        toast.success("Lead claimed", {
-          description: `${data.lead.company || data.lead.clientName} has been claimed`,
+    const attemptSubscribe = () => {
+      try {
+        leadSocketService.subscribeToLeads({
+          onLeadCreated: (data) => {
+            console.log("🔔 New lead created:", data);
+            
+            // Show toast notification
+            if (data.isPublic) {
+              toast.success("New lead from landing page!", {
+                description: `${data.lead.company} has submitted an inquiry`,
+              });
+            } else {
+              toast.success("New lead created", {
+                description: `${data.lead.company || data.lead.clientName}`,
+              });
+            }
+
+            // Refresh the current page data
+            fetchLeads(pagination.page);
+            fetchAllLeads();
+          },
+          onLeadUpdated: (data) => {
+            console.log("🔔 Lead updated:", data);
+            
+            // Refresh the current page data
+            fetchLeads(pagination.page);
+            fetchAllLeads();
+          },
+          onLeadClaimed: (data) => {
+            console.log("🔔 Lead claimed:", data);
+            
+            toast.success("Lead claimed", {
+              description: `${data.lead.company || data.lead.clientName} has been claimed`,
+            });
+
+            // Refresh the current page data
+            fetchLeads(pagination.page);
+            fetchAllLeads();
+          },
+          onLeadDeleted: (data) => {
+            console.log("🔔 Lead deleted:", data);
+            
+            // Refresh the current page data
+            fetchLeads(pagination.page);
+            fetchAllLeads();
+          },
         });
-
-        // Refresh the current page data
-        fetchLeads(pagination.page);
-        fetchAllLeads();
-      },
-      onLeadDeleted: (data) => {
-        console.log("🔔 Lead deleted:", data);
         
-        // Refresh the current page data
-        fetchLeads(pagination.page);
-        fetchAllLeads();
-      },
-    });
+        // If subscription succeeded, log success
+        if (leadSocketService.isSubscribed()) {
+          console.log("✅ Lead socket subscription successful");
+        } else {
+          throw new Error("Subscription failed");
+        }
+      } catch (error) {
+        // Retry with exponential backoff
+        if (retryCount < maxRetries) {
+          retryCount++;
+          const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000); // Max 5 seconds
+          console.log(
+            `⚠️ Lead socket subscription failed, retrying in ${delay}ms (attempt ${retryCount}/${maxRetries})`
+          );
+          subscribeTimeout = setTimeout(attemptSubscribe, delay);
+        } else {
+          console.error("❌ Lead socket subscription failed after max retries");
+        }
+      }
+    };
+
+    // Start subscription attempt with initial delay
+    subscribeTimeout = setTimeout(attemptSubscribe, 500);
 
     // Cleanup on unmount
     return () => {
+      clearTimeout(subscribeTimeout);
       leadSocketService.unsubscribeFromLeads();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

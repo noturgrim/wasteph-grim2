@@ -777,7 +777,9 @@ export const countersTable = pgTable(
 // Activity Log
 export const activityLogTable = pgTable("activity_log", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: text("user_id").references(() => userTable.id, { onDelete: "cascade" }), // Allow null for public/system actions
+  userId: text("user_id").references(() => userTable.id, {
+    onDelete: "cascade",
+  }), // Allow null for public/system actions
   inquiryId: uuid("inquiry_id").references(() => inquiryTable.id, {
     onDelete: "cascade",
   }),
@@ -933,6 +935,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "contract_requested",
   "contract_signed",
   "inquiry_created",
+  "lead_created_public",
   "system",
 ]);
 
