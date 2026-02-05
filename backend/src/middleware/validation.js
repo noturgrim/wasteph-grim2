@@ -78,14 +78,19 @@ export const publicLeadValidation = [
     .notEmpty()
     .withMessage("Company/Site name is required")
     .isLength({ min: 2, max: 255 })
-    .withMessage("Company name must be between 2 and 255 characters"),
+    .withMessage("Company name must be between 2 and 255 characters")
+    .escape() // Sanitize HTML/script tags
+    .matches(/^[a-zA-Z0-9\s\-\.\,\&\(\)]+$/)
+    .withMessage("Company name contains invalid characters"),
   body("email")
     .trim()
     .notEmpty()
     .withMessage("Email is required")
     .isEmail()
     .normalizeEmail()
-    .withMessage("Please enter a valid email address"),
+    .withMessage("Please enter a valid email address")
+    .isLength({ max: 100 })
+    .withMessage("Email must not exceed 100 characters"),
   body("phone")
     .trim()
     .notEmpty()
@@ -95,17 +100,18 @@ export const publicLeadValidation = [
     .matches(/^[\d\s\+\-\(\)]+$/)
     .withMessage("Phone number can only contain digits, spaces, and +()-"),
   body("wasteType")
+    .optional({ values: "falsy" }) // Make optional
     .trim()
-    .notEmpty()
-    .withMessage("Waste type is required")
     .isLength({ max: 500 })
-    .withMessage("Waste type must not exceed 500 characters"),
+    .withMessage("Waste type must not exceed 500 characters")
+    .escape(), // Sanitize HTML/script tags
   body("location")
     .trim()
     .notEmpty()
     .withMessage("Location is required")
     .isLength({ max: 500 })
-    .withMessage("Location must not exceed 500 characters"),
+    .withMessage("Location must not exceed 500 characters")
+    .escape(), // Sanitize HTML/script tags
 ];
 
 // Client validation

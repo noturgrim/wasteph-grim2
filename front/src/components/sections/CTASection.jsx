@@ -176,9 +176,10 @@ const CTASection = () => {
     newErrors.email = validateEmail(formData.email);
     newErrors.phone = validatePhone(formData.phone);
 
-    if (!formData.wasteType.trim()) {
-      newErrors.wasteType = "Waste type is required";
-    }
+    // Waste type is now optional - no validation needed
+    // if (!formData.wasteType.trim()) {
+    //   newErrors.wasteType = "Waste type is required";
+    // }
 
     if (!formData.location.trim()) {
       newErrors.location = "Location is required";
@@ -429,7 +430,7 @@ const CTASection = () => {
                   )}
                 </label>
 
-                {/* Waste Type */}
+                {/* Waste Type - Optional */}
                 <label className="group relative space-y-2">
                   <span className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-[#15803d] sm:text-sm">
                     <svg
@@ -442,6 +443,7 @@ const CTASection = () => {
                       <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                     </svg>
                     Waste Type
+                    <span className="text-xs font-normal text-white/50">(Optional)</span>
                   </span>
                   <input
                     type="text"
@@ -450,12 +452,11 @@ const CTASection = () => {
                         ? "border-red-500 focus:border-red-500 focus:bg-red-500/10 focus:shadow-[0_0_25px_rgba(239,68,68,0.4)]"
                         : "border-white/30 focus:border-[#15803d] focus:bg-[#15803d]/10 focus:shadow-[0_0_25px_rgba(21,128,61,0.4)]"
                     }`}
-                    placeholder="Mixed, food, residual..."
+                    placeholder="Mixed, food, residual... (optional)"
                     value={formData.wasteType}
                     onChange={handleChange("wasteType")}
                     onFocus={() => setFocusedField("wasteType")}
                     onBlur={() => setFocusedField(null)}
-                    required
                     aria-invalid={errors.wasteType ? "true" : "false"}
                     aria-describedby={
                       errors.wasteType ? "wasteType-error" : undefined
