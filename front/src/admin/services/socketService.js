@@ -229,7 +229,17 @@ class SocketService {
   getSocketId() {
     return this.socket?.id || null;
   }
+
+  /**
+   * Get socket instance
+   * @returns {Socket|null}
+   */
+  getSocket() {
+    return this.socket;
+  }
 }
 
 // Export singleton instance
-export default new SocketService();
+const socketServiceInstance = new SocketService();
+export default socketServiceInstance;
+export { socketServiceInstance as socketService };

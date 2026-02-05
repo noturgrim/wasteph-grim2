@@ -1,8 +1,5 @@
-import LeadService from "../services/leadService.js";
+import leadService from "../services/leadServiceWithSocket.js";
 import { AppError } from "../middleware/errorHandler.js";
-
-// Initialize service
-const leadService = new LeadService();
 
 /**
  * Controller: Create lead from public landing page

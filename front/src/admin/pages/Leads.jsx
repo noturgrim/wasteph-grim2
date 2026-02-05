@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
 import { toast } from "../utils/toast";
+import { leadSocketService } from "../services/leadSocketService";
 import { Plus, SlidersHorizontal, X, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,59 @@ export default function Leads() {
 
   useEffect(() => {
     fetchAllLeads();
+
+    // Subscribe to real-time lead updates
+    leadSocketService.subscribeToLeads({
+      onLeadCreated: (data) => {
+        console.log("🔔 New lead created:", data);
+        
+        // Show toast notification
+        if (data.isPublic) {
+          toast.success("New lead from landing page!", {
+            description: `${data.lead.company} has submitted an inquiry`,
+          });
+        } else {
+          toast.success("New lead created", {
+            description: `${data.lead.company || data.lead.clientName}`,
+          });
+        }
+
+        // Refresh the current page data
+        fetchLeads(pagination.page);
+        fetchAllLeads();
+      },
+      onLeadUpdated: (data) => {
+        console.log("🔔 Lead updated:", data);
+        
+        // Refresh the current page data
+        fetchLeads(pagination.page);
+        fetchAllLeads();
+      },
+      onLeadClaimed: (data) => {
+        console.log("🔔 Lead claimed:", data);
+        
+        toast.success("Lead claimed", {
+          description: `${data.lead.company || data.lead.clientName} has been claimed`,
+        });
+
+        // Refresh the current page data
+        fetchLeads(pagination.page);
+        fetchAllLeads();
+      },
+      onLeadDeleted: (data) => {
+        console.log("🔔 Lead deleted:", data);
+        
+        // Refresh the current page data
+        fetchLeads(pagination.page);
+        fetchAllLeads();
+      },
+    });
+
+    // Cleanup on unmount
+    return () => {
+      leadSocketService.unsubscribeFromLeads();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

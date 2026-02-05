@@ -137,6 +137,11 @@ const startServer = async () => {
     ticketService.initializeSocketEvents();
     ticketService.ticketEvents.setNotificationService(notificationService);
 
+    // Initialize socket events for lead service
+    const leadService = (await import("./services/leadServiceWithSocket.js"))
+      .default;
+    leadService.initializeSocket(socketServer);
+
     // Initialize socket events for proposal service
     const proposalService = (
       await import("./services/proposalServiceWithSocket.js")

@@ -1,7 +1,4 @@
-import LeadService from "../services/leadService.js";
-
-// Initialize service
-const leadService = new LeadService();
+import leadService from "../services/leadServiceWithSocket.js";
 
 /**
  * Controller: Create lead
