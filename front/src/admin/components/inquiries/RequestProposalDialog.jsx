@@ -405,8 +405,7 @@ export function RequestProposalDialog({
         setTemplate(service.template);
         toast.success(`Loaded template: ${service.template.name}`);
       } else {
-        // Service has no template linked
-        toast.warning(`No template configured for ${service.name}`);
+        toast.warning(`No template available for ${service.name}`);
         setTemplate(null);
       }
     } catch (error) {
@@ -1344,15 +1343,15 @@ ${bodyTag}
                             id="validityDays"
                             type="number"
                             placeholder="Enter number of days"
-                            value={formData.validityDays}
-                            onChange={(e) =>
+                            className="[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                            value={formData.validityDays ?? ""}
+                            onChange={(e) => {
+                              const raw = e.target.value;
                               handleInputChange(
                                 "validityDays",
-                                e.target.value
-                                  ? parseInt(e.target.value, 10)
-                                  : ""
-                              )
-                            }
+                                raw === "" ? "" : parseInt(raw, 10) || ""
+                              );
+                            }}
                           />
                         </div>
                       </div>

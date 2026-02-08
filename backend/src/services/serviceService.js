@@ -57,6 +57,32 @@ class ServiceService {
       throw new AppError("Service not found", 404);
     }
 
+    // Fallback: if service has no linked template, use the global default
+    if (!service.template?.id) {
+      const [defaultTemplate] = await db
+        .select({
+          id: proposalTemplateTable.id,
+          name: proposalTemplateTable.name,
+          description: proposalTemplateTable.description,
+          htmlTemplate: proposalTemplateTable.htmlTemplate,
+          templateType: proposalTemplateTable.templateType,
+          category: proposalTemplateTable.category,
+          isActive: proposalTemplateTable.isActive,
+        })
+        .from(proposalTemplateTable)
+        .where(
+          and(
+            eq(proposalTemplateTable.isDefault, true),
+            eq(proposalTemplateTable.isActive, true)
+          )
+        )
+        .limit(1);
+
+      if (defaultTemplate) {
+        service.template = defaultTemplate;
+      }
+    }
+
     return service;
   }
 

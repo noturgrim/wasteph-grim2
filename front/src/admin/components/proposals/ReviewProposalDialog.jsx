@@ -53,7 +53,7 @@ export function ReviewProposalDialog({
     console.error("Failed to parse proposal data:", error);
   }
 
-  const { services = [], pricing = {}, terms = {} } = proposalData;
+  const { services = [], pricing = {}, terms = {}, templateMetadata = {} } = proposalData;
 
   // Handle viewing PDF
   const handleViewPdf = async () => {
@@ -171,12 +171,23 @@ export function ReviewProposalDialog({
             <div className="border rounded-lg p-4">
               <h3 className="text-sm font-semibold mb-3">Service Type</h3>
               <div className="space-y-2">
-                {proposal.inquiryServiceType ? (
+                {templateMetadata.serviceName ? (
+                  <p className="text-sm">
+                    {templateMetadata.serviceName}
+                    {templateMetadata.serviceSubTypeName && (
+                      <span className="text-muted-foreground">
+                        {" "}- {templateMetadata.serviceSubTypeName}
+                      </span>
+                    )}
+                  </p>
+                ) : proposal.inquiryServiceType ? (
                   <p className="text-sm capitalize">
-                    {proposal.inquiryServiceType.replace(/_/g, ' ')}
+                    {proposal.inquiryServiceType.replace(/_/g, " ")}
                   </p>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No service type specified</p>
+                  <p className="text-sm text-muted-foreground">
+                    No service type specified
+                  </p>
                 )}
               </div>
             </div>
