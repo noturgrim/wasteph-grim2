@@ -100,7 +100,7 @@ export const createClientColumns = ({ userRole, onView, onEdit, onDelete }) => [
       if (cs === "signed") {
         return <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-700 text-xs">Signed</Badge>;
       }
-      return <span className="text-muted-foreground text-sm">—</span>;
+      return <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 text-xs">N/A</Badge>;
     },
   },
   {
@@ -112,7 +112,7 @@ export const createClientColumns = ({ userRole, onView, onEdit, onDelete }) => [
       const end = contractEndDate ? format(new Date(contractEndDate), "MMM dd, yyyy") : null;
       if (start && end) return `${start} – ${end}`;
       if (start) return `From ${start}`;
-      return "-";
+      return <span className="text-muted-foreground text-xs">N/A</span>;
     },
   },
   {
