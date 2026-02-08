@@ -36,10 +36,10 @@ class LeadServiceWithSocket extends LeadService {
   async createLead(leadData, userId, metadata = {}) {
     const lead = await super.createLead(leadData, userId, metadata);
 
-    // Emit socket event
-    if (this.leadEvents) {
-      await this.leadEvents.emitLeadCreated(lead, { isPublic: false });
-    }
+    // Fire-and-forget socket event — don't block the response
+    this.leadEvents
+      ?.emitLeadCreated(lead, { isPublic: false })
+      ?.catch?.((err) => console.error("[LeadSocket] emit failed:", err.message));
 
     return lead;
   }
@@ -50,10 +50,10 @@ class LeadServiceWithSocket extends LeadService {
   async createPublicLead(leadData, metadata = {}) {
     const lead = await super.createPublicLead(leadData, metadata);
 
-    // Emit socket event with public flag
-    if (this.leadEvents) {
-      await this.leadEvents.emitLeadCreated(lead, { isPublic: true });
-    }
+    // Fire-and-forget socket event — don't block the response
+    this.leadEvents
+      ?.emitLeadCreated(lead, { isPublic: true })
+      ?.catch?.((err) => console.error("[LeadSocket] emit failed:", err.message));
 
     return lead;
   }

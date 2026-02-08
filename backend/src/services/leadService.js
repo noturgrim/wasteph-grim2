@@ -37,8 +37,8 @@ class LeadService {
       })
       .returning();
 
-    // Log activity
-    await this.logActivity({
+    // Fire-and-forget: don't block response for activity logging
+    this._logInBackground({
       userId,
       action: "lead_created",
       entityType: "lead",
@@ -59,7 +59,6 @@ class LeadService {
   async createPublicLead(leadData, metadata = {}) {
     const { clientName, company, email, phone, location, notes } = leadData;
 
-    // Validate that at least company is provided (required for public submissions)
     if (!company?.trim()) {
       throw new AppError("Company name is required", 400);
     }
@@ -67,7 +66,7 @@ class LeadService {
     const [lead] = await db
       .insert(leadTable)
       .values({
-        clientName: clientName || company, // Use company as clientName fallback
+        clientName: clientName || company,
         company,
         email,
         phone,
@@ -77,8 +76,8 @@ class LeadService {
       })
       .returning();
 
-    // Log activity without userId for public submissions
-    await this.logActivity({
+    // Fire-and-forget: don't block response for activity logging
+    this._logInBackground({
       userId: null,
       action: "lead_created_public",
       entityType: "lead",
@@ -416,6 +415,17 @@ class LeadService {
         ? [{ reason: `${failedCount} lead(s) were already claimed or not found` }]
         : [],
     };
+  }
+
+  /**
+   * Fire-and-forget activity log — does not block the caller.
+   * Errors are caught and logged to stderr so they never crash the request.
+   * @param {Object} activityData - Activity log data
+   */
+  _logInBackground(activityData) {
+    this.logActivity(activityData).catch((err) =>
+      console.error("[LeadService] Background activity log failed:", err.message)
+    );
   }
 
   /**

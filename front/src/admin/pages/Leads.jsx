@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
 import { toast } from "../utils/toast";
@@ -209,10 +209,10 @@ export default function Leads() {
     }
   };
 
-  const handleEditLead = (lead) => {
+  const handleEditLead = useCallback((lead) => {
     setSelectedLead(lead);
     setIsEditDialogOpen(true);
-  };
+  }, []);
 
   const handleUpdateLead = async (formData) => {
     setIsSubmitting(true);
@@ -228,11 +228,11 @@ export default function Leads() {
     }
   };
 
-  const handleClaimLead = (lead) => {
+  const handleClaimLead = useCallback((lead) => {
     setSelectedLead(lead);
-    setClaimSource(""); // Reset source when opening dialog
+    setClaimSource("");
     setIsClaimDialogOpen(true);
-  };
+  }, []);
 
   const confirmClaim = async () => {
     setIsSubmitting(true);
@@ -252,10 +252,10 @@ export default function Leads() {
     }
   };
 
-  const handleDeleteLead = (lead) => {
+  const handleDeleteLead = useCallback((lead) => {
     setSelectedLead(lead);
     setIsDeleteDialogOpen(true);
-  };
+  }, []);
 
   const confirmDelete = async () => {
     try {
@@ -309,42 +309,61 @@ export default function Leads() {
     }
   };
 
-  const handleSelectLead = (leadId, isSelected) => {
+  const handleSelectLead = useCallback((leadId, isSelected) => {
     setSelectedLeads((prev) =>
       isSelected ? [...prev, leadId] : prev.filter((id) => id !== leadId)
     );
-  };
+  }, []);
 
-  const handleSelectAll = (isSelected) => {
-    if (isSelected) {
-      // Only select unclaimed leads
-      const unclaimedLeadIds = leads
-        .filter((lead) => !lead.isClaimed)
-        .map((lead) => lead.id);
-      setSelectedLeads(unclaimedLeadIds);
-    } else {
+  const handleSelectAll = useCallback((isSelected) => {
+    if (!isSelected) {
       setSelectedLeads([]);
+      return;
     }
-  };
+    // Only select unclaimed leads
+    const unclaimedLeadIds = leads
+      .filter((lead) => !lead.isClaimed)
+      .map((lead) => lead.id);
+    setSelectedLeads(unclaimedLeadIds);
+  }, [leads]);
 
-  const allColumns = createColumns({
-    onView: (lead) => {
-      setSelectedLead(lead);
-      setIsViewDialogOpen(true);
-    },
-    onEdit: handleEditLead,
-    onClaim: handleClaimLead,
-    onDelete: handleDeleteLead,
-    isMasterSales,
-    selectedLeads,
-    onSelectLead: handleSelectLead,
-    onSelectAll: handleSelectAll,
-  });
+  const handleViewLead = useCallback((lead) => {
+    setSelectedLead(lead);
+    setIsViewDialogOpen(true);
+  }, []);
 
-  const columns = allColumns.filter((column) => {
-    if (!column.accessorKey) return true;
-    return columnVisibility[column.accessorKey];
-  });
+  const allColumns = useMemo(
+    () =>
+      createColumns({
+        onView: handleViewLead,
+        onEdit: handleEditLead,
+        onClaim: handleClaimLead,
+        onDelete: handleDeleteLead,
+        isMasterSales,
+        selectedLeads,
+        onSelectLead: handleSelectLead,
+        onSelectAll: handleSelectAll,
+      }),
+    [
+      handleViewLead,
+      handleEditLead,
+      handleClaimLead,
+      handleDeleteLead,
+      isMasterSales,
+      selectedLeads,
+      handleSelectLead,
+      handleSelectAll,
+    ]
+  );
+
+  const columns = useMemo(
+    () =>
+      allColumns.filter((column) => {
+        if (!column.accessorKey) return true;
+        return columnVisibility[column.accessorKey];
+      }),
+    [allColumns, columnVisibility]
+  );
 
   return (
     <div className="space-y-4">
