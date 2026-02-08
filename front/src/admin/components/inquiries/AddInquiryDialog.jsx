@@ -198,6 +198,7 @@ export function AddInquiryDialog({ open, onOpenChange, onSubmit, isSubmitting })
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="website">Website</SelectItem>
                 <SelectItem value="phone">Phone</SelectItem>
                 <SelectItem value="facebook">Facebook</SelectItem>
                 <SelectItem value="email">Email</SelectItem>

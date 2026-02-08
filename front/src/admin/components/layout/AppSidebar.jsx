@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LogOut,
   Loader2,
@@ -35,6 +35,7 @@ import { getNavigationByRole } from "../../config/navigation";
 export function AppSidebar() {
   const { user, logout, isLoggingOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Get navigation items based on user role and master sales status
   const navigation = getNavigationByRole(user?.role || "sales", user?.isMasterSales || false);
@@ -161,7 +162,8 @@ export function AppSidebar() {
                   className="bg-slate-200 dark:bg-white/10"
                 />
                 <DropdownMenuItem
-                  className="text-slate-700 dark:text-white/80 dark:focus:bg-white/5"
+                  onClick={() => navigate("/admin/account")}
+                  className="text-slate-700 dark:text-white/80 dark:focus:bg-white/5 cursor-pointer"
                 >
                   <User className="mr-2 h-4 w-4" />
                   <span>Account</span>

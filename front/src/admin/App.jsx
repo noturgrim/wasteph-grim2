@@ -15,6 +15,7 @@ import Tickets from "./pages/Tickets";
 import BlogPosts from "./pages/BlogPosts";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
+import Account from "./pages/Account";
 import ProposalTemplates from "./pages/ProposalTemplates";
 import Proposals from "./pages/Proposals";
 import ContractRequests from "./pages/ContractRequests";
@@ -43,6 +44,7 @@ const CRMApp = () => {
           >
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="account" element={<Account />} />
             <Route path="calendar" element={<Calendar />} />
 
             {/* Sales Pipeline - accessible by all roles */}

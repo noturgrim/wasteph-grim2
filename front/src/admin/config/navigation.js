@@ -339,6 +339,10 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
  * @returns {boolean} Whether user has access
  */
 export const hasAccess = (role, path, isMasterSales = false) => {
+  // Routes accessible to all authenticated users regardless of role
+  const alwaysAllowed = ["/admin/account"];
+  if (alwaysAllowed.some((allowed) => path.startsWith(allowed))) return true;
+
   const navigation = getNavigationByRole(role, isMasterSales);
   const allItems = navigation.flatMap((group) => group.items);
   return allItems.some((item) => path.startsWith(item.url));

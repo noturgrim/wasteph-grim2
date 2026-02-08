@@ -226,6 +226,7 @@ export const getCurrentUser = async (req, res, next) => {
         lastName: req.user.lastName,
         role: req.user.role,
         isMasterSales: req.user.isMasterSales || false,
+        createdAt: req.user.createdAt,
       },
     });
   } catch (error) {
