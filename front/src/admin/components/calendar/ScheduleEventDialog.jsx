@@ -258,6 +258,12 @@ export function ScheduleEventDialog({
                   })
                 }
                 placeholder="Select date"
+                fromDate={new Date()}
+                disabledDates={(date) => {
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  return date < today;
+                }}
               />
               {formErrors.scheduledDate && (
                 <p className="text-sm text-red-500">
