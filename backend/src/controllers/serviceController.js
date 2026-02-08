@@ -40,6 +40,24 @@ export const getServiceById = async (req, res, next) => {
 };
 
 /**
+ * Get sub-types for a service
+ * GET /api/services/:id/sub-types
+ */
+export const getServiceSubTypes = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const subTypes = await serviceService.getSubTypes(id);
+
+    res.status(200).json({
+      success: true,
+      data: subTypes,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * Get template for a service
  * GET /api/services/:id/template
  */

@@ -7,6 +7,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +48,10 @@ export function RequestProposalDialog({
   const [services, setServices] = useState([]);
   const [selectedServiceId, setSelectedServiceId] = useState("");
   const [selectedServiceName, setSelectedServiceName] = useState("");
+  const [subTypes, setSubTypes] = useState([]);
+  const [selectedSubTypeId, setSelectedSubTypeId] = useState("");
+  const [selectedSubTypeName, setSelectedSubTypeName] = useState("");
+  const [isLoadingSubTypes, setIsLoadingSubTypes] = useState(false);
 
   // Editor content state - track saved vs current
   const [editorInitialContent, setEditorInitialContent] = useState("");
@@ -303,6 +308,9 @@ export function RequestProposalDialog({
       setEditorInitialContent("");
       setSavedEditorContent({ html: "", json: null });
       setHasUnsavedEditorChanges(false);
+      setSubTypes([]);
+      setSelectedSubTypeId("");
+      setSelectedSubTypeName("");
     }
   }, [open]);
 
@@ -410,10 +418,23 @@ export function RequestProposalDialog({
     }
   };
 
-  // Handle service selection
+  // Handle service selection — load template + sub-types in parallel
   const handleServiceChange = async (serviceId) => {
     setSelectedServiceId(serviceId);
-    await loadTemplateFromService(serviceId);
+    setSelectedSubTypeId("");
+    setSelectedSubTypeName("");
+    setSubTypes([]);
+
+    // Fetch template and sub-types in parallel
+    setIsLoadingSubTypes(true);
+    await Promise.all([
+      loadTemplateFromService(serviceId),
+      api
+        .getServiceSubTypes(serviceId)
+        .then((res) => setSubTypes(res.data || []))
+        .catch(() => setSubTypes([])),
+    ]);
+    setIsLoadingSubTypes(false);
   };
 
   // Render template server-side and load into editor
@@ -702,6 +723,8 @@ ${bodyTag}
           templateName: template?.name,
           serviceId: selectedServiceId,
           serviceName: selectedServiceName,
+          serviceSubTypeId: selectedSubTypeId || null,
+          serviceSubTypeName: selectedSubTypeName || null,
           editedAt: new Date().toISOString(),
           editorVersion: "tiptap-v1", // For future tracking
         },
@@ -721,6 +744,7 @@ ${bodyTag}
         await api.createProposal({
           inquiryId: inquiry.id,
           templateId: template?.id,
+          serviceSubTypeId: selectedSubTypeId || null,
           proposalData,
         });
         toast.success("Proposal request submitted for approval");
@@ -806,6 +830,16 @@ ${bodyTag}
         } flex flex-col p-0 gap-0 transition-all duration-300`}
         onInteractOutside={(e) => e.preventDefault()}
       >
+        <VisuallyHidden>
+          <DialogTitle>
+            {inquiry?.proposalStatus === "disapproved"
+              ? "Revise Proposal"
+              : "Create Proposal"}
+          </DialogTitle>
+          <DialogDescription>
+            Proposal creation wizard for {inquiry?.name}
+          </DialogDescription>
+        </VisuallyHidden>
         {/* Two Column Layout */}
         <div className="flex flex-1 min-h-0">
           {/* Left Sidebar - Progress Steps */}
@@ -1096,11 +1130,63 @@ ${bodyTag}
                     })}
                   </div>
 
-                  {isLoadingTemplate && (
+                  {/* Sub-type selector (shown when service has sub-types) */}
+                  {selectedServiceId && subTypes.length > 0 && !isLoadingSubTypes && (
+                    <div className="max-w-3xl space-y-3">
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                          Select {selectedServiceName} Type
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          Choose the specific hauling method
+                        </p>
+                      </div>
+                      <div className="flex gap-3">
+                        {subTypes.map((subType) => {
+                          const isSelected = selectedSubTypeId === subType.id;
+                          return (
+                            <button
+                              key={subType.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedSubTypeId(subType.id);
+                                setSelectedSubTypeName(subType.name);
+                              }}
+                              className={`relative flex-1 flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all text-center ${
+                                isSelected
+                                  ? "border-[#15803d] bg-green-50 dark:bg-green-900/20"
+                                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800"
+                              } cursor-pointer`}
+                            >
+                              <div className="absolute top-2.5 right-2.5">
+                                {isSelected ? (
+                                  <div className="w-4 h-4 bg-[#15803d] rounded-full flex items-center justify-center">
+                                    <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                                  </div>
+                                ) : (
+                                  <div className="w-4 h-4 border-2 border-gray-300 dark:border-gray-600 rounded-full" />
+                                )}
+                              </div>
+                              <h4 className="font-semibold text-sm text-gray-900 dark:text-white">
+                                {subType.name}
+                              </h4>
+                              {subType.description && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  {subType.description}
+                                </p>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {(isLoadingTemplate || isLoadingSubTypes) && (
                     <div className="flex items-center justify-center py-12">
                       <Loader2 className="h-8 w-8 animate-spin text-[#15803d]" />
                       <span className="ml-3 text-gray-600 dark:text-gray-400">
-                        Loading template...
+                        Loading...
                       </span>
                     </div>
                   )}
@@ -1321,6 +1407,7 @@ ${bodyTag}
                             </span>
                             <span className="font-medium text-gray-900 dark:text-white">
                               {selectedServiceName}
+                              {selectedSubTypeName && ` - ${selectedSubTypeName}`}
                             </span>
                           </div>
                         )}
@@ -1463,7 +1550,12 @@ ${templateStructureRef.current.styles}
                     </Button>
                     <Button
                       onClick={() => setCurrentStep(2)}
-                      disabled={!selectedServiceId || isLoadingTemplate}
+                      disabled={
+                        !selectedServiceId ||
+                        isLoadingTemplate ||
+                        isLoadingSubTypes ||
+                        (subTypes.length > 0 && !selectedSubTypeId)
+                      }
                       className="min-w-[120px]"
                     >
                       {isLoadingTemplate ? (

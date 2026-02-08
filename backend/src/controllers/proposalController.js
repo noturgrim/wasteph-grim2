@@ -454,6 +454,7 @@ export const getProposalStatusPublic = async (req, res, next) => {
         sentAt: proposal.sentAt,
         expiresAt: proposal.expiresAt,
         status: proposal.status,
+        requiresContract: proposal.requiresContract ?? true,
       },
     });
   } catch (error) {

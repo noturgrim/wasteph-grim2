@@ -1,5 +1,5 @@
 import { db } from "../db/index.js";
-import { proposalTable, activityLogTable, inquiryTable, userTable } from "../db/schema.js";
+import { proposalTable, activityLogTable, inquiryTable, userTable, serviceTable } from "../db/schema.js";
 import { eq, desc, and, or, like, inArray, count, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 import inquiryService from "./inquiryService.js";
@@ -23,7 +23,7 @@ class ProposalService {
    * @returns {Promise<Object>} Created proposal
    */
   async createProposal(proposalData, userId, metadata = {}) {
-    const { inquiryId, templateId, proposalData: data } = proposalData;
+    const { inquiryId, templateId, serviceSubTypeId, proposalData: data } = proposalData;
 
     let template;
     let wasTemplateSuggested = false;
@@ -43,6 +43,7 @@ class ProposalService {
           proposalNumber,
           inquiryId,
           templateId: template.id,
+          serviceSubTypeId: serviceSubTypeId || null,
           requestedBy: userId,
           proposalData: typeof data === "string" ? data : JSON.stringify(data),
           status: "pending",
@@ -836,7 +837,7 @@ class ProposalService {
       throw new AppError("Missing response token", 400);
     }
 
-    // Fetch only the fields we need
+    // Fetch proposal fields + service.requiresContract in one query
     const [proposal] = await db
       .select({
         id: proposalTable.id,
@@ -849,8 +850,11 @@ class ProposalService {
         clientResponseAt: proposalTable.clientResponseAt,
         sentAt: proposalTable.sentAt,
         expiresAt: proposalTable.expiresAt,
+        requiresContract: serviceTable.requiresContract,
       })
       .from(proposalTable)
+      .innerJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id))
+      .leftJoin(serviceTable, eq(inquiryTable.serviceId, serviceTable.id))
       .where(eq(proposalTable.id, proposalId))
       .limit(1);
 
@@ -932,7 +936,7 @@ class ProposalService {
       throw new AppError("This proposal has already been responded to or is no longer available", 400);
     }
 
-    // Fire-and-forget: log activity + auto-create contract
+    // Fire-and-forget: log activity
     this._logInBackground({
       userId: updatedProposal.requestedBy,
       action: "proposal_client_approved",
@@ -943,7 +947,23 @@ class ProposalService {
       userAgent: null,
     });
 
-    this._createContractInBackground(proposalId, updatedProposal.requestedBy, ipAddress);
+    // Check if the service requires a contract
+    // Single efficient query: proposal -> inquiry -> service
+    const [serviceInfo] = await db
+      .select({ requiresContract: serviceTable.requiresContract })
+      .from(proposalTable)
+      .innerJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id))
+      .innerJoin(serviceTable, eq(inquiryTable.serviceId, serviceTable.id))
+      .where(eq(proposalTable.id, proposalId))
+      .limit(1);
+
+    const requiresContract = serviceInfo?.requiresContract ?? true;
+
+    if (requiresContract) {
+      this._createContractInBackground(proposalId, updatedProposal.requestedBy, ipAddress);
+    } else {
+      this._createClientDirectly(proposalId, updatedProposal.requestedBy, ipAddress);
+    }
 
     return updatedProposal;
   }
@@ -960,6 +980,95 @@ class ProposalService {
         }),
       )
       .catch((err) => console.error("Failed to auto-create contract:", err));
+  }
+
+  /**
+   * Fire-and-forget: directly create client when contract is not required.
+   * Looks up proposal + inquiry data, creates/updates client, and marks inquiry as on_boarded.
+   */
+  _createClientDirectly(proposalId, salesUserId, ipAddress) {
+    (async () => {
+      // 1. Fetch proposal with inquiry in one query
+      const [row] = await db
+        .select({
+          proposalData: proposalTable.proposalData,
+          inquiryId: inquiryTable.id,
+          inquiryName: inquiryTable.name,
+          inquiryEmail: inquiryTable.email,
+          inquiryPhone: inquiryTable.phone,
+          inquiryCompany: inquiryTable.company,
+        })
+        .from(proposalTable)
+        .innerJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id))
+        .where(eq(proposalTable.id, proposalId))
+        .limit(1);
+
+      if (!row) return;
+
+      // 2. Parse client info from proposalData JSON (richer than inquiry fields)
+      const parsed =
+        typeof row.proposalData === "string"
+          ? JSON.parse(row.proposalData)
+          : row.proposalData;
+
+      const clientEmail = (
+        parsed.clientEmail || row.inquiryEmail
+      )?.toLowerCase().trim();
+
+      if (!clientEmail) {
+        console.error("[_createClientDirectly] No client email found for proposal:", proposalId);
+        return;
+      }
+
+      // 3. Check for existing client (prevent duplicates)
+      const { clientTable } = await import("../db/schema.js");
+      const [existing] = await db
+        .select({ id: clientTable.id })
+        .from(clientTable)
+        .where(eq(clientTable.email, clientEmail))
+        .limit(1);
+
+      let clientId;
+      if (existing) {
+        clientId = existing.id;
+      } else {
+        // 4. Create new client
+        const clientService = (await import("./clientService.js")).default;
+        const client = await clientService.createClient(
+          {
+            companyName: parsed.clientCompany || row.inquiryCompany || "Unknown",
+            contactPerson: parsed.clientName || row.inquiryName || "Unknown",
+            email: clientEmail,
+            phone: parsed.clientPhone || row.inquiryPhone || "",
+            address: parsed.clientAddress || "",
+            city: "",
+            province: "",
+          },
+          salesUserId,
+          { ipAddress },
+        );
+        clientId = client.id;
+      }
+
+      // 5. Update inquiry status to on_boarded
+      await db
+        .update(inquiryTable)
+        .set({ status: "on_boarded", updatedAt: new Date() })
+        .where(eq(inquiryTable.id, row.inquiryId));
+
+      // 6. Log activity
+      this._logInBackground({
+        userId: salesUserId,
+        action: "client_created_from_proposal",
+        entityType: "client",
+        entityId: clientId,
+        details: { proposalId, inquiryId: row.inquiryId, skipContract: true },
+        ipAddress,
+        userAgent: null,
+      });
+    })().catch((err) =>
+      console.error("Failed to create client directly from proposal:", err)
+    );
   }
 
   /**

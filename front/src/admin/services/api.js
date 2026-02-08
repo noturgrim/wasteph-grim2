@@ -307,6 +307,10 @@ class ApiClient {
     return this.request(`/services/${id}`);
   }
 
+  async getServiceSubTypes(serviceId) {
+    return this.request(`/services/${serviceId}/sub-types`);
+  }
+
   async getTemplateForService(serviceId) {
     return this.request(`/services/${serviceId}/template`);
   }

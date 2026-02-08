@@ -1,9 +1,10 @@
 import { db } from "../db/index.js";
-import { serviceTable } from "../db/schema.js";
+import { serviceTable, serviceSubTypeTable } from "../db/schema.js";
+import { eq } from "drizzle-orm";
 
 const seedServices = async () => {
   try {
-    console.log("🌱 Seeding services...");
+    console.log("Seeding services...");
 
     const services = [
       {
@@ -25,6 +26,7 @@ const seedServices = async () => {
       {
         name: "One-time Hauling",
         description: "Single trip waste hauling and removal",
+        requiresContract: false,
       },
       {
         name: "Purchase of Recyclables",
@@ -40,16 +42,63 @@ const seedServices = async () => {
         .returning();
 
       if (result) {
-        console.log(`✅ Service created: ${service.name}`);
+        console.log(`  Service created: ${service.name}`);
       } else {
-        console.log(`ℹ️  Service already exists: ${service.name}`);
+        // Update requiresContract flag for existing service if explicitly set
+        if (service.requiresContract === false) {
+          await db
+            .update(serviceTable)
+            .set({ requiresContract: false })
+            .where(eq(serviceTable.name, service.name));
+          console.log(`  Updated requiresContract=false: ${service.name}`);
+        } else {
+          console.log(`  Service already exists: ${service.name}`);
+        }
       }
     }
 
-    console.log("✅ Services seeded successfully!");
+    // Seed sub-types for One-time Hauling
+    console.log("\nSeeding service sub-types...");
+
+    const [oneTimeHauling] = await db
+      .select({ id: serviceTable.id })
+      .from(serviceTable)
+      .where(eq(serviceTable.name, "One-time Hauling"))
+      .limit(1);
+
+    if (oneTimeHauling) {
+      const subTypes = [
+        {
+          serviceId: oneTimeHauling.id,
+          name: "Dump",
+          description: "Standard dump truck hauling",
+        },
+        {
+          serviceId: oneTimeHauling.id,
+          name: "Compactor",
+          description: "Compactor truck hauling",
+        },
+      ];
+
+      for (const subType of subTypes) {
+        const [result] = await db
+          .insert(serviceSubTypeTable)
+          .values(subType)
+          .onConflictDoNothing()
+          .returning();
+
+        if (result) {
+          console.log(`  Sub-type created: ${subType.name}`);
+        } else {
+          console.log(`  Sub-type already exists: ${subType.name}`);
+        }
+      }
+    }
+
+    console.log("\nServices seeded successfully!");
     process.exit(0);
   } catch (error) {
-    console.error("❌ Error seeding services:", error);
+    console.error("Error seeding services:", error);
     process.exit(1);
   }
 };

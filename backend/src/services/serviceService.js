@@ -1,6 +1,6 @@
 import { db } from "../db/index.js";
-import { serviceTable, proposalTemplateTable } from "../db/schema.js";
-import { eq } from "drizzle-orm";
+import { serviceTable, serviceSubTypeTable, proposalTemplateTable } from "../db/schema.js";
+import { eq, and } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 
 /**
@@ -32,6 +32,7 @@ class ServiceService {
         name: serviceTable.name,
         description: serviceTable.description,
         defaultTemplateId: serviceTable.defaultTemplateId,
+        requiresContract: serviceTable.requiresContract,
         isActive: serviceTable.isActive,
         createdAt: serviceTable.createdAt,
         template: {
@@ -57,6 +58,27 @@ class ServiceService {
     }
 
     return service;
+  }
+
+  /**
+   * Get active sub-types for a service
+   * @param {string} serviceId - Service UUID
+   * @returns {Promise<Array>} List of sub-types
+   */
+  async getSubTypes(serviceId) {
+    return db
+      .select({
+        id: serviceSubTypeTable.id,
+        name: serviceSubTypeTable.name,
+        description: serviceSubTypeTable.description,
+      })
+      .from(serviceSubTypeTable)
+      .where(
+        and(
+          eq(serviceSubTypeTable.serviceId, serviceId),
+          eq(serviceSubTypeTable.isActive, true)
+        )
+      );
   }
 
   /**

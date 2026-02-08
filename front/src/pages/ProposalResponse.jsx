@@ -283,7 +283,9 @@ const ProposalResponse = () => {
                       }`}
                     >
                       {action === "approve"
-                        ? "By clicking 'Confirm Approval' below, you agree to the terms and conditions outlined in this proposal. Our team will begin preparing your contract immediately."
+                        ? proposalDetails.requiresContract === false
+                          ? "By clicking 'Confirm Approval' below, you agree to the terms and conditions outlined in this proposal. Our team will begin coordinating your service immediately."
+                          : "By clicking 'Confirm Approval' below, you agree to the terms and conditions outlined in this proposal. Our team will begin preparing your contract immediately."
                         : "If you decline, this proposal will be marked as rejected. You can still contact us to discuss alternative options or modifications."}
                     </p>
                   </div>
@@ -351,42 +353,76 @@ const ProposalResponse = () => {
                       What Happens Next?
                     </h4>
                     <div className="space-y-4">
-                      <div className="flex items-start gap-3">
-                        <div className="bg-[#104806] text-white rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-0.5 font-bold text-sm">
-                          1
-                        </div>
-                        <p className="text-sm text-gray-800 leading-relaxed">
-                          Our sales team has been notified and will review your
-                          approval immediately
-                        </p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="bg-[#104806] text-white rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-0.5 font-bold text-sm">
-                          2
-                        </div>
-                        <p className="text-sm text-gray-800 leading-relaxed">
-                          We'll finalize the contract details and prepare all
-                          documentation
-                        </p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="bg-[#104806] text-white rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-0.5 font-bold text-sm">
-                          3
-                        </div>
-                        <p className="text-sm text-gray-800 leading-relaxed">
-                          You'll receive the final contract document via email
-                          within 1-2 business days
-                        </p>
-                      </div>
-                      <div className="flex items-start gap-3">
-                        <div className="bg-[#104806] text-white rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-0.5 font-bold text-sm">
-                          4
-                        </div>
-                        <p className="text-sm text-gray-800 leading-relaxed">
-                          A dedicated team member will contact you to discuss
-                          service implementation
-                        </p>
-                      </div>
+                      {proposalDetails.requiresContract === false ? (
+                        <>
+                          <div className="flex items-start gap-3">
+                            <div className="bg-[#104806] text-white rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-0.5 font-bold text-sm">
+                              1
+                            </div>
+                            <p className="text-sm text-gray-800 leading-relaxed">
+                              Our team has been notified and will begin
+                              coordinating your service immediately
+                            </p>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <div className="bg-[#104806] text-white rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-0.5 font-bold text-sm">
+                              2
+                            </div>
+                            <p className="text-sm text-gray-800 leading-relaxed">
+                              A dedicated team member will contact you to
+                              schedule and confirm the service details
+                            </p>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <div className="bg-[#104806] text-white rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-0.5 font-bold text-sm">
+                              3
+                            </div>
+                            <p className="text-sm text-gray-800 leading-relaxed">
+                              You'll receive a confirmation with all the service
+                              logistics and timeline
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-start gap-3">
+                            <div className="bg-[#104806] text-white rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-0.5 font-bold text-sm">
+                              1
+                            </div>
+                            <p className="text-sm text-gray-800 leading-relaxed">
+                              Our sales team has been notified and will review
+                              your approval immediately
+                            </p>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <div className="bg-[#104806] text-white rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-0.5 font-bold text-sm">
+                              2
+                            </div>
+                            <p className="text-sm text-gray-800 leading-relaxed">
+                              We'll finalize the contract details and prepare all
+                              documentation
+                            </p>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <div className="bg-[#104806] text-white rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-0.5 font-bold text-sm">
+                              3
+                            </div>
+                            <p className="text-sm text-gray-800 leading-relaxed">
+                              You'll receive the final contract document via
+                              email within 1-2 business days
+                            </p>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <div className="bg-[#104806] text-white rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-0.5 font-bold text-sm">
+                              4
+                            </div>
+                            <p className="text-sm text-gray-800 leading-relaxed">
+                              A dedicated team member will contact you to discuss
+                              service implementation
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
 

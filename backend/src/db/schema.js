@@ -441,6 +441,20 @@ export const serviceTable = pgTable("service", {
   defaultTemplateId: uuid("default_template_id").references(
     () => proposalTemplateTable.id
   ),
+  requiresContract: boolean("requires_contract").notNull().default(true),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const serviceSubTypeTable = pgTable("service_sub_type", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  serviceId: uuid("service_id")
+    .notNull()
+    .references(() => serviceTable.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -508,6 +522,9 @@ export const proposalTable = pgTable(
     templateId: uuid("template_id")
       .notNull()
       .references(() => proposalTemplateTable.id),
+    serviceSubTypeId: uuid("service_sub_type_id").references(
+      () => serviceSubTypeTable.id
+    ),
     requestedBy: text("requested_by")
       .notNull()
       .references(() => userTable.id),
