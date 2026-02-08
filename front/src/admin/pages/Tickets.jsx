@@ -488,8 +488,10 @@ export default function Tickets() {
           </p>
         </div>
         <div className="rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground">Total</p>
-          <p className="text-2xl font-bold">{pagination.total}</p>
+          <p className="text-sm text-muted-foreground">Closed</p>
+          <p className="text-2xl font-bold">
+            {facets.status.closed || 0}
+          </p>
         </div>
       </div>
 

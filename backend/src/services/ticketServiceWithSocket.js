@@ -6,7 +6,7 @@ import {
   activityLogTable,
   userTable,
 } from "../db/schema.js";
-import { eq, desc, and, or, inArray, like, count } from "drizzle-orm";
+import { eq, desc, and, or, inArray, like, count, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 import counterService from "./counterService.js";
 import { getPresignedUrl } from "./s3Service.js";
@@ -111,6 +111,12 @@ class TicketService {
     const limit = Number(rawLimit) || 10;
     const offset = (page - 1) * limit;
 
+    // Permission filter for facets
+    const permissionFilter =
+      userRole === "sales" && !isMasterSales
+        ? sql`created_by = ${userId}`
+        : sql`1=1`;
+
     // Build where conditions
     const conditions = [];
 
@@ -160,40 +166,64 @@ class TicketService {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    // Count total
-    const [{ value: total }] = await db
-      .select({ value: count() })
-      .from(clientTicketsTable)
-      .leftJoin(userTable, eq(clientTicketsTable.createdBy, userTable.id))
-      .where(whereClause);
+    // Run count, data, and facets in parallel
+    const [[{ value: total }], tickets, facetRows] = await Promise.all([
+      // 1. Total count
+      db
+        .select({ value: count() })
+        .from(clientTicketsTable)
+        .leftJoin(userTable, eq(clientTicketsTable.createdBy, userTable.id))
+        .where(whereClause),
 
-    // Paginated query
-    const tickets = await db
-      .select({
-        id: clientTicketsTable.id,
-        ticketNumber: clientTicketsTable.ticketNumber,
-        clientId: clientTicketsTable.clientId,
-        category: clientTicketsTable.category,
-        priority: clientTicketsTable.priority,
-        subject: clientTicketsTable.subject,
-        description: clientTicketsTable.description,
-        status: clientTicketsTable.status,
-        createdBy: clientTicketsTable.createdBy,
-        resolvedBy: clientTicketsTable.resolvedBy,
-        resolvedAt: clientTicketsTable.resolvedAt,
-        resolutionNotes: clientTicketsTable.resolutionNotes,
-        createdAt: clientTicketsTable.createdAt,
-        updatedAt: clientTicketsTable.updatedAt,
-        creatorFirstName: userTable.firstName,
-        creatorLastName: userTable.lastName,
-        creatorEmail: userTable.email,
-      })
-      .from(clientTicketsTable)
-      .leftJoin(userTable, eq(clientTicketsTable.createdBy, userTable.id))
-      .where(whereClause)
-      .orderBy(desc(clientTicketsTable.createdAt))
-      .limit(limit)
-      .offset(offset);
+      // 2. Paginated data
+      db
+        .select({
+          id: clientTicketsTable.id,
+          ticketNumber: clientTicketsTable.ticketNumber,
+          clientId: clientTicketsTable.clientId,
+          category: clientTicketsTable.category,
+          priority: clientTicketsTable.priority,
+          subject: clientTicketsTable.subject,
+          description: clientTicketsTable.description,
+          status: clientTicketsTable.status,
+          createdBy: clientTicketsTable.createdBy,
+          resolvedBy: clientTicketsTable.resolvedBy,
+          resolvedAt: clientTicketsTable.resolvedAt,
+          resolutionNotes: clientTicketsTable.resolutionNotes,
+          createdAt: clientTicketsTable.createdAt,
+          updatedAt: clientTicketsTable.updatedAt,
+          creatorFirstName: userTable.firstName,
+          creatorLastName: userTable.lastName,
+          creatorEmail: userTable.email,
+        })
+        .from(clientTicketsTable)
+        .leftJoin(userTable, eq(clientTicketsTable.createdBy, userTable.id))
+        .where(whereClause)
+        .orderBy(desc(clientTicketsTable.createdAt))
+        .limit(limit)
+        .offset(offset),
+
+      // 3. All 3 facets in one query via UNION ALL (permission-filtered, NOT filter-filtered)
+      db.execute(sql`
+        SELECT 'status'::text AS facet_type, status::text AS facet_value, count(*)::int AS cnt
+          FROM client_tickets WHERE ${permissionFilter} GROUP BY status
+        UNION ALL
+        SELECT 'category'::text, category::text, count(*)::int
+          FROM client_tickets WHERE ${permissionFilter} GROUP BY category
+        UNION ALL
+        SELECT 'priority'::text, priority::text, count(*)::int
+          FROM client_tickets WHERE ${permissionFilter} GROUP BY priority
+      `),
+    ]);
+
+    // Parse combined UNION ALL facet rows into maps
+    const facets = { status: {}, category: {}, priority: {} };
+    for (const row of facetRows) {
+      if (!row.facet_value) continue;
+      if (row.facet_type === "status") facets.status[row.facet_value] = row.cnt;
+      else if (row.facet_type === "category") facets.category[row.facet_value] = row.cnt;
+      else if (row.facet_type === "priority") facets.priority[row.facet_value] = row.cnt;
+    }
 
     return {
       data: tickets,
@@ -203,6 +233,7 @@ class TicketService {
         limit,
         totalPages: Math.ceil(total / limit),
       },
+      facets,
     };
   }
 
