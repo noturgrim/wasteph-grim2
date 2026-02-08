@@ -27,18 +27,23 @@ export const createEvent = async (req, res, next) => {
 /**
  * Route: GET /api/calendar-events
  * Get calendar events with filters
- * Master Sales can view all events with viewAll=true
+ * Master Sales, Admin, and Super Admin can view all events with viewAll=true
  */
 export const getEvents = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const isMasterSales = req.user.isMasterSales; // Use isMasterSales field from database
+    const userRole = req.user.role;
+    const isMasterSales = req.user.isMasterSales;
+    const canViewAll =
+      isMasterSales ||
+      userRole === "admin" ||
+      userRole === "super_admin";
     const { startDate, endDate, status, inquiryId, clientId, viewAll, page, limit } =
       req.query;
 
     const result = await calendarEventService.getEvents({
       userId,
-      viewAll: isMasterSales && viewAll === "true", // Only Master Sales can view all
+      viewAll: canViewAll && viewAll === "true",
       startDate,
       endDate,
       status,

@@ -36,6 +36,8 @@ export default function Calendar() {
   const { user } = useAuth();
   const location = useLocation();
   const isMasterSales = user?.isMasterSales || false;
+  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
+  const canViewAll = isMasterSales || isAdmin;
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,7 +72,7 @@ export default function Calendar() {
       const monthEnd = endOfMonth(currentDate);
 
       // OPTIMIZATION: Create cache key based on month and viewAll setting
-      const cacheKey = `${format(currentDate, "yyyy-MM")}-${isMasterSales}`;
+      const cacheKey = `${format(currentDate, "yyyy-MM")}-${canViewAll}`;
 
       // Check cache first (unless explicitly skipping)
       if (!skipCache && eventsCache.current.has(cacheKey)) {
@@ -83,7 +85,7 @@ export default function Calendar() {
       const response = await api.getCalendarEvents({
         startDate: monthStart.toISOString(),
         endDate: monthEnd.toISOString(),
-        viewAll: isMasterSales, // Master Sales sees all events
+        viewAll: canViewAll, // Master Sales, Admin, Super Admin see all events
       });
 
       const fetchedEvents = response.data || [];
@@ -316,7 +318,7 @@ export default function Calendar() {
                               {event.startTime}
                             </div>
                           )}
-                          {isMasterSales && !isOwnEvent && event.user?.name && (
+                          {canViewAll && !isOwnEvent && event.user?.name && (
                             <div className="text-xs opacity-60 mt-0.5 truncate">
                               {event.user.name}
                             </div>
@@ -371,7 +373,7 @@ export default function Calendar() {
         event={selectedEvent}
         onUpdate={handleEventUpdated}
         onDelete={handleEventDeleted}
-        isReadOnly={isMasterSales && selectedEvent?.userId !== user?.id}
+        isReadOnly={canViewAll && selectedEvent?.userId !== user?.id}
       />
     </div>
   );
