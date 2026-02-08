@@ -412,6 +412,8 @@ export default function Inquiries() {
               "phone",
               "walk-in",
               "cold-approach",
+              "referral",
+              { value: "lead-pool", label: "Lead Pool" },
             ]}
             selectedValues={sourceFilter}
             onSelectionChange={setSourceFilter}

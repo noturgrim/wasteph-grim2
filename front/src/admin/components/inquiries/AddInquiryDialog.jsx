@@ -203,6 +203,7 @@ export function AddInquiryDialog({ open, onOpenChange, onSubmit, isSubmitting })
                 <SelectItem value="email">Email</SelectItem>
                 <SelectItem value="walk-in">Walk-in</SelectItem>
                 <SelectItem value="cold-approach">Cold Approach</SelectItem>
+                <SelectItem value="referral">Referral</SelectItem>
               </SelectContent>
             </Select>
           </div>

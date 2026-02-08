@@ -272,7 +272,7 @@ class LeadService {
         message:
           existingLead.notes || `Lead from pool: ${existingLead.clientName}`,
         status: "initial_comms",
-        source: source || null,
+        source: source || "lead-pool",
         assignedTo: userId,
         isInformationComplete: false,
       })
@@ -317,7 +317,7 @@ class LeadService {
           entityType: "inquiry",
           entityId: inquiry.id,
           details: JSON.stringify({
-            source: source || null,
+            source: source || "lead-pool",
             fromLeadPool: true,
             leadId: lead.id,
           }),

@@ -212,8 +212,8 @@ class InquiryService {
         SELECT 'status'::text AS facet_type, status::text AS facet_value, count(*)::int AS cnt
           FROM inquiry WHERE ${baseFilterSql} GROUP BY status
         UNION ALL
-        SELECT 'source'::text, source::text, count(*)::int
-          FROM inquiry WHERE ${baseFilterSql} GROUP BY source
+        SELECT 'source'::text, COALESCE(source, 'unknown')::text, count(*)::int
+          FROM inquiry WHERE ${baseFilterSql} GROUP BY COALESCE(source, 'unknown')
         UNION ALL
         SELECT 'service_type'::text, s.name::text, count(*)::int
           FROM inquiry i INNER JOIN service s ON i.service_id = s.id

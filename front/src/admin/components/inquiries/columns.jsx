@@ -109,7 +109,7 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestP
       const source = row.original.source;
       return (
         <span className="capitalize">
-          {source?.replace("-", " ") || "website"}
+          {source ? source.replace("-", " ") : "N/A"}
         </span>
       );
     },

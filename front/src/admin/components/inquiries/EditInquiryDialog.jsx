@@ -254,6 +254,8 @@ export function EditInquiryDialog({
                   <SelectItem value="email">Email</SelectItem>
                   <SelectItem value="walk-in">Walk-in</SelectItem>
                   <SelectItem value="cold-approach">Cold Approach</SelectItem>
+                  <SelectItem value="referral">Referral</SelectItem>
+                  <SelectItem value="lead-pool">Lead Pool</SelectItem>
                 </SelectContent>
               </Select>
             </div>
