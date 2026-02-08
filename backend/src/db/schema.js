@@ -650,6 +650,8 @@ export const contractsTable = pgTable(
     proposalIdIdx: index("contracts_proposal_id_idx").on(table.proposalId),
     statusIdx: index("contracts_status_idx").on(table.status),
     requestedByIdx: index("contracts_requested_by_idx").on(table.requestedBy),
+    clientIdIdx: index("contracts_client_id_idx").on(table.clientId),
+    createdAtIdx: index("contracts_created_at_idx").on(table.createdAt),
   })
 );
 

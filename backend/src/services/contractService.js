@@ -7,7 +7,7 @@ import {
   userTable,
   clientTable,
 } from "../db/schema.js";
-import { eq, desc, and, or, like, count } from "drizzle-orm";
+import { eq, desc, and, or, like, count, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 import emailService from "./emailService.js";
 import inquiryService from "./inquiryService.js";
@@ -90,27 +90,7 @@ class ContractService {
     const limit = Number(rawLimit) || 10;
     const offset = (page - 1) * limit;
 
-    // Build base query with joins
-    let query = db
-      .select({
-        contract: contractsTable,
-        proposal: proposalTable,
-        inquiry: inquiryTable,
-        requestedByUser: {
-          id: userTable.id,
-          email: userTable.email,
-          firstName: userTable.firstName,
-          lastName: userTable.lastName,
-          role: userTable.role,
-        },
-      })
-      .from(contractsTable)
-      .leftJoin(proposalTable, eq(contractsTable.proposalId, proposalTable.id))
-      .leftJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id))
-      .leftJoin(userTable, eq(contractsTable.requestedBy, userTable.id));
-
-    // Build filter conditions
-    let conditions = [];
+    const conditions = [];
 
     // Filter by client ID (for client detail dialog)
     if (clientId) {
@@ -134,33 +114,92 @@ class ContractService {
         or(
           like(inquiryTable.name, `%${escaped}%`),
           like(inquiryTable.email, `%${escaped}%`),
-          like(inquiryTable.company, `%${escaped}%`)
-        )
+          like(inquiryTable.company, `%${escaped}%`),
+        ),
       );
     }
 
-    // Count total records
-    const countQuery = db
-      .select({ value: count() })
+    // Single query: data + count via window function
+    // Select only columns needed for list view (skip heavy blobs)
+    let query = db
+      .select({
+        contract: {
+          id: contractsTable.id,
+          proposalId: contractsTable.proposalId,
+          status: contractsTable.status,
+          requestedBy: contractsTable.requestedBy,
+          requestedAt: contractsTable.requestedAt,
+          requestNotes: contractsTable.requestNotes,
+          contractType: contractsTable.contractType,
+          clientName: contractsTable.clientName,
+          companyName: contractsTable.companyName,
+          clientEmailContract: contractsTable.clientEmailContract,
+          clientAddress: contractsTable.clientAddress,
+          contractDuration: contractsTable.contractDuration,
+          contractStartDate: contractsTable.contractStartDate,
+          contractEndDate: contractsTable.contractEndDate,
+          collectionSchedule: contractsTable.collectionSchedule,
+          templateId: contractsTable.templateId,
+          contractUploadedBy: contractsTable.contractUploadedBy,
+          contractUploadedAt: contractsTable.contractUploadedAt,
+          contractPdfUrl: contractsTable.contractPdfUrl,
+          adminNotes: contractsTable.adminNotes,
+          sentToSalesBy: contractsTable.sentToSalesBy,
+          sentToSalesAt: contractsTable.sentToSalesAt,
+          sentToClientBy: contractsTable.sentToClientBy,
+          sentToClientAt: contractsTable.sentToClientAt,
+          clientEmail: contractsTable.clientEmail,
+          signedContractUrl: contractsTable.signedContractUrl,
+          signedAt: contractsTable.signedAt,
+          clientId: contractsTable.clientId,
+          hardboundContractUrl: contractsTable.hardboundContractUrl,
+          hardboundUploadedBy: contractsTable.hardboundUploadedBy,
+          hardboundUploadedAt: contractsTable.hardboundUploadedAt,
+          createdAt: contractsTable.createdAt,
+          updatedAt: contractsTable.updatedAt,
+        },
+        proposal: {
+          id: proposalTable.id,
+          proposalNumber: proposalTable.proposalNumber,
+          inquiryId: proposalTable.inquiryId,
+          requestedBy: proposalTable.requestedBy,
+          status: proposalTable.status,
+        },
+        inquiry: {
+          id: inquiryTable.id,
+          name: inquiryTable.name,
+          email: inquiryTable.email,
+          phone: inquiryTable.phone,
+          company: inquiryTable.company,
+          inquiryNumber: inquiryTable.inquiryNumber,
+        },
+        requestedByUser: {
+          id: userTable.id,
+          email: userTable.email,
+          firstName: userTable.firstName,
+          lastName: userTable.lastName,
+          role: userTable.role,
+        },
+        totalCount: sql`(count(*) over())::int`,
+      })
       .from(contractsTable)
       .leftJoin(proposalTable, eq(contractsTable.proposalId, proposalTable.id))
-      .leftJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id));
+      .leftJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id))
+      .leftJoin(userTable, eq(contractsTable.requestedBy, userTable.id));
 
-    if (conditions.length > 0) {
-      countQuery.where(and(...conditions));
-    }
-
-    const [{ value: total }] = await countQuery;
-
-    // Get paginated data
     if (conditions.length > 0) {
       query = query.where(and(...conditions));
     }
 
-    const contracts = await query
+    const rows = await query
       .orderBy(desc(contractsTable.createdAt))
       .limit(limit)
       .offset(offset);
+
+    const total = rows.length > 0 ? rows[0].totalCount : 0;
+
+    // Strip totalCount from each row
+    const contracts = rows.map(({ totalCount, ...rest }) => rest);
 
     return {
       data: contracts,
