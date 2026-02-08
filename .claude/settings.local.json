@@ -3,7 +3,9 @@
     "allow": [
       "Bash(cd:*)",
       "Bash(npx shadcn@latest add label textarea sonner)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npm run db:studio:*)",
+      "Bash(grep:*)"
     ]
   }
 }

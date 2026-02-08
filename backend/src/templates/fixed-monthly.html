@@ -13,15 +13,25 @@
     }
 
     .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
+      width: 100%;
       margin-bottom: 30px;
       padding-bottom: 15px;
     }
 
+    .header-table {
+      width: 100%;
+      border: none;
+      border-collapse: collapse;
+    }
+
+    .header-table td {
+      border: none;
+      padding: 0;
+      vertical-align: top;
+    }
+
     .logo {
-      flex: 1;
+      width: 50%;
     }
 
     .logo h1 {
@@ -44,6 +54,7 @@
     }
 
     .contact-info {
+      width: 50%;
       text-align: right;
       font-size: 9px;
       color: #2a6b1f;
@@ -107,6 +118,19 @@
       display: table-row !important;
     }
 
+    /* Also target first row as header in case thead is stripped */
+    .pricing-table tr:first-child {
+      background-color: #104806 !important;
+      color: white !important;
+    }
+
+    .pricing-table tr:first-child th,
+    .pricing-table tr:first-child td {
+      background-color: #104806 !important;
+      color: white !important;
+      font-weight: bold !important;
+    }
+
     .pricing-table th,
     .pricing-table td {
       border: 1px solid #000 !important;
@@ -117,6 +141,8 @@
 
     .pricing-table th {
       font-weight: bold !important;
+      background-color: #104806 !important;
+      color: white !important;
     }
 
     .note {
@@ -229,85 +255,94 @@
   </style>
 </head>
 <body>
+  <!-- HEADER: NOT EDITABLE - stays outside .content wrapper -->
   <div class="header">
-    <div class="logo">
-      <h1>WASTE <span class="dot">•</span> PH</h1>
-      <p>PRIVATE WASTE MANAGEMENT</p>
-    </div>
-    <div class="contact-info">
-      <strong>UNIT 503, THE MERIDIAN CONDOMINIUM, GOCHAN DR., KASAMBAGAN, CEBU CITY, CEBU, 6000</strong><br>
-      ADMIN @WASTE.PH&nbsp;&nbsp;&nbsp;&nbsp;SALES @WASTE.PH&nbsp;&nbsp;&nbsp;&nbsp;0956-246-1503&nbsp;&nbsp;&nbsp;&nbsp;0927-796-6751
-    </div>
-  </div>
-
-  <div class="date">
-    <strong>{{proposalDate}}</strong>
-  </div>
-
-  <div class="recipient">
-    <p>{{clientName}}</p>
-    {{#if clientPosition}}
-    <p>{{clientPosition}}</p>
-    {{/if}}
-    {{#if clientCompany}}
-    <p>{{clientCompany}}</p>
-    {{/if}}
-    {{#if clientAddress}}
-    <p>{{clientAddress}}</p>
-    {{/if}}
-  </div>
-
-  <div class="greeting">
-    <p>Dear Sir/Madam,</p>
-  </div>
-
-  <div class="intro">
-    <p>This is in reference to the work specification for <strong>Fixed Monthly Rate Waste Collection</strong> for your business establishment.</p>
-  </div>
-
-  <div class="section-title">SCOPE OF WORK</div>
-
-  <div class="subsection-title">1. Garbage Collection</div>
-
-  <table class="pricing-table">
-    <thead>
+    <table class="header-table">
       <tr>
-        <th>Solid Waste Classification</th>
-        <th>Price per month (in PHP)</th>
-        <th>Waste Allowance</th>
+        <td class="logo">
+          <h1>WASTE <span class="dot">•</span> PH</h1>
+          <p>PRIVATE WASTE MANAGEMENT</p>
+        </td>
+        <td class="contact-info">
+          <strong>UNIT 503, THE MERIDIAN CONDOMINIUM, GOCHAN DR., KASAMBAGAN, CEBU CITY, CEBU, 6000</strong><br>
+          ADMIN @WASTE.PH&nbsp;&nbsp;&nbsp;&nbsp;SALES @WASTE.PH&nbsp;&nbsp;&nbsp;&nbsp;0956-246-1503&nbsp;&nbsp;&nbsp;&nbsp;0927-796-6751
+        </td>
       </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Mixed Solid Waste(General Waste) and Food Waste</td>
-        <td>₱ {{pricing.monthlyRate}}</td>
-        <td>{{pricing.wasteAllowance}} kg</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="note">
-    <strong>Note:</strong> {{pricing.excessRate}} php per kg shall be billed upon excess of the allocated Waste Allowance of {{pricing.wasteAllowance}} kg.
+    </table>
   </div>
 
-  <div class="closing">
-    <p>Thank you for considering our services.</p>
-  </div>
-
-  <div class="signature-section">
-    <p>Sincerely,</p>
-    <br>
-    <div class="signature-block">
-      <p><strong>Adrian Kim S. Balila</strong></p>
-      <p>Chief Marketing Officer</p>
-      <p><strong>WASTE PH</strong></p>
+  <!-- EDITABLE CONTENT AREA -->
+  <div class="content">
+    <div class="date">
+      <strong>{{proposalDate}}</strong>
     </div>
 
-    <div class="signature-block">
-      <p><strong>Accepted By:</strong></p>
+    <div class="recipient">
+      <p>{{clientName}}</p>
+      {{#if clientPosition}}
+      <p>{{clientPosition}}</p>
+      {{/if}}
+      {{#if clientCompany}}
+      <p>{{clientCompany}}</p>
+      {{/if}}
+      {{#if clientAddress}}
+      <p>{{clientAddress}}</p>
+      {{/if}}
     </div>
-  </div>
 
-  <hr>
+    <div class="greeting">
+      <p>Dear Sir/Madam,</p>
+    </div>
+
+    <div class="intro">
+      <p>This is in reference to the work specification for <strong>Fixed Monthly Rate Waste Collection</strong> for your business establishment.</p>
+    </div>
+
+    <div class="section-title">SCOPE OF WORK</div>
+
+    <div class="subsection-title">1. Garbage Collection</div>
+
+    <table class="pricing-table">
+      <thead>
+        <tr>
+          <th>Solid Waste Classification</th>
+          <th>Price per month (in PHP)</th>
+          <th>Waste Allowance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Mixed Solid Waste(General Waste) and Food Waste</td>
+          <td>₱ {{pricing.monthlyRate}}</td>
+          <td>{{pricing.wasteAllowance}} kg</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <strong>Note:</strong> {{pricing.excessRate}} php per kg shall be billed upon excess of the allocated Waste Allowance of {{pricing.wasteAllowance}} kg.
+    </div>
+
+    <div class="closing">
+      <p>Thank you for considering our services.</p>
+    </div>
+
+    <div class="signature-section">
+      <p>Sincerely,</p>
+      <br>
+      <div class="signature-block">
+        <p><strong>Adrian Kim S. Balila</strong></p>
+        <p>Chief Marketing Officer</p>
+        <p><strong>WASTE PH</strong></p>
+      </div>
+
+      <div class="signature-block">
+        <p><strong>Accepted By:</strong></p>
+      </div>
+    </div>
+
+    <hr>
+  </div>
+  <!-- END EDITABLE CONTENT -->
 </body>
 </html>

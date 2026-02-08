@@ -130,16 +130,129 @@ export function RequestProposalDialog({
             await loadTemplateFromService(inquiry.serviceId);
           }
 
-          // If we have edited content, load directly into editor (skip to step 3)
+          // If we have edited content, check if we should use current template or saved HTML
           if (existingData.editedHtmlContent) {
-            setEditorInitialContent(existingData.editedHtmlContent);
-            setSavedEditorContent({
-              html: existingData.editedHtmlContent,
-              json: existingData.editedJsonContent || null,
-            });
-            setHasUnsavedEditorChanges(false);
-            // Go directly to editor step
-            setCurrentStep(3);
+            const savedHtml = existingData.editedHtmlContent;
+
+            // Check if saved HTML uses old flexbox structure (needs re-rendering)
+            const usesFlexbox = savedHtml.includes("display: flex");
+            const hasContentWrapper = savedHtml.includes('<div class="content">');
+            const hasTableHeader = savedHtml.includes("header-table");
+
+            if (usesFlexbox || !hasContentWrapper || !hasTableHeader) {
+              // Old template structure - re-render from current template instead
+
+              // Extract just the editable content from saved HTML
+              const bodyMatch = savedHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+              if (bodyMatch) {
+                let editableContent = "";
+                try {
+                  const container = document.createElement("div");
+                  container.innerHTML = bodyMatch[1];
+
+                  // Try to extract meaningful content (skip header/footer)
+                  // Look for date, recipient, greeting sections
+                  const dateDiv = container.querySelector(".date");
+                  const recipientDiv = container.querySelector(".recipient");
+                  const greetingDiv = container.querySelector(".greeting");
+                  const introDiv = container.querySelector(".intro");
+
+                  if (dateDiv && recipientDiv) {
+                    // Extract from date onwards (all editable content)
+                    const tempDiv = document.createElement("div");
+                    let foundDate = false;
+                    Array.from(container.children).forEach((child) => {
+                      if (child.classList.contains("date")) foundDate = true;
+                      if (foundDate && !child.classList.contains("header")) {
+                        tempDiv.appendChild(child.cloneNode(true));
+                      }
+                    });
+                    editableContent = tempDiv.innerHTML;
+                  } else {
+                    // Fallback: use all body content
+                    editableContent = bodyMatch[1];
+                  }
+                } catch (e) {
+                  console.error("Failed to extract content:", e);
+                  editableContent = bodyMatch[1];
+                }
+
+                // Now render the CURRENT template with this content
+                // We need to re-fetch the template and merge the saved content
+                console.log("Re-rendering with current template structure...");
+
+                // For now, just proceed to step 2 to re-render
+                // (User can click "Generate Proposal" to get fresh template)
+                toast.info(
+                  "This proposal uses an older template format. Please click 'Generate Proposal' to update it.",
+                  { duration: 5000 }
+                );
+                setCurrentStep(2);
+              }
+            } else {
+              // Current template structure - use saved HTML as-is
+              // Extract head, body, and styles (same pattern as prepareEditorContent)
+              const headMatch = savedHtml.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+              const bodyTagMatch = savedHtml.match(/<body[^>]*>/i);
+              const bodyMatch = savedHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+
+              if (headMatch && bodyMatch) {
+                const styleMatch = headMatch[0].match(
+                  /<style[^>]*>([\s\S]*?)<\/style>/gi
+                );
+                const inlineStyles = styleMatch
+                  ? styleMatch.map((s) => s.replace(/<\/?style[^>]*>/gi, "")).join("\n")
+                  : "";
+
+                const fullBodyHtml = bodyMatch[1] || "";
+
+                // Try to find .content wrapper (editable section)
+                let editorBodyContent = fullBodyHtml;
+                try {
+                  const container = document.createElement("div");
+                  container.innerHTML = fullBodyHtml;
+                  const contentNode = container.querySelector(".content");
+                  if (contentNode) {
+                    editorBodyContent = contentNode.innerHTML || "";
+                  }
+                } catch {
+                  // Fallback: use full body HTML
+                  editorBodyContent = fullBodyHtml;
+                }
+
+                // Populate templateStructureRef so handleEditorSave can reconstruct
+                templateStructureRef.current = {
+                  head: headMatch[0],
+                  bodyTag: bodyTagMatch ? bodyTagMatch[0] : "<body>",
+                  styles: inlineStyles,
+                  bodyHtml: fullBodyHtml,
+                  contentSelector: ".content",
+                };
+
+                // Load extracted content into editor
+                setEditorInitialContent(editorBodyContent);
+
+                setSavedEditorContent({
+                  html: savedHtml, // Keep original full HTML as saved
+                  json: existingData.editedJsonContent || null,
+                });
+                setHasUnsavedEditorChanges(false);
+                // Go directly to editor step
+                setCurrentStep(3);
+              } else {
+                // No structure found, load as-is (may be legacy or corrupted)
+                console.warn("No template structure found in editedHtmlContent, loading as-is");
+                setEditorInitialContent(savedHtml);
+                templateStructureRef.current = { head: "", bodyTag: "", styles: "" };
+
+                setSavedEditorContent({
+                  html: savedHtml,
+                  json: existingData.editedJsonContent || null,
+                });
+                setHasUnsavedEditorChanges(false);
+                setCurrentStep(3);
+              }
+            }
           }
         } catch (error) {
           console.error("Failed to load existing proposal:", error);
@@ -408,6 +521,10 @@ export function RequestProposalDialog({
           contentSelector: ".content",
         };
 
+        console.log("✅ Template structure updated from fresh render");
+        console.log("Has flexbox?", inlineStyles.includes("display: flex"));
+        console.log("Has table-header?", fullBodyHtml.includes("header-table"));
+
         setEditorInitialContent(editorBodyContent);
         setSavedEditorContent({ html: rendered, json: null });
       } else {
@@ -429,9 +546,17 @@ export function RequestProposalDialog({
 
   // Handle editor save callback
   const handleEditorSave = ({ html, json }) => {
+    console.log("=== handleEditorSave called ===");
+    console.log("Editor HTML length:", html?.length);
+    console.log("templateStructureRef.current:", templateStructureRef.current);
+
     // Reconstruct full HTML with template structure (head + styles)
     const { head, bodyTag, bodyHtml, contentSelector } =
       templateStructureRef.current;
+
+    console.log("Has head?", !!head);
+    console.log("Has bodyHtml?", !!bodyHtml);
+    console.log("Content selector:", contentSelector);
 
     // By default, use the editor's HTML as the body content.
     // If we have the original body HTML and a known editable container
@@ -446,12 +571,26 @@ export function RequestProposalDialog({
         const target = container.querySelector(contentSelector);
 
         if (target) {
+          // Success: replace only the editable section
           target.innerHTML = html;
           bodyContentForSave = container.innerHTML;
+          console.debug("Successfully replaced content in selector:", contentSelector);
+        } else {
+          // Selector not found, use full body replacement
+          console.warn(
+            `Content selector "${contentSelector}" not found in template body. ` +
+            `Using full body replacement instead. Template may not have standard structure.`
+          );
+          bodyContentForSave = html;
         }
-      } catch {
+      } catch (error) {
+        console.error("DOM parsing failed during surgical replacement:", error);
         bodyContentForSave = html;
       }
+    } else {
+      // No template structure available, use raw editor content
+      console.debug("No template structure, using raw editor HTML");
+      bodyContentForSave = html;
     }
 
     let fullHtml = bodyContentForSave;
@@ -464,7 +603,50 @@ ${bodyTag}
   ${bodyContentForSave}
 </body>
 </html>`;
+      console.log("Full HTML reconstructed with template structure");
+    } else {
+      console.warn("No template structure available - saving raw HTML");
     }
+
+    // Validate that we have a complete HTML document
+    const isCompleteHtml =
+      fullHtml.includes("<!DOCTYPE") &&
+      fullHtml.includes("<html") &&
+      fullHtml.includes("<head") &&
+      fullHtml.includes("<body");
+
+    if (!isCompleteHtml) {
+      console.error("Saved HTML is incomplete, missing document structure:", {
+        hasDoctype: fullHtml.includes("<!DOCTYPE"),
+        hasHtml: fullHtml.includes("<html"),
+        hasHead: fullHtml.includes("<head"),
+        hasBody: fullHtml.includes("<body"),
+        htmlPreview: fullHtml.substring(0, 200),
+      });
+
+      // Attempt to wrap in minimal document structure
+      if (!fullHtml.includes("<!DOCTYPE")) {
+        const styles = templateStructureRef.current.styles || "";
+        fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proposal</title>
+  ${styles ? `<style>${styles}</style>` : ""}
+</head>
+<body>
+  ${html}
+</body>
+</html>`;
+        console.warn("Wrapped incomplete HTML in minimal document structure");
+      }
+    }
+
+    console.log("Final saved HTML length:", fullHtml?.length);
+    console.log("Has DOCTYPE?", fullHtml?.includes("<!DOCTYPE"));
+    console.log("Has <head>?", fullHtml?.includes("<head"));
+    console.log("Has <body>?", fullHtml?.includes("<body"));
 
     setSavedEditorContent({ html: fullHtml, json });
     setHasUnsavedEditorChanges(false);
@@ -513,6 +695,16 @@ ${bodyTag}
         // The actual proposal content (edited HTML and JSON for re-editing)
         editedHtmlContent: savedEditorContent.html,
         editedJsonContent: savedEditorContent.json,
+
+        // Template metadata for debugging/recovery
+        templateMetadata: {
+          templateId: template?.id,
+          templateName: template?.name,
+          serviceId: selectedServiceId,
+          serviceName: selectedServiceName,
+          editedAt: new Date().toISOString(),
+          editorVersion: "tiptap-v1", // For future tracking
+        },
       };
 
       // Check if revising a disapproved proposal
@@ -607,7 +799,11 @@ ${bodyTag}
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-[1000px]! max-w-[95vw]! h-[90vh]! max-h-[90vh]! flex flex-col p-0 gap-0"
+        className={`${
+          currentStep === 3
+            ? "w-[1400px]! max-w-[98vw]! h-[95vh]! max-h-[95vh]!"
+            : "w-[1000px]! max-w-[95vw]! h-[90vh]! max-h-[90vh]!"
+        } flex flex-col p-0 gap-0 transition-all duration-300`}
         onInteractOutside={(e) => e.preventDefault()}
       >
         {/* Two Column Layout */}
@@ -1201,14 +1397,53 @@ ${bodyTag}
                       </span>
                     </div>
                   ) : (
-                    <div className="flex-1 min-h-0">
-                      <ProposalHtmlEditor
-                        content={editorInitialContent}
-                        templateStyles={templateStructureRef.current.styles}
-                        onChange={handleEditorSave}
-                        onUnsavedChange={handleUnsavedChange}
-                        className="h-full"
-                      />
+                    <div className="flex-1 min-h-0 flex flex-col">
+                      {/* Non-editable header preview using iframe for style isolation */}
+                      {templateStructureRef.current.bodyHtml && templateStructureRef.current.styles && (() => {
+                        try {
+                          const container = document.createElement("div");
+                          container.innerHTML = templateStructureRef.current.bodyHtml;
+                          const contentNode = container.querySelector(".content");
+                          if (contentNode) {
+                            contentNode.remove();
+                            const headerHtml = container.innerHTML.trim();
+                            if (headerHtml) {
+                              const iframeContent = `<!DOCTYPE html>
+<html>
+<head>
+<style>
+body { margin: 0; padding: 10px 20px; font-family: Arial, sans-serif; }
+${templateStructureRef.current.styles}
+</style>
+</head>
+<body>${headerHtml}</body>
+</html>`;
+                              return (
+                                <iframe
+                                  srcDoc={iframeContent}
+                                  title="Header Preview"
+                                  className="w-full border-0 border-b border-gray-200 bg-white"
+                                  style={{ height: "120px", pointerEvents: "none" }}
+                                />
+                              );
+                            }
+                          }
+                        } catch (e) {
+                          console.error("Failed to extract header:", e);
+                        }
+                        return null;
+                      })()}
+
+                      {/* Editable content area */}
+                      <div className="flex-1 overflow-auto" style={{ minHeight: 0 }}>
+                        <ProposalHtmlEditor
+                          content={editorInitialContent}
+                          templateStyles={templateStructureRef.current.styles}
+                          onChange={handleEditorSave}
+                          onUnsavedChange={handleUnsavedChange}
+                          className="h-full"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
