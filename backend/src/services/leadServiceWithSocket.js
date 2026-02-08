@@ -1,5 +1,8 @@
 import LeadService from "./leadService.js";
 import LeadEventEmitter from "../socket/events/leadEvents.js";
+import { db } from "../db/index.js";
+import { userTable } from "../db/schema.js";
+import { eq } from "drizzle-orm";
 
 /**
  * LeadService with Real-Time Socket Support
@@ -76,33 +79,30 @@ class LeadServiceWithSocket extends LeadService {
    * Claim a lead (override to add socket emission)
    */
   async claimLead(leadId, userId, source, metadata = {}) {
-    const inquiry = await super.claimLead(leadId, userId, source, metadata);
+    const { inquiry, lead } = await super.claimLead(leadId, userId, source, metadata);
 
-    // Get the updated lead
-    const lead = await this.getLeadById(leadId);
-
-    // Get user details for notification
-    const { db } = await import("../db/index.js");
-    const { userTable } = await import("../db/schema.js");
-    const { eq } = await import("drizzle-orm");
-
-    const [user] = await db
-      .select({
-        id: userTable.id,
-        firstName: userTable.firstName,
-        lastName: userTable.lastName,
-        email: userTable.email,
-      })
-      .from(userTable)
-      .where(eq(userTable.id, userId))
-      .limit(1);
-
-    // Emit socket event
-    if (this.leadEvents && user) {
-      await this.leadEvents.emitLeadClaimed(lead, inquiry, user);
+    // Fire-and-forget: fetch user details + emit socket in background
+    if (this.leadEvents) {
+      db.select({
+          id: userTable.id,
+          firstName: userTable.firstName,
+          lastName: userTable.lastName,
+          email: userTable.email,
+        })
+        .from(userTable)
+        .where(eq(userTable.id, userId))
+        .limit(1)
+        .then(([user]) => {
+          if (user) {
+            return this.leadEvents.emitLeadClaimed(lead, inquiry, user);
+          }
+        })
+        .catch((err) =>
+          console.error("[LeadSocket] claim emit failed:", err.message)
+        );
     }
 
-    return inquiry;
+    return { inquiry, lead };
   }
 
   /**

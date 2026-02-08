@@ -249,25 +249,23 @@ class LeadService {
    * @throws {AppError} If lead not found or already claimed
    */
   async claimLead(leadId, userId, source, metadata = {}) {
-    // First check if lead exists and is not claimed
-    const existingLead = await this.getLeadById(leadId);
+    // Run lead check + counter generation in parallel (they're independent)
+    const [existingLead, inquiryNumber] = await Promise.all([
+      this.getLeadById(leadId),
+      counterService.getNextInquiryNumber(),
+    ]);
 
     if (existingLead.isClaimed) {
       throw new AppError("Lead has already been claimed", 400);
     }
 
-    // Generate unique inquiry number using counter service
-    const inquiryNumber = await counterService.getNextInquiryNumber();
-
     // Create inquiry from lead data
-    // Use provided source if available, otherwise leave as null (can be set later)
-    // Set isInformationComplete to false since lead data is incomplete
     const [inquiry] = await db
       .insert(inquiryTable)
       .values({
         inquiryNumber,
         name: existingLead.clientName,
-        email: existingLead.email || "noemail@wasteph.com", // Required field fallback
+        email: existingLead.email || "noemail@wasteph.com",
         phone: existingLead.phone,
         company: existingLead.company,
         location: existingLead.location || null,
@@ -276,12 +274,11 @@ class LeadService {
         status: "initial_comms",
         source: source || null,
         assignedTo: userId,
-        isInformationComplete: false, // Mark as incomplete - needs site visit/contact
+        isInformationComplete: false,
       })
       .returning();
 
-    // Mark lead as claimed with a WHERE clause to prevent race conditions
-    // This will only update if the lead is still unclaimed
+    // Atomic claim — only succeeds if lead is still unclaimed (race-condition safe)
     const [lead] = await db
       .update(leadTable)
       .set({
@@ -293,9 +290,8 @@ class LeadService {
       .where(and(eq(leadTable.id, leadId), eq(leadTable.isClaimed, false)))
       .returning();
 
-    // If no lead was returned, it means another user already claimed it
     if (!lead) {
-      // Delete the inquiry we just created since the claim failed
+      // Claim lost the race — clean up the inquiry we just created
       await db.delete(inquiryTable).where(eq(inquiryTable.id, inquiry.id));
       throw new AppError(
         "Lead has already been claimed by another user. Please refresh the page.",
@@ -303,28 +299,37 @@ class LeadService {
       );
     }
 
-    // Log lead claimed activity
-    await this.logActivity({
-      userId,
-      action: "lead_claimed",
-      entityType: "lead",
-      entityId: lead.id,
-      ipAddress: metadata.ipAddress,
-      userAgent: metadata.userAgent,
-    });
+    // Fire-and-forget: batch both activity logs in a single INSERT
+    db.insert(activityLogTable)
+      .values([
+        {
+          userId,
+          action: "lead_claimed",
+          entityType: "lead",
+          entityId: lead.id,
+          details: null,
+          ipAddress: metadata.ipAddress,
+          userAgent: metadata.userAgent,
+        },
+        {
+          userId,
+          action: "inquiry_created",
+          entityType: "inquiry",
+          entityId: inquiry.id,
+          details: JSON.stringify({
+            source: source || null,
+            fromLeadPool: true,
+            leadId: lead.id,
+          }),
+          ipAddress: metadata.ipAddress,
+          userAgent: metadata.userAgent,
+        },
+      ])
+      .catch((err) =>
+        console.error("[LeadService] Background claim activity log failed:", err.message)
+      );
 
-    // Log inquiry created activity
-    await this.logActivity({
-      userId,
-      action: "inquiry_created",
-      entityType: "inquiry",
-      entityId: inquiry.id,
-      details: { source: source || null, fromLeadPool: true, leadId: lead.id },
-      ipAddress: metadata.ipAddress,
-      userAgent: metadata.userAgent,
-    });
-
-    return inquiry;
+    return { inquiry, lead };
   }
 
   /**

@@ -110,7 +110,7 @@ export const claimLead = async (req, res, next) => {
     const { source } = req.body;
     const userId = req.user.id;
 
-    const lead = await leadService.claimLead(id, userId, source, {
+    const { inquiry } = await leadService.claimLead(id, userId, source, {
       ipAddress: req.ip,
       userAgent: req.get("user-agent"),
     });
@@ -118,7 +118,7 @@ export const claimLead = async (req, res, next) => {
     res.json({
       success: true,
       message: "Lead claimed successfully",
-      data: lead,
+      data: inquiry,
     });
   } catch (error) {
     next(error);
