@@ -7,7 +7,7 @@ import {
   userTable,
   clientTable,
 } from "../db/schema.js";
-import { eq, desc, and, or, like, count, sql } from "drizzle-orm";
+import { eq, desc, and, or, like, count, sql, inArray } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 import emailService from "./emailService.js";
 import inquiryService from "./inquiryService.js";
@@ -113,9 +113,14 @@ class ContractService {
       conditions.push(eq(proposalTable.requestedBy, userId));
     }
 
-    // Filter by status
+    // Filter by status - support multiple statuses
     if (status) {
-      conditions.push(eq(contractsTable.status, status));
+      const statuses = status.split(",").map((s) => s.trim());
+      if (statuses.length === 1) {
+        conditions.push(eq(contractsTable.status, statuses[0]));
+      } else {
+        conditions.push(inArray(contractsTable.status, statuses));
+      }
     }
 
     // Search by contract number, client name, email, or company
