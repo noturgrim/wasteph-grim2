@@ -54,6 +54,9 @@ export default function ContractRequests() {
   const [statusFilter, setStatusFilter] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Server-side facet counts
+  const [facets, setFacets] = useState({ status: {} });
+
   // Column visibility
   const [columnVisibility, setColumnVisibility] = useState({
     contractNumber: true,
@@ -166,6 +169,7 @@ export default function ContractRequests() {
 
       setContracts(data);
       setPagination(meta);
+      if (response.facets) setFacets(response.facets);
     } catch (error) {
       if (currentFetchId !== fetchIdRef.current) return;
       toast.error("Failed to fetch contracts");
@@ -342,9 +346,7 @@ export default function ContractRequests() {
             ]}
             selectedValues={statusFilter}
             onSelectionChange={setStatusFilter}
-            getCount={(status) =>
-              contracts.filter((c) => c.contract?.status === status).length
-            }
+            getCount={(status) => facets.status[status] || 0}
           />
 
           {/* Clear filters */}

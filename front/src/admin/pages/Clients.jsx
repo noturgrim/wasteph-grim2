@@ -47,6 +47,9 @@ export default function Clients() {
   const [statusFilter, setStatusFilter] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Server-side facet counts
+  const [facets, setFacets] = useState({ status: {} });
+
   // Column visibility
   const [columnVisibility, setColumnVisibility] = useState({
     companyName: true,
@@ -114,6 +117,7 @@ export default function Clients() {
 
       setClients(data);
       setPagination(meta);
+      if (response.facets) setFacets(response.facets);
     } catch (error) {
       if (currentFetchId !== fetchIdRef.current) return;
       toast.error("Failed to fetch clients");
@@ -207,9 +211,7 @@ export default function Clients() {
             ]}
             selectedValues={statusFilter}
             onSelectionChange={setStatusFilter}
-            getCount={(status) =>
-              clients.filter((c) => c.status === status).length
-            }
+            getCount={(status) => facets.status[status] || 0}
           />
 
           {(statusFilter.length > 0 || searchTerm) && (

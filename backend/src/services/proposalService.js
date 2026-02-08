@@ -146,6 +146,12 @@ class ProposalService {
     const limit = Number(rawLimit) || 10;
     const offset = (page - 1) * limit;
 
+    // Permission filter (applies to both data query and facets)
+    const permissionFilter =
+      userRole === "sales" && !isMasterSales
+        ? sql`requested_by = ${userId}`
+        : sql`1=1`;
+
     const conditions = [];
 
     // Permission check: Regular sales see only their proposals
@@ -168,50 +174,71 @@ class ProposalService {
       conditions.push(eq(proposalTable.inquiryId, inquiryId));
     }
 
-    // Single query: data + count via window function
-    let query = db
-      .select({
-        id: proposalTable.id,
-        proposalNumber: proposalTable.proposalNumber,
-        inquiryId: proposalTable.inquiryId,
-        templateId: proposalTable.templateId,
-        requestedBy: proposalTable.requestedBy,
-        proposalData: proposalTable.proposalData,
-        status: proposalTable.status,
-        reviewedBy: proposalTable.reviewedBy,
-        reviewedAt: proposalTable.reviewedAt,
-        adminNotes: proposalTable.adminNotes,
-        rejectionReason: proposalTable.rejectionReason,
-        emailSentAt: proposalTable.emailSentAt,
-        emailStatus: proposalTable.emailStatus,
-        pdfUrl: proposalTable.pdfUrl,
-        createdAt: proposalTable.createdAt,
-        updatedAt: proposalTable.updatedAt,
-        // Inquiry details
-        inquiryName: inquiryTable.name,
-        inquiryEmail: inquiryTable.email,
-        inquiryPhone: inquiryTable.phone,
-        inquiryCompany: inquiryTable.company,
-        inquiryNumber: inquiryTable.inquiryNumber,
-        // Total count via window function
-        totalCount: sql`(count(*) over())::int`,
-      })
-      .from(proposalTable)
-      .leftJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id));
+    // Run data + facets in parallel
+    const [rows, facetRows] = await Promise.all([
+      // 1. Paginated data + total count via window function
+      (() => {
+        let query = db
+          .select({
+            id: proposalTable.id,
+            proposalNumber: proposalTable.proposalNumber,
+            inquiryId: proposalTable.inquiryId,
+            templateId: proposalTable.templateId,
+            requestedBy: proposalTable.requestedBy,
+            proposalData: proposalTable.proposalData,
+            status: proposalTable.status,
+            reviewedBy: proposalTable.reviewedBy,
+            reviewedAt: proposalTable.reviewedAt,
+            adminNotes: proposalTable.adminNotes,
+            rejectionReason: proposalTable.rejectionReason,
+            emailSentAt: proposalTable.emailSentAt,
+            emailStatus: proposalTable.emailStatus,
+            pdfUrl: proposalTable.pdfUrl,
+            createdAt: proposalTable.createdAt,
+            updatedAt: proposalTable.updatedAt,
+            // Inquiry details
+            inquiryName: inquiryTable.name,
+            inquiryEmail: inquiryTable.email,
+            inquiryPhone: inquiryTable.phone,
+            inquiryCompany: inquiryTable.company,
+            inquiryNumber: inquiryTable.inquiryNumber,
+            // Total count via window function
+            totalCount: sql`(count(*) over())::int`,
+          })
+          .from(proposalTable)
+          .leftJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id));
 
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
+        if (conditions.length > 0) {
+          query = query.where(and(...conditions));
+        }
 
-    const rows = await query
-      .orderBy(desc(proposalTable.createdAt))
-      .limit(limit)
-      .offset(offset);
+        return query
+          .orderBy(desc(proposalTable.createdAt))
+          .limit(limit)
+          .offset(offset);
+      })(),
+
+      // 2. Status facet counts (permission-filtered, but NOT status-filtered)
+      db.execute(sql`
+        SELECT status::text AS facet_value, count(*)::int AS cnt
+        FROM proposal
+        WHERE ${permissionFilter}
+        GROUP BY status
+      `),
+    ]);
 
     const total = rows.length > 0 ? rows[0].totalCount : 0;
 
     // Strip totalCount from each row
     const proposals = rows.map(({ totalCount, ...rest }) => rest);
+
+    // Parse facet rows into a status counts map
+    const facets = { status: {} };
+    for (const row of facetRows) {
+      if (row.facet_value) {
+        facets.status[row.facet_value] = row.cnt;
+      }
+    }
 
     return {
       data: proposals,
@@ -221,6 +248,7 @@ class ProposalService {
         limit,
         totalPages: Math.ceil(total / limit),
       },
+      facets,
     };
   }
 

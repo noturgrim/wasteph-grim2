@@ -77,6 +77,12 @@ class TicketService {
     const limit = Number(rawLimit) || 10;
     const offset = (page - 1) * limit;
 
+    // Permission filter for facets (same logic as data query)
+    const permissionFilter =
+      userRole === "sales" && !isMasterSales
+        ? sql`created_by = ${userId}`
+        : sql`1=1`;
+
     // Build where conditions
     const conditions = [];
 
@@ -126,37 +132,61 @@ class TicketService {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    // Single query: data + count via window function
-    const rows = await db
-      .select({
-        id: clientTicketsTable.id,
-        ticketNumber: clientTicketsTable.ticketNumber,
-        clientId: clientTicketsTable.clientId,
-        category: clientTicketsTable.category,
-        priority: clientTicketsTable.priority,
-        subject: clientTicketsTable.subject,
-        status: clientTicketsTable.status,
-        createdBy: clientTicketsTable.createdBy,
-        resolvedBy: clientTicketsTable.resolvedBy,
-        resolvedAt: clientTicketsTable.resolvedAt,
-        createdAt: clientTicketsTable.createdAt,
-        updatedAt: clientTicketsTable.updatedAt,
-        creatorFirstName: userTable.firstName,
-        creatorLastName: userTable.lastName,
-        creatorEmail: userTable.email,
-        totalCount: sql`(count(*) over())::int`,
-      })
-      .from(clientTicketsTable)
-      .leftJoin(userTable, eq(clientTicketsTable.createdBy, userTable.id))
-      .where(whereClause)
-      .orderBy(desc(clientTicketsTable.createdAt))
-      .limit(limit)
-      .offset(offset);
+    // Run data + facets in parallel
+    const [rows, facetRows] = await Promise.all([
+      // 1. Paginated data + total count via window function
+      db
+        .select({
+          id: clientTicketsTable.id,
+          ticketNumber: clientTicketsTable.ticketNumber,
+          clientId: clientTicketsTable.clientId,
+          category: clientTicketsTable.category,
+          priority: clientTicketsTable.priority,
+          subject: clientTicketsTable.subject,
+          status: clientTicketsTable.status,
+          createdBy: clientTicketsTable.createdBy,
+          resolvedBy: clientTicketsTable.resolvedBy,
+          resolvedAt: clientTicketsTable.resolvedAt,
+          createdAt: clientTicketsTable.createdAt,
+          updatedAt: clientTicketsTable.updatedAt,
+          creatorFirstName: userTable.firstName,
+          creatorLastName: userTable.lastName,
+          creatorEmail: userTable.email,
+          totalCount: sql`(count(*) over())::int`,
+        })
+        .from(clientTicketsTable)
+        .leftJoin(userTable, eq(clientTicketsTable.createdBy, userTable.id))
+        .where(whereClause)
+        .orderBy(desc(clientTicketsTable.createdAt))
+        .limit(limit)
+        .offset(offset),
+
+      // 2. All 3 facets in one query via UNION ALL (permission-filtered, NOT filter-filtered)
+      db.execute(sql`
+        SELECT 'status'::text AS facet_type, status::text AS facet_value, count(*)::int AS cnt
+          FROM client_tickets WHERE ${permissionFilter} GROUP BY status
+        UNION ALL
+        SELECT 'category'::text, category::text, count(*)::int
+          FROM client_tickets WHERE ${permissionFilter} GROUP BY category
+        UNION ALL
+        SELECT 'priority'::text, priority::text, count(*)::int
+          FROM client_tickets WHERE ${permissionFilter} GROUP BY priority
+      `),
+    ]);
 
     const total = rows.length > 0 ? rows[0].totalCount : 0;
 
     // Strip totalCount from each row
     const data = rows.map(({ totalCount, ...ticket }) => ticket);
+
+    // Parse combined UNION ALL facet rows into maps
+    const facets = { status: {}, category: {}, priority: {} };
+    for (const row of facetRows) {
+      if (!row.facet_value) continue;
+      if (row.facet_type === "status") facets.status[row.facet_value] = row.cnt;
+      else if (row.facet_type === "category") facets.category[row.facet_value] = row.cnt;
+      else if (row.facet_type === "priority") facets.priority[row.facet_value] = row.cnt;
+    }
 
     return {
       data,
@@ -166,6 +196,7 @@ class TicketService {
         limit,
         totalPages: Math.ceil(total / limit),
       },
+      facets,
     };
   }
 

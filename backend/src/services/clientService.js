@@ -154,6 +154,20 @@ class ClientService {
       contractStatus: contractMap.get(client.id) || null,
     }));
 
+    // Status facet counts (no permission filter, NOT status-filtered)
+    const facetRows = await db.execute(sql`
+      SELECT status::text AS facet_value, count(*)::int AS cnt
+      FROM client
+      GROUP BY status
+    `);
+
+    const facets = { status: {} };
+    for (const row of facetRows) {
+      if (row.facet_value) {
+        facets.status[row.facet_value] = row.cnt;
+      }
+    }
+
     return {
       data,
       pagination: {
@@ -162,6 +176,7 @@ class ClientService {
         limit,
         totalPages: Math.ceil(total / limit),
       },
+      facets,
     };
   }
 

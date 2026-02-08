@@ -39,6 +39,9 @@ export default function Users() {
   const [roleFilter, setRoleFilter] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Server-side facet counts
+  const [facets, setFacets] = useState({ role: {} });
+
   // Column visibility
   const [columnVisibility, setColumnVisibility] = useState({
     name: true,
@@ -94,6 +97,7 @@ export default function Users() {
         limit: 10,
         totalPages: 1,
       });
+      if (response.facets) setFacets(response.facets);
     } catch (error) {
       if (currentFetchId !== fetchIdRef.current) return;
       toast.error("Failed to fetch users");
@@ -204,7 +208,7 @@ export default function Users() {
             ]}
             selectedValues={roleFilter}
             onSelectionChange={setRoleFilter}
-            getCount={(role) => users.filter((u) => u.role === role).length}
+            getCount={(role) => facets.role[role] || 0}
           />
 
           {(roleFilter.length > 0 || searchTerm) && (

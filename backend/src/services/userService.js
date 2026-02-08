@@ -45,18 +45,27 @@ class UserService {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const [{ value: total }] = await db
-      .select({ value: count() })
-      .from(userTable)
-      .where(whereClause);
+    // Active filter for facets (same as default behavior)
+    const facetFilter = includeInactive ? sql`1=1` : sql`is_active = true`;
 
-    const users = await db
-      .select(userSelect)
-      .from(userTable)
-      .where(whereClause)
-      .orderBy(userTable.firstName)
-      .limit(limit)
-      .offset(offset);
+    const [[{ value: total }], users, facetRows] = await Promise.all([
+      db.select({ value: count() }).from(userTable).where(whereClause),
+      db.select(userSelect).from(userTable).where(whereClause).orderBy(userTable.firstName).limit(limit).offset(offset),
+      // Role facet counts (NOT role-filtered)
+      db.execute(sql`
+        SELECT role::text AS facet_value, count(*)::int AS cnt
+        FROM "user"
+        WHERE ${facetFilter}
+        GROUP BY role
+      `),
+    ]);
+
+    const facets = { role: {} };
+    for (const row of facetRows) {
+      if (row.facet_value) {
+        facets.role[row.facet_value] = row.cnt;
+      }
+    }
 
     return {
       data: users,
@@ -66,6 +75,7 @@ class UserService {
         limit,
         totalPages: Math.ceil(total / limit),
       },
+      facets,
     };
   }
 

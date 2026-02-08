@@ -95,6 +95,12 @@ class ContractService {
     const limit = Number(rawLimit) || 10;
     const offset = (page - 1) * limit;
 
+    // Permission filter (applies to both data query and facets)
+    const permissionFilter =
+      userRole === "sales" && !isMasterSales
+        ? sql`p.requested_by = ${userId}`
+        : sql`1=1`;
+
     const conditions = [];
 
     // Filter by client ID (for client detail dialog)
@@ -125,97 +131,118 @@ class ContractService {
       );
     }
 
-    // Single query: data + count via window function
-    // Select only columns needed for list view (skip heavy blobs)
-    let query = db
-      .select({
-        contract: {
-          id: contractsTable.id,
-          contractNumber: contractsTable.contractNumber,
-          proposalId: contractsTable.proposalId,
-          status: contractsTable.status,
-          requestedBy: contractsTable.requestedBy,
-          requestedAt: contractsTable.requestedAt,
-          requestNotes: contractsTable.requestNotes,
-          contractType: contractsTable.contractType,
-          clientName: contractsTable.clientName,
-          companyName: contractsTable.companyName,
-          clientEmailContract: contractsTable.clientEmailContract,
-          clientAddress: contractsTable.clientAddress,
-          contractDuration: contractsTable.contractDuration,
-          contractStartDate: contractsTable.contractStartDate,
-          contractEndDate: contractsTable.contractEndDate,
-          serviceLatitude: contractsTable.serviceLatitude,
-          serviceLongitude: contractsTable.serviceLongitude,
-          collectionSchedule: contractsTable.collectionSchedule,
-          collectionScheduleOther: contractsTable.collectionScheduleOther,
-          wasteAllowance: contractsTable.wasteAllowance,
-          specialClauses: contractsTable.specialClauses,
-          signatories: contractsTable.signatories,
-          ratePerKg: contractsTable.ratePerKg,
-          clientRequests: contractsTable.clientRequests,
-          customTemplateUrl: contractsTable.customTemplateUrl,
-          templateId: contractsTable.templateId,
-          contractUploadedBy: contractsTable.contractUploadedBy,
-          contractUploadedAt: contractsTable.contractUploadedAt,
-          contractPdfUrl: contractsTable.contractPdfUrl,
-          adminNotes: contractsTable.adminNotes,
-          sentToSalesBy: contractsTable.sentToSalesBy,
-          sentToSalesAt: contractsTable.sentToSalesAt,
-          sentToClientBy: contractsTable.sentToClientBy,
-          sentToClientAt: contractsTable.sentToClientAt,
-          clientEmail: contractsTable.clientEmail,
-          signedContractUrl: contractsTable.signedContractUrl,
-          signedAt: contractsTable.signedAt,
-          clientId: contractsTable.clientId,
-          hardboundContractUrl: contractsTable.hardboundContractUrl,
-          hardboundUploadedBy: contractsTable.hardboundUploadedBy,
-          hardboundUploadedAt: contractsTable.hardboundUploadedAt,
-          createdAt: contractsTable.createdAt,
-          updatedAt: contractsTable.updatedAt,
-        },
-        proposal: {
-          id: proposalTable.id,
-          proposalNumber: proposalTable.proposalNumber,
-          inquiryId: proposalTable.inquiryId,
-          requestedBy: proposalTable.requestedBy,
-          status: proposalTable.status,
-        },
-        inquiry: {
-          id: inquiryTable.id,
-          name: inquiryTable.name,
-          email: inquiryTable.email,
-          phone: inquiryTable.phone,
-          company: inquiryTable.company,
-          inquiryNumber: inquiryTable.inquiryNumber,
-        },
-        requestedByUser: {
-          id: userTable.id,
-          email: userTable.email,
-          firstName: userTable.firstName,
-          lastName: userTable.lastName,
-          role: userTable.role,
-        },
-        totalCount: sql`(count(*) over())::int`,
-      })
-      .from(contractsTable)
-      .leftJoin(proposalTable, eq(contractsTable.proposalId, proposalTable.id))
-      .leftJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id))
-      .leftJoin(userTable, eq(contractsTable.requestedBy, userTable.id));
+    // Run data + facets in parallel
+    const [rows, facetRows] = await Promise.all([
+      // 1. Paginated data + total count via window function
+      (() => {
+        let query = db
+          .select({
+            contract: {
+              id: contractsTable.id,
+              contractNumber: contractsTable.contractNumber,
+              proposalId: contractsTable.proposalId,
+              status: contractsTable.status,
+              requestedBy: contractsTable.requestedBy,
+              requestedAt: contractsTable.requestedAt,
+              requestNotes: contractsTable.requestNotes,
+              contractType: contractsTable.contractType,
+              clientName: contractsTable.clientName,
+              companyName: contractsTable.companyName,
+              clientEmailContract: contractsTable.clientEmailContract,
+              clientAddress: contractsTable.clientAddress,
+              contractDuration: contractsTable.contractDuration,
+              contractStartDate: contractsTable.contractStartDate,
+              contractEndDate: contractsTable.contractEndDate,
+              serviceLatitude: contractsTable.serviceLatitude,
+              serviceLongitude: contractsTable.serviceLongitude,
+              collectionSchedule: contractsTable.collectionSchedule,
+              collectionScheduleOther: contractsTable.collectionScheduleOther,
+              wasteAllowance: contractsTable.wasteAllowance,
+              specialClauses: contractsTable.specialClauses,
+              signatories: contractsTable.signatories,
+              ratePerKg: contractsTable.ratePerKg,
+              clientRequests: contractsTable.clientRequests,
+              customTemplateUrl: contractsTable.customTemplateUrl,
+              templateId: contractsTable.templateId,
+              contractUploadedBy: contractsTable.contractUploadedBy,
+              contractUploadedAt: contractsTable.contractUploadedAt,
+              contractPdfUrl: contractsTable.contractPdfUrl,
+              adminNotes: contractsTable.adminNotes,
+              sentToSalesBy: contractsTable.sentToSalesBy,
+              sentToSalesAt: contractsTable.sentToSalesAt,
+              sentToClientBy: contractsTable.sentToClientBy,
+              sentToClientAt: contractsTable.sentToClientAt,
+              clientEmail: contractsTable.clientEmail,
+              signedContractUrl: contractsTable.signedContractUrl,
+              signedAt: contractsTable.signedAt,
+              clientId: contractsTable.clientId,
+              hardboundContractUrl: contractsTable.hardboundContractUrl,
+              hardboundUploadedBy: contractsTable.hardboundUploadedBy,
+              hardboundUploadedAt: contractsTable.hardboundUploadedAt,
+              createdAt: contractsTable.createdAt,
+              updatedAt: contractsTable.updatedAt,
+            },
+            proposal: {
+              id: proposalTable.id,
+              proposalNumber: proposalTable.proposalNumber,
+              inquiryId: proposalTable.inquiryId,
+              requestedBy: proposalTable.requestedBy,
+              status: proposalTable.status,
+            },
+            inquiry: {
+              id: inquiryTable.id,
+              name: inquiryTable.name,
+              email: inquiryTable.email,
+              phone: inquiryTable.phone,
+              company: inquiryTable.company,
+              inquiryNumber: inquiryTable.inquiryNumber,
+            },
+            requestedByUser: {
+              id: userTable.id,
+              email: userTable.email,
+              firstName: userTable.firstName,
+              lastName: userTable.lastName,
+              role: userTable.role,
+            },
+            totalCount: sql`(count(*) over())::int`,
+          })
+          .from(contractsTable)
+          .leftJoin(proposalTable, eq(contractsTable.proposalId, proposalTable.id))
+          .leftJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id))
+          .leftJoin(userTable, eq(contractsTable.requestedBy, userTable.id));
 
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
+        if (conditions.length > 0) {
+          query = query.where(and(...conditions));
+        }
 
-    const rows = await query
-      .orderBy(desc(contractsTable.createdAt))
-      .limit(limit)
-      .offset(offset);
+        return query
+          .orderBy(desc(contractsTable.createdAt))
+          .limit(limit)
+          .offset(offset);
+      })(),
+
+      // 2. Status facet counts (permission-filtered, NOT status-filtered)
+      db.execute(sql`
+        SELECT c.status::text AS facet_value, count(*)::int AS cnt
+        FROM contracts c
+        LEFT JOIN proposal p ON c.proposal_id = p.id
+        WHERE ${permissionFilter}
+        GROUP BY c.status
+      `),
+    ]);
 
     const total = rows.length > 0 ? rows[0].totalCount : 0;
 
     // Strip totalCount from each row
     const contracts = rows.map(({ totalCount, ...rest }) => rest);
+
+    // Parse facet rows into a status counts map
+    const facets = { status: {} };
+    for (const row of facetRows) {
+      if (row.facet_value) {
+        facets.status[row.facet_value] = row.cnt;
+      }
+    }
 
     return {
       data: contracts,
@@ -225,6 +252,7 @@ class ContractService {
         limit,
         totalPages: Math.ceil(total / limit),
       },
+      facets,
     };
   }
 

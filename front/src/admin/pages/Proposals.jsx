@@ -49,6 +49,9 @@ export default function Proposals() {
   const [statusFilter, setStatusFilter] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Server-side facet counts for status filter badges
+  const [facets, setFacets] = useState({ status: {} });
+
   // Column visibility
   const [columnVisibility, setColumnVisibility] = useState({
     proposalNumber: true,
@@ -148,6 +151,7 @@ export default function Proposals() {
 
       setProposals(data);
       setPagination(meta);
+      if (response.facets) setFacets(response.facets);
     } catch (error) {
       if (currentFetchId !== fetchIdRef.current) return;
       toast.error("Failed to fetch proposals");
@@ -291,7 +295,7 @@ export default function Proposals() {
             ]}
             selectedValues={statusFilter}
             onSelectionChange={setStatusFilter}
-            getCount={(status) => proposals.filter(p => p.status === status).length}
+            getCount={(status) => facets.status[status] || 0}
           />
 
           {/* Clear filters */}
