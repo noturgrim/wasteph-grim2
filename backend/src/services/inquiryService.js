@@ -365,8 +365,27 @@ class InquiryService {
       isInformationComplete,
     } = updateData;
 
-    // Fetch the current inquiry before updating to track changes
-    const oldInquiry = await this.getInquiryById(inquiryId);
+    // Fetch only the fields needed for change tracking (skip proposal lookup)
+    const [oldInquiry] = await db
+      .select({
+        name: inquiryTable.name,
+        email: inquiryTable.email,
+        phone: inquiryTable.phone,
+        company: inquiryTable.company,
+        location: inquiryTable.location,
+        source: inquiryTable.source,
+        status: inquiryTable.status,
+        assignedTo: inquiryTable.assignedTo,
+        serviceId: inquiryTable.serviceId,
+        isInformationComplete: inquiryTable.isInformationComplete,
+      })
+      .from(inquiryTable)
+      .where(eq(inquiryTable.id, inquiryId))
+      .limit(1);
+
+    if (!oldInquiry) {
+      throw new AppError("Inquiry not found", 404);
+    }
 
     // Convert empty strings to null for UUID fields
     const normalizedAssignedTo = assignedTo === "" ? null : assignedTo;

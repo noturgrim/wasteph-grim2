@@ -25,27 +25,58 @@ class ProposalService {
   async createProposal(proposalData, userId, metadata = {}) {
     const { inquiryId, templateId, proposalData: data } = proposalData;
 
-    // Get inquiry
-    const inquiry = await inquiryService.getInquiryById(inquiryId);
-
-    // Determine template - auto-suggest if not provided
     let template;
     let wasTemplateSuggested = false;
 
     if (templateId) {
-      // Template explicitly provided
-      template = await proposalTemplateService.getTemplateById(templateId);
-      wasTemplateSuggested = false;
-    } else {
-      // Auto-suggest template based on inquiry service type
-      template = await proposalTemplateService.suggestTemplateForInquiry(inquiry);
-      wasTemplateSuggested = true;
+      // Template provided — run template fetch + counter in parallel (skip inquiry fetch)
+      const [fetchedTemplate, proposalNumber] = await Promise.all([
+        proposalTemplateService.getTemplateById(templateId),
+        counterService.getNextProposalNumber(),
+      ]);
+      template = fetchedTemplate;
+
+      // Insert proposal
+      const [proposal] = await db
+        .insert(proposalTable)
+        .values({
+          proposalNumber,
+          inquiryId,
+          templateId: template.id,
+          requestedBy: userId,
+          proposalData: typeof data === "string" ? data : JSON.stringify(data),
+          status: "pending",
+          wasTemplateSuggested: false,
+        })
+        .returning();
+
+      // Fire-and-forget: update inquiry status + log activity
+      this._updateInquiryStatus(inquiryId, userId, metadata);
+      this._logInBackground({
+        userId,
+        action: "proposal_created",
+        entityType: "proposal",
+        entityId: proposal.id,
+        details: {
+          inquiryId,
+          templateId: template.id,
+          templateType: template.templateType,
+          wasTemplateSuggested: false,
+        },
+        ipAddress: metadata.ipAddress,
+        userAgent: metadata.userAgent,
+      });
+
+      return proposal;
     }
 
-    // Generate proposal number (format: PROP-YYYYMMDD-NNNN)
+    // No template — need inquiry to auto-suggest template
+    const inquiry = await inquiryService.getInquiryById(inquiryId);
+    template = await proposalTemplateService.suggestTemplateForInquiry(inquiry);
+    wasTemplateSuggested = true;
+
     const proposalNumber = await counterService.getNextProposalNumber();
 
-    // Create proposal
     const [proposal] = await db
       .insert(proposalTable)
       .values({
@@ -59,20 +90,9 @@ class ProposalService {
       })
       .returning();
 
-    // Update inquiry status to proposal_created (non-critical)
-    try {
-      await inquiryService.updateInquiry(
-        inquiryId,
-        { status: "proposal_created" },
-        userId,
-        metadata
-      );
-    } catch (error) {
-      console.error("Failed to update inquiry status after creating proposal:", error);
-    }
-
-    // Log activity
-    await this.logActivity({
+    // Fire-and-forget: update inquiry status + log activity
+    this._updateInquiryStatus(inquiryId, userId, metadata);
+    this._logInBackground({
       userId,
       action: "proposal_created",
       entityType: "proposal",
@@ -88,6 +108,28 @@ class ProposalService {
     });
 
     return proposal;
+  }
+
+  /**
+   * Fire-and-forget: update inquiry status to proposal_created
+   */
+  _updateInquiryStatus(inquiryId, userId, metadata) {
+    db.update(inquiryTable)
+      .set({ status: "proposal_created", updatedAt: new Date() })
+      .where(eq(inquiryTable.id, inquiryId))
+      .catch((err) => console.error("Failed to update inquiry status:", err));
+  }
+
+  /**
+   * Fire-and-forget activity log
+   */
+  _logInBackground(activityData) {
+    db.insert(activityLogTable)
+      .values({
+        ...activityData,
+        details: activityData.details ? JSON.stringify(activityData.details) : null,
+      })
+      .catch((err) => console.error("Failed to log activity:", err));
   }
 
   /**
