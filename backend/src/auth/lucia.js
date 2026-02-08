@@ -10,7 +10,7 @@ const adapter = new PostgresJsAdapter(client, {
 
 // Initialize Lucia with enhanced cookie settings for cross-origin support
 export const lucia = new Lucia(adapter, {
-  sessionExpiresIn: new TimeSpan(30, "d"), // 30 days
+  sessionExpiresIn: new TimeSpan(1, "h"), // 1 hour (server-side safety net; frontend idle timer handles 30-min UX)
   sessionCookie: {
     name: "auth_session",
     expires: false, // Session cookie (persists until browser closes) - set to true for persistent

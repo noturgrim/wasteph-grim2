@@ -1,10 +1,12 @@
 import { Outlet, useLocation, Link, useNavigate, useOutlet } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Bell, Moon, Sun, Settings, MoreVertical } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotifications } from "../../contexts/NotificationContext";
 import { useTheme } from "../../contexts/ThemeContext";
+import { useIdleTimer } from "@/hooks/useIdleTimer";
+import SessionTimeoutWarning from "../common/SessionTimeoutWarning";
 import {
   SidebarInset,
   SidebarProvider,
@@ -41,12 +43,22 @@ function FrozenOutlet() {
 }
 
 export default function AppLayout() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } =
     useNotifications();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // 30-minute inactivity timeout with 5-minute warning
+  const handleIdle = useCallback(async () => {
+    await logout();
+    navigate("/admin/login", { replace: true });
+  }, [logout, navigate]);
+
+  const { showWarning, secondsRemaining, stayLoggedIn } = useIdleTimer({
+    onIdle: handleIdle,
+  });
 
   // Navigation mapping for breadcrumbs
   const navigationMap = {
@@ -309,6 +321,12 @@ export default function AppLayout() {
           </AnimatePresence>
         </main>
       </SidebarInset>
+
+      <SessionTimeoutWarning
+        open={showWarning}
+        secondsRemaining={secondsRemaining}
+        onStayLoggedIn={stayLoggedIn}
+      />
     </SidebarProvider>
   );
 }
