@@ -888,7 +888,8 @@ export const clientTicketsTable = pgTable(
     createdByIdx: index("client_tickets_created_by_idx").on(table.createdBy),
     categoryIdx: index("client_tickets_category_idx").on(table.category),
     priorityIdx: index("client_tickets_priority_idx").on(table.priority),
-  })
+    createdAtIdx: index("client_tickets_created_at_idx").on(table.createdAt),
+  }),
 );
 
 // Ticket Attachments - Files attached to tickets

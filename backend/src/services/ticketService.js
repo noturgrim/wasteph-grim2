@@ -6,7 +6,7 @@ import {
   activityLogTable,
   userTable,
 } from "../db/schema.js";
-import { eq, desc, and, or, inArray, like, count } from "drizzle-orm";
+import { eq, desc, and, or, inArray, like, count, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 import counterService from "./counterService.js";
 import { getPresignedUrl } from "./s3Service.js";
@@ -106,14 +106,14 @@ class TicketService {
     }
 
     if (search) {
+      const escaped = search.replace(/[%_\\]/g, "\\$&");
       conditions.push(
         or(
-          like(clientTicketsTable.ticketNumber, `%${search}%`),
-          like(clientTicketsTable.subject, `%${search}%`),
-          like(clientTicketsTable.description, `%${search}%`),
-          like(userTable.firstName, `%${search}%`),
-          like(userTable.lastName, `%${search}%`),
-        )
+          like(clientTicketsTable.ticketNumber, `%${escaped}%`),
+          like(clientTicketsTable.subject, `%${escaped}%`),
+          like(userTable.firstName, `%${escaped}%`),
+          like(userTable.lastName, `%${escaped}%`),
+        ),
       );
     }
 
@@ -126,15 +126,8 @@ class TicketService {
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    // Count total
-    const [{ value: total }] = await db
-      .select({ value: count() })
-      .from(clientTicketsTable)
-      .leftJoin(userTable, eq(clientTicketsTable.createdBy, userTable.id))
-      .where(whereClause);
-
-    // Paginated query
-    const tickets = await db
+    // Single query: data + count via window function
+    const rows = await db
       .select({
         id: clientTicketsTable.id,
         ticketNumber: clientTicketsTable.ticketNumber,
@@ -142,17 +135,16 @@ class TicketService {
         category: clientTicketsTable.category,
         priority: clientTicketsTable.priority,
         subject: clientTicketsTable.subject,
-        description: clientTicketsTable.description,
         status: clientTicketsTable.status,
         createdBy: clientTicketsTable.createdBy,
         resolvedBy: clientTicketsTable.resolvedBy,
         resolvedAt: clientTicketsTable.resolvedAt,
-        resolutionNotes: clientTicketsTable.resolutionNotes,
         createdAt: clientTicketsTable.createdAt,
         updatedAt: clientTicketsTable.updatedAt,
         creatorFirstName: userTable.firstName,
         creatorLastName: userTable.lastName,
         creatorEmail: userTable.email,
+        totalCount: sql`(count(*) over())::int`,
       })
       .from(clientTicketsTable)
       .leftJoin(userTable, eq(clientTicketsTable.createdBy, userTable.id))
@@ -161,8 +153,13 @@ class TicketService {
       .limit(limit)
       .offset(offset);
 
+    const total = rows.length > 0 ? rows[0].totalCount : 0;
+
+    // Strip totalCount from each row
+    const data = rows.map(({ totalCount, ...ticket }) => ticket);
+
     return {
-      data: tickets,
+      data,
       pagination: {
         total,
         page,
