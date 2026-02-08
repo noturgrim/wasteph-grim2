@@ -11,17 +11,15 @@ import { AppError } from "../middleware/errorHandler.js";
 
 class CalendarEventService {
   /**
-   * Log activity
+   * Log activity (fire-and-forget — does not block the response)
    */
-  async logActivity(data) {
-    try {
-      await db.insert(activityLogTable).values({
+  _logInBackground(data) {
+    db.insert(activityLogTable)
+      .values({
         ...data,
         details: data.details ? JSON.stringify(data.details) : null,
-      });
-    } catch (error) {
-      console.error("Failed to log activity:", error);
-    }
+      })
+      .catch((error) => console.error("Failed to log activity:", error));
   }
 
   /**
@@ -57,8 +55,8 @@ class CalendarEventService {
       })
       .returning();
 
-    // Log activity
-    await this.logActivity({
+    // Log activity (fire-and-forget)
+    this._logInBackground({
       userId,
       inquiryId: event.inquiryId, // Link to inquiry for timeline (if applicable)
       action: "calendar_event_created",
@@ -132,9 +130,12 @@ class CalendarEventService {
       conditions.push(eq(calendarEventTable.clientId, clientId));
     }
 
-    // OPTIMIZATION: Only join user table (most common need for calendar view)
-    // Inquiry/Client details can be fetched on-demand when viewing event details
-    let query = db
+    // Single query: data + count via window function (1 round-trip instead of 2)
+    const whereClause =
+      conditions.length > 0 ? and(...conditions) : undefined;
+    const offset = (page - 1) * limit;
+
+    const results = await db
       .select({
         id: calendarEventTable.id,
         userId: calendarEventTable.userId,
@@ -151,35 +152,21 @@ class CalendarEventService {
         notes: calendarEventTable.notes,
         createdAt: calendarEventTable.createdAt,
         updatedAt: calendarEventTable.updatedAt,
-        // Only include user info (needed for Master Sales view)
         userFirstName: userTable.firstName,
         userLastName: userTable.lastName,
+        totalCount: sql`(count(*) over())::int`,
       })
       .from(calendarEventTable)
-      .leftJoin(userTable, eq(calendarEventTable.userId, userTable.id));
-
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
-
-    // Count total
-    let countQuery = db.select({ value: count() }).from(calendarEventTable);
-
-    if (conditions.length > 0) {
-      countQuery = countQuery.where(and(...conditions));
-    }
-
-    const [{ value: total }] = await countQuery;
-
-    // Apply pagination and ordering
-    const offset = (page - 1) * limit;
-    const results = await query
+      .leftJoin(userTable, eq(calendarEventTable.userId, userTable.id))
+      .where(whereClause)
       .orderBy(calendarEventTable.scheduledDate)
       .limit(limit)
       .offset(offset);
 
-    // OPTIMIZATION: Simplified transformation - only nest user data
-    const events = results.map((event) => ({
+    const total = results[0]?.totalCount ?? 0;
+
+    // Transform: nest user data, strip totalCount
+    const events = results.map(({ totalCount, ...event }) => ({
       id: event.id,
       userId: event.userId,
       inquiryId: event.inquiryId,
@@ -195,7 +182,6 @@ class CalendarEventService {
       notes: event.notes,
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
-      // Only include user object (for Master Sales to see who owns the event)
       user: event.userFirstName
         ? {
             name: `${event.userFirstName} ${event.userLastName}`,
@@ -346,8 +332,8 @@ class CalendarEventService {
       throw new AppError("Event not found", 404);
     }
 
-    // Log activity
-    await this.logActivity({
+    // Log activity (fire-and-forget)
+    this._logInBackground({
       userId,
       inquiryId: event.inquiryId, // Link to inquiry for timeline
       action: "calendar_event_updated",
@@ -374,41 +360,50 @@ class CalendarEventService {
 
   /**
    * Delete event (soft delete - changes status to cancelled)
+   * Combines ownership check + update in a single query
    */
   async deleteEvent(eventId, userId, metadata = {}) {
-    // Get event for ownership check
-    const event = await this.getEventById(eventId);
-
-    // Check ownership
-    if (event.userId !== userId) {
-      throw new AppError("You can only delete your own events", 403);
-    }
-
-    // Soft delete by setting status to cancelled
     const [cancelledEvent] = await db
       .update(calendarEventTable)
       .set({
         status: "cancelled",
         updatedAt: new Date(),
       })
-      .where(eq(calendarEventTable.id, eventId))
+      .where(
+        and(
+          eq(calendarEventTable.id, eventId),
+          eq(calendarEventTable.userId, userId),
+        ),
+      )
       .returning();
 
     if (!cancelledEvent) {
-      throw new AppError("Event not found", 404);
+      // Could be not found or not owned — check which
+      const [exists] = await db
+        .select({ id: calendarEventTable.id })
+        .from(calendarEventTable)
+        .where(eq(calendarEventTable.id, eventId))
+        .limit(1);
+
+      throw new AppError(
+        exists
+          ? "You can only cancel your own events"
+          : "Event not found",
+        exists ? 403 : 404,
+      );
     }
 
-    // Log activity
-    await this.logActivity({
+    // Log activity (fire-and-forget)
+    this._logInBackground({
       userId,
-      inquiryId: event.inquiryId, // Link to inquiry for timeline
+      inquiryId: cancelledEvent.inquiryId,
       action: "calendar_event_deleted",
       entityType: "calendar_event",
       entityId: eventId,
       details: {
-        title: event.title,
-        eventType: event.eventType,
-        scheduledDate: event.scheduledDate,
+        title: cancelledEvent.title,
+        eventType: cancelledEvent.eventType,
+        scheduledDate: cancelledEvent.scheduledDate,
       },
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent,

@@ -28,6 +28,7 @@ import {
   Trash2,
   ExternalLink,
   FileText,
+  Loader2,
 } from "lucide-react";
 import { api } from "../../services/api";
 import { toast } from "../../utils/toast";
@@ -289,8 +290,16 @@ export function ViewEventDialog({
                     isDeleting || isCompleting || event.status === "cancelled"
                   }
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  {event.status === "cancelled" ? "Cancelled" : "Cancel Event"}
+                  {isDeleting ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 mr-2" />
+                  )}
+                  {event.status === "cancelled"
+                    ? "Cancelled"
+                    : isDeleting
+                      ? "Cancelling..."
+                      : "Cancel Event"}
                 </Button>
 
                 <div className="flex gap-2">
@@ -346,7 +355,17 @@ export function ViewEventDialog({
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "Cancelling..." : "Cancel Event"}
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                <>
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Cancel Event
+                </>
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
