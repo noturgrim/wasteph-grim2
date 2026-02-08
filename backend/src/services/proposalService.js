@@ -472,22 +472,35 @@ class ProposalService {
     // Step 3: Generate PDF
     let pdfBuffer, pdfUrl;
     try {
+      let htmlForPdf = null;
+
       if (proposalData.editedHtmlContent) {
-        // New format: use the already-rendered HTML directly
-        pdfBuffer = await pdfService.generatePDFFromHTML(
-          proposalData.editedHtmlContent,
-        );
-      } else {
-        // Legacy format: use template rendering
-        const template = await proposalTemplateService.getTemplateById(
-          proposal.templateId,
-        );
+        // Check if saved HTML is complete
+        if (this._isCompleteHtml(proposalData.editedHtmlContent)) {
+          // Use saved HTML (preferred path - preserves all user edits)
+          htmlForPdf = proposalData.editedHtmlContent;
+          console.log(`Using editedHtmlContent for PDF generation (proposal ${proposalId})`);
+        } else {
+          console.warn(
+            `editedHtmlContent is incomplete for proposal ${proposalId}, ` +
+            `falling back to template re-rendering. This indicates a data quality issue.`
+          );
+        }
+      }
+
+      // Fallback: re-render from template if no valid HTML
+      if (!htmlForPdf) {
+        const template = await proposalTemplateService.getTemplateById(proposal.templateId);
         pdfBuffer = await pdfService.generateProposalPDF(
           proposalData,
           inquiry,
-          template.htmlTemplate,
+          template.htmlTemplate
         );
+      } else {
+        // Generate from saved HTML
+        pdfBuffer = await pdfService.generatePDFFromHTML(htmlForPdf);
       }
+
       pdfUrl = await this.savePDF(pdfBuffer, proposalId);
     } catch (error) {
       throw new AppError("PDF generation failed: " + error.message, 500);
@@ -1017,6 +1030,25 @@ class ProposalService {
       ipAddress,
       userAgent,
     });
+  }
+
+  /**
+   * Validate that HTML contains required document structure for PDF generation
+   * @param {string} html - HTML string to validate
+   * @returns {boolean} True if HTML has complete document structure
+   * @private
+   */
+  _isCompleteHtml(html) {
+    if (!html || typeof html !== "string") {
+      return false;
+    }
+
+    const hasDoctype = html.includes("<!DOCTYPE") || html.includes("<!doctype");
+    const hasHtml = /<html[^>]*>/i.test(html);
+    const hasHead = /<head[^>]*>/i.test(html);
+    const hasBody = /<body[^>]*>/i.test(html);
+
+    return hasDoctype && hasHtml && hasHead && hasBody;
   }
 }
 

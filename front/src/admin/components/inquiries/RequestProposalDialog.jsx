@@ -132,9 +132,58 @@ export function RequestProposalDialog({
 
           // If we have edited content, load directly into editor (skip to step 3)
           if (existingData.editedHtmlContent) {
-            setEditorInitialContent(existingData.editedHtmlContent);
+            // Parse the saved HTML to extract template structure
+            const savedHtml = existingData.editedHtmlContent;
+
+            // Extract head, body, and styles (same pattern as prepareEditorContent)
+            const headMatch = savedHtml.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+            const bodyTagMatch = savedHtml.match(/<body[^>]*>/i);
+            const bodyMatch = savedHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+
+            if (headMatch && bodyMatch) {
+              const styleMatch = headMatch[0].match(
+                /<style[^>]*>([\s\S]*?)<\/style>/gi
+              );
+              const inlineStyles = styleMatch
+                ? styleMatch.map((s) => s.replace(/<\/?style[^>]*>/gi, "")).join("\n")
+                : "";
+
+              const fullBodyHtml = bodyMatch[1] || "";
+
+              // Try to find .content wrapper (editable section)
+              let editorBodyContent = fullBodyHtml;
+              try {
+                const container = document.createElement("div");
+                container.innerHTML = fullBodyHtml;
+                const contentNode = container.querySelector(".content");
+                if (contentNode) {
+                  editorBodyContent = contentNode.innerHTML || "";
+                }
+              } catch {
+                // Fallback: use full body HTML
+                editorBodyContent = fullBodyHtml;
+              }
+
+              // Populate templateStructureRef so handleEditorSave can reconstruct
+              templateStructureRef.current = {
+                head: headMatch[0],
+                bodyTag: bodyTagMatch ? bodyTagMatch[0] : "<body>",
+                styles: inlineStyles,
+                bodyHtml: fullBodyHtml,
+                contentSelector: ".content",
+              };
+
+              // Load extracted content into editor
+              setEditorInitialContent(editorBodyContent);
+            } else {
+              // No structure found, load as-is (may be legacy or corrupted)
+              console.warn("No template structure found in editedHtmlContent, loading as-is");
+              setEditorInitialContent(savedHtml);
+              templateStructureRef.current = { head: "", bodyTag: "", styles: "" };
+            }
+
             setSavedEditorContent({
-              html: existingData.editedHtmlContent,
+              html: savedHtml, // Keep original full HTML as saved
               json: existingData.editedJsonContent || null,
             });
             setHasUnsavedEditorChanges(false);
@@ -446,12 +495,26 @@ export function RequestProposalDialog({
         const target = container.querySelector(contentSelector);
 
         if (target) {
+          // Success: replace only the editable section
           target.innerHTML = html;
           bodyContentForSave = container.innerHTML;
+          console.debug("Successfully replaced content in selector:", contentSelector);
+        } else {
+          // Selector not found, use full body replacement
+          console.warn(
+            `Content selector "${contentSelector}" not found in template body. ` +
+            `Using full body replacement instead. Template may not have standard structure.`
+          );
+          bodyContentForSave = html;
         }
-      } catch {
+      } catch (error) {
+        console.error("DOM parsing failed during surgical replacement:", error);
         bodyContentForSave = html;
       }
+    } else {
+      // No template structure available, use raw editor content
+      console.debug("No template structure, using raw editor HTML");
+      bodyContentForSave = html;
     }
 
     let fullHtml = bodyContentForSave;
@@ -464,6 +527,41 @@ ${bodyTag}
   ${bodyContentForSave}
 </body>
 </html>`;
+    }
+
+    // Validate that we have a complete HTML document
+    const isCompleteHtml =
+      fullHtml.includes("<!DOCTYPE") &&
+      fullHtml.includes("<html") &&
+      fullHtml.includes("<head") &&
+      fullHtml.includes("<body");
+
+    if (!isCompleteHtml) {
+      console.error("Saved HTML is incomplete, missing document structure:", {
+        hasDoctype: fullHtml.includes("<!DOCTYPE"),
+        hasHtml: fullHtml.includes("<html"),
+        hasHead: fullHtml.includes("<head"),
+        hasBody: fullHtml.includes("<body"),
+        htmlPreview: fullHtml.substring(0, 200),
+      });
+
+      // Attempt to wrap in minimal document structure
+      if (!fullHtml.includes("<!DOCTYPE")) {
+        const styles = templateStructureRef.current.styles || "";
+        fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proposal</title>
+  ${styles ? `<style>${styles}</style>` : ""}
+</head>
+<body>
+  ${html}
+</body>
+</html>`;
+        console.warn("Wrapped incomplete HTML in minimal document structure");
+      }
     }
 
     setSavedEditorContent({ html: fullHtml, json });
@@ -513,6 +611,16 @@ ${bodyTag}
         // The actual proposal content (edited HTML and JSON for re-editing)
         editedHtmlContent: savedEditorContent.html,
         editedJsonContent: savedEditorContent.json,
+
+        // Template metadata for debugging/recovery
+        templateMetadata: {
+          templateId: template?.id,
+          templateName: template?.name,
+          serviceId: selectedServiceId,
+          serviceName: selectedServiceName,
+          editedAt: new Date().toISOString(),
+          editorVersion: "tiptap-v1", // For future tracking
+        },
       };
 
       // Check if revising a disapproved proposal
@@ -607,7 +715,11 @@ ${bodyTag}
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-[1000px]! max-w-[95vw]! h-[90vh]! max-h-[90vh]! flex flex-col p-0 gap-0"
+        className={`${
+          currentStep === 3
+            ? "w-[1400px]! max-w-[98vw]! h-[95vh]! max-h-[95vh]!"
+            : "w-[1000px]! max-w-[95vw]! h-[90vh]! max-h-[90vh]!"
+        } flex flex-col p-0 gap-0 transition-all duration-300`}
         onInteractOutside={(e) => e.preventDefault()}
       >
         {/* Two Column Layout */}
@@ -1201,14 +1313,53 @@ ${bodyTag}
                       </span>
                     </div>
                   ) : (
-                    <div className="flex-1 min-h-0">
-                      <ProposalHtmlEditor
-                        content={editorInitialContent}
-                        templateStyles={templateStructureRef.current.styles}
-                        onChange={handleEditorSave}
-                        onUnsavedChange={handleUnsavedChange}
-                        className="h-full"
-                      />
+                    <div className="flex-1 min-h-0 flex flex-col">
+                      {/* Non-editable header preview using iframe for style isolation */}
+                      {templateStructureRef.current.bodyHtml && templateStructureRef.current.styles && (() => {
+                        try {
+                          const container = document.createElement("div");
+                          container.innerHTML = templateStructureRef.current.bodyHtml;
+                          const contentNode = container.querySelector(".content");
+                          if (contentNode) {
+                            contentNode.remove();
+                            const headerHtml = container.innerHTML.trim();
+                            if (headerHtml) {
+                              const iframeContent = `<!DOCTYPE html>
+<html>
+<head>
+<style>
+body { margin: 0; padding: 10px 20px; font-family: Arial, sans-serif; }
+${templateStructureRef.current.styles}
+</style>
+</head>
+<body>${headerHtml}</body>
+</html>`;
+                              return (
+                                <iframe
+                                  srcDoc={iframeContent}
+                                  title="Header Preview"
+                                  className="w-full border-0 border-b border-gray-200 bg-white"
+                                  style={{ height: "120px", pointerEvents: "none" }}
+                                />
+                              );
+                            }
+                          }
+                        } catch (e) {
+                          console.error("Failed to extract header:", e);
+                        }
+                        return null;
+                      })()}
+
+                      {/* Editable content area */}
+                      <div className="flex-1 overflow-auto" style={{ minHeight: 0 }}>
+                        <ProposalHtmlEditor
+                          content={editorInitialContent}
+                          templateStyles={templateStructureRef.current.styles}
+                          onChange={handleEditorSave}
+                          onUnsavedChange={handleUnsavedChange}
+                          className="h-full"
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
