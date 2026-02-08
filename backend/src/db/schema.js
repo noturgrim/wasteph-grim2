@@ -199,6 +199,15 @@ export const inquiryTable = pgTable(
   },
   (table) => ({
     inquiryNumberIdx: index("inquiry_number_idx").on(table.inquiryNumber),
+    assignedToIdx: index("inquiry_assigned_to_idx").on(table.assignedTo),
+    statusIdx: index("inquiry_status_idx").on(table.status),
+    sourceIdx: index("inquiry_source_idx").on(table.source),
+    serviceIdIdx: index("inquiry_service_id_idx").on(table.serviceId),
+    createdAtIdx: index("inquiry_created_at_idx").on(table.createdAt),
+    assignedCreatedIdx: index("inquiry_assigned_created_idx").on(
+      table.assignedTo,
+      table.createdAt,
+    ),
   })
 );
 

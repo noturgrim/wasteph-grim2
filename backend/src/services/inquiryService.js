@@ -167,85 +167,63 @@ class InquiryService {
     const whereClause =
       allConditions.length > 0 ? and(...allConditions) : undefined;
 
-    // Base WHERE for facet counts (only user scope, no other filters)
-    const baseWhere =
-      baseConditions.length > 0 ? and(...baseConditions) : undefined;
+    // --- Run data+count and facets in parallel (2 queries instead of 5) ---
+    const baseFilterSql = assignedTo
+      ? sql`assigned_to = ${assignedTo}`
+      : sql`1=1`;
 
-    // --- Run count + data + facet counts in parallel ---
-    const [countResult, inquiries, statusFacets, sourceFacets, serviceTypeFacets] =
-      await Promise.all([
-        // 1. Filtered count for pagination
-        db
-          .select({ value: count() })
-          .from(inquiryTable)
-          .where(whereClause),
+    const [inquiriesWithCount, facetRows] = await Promise.all([
+      // 1. Paginated data + total count via window function (replaces 2 queries)
+      db
+        .select({
+          id: inquiryTable.id,
+          inquiryNumber: inquiryTable.inquiryNumber,
+          name: inquiryTable.name,
+          email: inquiryTable.email,
+          phone: inquiryTable.phone,
+          company: inquiryTable.company,
+          location: inquiryTable.location,
+          message: inquiryTable.message,
+          serviceId: inquiryTable.serviceId,
+          serviceType: serviceTable.name,
+          status: inquiryTable.status,
+          source: inquiryTable.source,
+          assignedTo: inquiryTable.assignedTo,
+          notes: inquiryTable.notes,
+          isInformationComplete: inquiryTable.isInformationComplete,
+          createdAt: inquiryTable.createdAt,
+          updatedAt: inquiryTable.updatedAt,
+          service: {
+            id: serviceTable.id,
+            name: serviceTable.name,
+            description: serviceTable.description,
+          },
+          totalCount: sql`(count(*) over())::int`,
+        })
+        .from(inquiryTable)
+        .leftJoin(serviceTable, eq(inquiryTable.serviceId, serviceTable.id))
+        .where(whereClause)
+        .orderBy(desc(inquiryTable.createdAt))
+        .limit(limit)
+        .offset(offset),
 
-        // 2. Paginated data
-        db
-          .select({
-            id: inquiryTable.id,
-            inquiryNumber: inquiryTable.inquiryNumber,
-            name: inquiryTable.name,
-            email: inquiryTable.email,
-            phone: inquiryTable.phone,
-            company: inquiryTable.company,
-            location: inquiryTable.location,
-            message: inquiryTable.message,
-            serviceId: inquiryTable.serviceId,
-            serviceType: serviceTable.name,
-            status: inquiryTable.status,
-            source: inquiryTable.source,
-            assignedTo: inquiryTable.assignedTo,
-            notes: inquiryTable.notes,
-            isInformationComplete: inquiryTable.isInformationComplete,
-            createdAt: inquiryTable.createdAt,
-            updatedAt: inquiryTable.updatedAt,
-            service: {
-              id: serviceTable.id,
-              name: serviceTable.name,
-              description: serviceTable.description,
-            },
-          })
-          .from(inquiryTable)
-          .leftJoin(serviceTable, eq(inquiryTable.serviceId, serviceTable.id))
-          .where(whereClause)
-          .orderBy(desc(inquiryTable.createdAt))
-          .limit(limit)
-          .offset(offset),
+      // 2. All 3 facets in one query via UNION ALL (replaces 3 queries)
+      db.execute(sql`
+        SELECT 'status'::text AS facet_type, status::text AS facet_value, count(*)::int AS cnt
+          FROM inquiry WHERE ${baseFilterSql} GROUP BY status
+        UNION ALL
+        SELECT 'source'::text, source::text, count(*)::int
+          FROM inquiry WHERE ${baseFilterSql} GROUP BY source
+        UNION ALL
+        SELECT 'service_type'::text, s.name::text, count(*)::int
+          FROM inquiry i INNER JOIN service s ON i.service_id = s.id
+          WHERE ${assignedTo ? sql`i.assigned_to = ${assignedTo}` : sql`1=1`}
+          GROUP BY s.name
+      `),
+    ]);
 
-        // 3. Facet: status counts (base scope only)
-        db
-          .select({
-            status: inquiryTable.status,
-            count: count(),
-          })
-          .from(inquiryTable)
-          .where(baseWhere)
-          .groupBy(inquiryTable.status),
-
-        // 4. Facet: source counts (base scope only)
-        db
-          .select({
-            source: inquiryTable.source,
-            count: count(),
-          })
-          .from(inquiryTable)
-          .where(baseWhere)
-          .groupBy(inquiryTable.source),
-
-        // 5. Facet: service type counts (base scope only, join for name)
-        db
-          .select({
-            serviceType: serviceTable.name,
-            count: count(),
-          })
-          .from(inquiryTable)
-          .innerJoin(serviceTable, eq(inquiryTable.serviceId, serviceTable.id))
-          .where(baseWhere)
-          .groupBy(serviceTable.name),
-      ]);
-
-    const total = countResult[0].value;
+    const total = inquiriesWithCount[0]?.totalCount ?? 0;
+    const inquiries = inquiriesWithCount;
 
     // --- Fetch proposal statuses for the current page ---
     const inquiryIds = inquiries.map((inq) => inq.id);
@@ -279,7 +257,7 @@ class InquiryService {
     }
 
     // --- Build response ---
-    const data = inquiries.map((inquiry) => ({
+    const data = inquiries.map(({ totalCount, ...inquiry }) => ({
       ...inquiry,
       serviceType: inquiry.serviceType
         ? this.serviceNameToFrontend(inquiry.serviceType)
@@ -292,14 +270,23 @@ class InquiryService {
         proposalMap[inquiry.id]?.proposalRejectionReason || null,
     }));
 
-    // Convert facet arrays to { value: count } maps
-    const toFacetMap = (rows, key) => {
-      const map = {};
-      for (const row of rows) {
-        if (row[key]) map[row[key]] = row.count;
+    // Parse combined UNION ALL facet rows into maps
+    const facets = { status: {}, source: {}, serviceType: {} };
+    for (const row of facetRows) {
+      if (!row.facet_value) continue;
+      switch (row.facet_type) {
+        case "status":
+          facets.status[row.facet_value] = row.cnt;
+          break;
+        case "source":
+          facets.source[row.facet_value] = row.cnt;
+          break;
+        case "service_type":
+          facets.serviceType[this.serviceNameToFrontend(row.facet_value)] =
+            row.cnt;
+          break;
       }
-      return map;
-    };
+    }
 
     return {
       data,
@@ -309,16 +296,7 @@ class InquiryService {
         limit,
         totalPages: Math.ceil(total / limit),
       },
-      facets: {
-        status: toFacetMap(statusFacets, "status"),
-        source: toFacetMap(sourceFacets, "source"),
-        serviceType: Object.fromEntries(
-          serviceTypeFacets.map((r) => [
-            this.serviceNameToFrontend(r.serviceType),
-            r.count,
-          ]),
-        ),
-      },
+      facets,
     };
   }
 

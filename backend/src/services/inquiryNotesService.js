@@ -117,60 +117,75 @@ class InquiryNotesService {
    * @returns {Promise<Array>} Array of timeline entries sorted newest first
    */
   async getInquiryTimeline(inquiryId) {
-    // Fetch manual notes
-    const notes = await db
-      .select({
-        id: inquiryNotesTable.id,
-        inquiryId: inquiryNotesTable.inquiryId,
-        content: inquiryNotesTable.content,
-        createdAt: inquiryNotesTable.createdAt,
-        createdBy: {
+    // Phase 1: Run all independent queries in parallel (4 queries → 1 round-trip)
+    const [notes, proposals, services, allUsers] = await Promise.all([
+      // Manual notes with user info
+      db
+        .select({
+          id: inquiryNotesTable.id,
+          inquiryId: inquiryNotesTable.inquiryId,
+          content: inquiryNotesTable.content,
+          createdAt: inquiryNotesTable.createdAt,
+          createdBy: {
+            id: userTable.id,
+            firstName: userTable.firstName,
+            lastName: userTable.lastName,
+            email: userTable.email,
+          },
+        })
+        .from(inquiryNotesTable)
+        .leftJoin(userTable, eq(inquiryNotesTable.createdBy, userTable.id))
+        .where(eq(inquiryNotesTable.inquiryId, inquiryId)),
+
+      // Proposals for this inquiry (to find related activity logs)
+      db
+        .select({ id: proposalTable.id })
+        .from(proposalTable)
+        .where(eq(proposalTable.inquiryId, inquiryId)),
+
+      // Service names for enrichment (small table, select only needed fields)
+      db
+        .select({ id: serviceTable.id, name: serviceTable.name })
+        .from(serviceTable),
+
+      // User names for enrichment (select only needed fields)
+      db
+        .select({
           id: userTable.id,
           firstName: userTable.firstName,
           lastName: userTable.lastName,
-          email: userTable.email,
-        },
-      })
-      .from(inquiryNotesTable)
-      .leftJoin(userTable, eq(inquiryNotesTable.createdBy, userTable.id))
-      .where(eq(inquiryNotesTable.inquiryId, inquiryId));
+        })
+        .from(userTable),
+    ]);
 
-    // Get all proposals for this inquiry to include their activities
-    const proposals = await db
-      .select({ id: proposalTable.id })
-      .from(proposalTable)
-      .where(eq(proposalTable.inquiryId, inquiryId));
+    // Build lookup maps
+    const serviceMap = {};
+    for (const s of services) serviceMap[s.id] = s.name;
 
+    const userMap = {};
+    for (const u of allUsers) userMap[u.id] = `${u.firstName} ${u.lastName}`;
+
+    // Phase 2: Activity logs (depends on proposalIds from Phase 1)
     const proposalIds = proposals.map((p) => p.id);
 
-    // Fetch activity logs:
-    // 1. Activities for the inquiry itself (entityType = "inquiry")
-    // 2. Activities for proposals related to this inquiry (entityType = "proposal")
-    // 3. Activities directly linked to this inquiry via inquiryId (calendar events, etc.)
-
-    const activityConditions = [];
-
-    // Activities with inquiryId set (calendar events, notes, etc.)
-    activityConditions.push(eq(activityLogTable.inquiryId, inquiryId));
-
-    // Activities for the inquiry entity itself
-    activityConditions.push(
+    const activityConditions = [
+      // Activities directly linked to this inquiry
+      eq(activityLogTable.inquiryId, inquiryId),
+      // Activities for the inquiry entity itself
       and(
         eq(activityLogTable.entityType, "inquiry"),
         eq(activityLogTable.entityId, inquiryId),
       ),
-    );
+    ];
 
-    // Add proposal activities if there are any proposals
-    if (proposalIds.length > 0) {
-      proposalIds.forEach((proposalId) => {
-        activityConditions.push(
-          and(
-            eq(activityLogTable.entityType, "proposal"),
-            eq(activityLogTable.entityId, proposalId),
-          ),
-        );
-      });
+    // Add proposal activities if any
+    for (const proposalId of proposalIds) {
+      activityConditions.push(
+        and(
+          eq(activityLogTable.entityType, "proposal"),
+          eq(activityLogTable.entityId, proposalId),
+        ),
+      );
     }
 
     const activities = await db
@@ -190,20 +205,6 @@ class InquiryNotesService {
       .from(activityLogTable)
       .leftJoin(userTable, eq(activityLogTable.userId, userTable.id))
       .where(or(...activityConditions));
-
-    // Fetch service names for service ID lookups (for inquiry_updated activities)
-    const services = await db.select().from(serviceTable);
-    const serviceMap = {};
-    services.forEach((service) => {
-      serviceMap[service.id] = service.name;
-    });
-
-    // Fetch user names for assignedTo lookups
-    const users = await db.select().from(userTable);
-    const userMap = {};
-    users.forEach((user) => {
-      userMap[user.id] = `${user.firstName} ${user.lastName}`;
-    });
 
     // Combine and format timeline entries
     const timeline = [
