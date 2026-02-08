@@ -139,16 +139,8 @@ export function RequestProposalDialog({
             const hasContentWrapper = savedHtml.includes('<div class="content">');
             const hasTableHeader = savedHtml.includes("header-table");
 
-            console.log("Template detection:", {
-              usesFlexbox,
-              hasContentWrapper,
-              hasTableHeader,
-              needsRerender: usesFlexbox || !hasContentWrapper || !hasTableHeader
-            });
-
             if (usesFlexbox || !hasContentWrapper || !hasTableHeader) {
               // Old template structure - re-render from current template instead
-              console.warn("Saved HTML uses outdated template structure, re-rendering from current template");
 
               // Extract just the editable content from saved HTML
               const bodyMatch = savedHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
