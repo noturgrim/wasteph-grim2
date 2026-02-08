@@ -18,21 +18,21 @@ class DashboardService {
     const now = new Date();
 
     const [
-      leadStats,
-      proposalStats,
-      contractStats,
-      clientCount,
+      activeLeads,
+      activeProposals,
+      contractsInProgress,
+      myClients,
       upcomingEvents,
       recentActivity,
     ] = await Promise.all([
-      // 1. Lead counts — claimed by this user
-      this._getLeadStats(userId),
+      // 1. Lead count — claimed by this user
+      this._getLeadCount(userId),
 
-      // 2. Proposal counts by status — requested by this user
-      this._getProposalStats(userId),
+      // 2. Active proposal count — requested by this user
+      this._getActiveProposalCount(userId),
 
-      // 3. Contract counts by status — requested by this user
-      this._getContractStats(userId),
+      // 3. In-progress contract count — requested by this user
+      this._getContractInProgressCount(userId),
 
       // 4. Client count — managed by this user
       this._getClientCount(userId),
@@ -40,21 +40,16 @@ class DashboardService {
       // 5. Upcoming calendar events — next 5
       this._getUpcomingEvents(userId, now),
 
-      // 6. Recent activity — last 5
+      // 6. Recent activity — last 10
       this._getRecentActivity(userId),
     ]);
 
     return {
       stats: {
-        activeLeads: leadStats.total,
-        activeProposals: proposalStats.total,
-        contractsInProgress: contractStats.total,
-        myClients: clientCount,
-      },
-      pipeline: {
-        leads: leadStats.breakdown,
-        proposals: proposalStats.breakdown,
-        contracts: contractStats.breakdown,
+        activeLeads,
+        activeProposals,
+        contractsInProgress,
+        myClients,
       },
       upcomingEvents,
       recentActivity,
@@ -62,119 +57,49 @@ class DashboardService {
   }
 
   /**
-   * Leads claimed by this user (not unclaimed leads).
-   * Lead table has no status column — uses isClaimed boolean.
+   * Count of leads claimed by this user.
    */
-  async _getLeadStats(userId) {
+  async _getLeadCount(userId) {
     const rows = await db
-      .select({
-        total: sql`count(*)::int`,
-      })
+      .select({ total: sql`count(*)::int` })
       .from(leadTable)
       .where(eq(leadTable.claimedBy, userId));
 
-    const total = rows[0]?.total ?? 0;
-
-    return { total, breakdown: [] };
+    return rows[0]?.total ?? 0;
   }
 
   /**
-   * Proposal counts grouped by status for the user.
-   * Only counts active statuses for the top-level number.
+   * Count of active proposals (pending, approved, sent) requested by this user.
    */
-  async _getProposalStats(userId) {
-    const activeStatuses = ["pending", "approved", "sent"];
-    const displayStatuses = ["pending", "approved", "sent", "accepted"];
-
-    const [activeRows, breakdownRows] = await Promise.all([
-      db
-        .select({ total: sql`count(*)::int` })
-        .from(proposalTable)
-        .where(
-          and(
-            eq(proposalTable.requestedBy, userId),
-            inArray(proposalTable.status, activeStatuses),
-          ),
+  async _getActiveProposalCount(userId) {
+    const rows = await db
+      .select({ total: sql`count(*)::int` })
+      .from(proposalTable)
+      .where(
+        and(
+          eq(proposalTable.requestedBy, userId),
+          inArray(proposalTable.status, ["pending", "approved", "sent"]),
         ),
-      db
-        .select({
-          status: proposalTable.status,
-          count: sql`count(*)::int`,
-        })
-        .from(proposalTable)
-        .where(
-          and(
-            eq(proposalTable.requestedBy, userId),
-            inArray(proposalTable.status, displayStatuses),
-          ),
-        )
-        .groupBy(proposalTable.status),
-    ]);
+      );
 
-    const total = activeRows[0]?.total ?? 0;
-
-    // Build ordered breakdown
-    const countMap = Object.fromEntries(
-      breakdownRows.map((r) => [r.status, r.count]),
-    );
-    const breakdown = displayStatuses.map((s) => ({
-      status: s,
-      count: countMap[s] ?? 0,
-    }));
-
-    return { total, breakdown };
+    return rows[0]?.total ?? 0;
   }
 
   /**
-   * Contract counts grouped by status for the user.
-   * "In progress" = everything except signed & hardbound_received.
+   * Count of in-progress contracts (everything except signed & hardbound_received).
    */
-  async _getContractStats(userId) {
-    const terminalStatuses = ["signed", "hardbound_received"];
-    const displayStatuses = [
-      "pending_request",
-      "requested",
-      "ready_for_sales",
-      "sent_to_sales",
-      "sent_to_client",
-    ];
-
-    const [activeRows, breakdownRows] = await Promise.all([
-      db
-        .select({ total: sql`count(*)::int` })
-        .from(contractsTable)
-        .where(
-          and(
-            eq(contractsTable.requestedBy, userId),
-            notInArray(contractsTable.status, terminalStatuses),
-          ),
+  async _getContractInProgressCount(userId) {
+    const rows = await db
+      .select({ total: sql`count(*)::int` })
+      .from(contractsTable)
+      .where(
+        and(
+          eq(contractsTable.requestedBy, userId),
+          notInArray(contractsTable.status, ["signed", "hardbound_received"]),
         ),
-      db
-        .select({
-          status: contractsTable.status,
-          count: sql`count(*)::int`,
-        })
-        .from(contractsTable)
-        .where(
-          and(
-            eq(contractsTable.requestedBy, userId),
-            inArray(contractsTable.status, displayStatuses),
-          ),
-        )
-        .groupBy(contractsTable.status),
-    ]);
+      );
 
-    const total = activeRows[0]?.total ?? 0;
-
-    const countMap = Object.fromEntries(
-      breakdownRows.map((r) => [r.status, r.count]),
-    );
-    const breakdown = displayStatuses.map((s) => ({
-      status: s,
-      count: countMap[s] ?? 0,
-    }));
-
-    return { total, breakdown };
+    return rows[0]?.total ?? 0;
   }
 
   /**
@@ -218,7 +143,7 @@ class DashboardService {
   }
 
   /**
-   * Last 5 activity log entries for this user.
+   * Last 10 activity log entries for this user.
    */
   async _getRecentActivity(userId) {
     const rows = await db
@@ -233,7 +158,7 @@ class DashboardService {
       .from(activityLogTable)
       .where(eq(activityLogTable.userId, userId))
       .orderBy(desc(activityLogTable.createdAt))
-      .limit(5);
+      .limit(10);
 
     return rows;
   }

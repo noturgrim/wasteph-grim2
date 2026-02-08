@@ -1,6 +1,23 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDistanceToNow } from "date-fns";
+import {
+  FileText,
+  FolderKanban,
+  Users,
+  MessageSquare,
+  UserPlus,
+  Send,
+  CheckCircle2,
+  XCircle,
+  PenLine,
+  Trash2,
+  ClipboardList,
+  Activity,
+} from "lucide-react";
+
+// --- Helpers ---
 
 const ENTITY_COLORS = {
   proposal:
@@ -16,15 +33,120 @@ const ENTITY_COLORS = {
     "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/30",
 };
 
-const DEFAULT_COLOR =
+const DEFAULT_ENTITY_COLOR =
   "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/30";
 
-const formatAction = (action) => {
-  if (!action) return "Unknown action";
-  return action
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+const ICON_BG = {
+  proposal: "bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400",
+  contract:
+    "bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-400",
+  lead: "bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400",
+  inquiry:
+    "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400",
+  client: "bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400",
+  ticket:
+    "bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400",
 };
+
+const DEFAULT_ICON_BG =
+  "bg-slate-100 text-slate-600 dark:bg-slate-500/20 dark:text-slate-400";
+
+/** Map action strings to a human-readable label and icon. */
+const ACTION_MAP = {
+  // Proposals
+  proposal_created: { label: "Created a proposal", icon: FileText },
+  proposal_updated: { label: "Updated a proposal", icon: PenLine },
+  proposal_revised: { label: "Revised a proposal", icon: PenLine },
+  proposal_approved: { label: "Proposal approved by admin", icon: CheckCircle2 },
+  proposal_disapproved: { label: "Proposal disapproved", icon: XCircle },
+  proposal_sent: { label: "Sent proposal to client", icon: Send },
+  proposal_cancelled: { label: "Cancelled a proposal", icon: XCircle },
+  proposal_client_approved: { label: "Client accepted proposal", icon: CheckCircle2 },
+  proposal_client_rejected: { label: "Client rejected proposal", icon: XCircle },
+  proposal_email_retried: { label: "Retried proposal email", icon: Send },
+
+  // Contracts
+  contract_created: { label: "Contract created", icon: FolderKanban },
+  contract_requested: { label: "Requested a contract", icon: ClipboardList },
+  contract_uploaded: { label: "Contract PDF uploaded", icon: FolderKanban },
+  contract_generated_from_template: { label: "Contract generated from template", icon: FolderKanban },
+  contract_html_edited: { label: "Edited contract content", icon: PenLine },
+  contract_sent_to_client: { label: "Sent contract to client", icon: Send },
+  contract_signed_by_client: { label: "Client signed contract", icon: CheckCircle2 },
+  hardbound_contract_uploaded: { label: "Hardbound contract uploaded", icon: FolderKanban },
+
+  // Leads
+  lead_created: { label: "Created a lead", icon: UserPlus },
+  lead_created_public: { label: "Lead submitted via website", icon: UserPlus },
+  lead_created_from_inquiry: { label: "Lead created from inquiry", icon: UserPlus },
+  lead_updated: { label: "Updated a lead", icon: PenLine },
+  lead_claimed: { label: "Claimed a lead", icon: Users },
+  lead_deleted: { label: "Deleted a lead", icon: Trash2 },
+  lead_deleted_bulk: { label: "Bulk deleted leads", icon: Trash2 },
+
+  // Inquiries
+  inquiry_created: { label: "Created an inquiry", icon: MessageSquare },
+  inquiry_created_manual: { label: "Manually created inquiry", icon: MessageSquare },
+  inquiry_updated: { label: "Updated an inquiry", icon: PenLine },
+  inquiry_assigned: { label: "Assigned an inquiry", icon: Users },
+  inquiry_converted_to_lead: { label: "Converted inquiry to lead", icon: UserPlus },
+  inquiry_deleted: { label: "Deleted an inquiry", icon: Trash2 },
+
+  // Tickets
+  ticket_created: { label: "Created a ticket", icon: ClipboardList },
+  ticket_updated: { label: "Updated a ticket", icon: PenLine },
+  ticket_status_updated: { label: "Changed ticket status", icon: Activity },
+  ticket_comment_added: { label: "Commented on a ticket", icon: MessageSquare },
+
+  // Clients
+  client_created: { label: "Client record created", icon: Users },
+  client_updated: { label: "Updated client info", icon: PenLine },
+  client_deleted: { label: "Deleted a client", icon: Trash2 },
+};
+
+/**
+ * Parse JSON details string into readable key-value pairs.
+ */
+const parseDetails = (raw) => {
+  if (!raw) return [];
+
+  try {
+    const obj = typeof raw === "string" ? JSON.parse(raw) : raw;
+    if (!obj || typeof obj !== "object") return [];
+
+    const items = [];
+
+    if (obj.proposalNumber) items.push({ label: "Proposal", value: obj.proposalNumber });
+    if (obj.contractNumber) items.push({ label: "Contract", value: obj.contractNumber });
+    if (obj.inquiryNumber) items.push({ label: "Inquiry", value: obj.inquiryNumber });
+    if (obj.ticketNumber) items.push({ label: "Ticket", value: obj.ticketNumber });
+    if (obj.companyName || obj.company)
+      items.push({ label: "Company", value: obj.companyName || obj.company });
+    if (obj.clientName) items.push({ label: "Client", value: obj.clientName });
+    if (obj.name) items.push({ label: "Name", value: obj.name });
+    if (obj.clientEmail) items.push({ label: "Email", value: obj.clientEmail });
+    if (obj.contractType)
+      items.push({ label: "Type", value: obj.contractType.replace(/_/g, " ") });
+    if (obj.oldStatus && obj.newStatus)
+      items.push({
+        label: "Status",
+        value: `${obj.oldStatus.replace(/_/g, " ")} → ${obj.newStatus.replace(/_/g, " ")}`,
+      });
+    else if (obj.status)
+      items.push({ label: "Status", value: obj.status.replace(/_/g, " ") });
+    if (obj.rejectionReason) items.push({ label: "Reason", value: obj.rejectionReason });
+    if (obj.requestNotes) items.push({ label: "Notes", value: obj.requestNotes });
+    if (obj.serviceRequestsCount != null)
+      items.push({ label: "Service Requests", value: String(obj.serviceRequestsCount) });
+    if (obj.source) items.push({ label: "Source", value: obj.source });
+
+    return items;
+  } catch {
+    return [];
+  }
+};
+
+// --- Component ---
 
 const RecentActivity = ({ activities = [] }) => {
   if (activities.length === 0) {
@@ -36,9 +158,10 @@ const RecentActivity = ({ activities = [] }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground text-center py-8">
-            No recent activity
-          </p>
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <Activity className="h-10 w-10 text-muted-foreground/40 mb-2" />
+            <p className="text-sm text-muted-foreground">No recent activity</p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -51,44 +174,64 @@ const RecentActivity = ({ activities = [] }) => {
           Recent Activity
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {activities.map((activity) => {
-            const entityColor =
-              ENTITY_COLORS[activity.entityType] || DEFAULT_COLOR;
+      <CardContent className="p-0">
+        <ScrollArea className="h-[360px] px-6 pb-6">
+          <div className="space-y-1">
+            {activities.map((activity) => {
+              const mapped = ACTION_MAP[activity.action];
+              const Icon = mapped?.icon || Activity;
+              const label = mapped?.label || activity.action?.replace(/_/g, " ") || "Unknown";
+              const entityColor =
+                ENTITY_COLORS[activity.entityType] || DEFAULT_ENTITY_COLOR;
+              const iconBg = ICON_BG[activity.entityType] || DEFAULT_ICON_BG;
+              const details = parseDetails(activity.details);
 
-            return (
-              <div
-                key={activity.id}
-                className="flex items-start gap-3 rounded-lg border p-3 border-slate-200 dark:border-white/10"
-              >
-                <div className="flex-1 min-w-0 space-y-1">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">
-                    {formatAction(activity.action)}
-                  </p>
-                  {activity.details && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {activity.details}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2">
+              return (
+                <div
+                  key={activity.id}
+                  className="flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-accent/50"
+                >
+                  <div
+                    className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconBg}`}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium text-slate-900 dark:text-white">
+                        {label}
+                      </p>
+                      <span className="shrink-0 text-xs text-muted-foreground whitespace-nowrap">
+                        {formatDistanceToNow(new Date(activity.createdAt), {
+                          addSuffix: true,
+                        })}
+                      </span>
+                    </div>
+                    {details.length > 0 && (
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                        {details.map((d) => (
+                          <span
+                            key={d.label}
+                            className="text-xs text-muted-foreground"
+                          >
+                            <span className="font-medium">{d.label}:</span>{" "}
+                            {d.value}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     <Badge
                       variant="outline"
-                      className={`text-xs capitalize ${entityColor}`}
+                      className={`text-[10px] capitalize ${entityColor}`}
                     >
                       {activity.entityType}
                     </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(activity.createdAt), {
-                        addSuffix: true,
-                      })}
-                    </span>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );

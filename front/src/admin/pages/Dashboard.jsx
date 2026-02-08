@@ -4,7 +4,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import DashboardCard from "../components/common/DashboardCard";
-import PipelineBreakdown from "../components/dashboard/PipelineBreakdown";
 import UpcomingEvents from "../components/dashboard/UpcomingEvents";
 import RecentActivity from "../components/dashboard/RecentActivity";
 
@@ -49,6 +48,7 @@ const ContentSkeleton = () => (
     <Skeleton className="h-[320px] rounded-xl" />
   </div>
 );
+
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -104,24 +104,14 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Pipeline + Events */}
+      {/* Upcoming Events + Recent Activity */}
       {isLoading ? (
         <ContentSkeleton />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          <PipelineBreakdown
-            proposals={data?.pipeline?.proposals ?? []}
-            contracts={data?.pipeline?.contracts ?? []}
-          />
           <UpcomingEvents events={data?.upcomingEvents ?? []} />
+          <RecentActivity activities={data?.recentActivity ?? []} />
         </div>
-      )}
-
-      {/* Recent Activity */}
-      {isLoading ? (
-        <Skeleton className="h-[280px] rounded-xl" />
-      ) : (
-        <RecentActivity activities={data?.recentActivity ?? []} />
       )}
     </div>
   );
