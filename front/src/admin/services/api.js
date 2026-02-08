@@ -896,6 +896,11 @@ class ApiClient {
     });
   }
 
+  // Dashboard
+  async getSalesDashboard() {
+    return this.request("/dashboard/sales");
+  }
+
   // Notifications
   async getNotifications(params = {}) {
     return this.request("/notifications", { params });

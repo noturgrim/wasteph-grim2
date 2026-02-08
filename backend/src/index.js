@@ -30,6 +30,7 @@ import calendarEventRoutes from "./routes/calendarEventRoutes.js";
 import ticketRoutes from "./routes/ticketRoutes.js";
 import clientNotesRoutes from "./routes/clientNotesRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
 
 dotenv.config();
 
@@ -107,6 +108,7 @@ app.use("/api/calendar-events", calendarEventRoutes);
 app.use("/api/tickets", ticketRoutes);
 app.use("/api/client-notes", clientNotesRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
