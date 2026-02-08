@@ -126,7 +126,7 @@ export default function Leads() {
             fetchLeads(currentPageRef.current);
           },
         });
-        
+
         // If subscription succeeded, log success
         if (leadSocketService.isSubscribed()) {
           console.log("Lead socket subscription successful");
@@ -161,7 +161,7 @@ export default function Leads() {
 
   const fetchLeads = async (
     page = pagination.page,
-    limit = pagination.limit
+    limit = pagination.limit,
   ) => {
     const currentFetchId = ++fetchIdRef.current;
     setIsLoading(true);
@@ -183,7 +183,7 @@ export default function Leads() {
 
       setLeads(response.data || []);
       setPagination(
-        response.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 }
+        response.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 },
       );
     } catch (error) {
       if (currentFetchId !== fetchIdRef.current) return;
@@ -240,7 +240,7 @@ export default function Leads() {
       // Pass source only if user selected one
       await api.claimLead(selectedLead.id, claimSource || undefined);
       toast.success(
-        "Lead claimed successfully! Check Inquiries page to manage it."
+        "Lead claimed successfully! Check Inquiries page to manage it.",
       );
       setIsClaimDialogOpen(false);
       setClaimSource("");
@@ -311,21 +311,24 @@ export default function Leads() {
 
   const handleSelectLead = useCallback((leadId, isSelected) => {
     setSelectedLeads((prev) =>
-      isSelected ? [...prev, leadId] : prev.filter((id) => id !== leadId)
+      isSelected ? [...prev, leadId] : prev.filter((id) => id !== leadId),
     );
   }, []);
 
-  const handleSelectAll = useCallback((isSelected) => {
-    if (!isSelected) {
-      setSelectedLeads([]);
-      return;
-    }
-    // Only select unclaimed leads
-    const unclaimedLeadIds = leads
-      .filter((lead) => !lead.isClaimed)
-      .map((lead) => lead.id);
-    setSelectedLeads(unclaimedLeadIds);
-  }, [leads]);
+  const handleSelectAll = useCallback(
+    (isSelected) => {
+      if (!isSelected) {
+        setSelectedLeads([]);
+        return;
+      }
+      // Only select unclaimed leads
+      const unclaimedLeadIds = leads
+        .filter((lead) => !lead.isClaimed)
+        .map((lead) => lead.id);
+      setSelectedLeads(unclaimedLeadIds);
+    },
+    [leads],
+  );
 
   const handleViewLead = useCallback((lead) => {
     setSelectedLead(lead);
@@ -353,7 +356,7 @@ export default function Leads() {
       selectedLeads,
       handleSelectLead,
       handleSelectAll,
-    ]
+    ],
   );
 
   const columns = useMemo(
@@ -362,7 +365,7 @@ export default function Leads() {
         if (!column.accessorKey) return true;
         return columnVisibility[column.accessorKey];
       }),
-    [allColumns, columnVisibility]
+    [allColumns, columnVisibility],
   );
 
   return (
@@ -478,8 +481,8 @@ export default function Leads() {
           statusFilter === "all"
             ? "No leads in pool"
             : statusFilter === "unclaimed"
-            ? "No available leads in pool"
-            : "No claimed leads"
+              ? "No available leads in pool"
+              : "No claimed leads"
         }
         showViewOptions={false}
       />

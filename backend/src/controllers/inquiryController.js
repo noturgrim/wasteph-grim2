@@ -86,6 +86,7 @@ export const getAllInquiries = async (req, res, next) => {
       success: true,
       data: result.data,
       pagination: result.pagination,
+      facets: result.facets,
     });
   } catch (error) {
     next(error);

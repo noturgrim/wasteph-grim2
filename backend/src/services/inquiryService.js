@@ -70,73 +70,46 @@ class InquiryService {
       source,
       serviceType,
       month,
-      page = 1,
-      limit = 10,
+      page: rawPage = 1,
+      limit: rawLimit = 10,
     } = options;
 
-    // Calculate offset
+    const page = Number(rawPage) || 1;
+    const limit = Number(rawLimit) || 10;
     const offset = (page - 1) * limit;
 
-    // Build base query with service join
-    let query = db
-      .select({
-        id: inquiryTable.id,
-        inquiryNumber: inquiryTable.inquiryNumber,
-        name: inquiryTable.name,
-        email: inquiryTable.email,
-        phone: inquiryTable.phone,
-        company: inquiryTable.company,
-        location: inquiryTable.location,
-        message: inquiryTable.message,
-        serviceId: inquiryTable.serviceId,
-        serviceType: serviceTable.name, // Add service name as serviceType for frontend compatibility
-        status: inquiryTable.status,
-        source: inquiryTable.source,
-        assignedTo: inquiryTable.assignedTo,
-        notes: inquiryTable.notes,
-        isInformationComplete: inquiryTable.isInformationComplete,
-        createdAt: inquiryTable.createdAt,
-        updatedAt: inquiryTable.updatedAt,
-        service: {
-          id: serviceTable.id,
-          name: serviceTable.name,
-          description: serviceTable.description,
-        },
-      })
-      .from(inquiryTable)
-      .leftJoin(serviceTable, eq(inquiryTable.serviceId, serviceTable.id));
+    // --- Build filter conditions ---
     const conditions = [];
 
-    // Status filter - support multiple statuses (comma-separated)
+    // Base condition: user scope (used for both filters AND facet counts)
+    const baseConditions = [];
+    if (assignedTo) {
+      baseConditions.push(eq(inquiryTable.assignedTo, assignedTo));
+    }
+
+    // Status filter
     if (status) {
       const statuses = status.split(",").map((s) => s.trim());
-      if (statuses.length === 1) {
-        conditions.push(eq(inquiryTable.status, statuses[0]));
-      } else {
-        conditions.push(inArray(inquiryTable.status, statuses));
-      }
+      conditions.push(
+        statuses.length === 1
+          ? eq(inquiryTable.status, statuses[0])
+          : inArray(inquiryTable.status, statuses),
+      );
     }
 
-    // Assigned to filter
-    if (assignedTo) {
-      conditions.push(eq(inquiryTable.assignedTo, assignedTo));
-    }
-
-    // Source filter - support multiple sources (comma-separated)
+    // Source filter
     if (source) {
       const sources = source.split(",").map((s) => s.trim());
-      if (sources.length === 1) {
-        conditions.push(eq(inquiryTable.source, sources[0]));
-      } else {
-        conditions.push(inArray(inquiryTable.source, sources));
-      }
+      conditions.push(
+        sources.length === 1
+          ? eq(inquiryTable.source, sources[0])
+          : inArray(inquiryTable.source, sources),
+      );
     }
 
-    // Service filter - lookup service UUIDs by names, then filter by IDs
+    // Service filter — resolve IDs synchronously from name mapping
+    let serviceIdCondition = null;
     if (serviceType) {
-      const serviceNames = serviceType.split(",").map((s) => s.trim());
-
-      // Map frontend snake_case values to actual service names in database
       const serviceNameMapping = {
         fixed_monthly_rate: "Fixed Monthly Rate",
         hazardous_waste: "Hazardous Waste",
@@ -145,47 +118,42 @@ class InquiryService {
         onetime_hauling: "One-time Hauling",
         purchase_of_recyclables: "Purchase of Recyclables",
       };
+      const actualNames = serviceType
+        .split(",")
+        .map((s) => serviceNameMapping[s.trim()] || s.trim());
 
-      // Convert to actual service names
-      const actualServiceNames = serviceNames.map(
-        (name) => serviceNameMapping[name] || name,
-      );
-
-      // First, get the service IDs for these service names
       const services = await db
         .select({ id: serviceTable.id })
         .from(serviceTable)
-        .where(inArray(serviceTable.name, actualServiceNames));
+        .where(inArray(serviceTable.name, actualNames));
 
       const serviceIds = services.map((s) => s.id);
-
-      // Only add filter if we found matching services
       if (serviceIds.length > 0) {
-        if (serviceIds.length === 1) {
-          conditions.push(eq(inquiryTable.serviceId, serviceIds[0]));
-        } else {
-          conditions.push(inArray(inquiryTable.serviceId, serviceIds));
-        }
+        serviceIdCondition =
+          serviceIds.length === 1
+            ? eq(inquiryTable.serviceId, serviceIds[0])
+            : inArray(inquiryTable.serviceId, serviceIds);
+        conditions.push(serviceIdCondition);
       }
     }
 
-    // Search filter (name, email, company)
+    // Search filter
     if (search) {
-      const searchTerm = `%${search}%`;
+      const term = `%${search}%`;
       conditions.push(
         or(
-          like(inquiryTable.name, searchTerm),
-          like(inquiryTable.email, searchTerm),
-          like(inquiryTable.company, searchTerm),
+          like(inquiryTable.name, term),
+          like(inquiryTable.email, term),
+          like(inquiryTable.company, term),
         ),
       );
     }
 
-    // Month filter (format: "YYYY-MM")
+    // Month filter
     if (month) {
       const [year, monthNum] = month.split("-").map(Number);
       const startDate = new Date(year, monthNum - 1, 1);
-      const endDate = new Date(year, monthNum, 0, 23, 59, 59, 999); // Last day of month
+      const endDate = new Date(year, monthNum, 0, 23, 59, 59, 999);
       conditions.push(
         and(
           sql`${inquiryTable.createdAt} >= ${startDate}`,
@@ -194,34 +162,97 @@ class InquiryService {
       );
     }
 
-    // Apply conditions if any
-    if (conditions.length > 0) {
-      query = query.where(and(...conditions));
-    }
+    // Full WHERE for the filtered queries (base + specific filters)
+    const allConditions = [...baseConditions, ...conditions];
+    const whereClause =
+      allConditions.length > 0 ? and(...allConditions) : undefined;
 
-    // Get total count for pagination
-    let countQuery = db
-      .select({ value: count() })
-      .from(inquiryTable)
-      .leftJoin(serviceTable, eq(inquiryTable.serviceId, serviceTable.id));
-    if (conditions.length > 0) {
-      countQuery = countQuery.where(and(...conditions));
-    }
-    const [{ value: total }] = await countQuery;
+    // Base WHERE for facet counts (only user scope, no other filters)
+    const baseWhere =
+      baseConditions.length > 0 ? and(...baseConditions) : undefined;
 
-    // Order by creation date and apply pagination
-    const inquiries = await query
-      .orderBy(desc(inquiryTable.createdAt))
-      .limit(limit)
-      .offset(offset);
+    // --- Run count + data + facet counts in parallel ---
+    const [countResult, inquiries, statusFacets, sourceFacets, serviceTypeFacets] =
+      await Promise.all([
+        // 1. Filtered count for pagination
+        db
+          .select({ value: count() })
+          .from(inquiryTable)
+          .where(whereClause),
 
-    // Fetch proposal status for each inquiry
+        // 2. Paginated data
+        db
+          .select({
+            id: inquiryTable.id,
+            inquiryNumber: inquiryTable.inquiryNumber,
+            name: inquiryTable.name,
+            email: inquiryTable.email,
+            phone: inquiryTable.phone,
+            company: inquiryTable.company,
+            location: inquiryTable.location,
+            message: inquiryTable.message,
+            serviceId: inquiryTable.serviceId,
+            serviceType: serviceTable.name,
+            status: inquiryTable.status,
+            source: inquiryTable.source,
+            assignedTo: inquiryTable.assignedTo,
+            notes: inquiryTable.notes,
+            isInformationComplete: inquiryTable.isInformationComplete,
+            createdAt: inquiryTable.createdAt,
+            updatedAt: inquiryTable.updatedAt,
+            service: {
+              id: serviceTable.id,
+              name: serviceTable.name,
+              description: serviceTable.description,
+            },
+          })
+          .from(inquiryTable)
+          .leftJoin(serviceTable, eq(inquiryTable.serviceId, serviceTable.id))
+          .where(whereClause)
+          .orderBy(desc(inquiryTable.createdAt))
+          .limit(limit)
+          .offset(offset),
+
+        // 3. Facet: status counts (base scope only)
+        db
+          .select({
+            status: inquiryTable.status,
+            count: count(),
+          })
+          .from(inquiryTable)
+          .where(baseWhere)
+          .groupBy(inquiryTable.status),
+
+        // 4. Facet: source counts (base scope only)
+        db
+          .select({
+            source: inquiryTable.source,
+            count: count(),
+          })
+          .from(inquiryTable)
+          .where(baseWhere)
+          .groupBy(inquiryTable.source),
+
+        // 5. Facet: service type counts (base scope only, join for name)
+        db
+          .select({
+            serviceType: serviceTable.name,
+            count: count(),
+          })
+          .from(inquiryTable)
+          .innerJoin(serviceTable, eq(inquiryTable.serviceId, serviceTable.id))
+          .where(baseWhere)
+          .groupBy(serviceTable.name),
+      ]);
+
+    const total = countResult[0].value;
+
+    // --- Fetch proposal statuses for the current page ---
     const inquiryIds = inquiries.map((inq) => inq.id);
-    let proposalStatuses = [];
+    let proposalMap = {};
 
     if (inquiryIds.length > 0) {
-      // Get the most recent proposal for each inquiry
-      proposalStatuses = await db
+      const proposalStatuses = await db
         .select({
           inquiryId: proposalTable.inquiryId,
           proposalId: proposalTable.id,
@@ -233,24 +264,22 @@ class InquiryService {
         .from(proposalTable)
         .where(inArray(proposalTable.inquiryId, inquiryIds))
         .orderBy(desc(proposalTable.createdAt));
+
+      for (const p of proposalStatuses) {
+        if (!proposalMap[p.inquiryId]) {
+          proposalMap[p.inquiryId] = {
+            proposalId: p.proposalId,
+            proposalNumber: p.proposalNumber,
+            proposalStatus: p.status,
+            proposalCreatedAt: p.createdAt,
+            proposalRejectionReason: p.rejectionReason,
+          };
+        }
+      }
     }
 
-    // Create a map of inquiry ID to proposal status (most recent)
-    const proposalMap = {};
-    proposalStatuses.forEach((p) => {
-      if (!proposalMap[p.inquiryId]) {
-        proposalMap[p.inquiryId] = {
-          proposalId: p.proposalId,
-          proposalNumber: p.proposalNumber,
-          proposalStatus: p.status,
-          proposalCreatedAt: p.createdAt,
-          proposalRejectionReason: p.rejectionReason,
-        };
-      }
-    });
-
-    // Attach proposal data to inquiries and convert serviceType to frontend format
-    const inquiriesWithProposals = inquiries.map((inquiry) => ({
+    // --- Build response ---
+    const data = inquiries.map((inquiry) => ({
       ...inquiry,
       serviceType: inquiry.serviceType
         ? this.serviceNameToFrontend(inquiry.serviceType)
@@ -263,13 +292,32 @@ class InquiryService {
         proposalMap[inquiry.id]?.proposalRejectionReason || null,
     }));
 
+    // Convert facet arrays to { value: count } maps
+    const toFacetMap = (rows, key) => {
+      const map = {};
+      for (const row of rows) {
+        if (row[key]) map[row[key]] = row.count;
+      }
+      return map;
+    };
+
     return {
-      data: inquiriesWithProposals,
+      data,
       pagination: {
         total,
         page,
         limit,
         totalPages: Math.ceil(total / limit),
+      },
+      facets: {
+        status: toFacetMap(statusFacets, "status"),
+        source: toFacetMap(sourceFacets, "source"),
+        serviceType: Object.fromEntries(
+          serviceTypeFacets.map((r) => [
+            this.serviceNameToFrontend(r.serviceType),
+            r.count,
+          ]),
+        ),
       },
     };
   }
@@ -427,9 +475,8 @@ class InquiryService {
       };
     }
 
-    // Only log activity if there were actual changes
     if (Object.keys(changes).length > 0) {
-      await this.logActivity({
+      this._logInBackground({
         userId,
         action: "inquiry_updated",
         entityType: "inquiry",
@@ -461,8 +508,7 @@ class InquiryService {
       throw new AppError("Inquiry not found", 404);
     }
 
-    // Log activity
-    await this.logActivity({
+    this._logInBackground({
       userId,
       action: "inquiry_deleted",
       entityType: "inquiry",
@@ -506,12 +552,11 @@ class InquiryService {
         message,
         source,
         serviceType,
-        assignedTo: userId, // Auto-assign to creator
+        assignedTo: userId,
       })
       .returning();
 
-    // Log activity
-    await this.logActivity({
+    this._logInBackground({
       userId,
       action: "inquiry_created_manual",
       entityType: "inquiry",
@@ -533,10 +578,6 @@ class InquiryService {
    * @throws {AppError} If inquiry not found
    */
   async assignInquiry(inquiryId, assignToUserId, userId, metadata = {}) {
-    // Get the inquiry first
-    const inquiry = await this.getInquiryById(inquiryId);
-
-    // Update the inquiry with new assignment
     const [updatedInquiry] = await db
       .update(inquiryTable)
       .set({
@@ -546,12 +587,15 @@ class InquiryService {
       .where(eq(inquiryTable.id, inquiryId))
       .returning();
 
-    // Log activity
-    await this.logActivity({
+    if (!updatedInquiry) {
+      throw new AppError("Inquiry not found", 404);
+    }
+
+    this._logInBackground({
       userId,
       action: "inquiry_assigned",
       entityType: "inquiry",
-      entityId: inquiry.id,
+      entityId: updatedInquiry.id,
       details: { assignedTo: assignToUserId },
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent,
@@ -631,34 +675,49 @@ class InquiryService {
       .set({ status: "converted", updatedAt: new Date() })
       .where(eq(inquiryTable.id, inquiryId));
 
-    // 8. Log activities for both inquiry and lead
-    await this.logActivity({
-      userId,
-      action: "inquiry_converted_to_lead",
-      entityType: "inquiry",
-      entityId: inquiry.id,
-      details: {
-        leadId: lead.id,
-        serviceRequestsCount: serviceRequests.length,
-      },
-      ipAddress: metadata.ipAddress,
-      userAgent: metadata.userAgent,
-    });
-
-    await db.insert(activityLogTable).values({
-      userId,
-      action: "lead_created_from_inquiry",
-      entityType: "lead",
-      entityId: lead.id,
-      details: JSON.stringify({
-        inquiryId: inquiry.id,
-        serviceRequestsCount: serviceRequests.length,
-      }),
-      ipAddress: metadata.ipAddress,
-      userAgent: metadata.userAgent,
-    });
+    // Fire-and-forget: batch both activity logs in a single INSERT
+    db.insert(activityLogTable)
+      .values([
+        {
+          userId,
+          action: "inquiry_converted_to_lead",
+          entityType: "inquiry",
+          entityId: inquiry.id,
+          details: JSON.stringify({
+            leadId: lead.id,
+            serviceRequestsCount: serviceRequests.length,
+          }),
+          ipAddress: metadata.ipAddress,
+          userAgent: metadata.userAgent,
+        },
+        {
+          userId,
+          action: "lead_created_from_inquiry",
+          entityType: "lead",
+          entityId: lead.id,
+          details: JSON.stringify({
+            inquiryId: inquiry.id,
+            serviceRequestsCount: serviceRequests.length,
+          }),
+          ipAddress: metadata.ipAddress,
+          userAgent: metadata.userAgent,
+        },
+      ])
+      .catch((err) =>
+        console.error("[InquiryService] Background convert log failed:", err.message)
+      );
 
     return lead;
+  }
+
+  /**
+   * Fire-and-forget activity log — does not block the caller.
+   * @param {Object} activityData - Activity log data
+   */
+  _logInBackground(activityData) {
+    this.logActivity(activityData).catch((err) =>
+      console.error("[InquiryService] Background activity log failed:", err.message)
+    );
   }
 
   /**

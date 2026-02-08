@@ -1,5 +1,6 @@
-import { Outlet, useLocation, Link, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, Link, useNavigate, useOutlet } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import { useState } from "react";
 import { Bell, Moon, Sun, Settings, MoreVertical } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotifications } from "../../contexts/NotificationContext";
@@ -27,6 +28,17 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import PageTransition from "../common/PageTransition";
 import { AppSidebar } from "./AppSidebar";
+
+/**
+ * Freezes the outlet content at mount time so that during AnimatePresence
+ * exit animations, the OLD page keeps rendering instead of switching to the
+ * new route's component (which would cause a double mount/fetch).
+ */
+function FrozenOutlet() {
+  const outlet = useOutlet();
+  const [frozen] = useState(outlet);
+  return frozen;
+}
 
 export default function AppLayout() {
   const { user } = useAuth();
@@ -292,7 +304,7 @@ export default function AppLayout() {
         <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-white dark:bg-[#0a1f0f]">
           <AnimatePresence mode="wait">
             <PageTransition key={location.pathname}>
-              <Outlet />
+              <FrozenOutlet />
             </PageTransition>
           </AnimatePresence>
         </main>

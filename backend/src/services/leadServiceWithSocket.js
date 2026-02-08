@@ -42,7 +42,9 @@ class LeadServiceWithSocket extends LeadService {
     // Fire-and-forget socket event — don't block the response
     this.leadEvents
       ?.emitLeadCreated(lead, { isPublic: false })
-      ?.catch?.((err) => console.error("[LeadSocket] emit failed:", err.message));
+      ?.catch?.((err) =>
+        console.error("[LeadSocket] emit failed:", err.message),
+      );
 
     return lead;
   }
@@ -56,7 +58,9 @@ class LeadServiceWithSocket extends LeadService {
     // Fire-and-forget socket event — don't block the response
     this.leadEvents
       ?.emitLeadCreated(lead, { isPublic: true })
-      ?.catch?.((err) => console.error("[LeadSocket] emit failed:", err.message));
+      ?.catch?.((err) =>
+        console.error("[LeadSocket] emit failed:", err.message),
+      );
 
     return lead;
   }
@@ -79,16 +83,21 @@ class LeadServiceWithSocket extends LeadService {
    * Claim a lead (override to add socket emission)
    */
   async claimLead(leadId, userId, source, metadata = {}) {
-    const { inquiry, lead } = await super.claimLead(leadId, userId, source, metadata);
+    const { inquiry, lead } = await super.claimLead(
+      leadId,
+      userId,
+      source,
+      metadata,
+    );
 
     // Fire-and-forget: fetch user details + emit socket in background
     if (this.leadEvents) {
       db.select({
-          id: userTable.id,
-          firstName: userTable.firstName,
-          lastName: userTable.lastName,
-          email: userTable.email,
-        })
+        id: userTable.id,
+        firstName: userTable.firstName,
+        lastName: userTable.lastName,
+        email: userTable.email,
+      })
         .from(userTable)
         .where(eq(userTable.id, userId))
         .limit(1)
@@ -98,7 +107,7 @@ class LeadServiceWithSocket extends LeadService {
           }
         })
         .catch((err) =>
-          console.error("[LeadSocket] claim emit failed:", err.message)
+          console.error("[LeadSocket] claim emit failed:", err.message),
         );
     }
 

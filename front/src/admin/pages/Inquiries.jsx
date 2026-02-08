@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
 import { toast } from "../utils/toast";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
   Plus,
   SlidersHorizontal,
@@ -142,8 +143,10 @@ export default function Inquiries() {
   const { user } = useAuth();
   const isMasterSales = user?.isMasterSales || false;
   const [inquiries, setInquiries] = useState([]);
-  const [allInquiries, setAllInquiries] = useState([]); // Store all inquiries for counting
   const [isLoading, setIsLoading] = useState(true);
+
+  // Server-side facet counts (replaces the old fetchAllInquiries approach)
+  const [facets, setFacets] = useState({ status: {}, source: {}, serviceType: {} });
 
   // Pagination
   const [pagination, setPagination] = useState({
@@ -159,6 +162,10 @@ export default function Inquiries() {
   const [serviceTypeFilter, setServiceTypeFilter] = useState([]);
   const [monthFilter, setMonthFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 400);
+
+  // Stale-response guard
+  const fetchIdRef = useRef(0);
 
   // Column visibility
   const [columnVisibility, setColumnVisibility] = useState({
@@ -189,47 +196,30 @@ export default function Inquiries() {
 
   // Fetch users on mount
   useEffect(() => {
-    fetchUsers();
-    fetchAllInquiries();
+    const loadUsers = async () => {
+      try {
+        const response = await api.getUsers();
+        setUsers(response.data || response);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+      }
+    };
+    loadUsers();
   }, []);
 
-  // Fetch filtered inquiries
+  // Fetch filtered inquiries on filter change (debounced search)
   useEffect(() => {
-    setPagination((prev) => ({ ...prev, page: 1 })); // Reset to page 1 on filter change
+    setPagination((prev) => ({ ...prev, page: 1 }));
     fetchInquiries(1);
-  }, [statusFilter, sourceFilter, serviceTypeFilter, monthFilter, searchTerm]);
-
-  const fetchUsers = async () => {
-    try {
-      const response = await api.getUsers();
-      const userData = response.data || response;
-      setUsers(userData);
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
-    }
-  };
-
-  const fetchAllInquiries = async () => {
-    try {
-      const filters = {};
-      // For normal sales, only show inquiries assigned to them
-      if (!isMasterSales && user?.id) {
-        filters.assignedTo = user.id;
-      }
-      const response = await api.getInquiries(filters);
-      // Backend returns { data, pagination } so we need response.data
-      setAllInquiries(response.data || []);
-    } catch (error) {
-      console.error("Failed to fetch all inquiries:", error);
-    }
-  };
+  }, [statusFilter, sourceFilter, serviceTypeFilter, monthFilter, debouncedSearch]);
 
   const fetchInquiries = async (
     page = pagination.page,
     limit = pagination.limit,
   ) => {
+    const currentFetchId = ++fetchIdRef.current;
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       const filters = {
         status: statusFilter.length > 0 ? statusFilter.join(",") : undefined,
         source: sourceFilter.length > 0 ? sourceFilter.join(",") : undefined,
@@ -238,45 +228,51 @@ export default function Inquiries() {
             ? serviceTypeFilter.join(",")
             : undefined,
         month: monthFilter || undefined,
-        search: searchTerm || undefined,
+        search: debouncedSearch || undefined,
         page,
         limit,
       };
 
-      // For normal sales, only show inquiries assigned to them
       if (!isMasterSales && user?.id) {
         filters.assignedTo = user.id;
       }
 
       const response = await api.getInquiries(filters);
 
-      // Backend now returns { data, pagination }
+      if (currentFetchId !== fetchIdRef.current) return; // Ignore stale
+
       setInquiries(response.data || []);
       setPagination(
-        response.pagination || { total: 0, page: 1, limit: 20, totalPages: 1 },
+        response.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 },
       );
+      if (response.facets) {
+        setFacets(response.facets);
+      }
     } catch (error) {
+      if (currentFetchId !== fetchIdRef.current) return;
       toast.error(error.message || "Failed to fetch inquiries");
     } finally {
-      setIsLoading(false);
+      if (currentFetchId === fetchIdRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
-  // Get count for each status from all inquiries
-  const getStatusCount = (status) => {
-    return allInquiries.filter((inquiry) => inquiry.status === status).length;
-  };
+  // Facet count getters — read from server-side counts
+  const getStatusCount = useCallback(
+    (status) => facets.status[status] || 0,
+    [facets.status],
+  );
 
-  // Get count for each source from all inquiries
-  const getSourceCount = (source) => {
-    return allInquiries.filter((inquiry) => inquiry.source === source).length;
-  };
+  const getSourceCount = useCallback(
+    (source) => facets.source[source] || 0,
+    [facets.source],
+  );
 
-  // Get count for each service type from all inquiries
-  const getServiceTypeCount = (serviceType) => {
-    return allInquiries.filter((inquiry) => inquiry.serviceType === serviceType)
-      .length;
-  };
+  const getServiceTypeCount = useCallback(
+    (serviceType) => facets.serviceType[serviceType] || 0,
+    [facets.serviceType],
+  );
 
   // CRUD Handlers
   const handleCreateInquiry = async (formData) => {
@@ -285,7 +281,6 @@ export default function Inquiries() {
       await api.createInquiry(formData);
       toast.success("Inquiry created successfully");
       setIsCreateDialogOpen(false);
-      fetchAllInquiries();
       fetchInquiries();
     } catch (error) {
       toast.error(error.message || "Failed to create inquiry");
@@ -300,7 +295,6 @@ export default function Inquiries() {
       await api.updateInquiry(selectedInquiry.id, formData);
       toast.success("Inquiry updated successfully");
       setIsEditDialogOpen(false);
-      fetchAllInquiries();
       fetchInquiries();
     } catch (error) {
       toast.error(error.message || "Failed to update inquiry");
@@ -309,16 +303,15 @@ export default function Inquiries() {
     }
   };
 
-  const handleDeleteInquiry = (inquiry) => {
+  const handleDeleteInquiry = useCallback((inquiry) => {
     setSelectedInquiry(inquiry);
     setIsDeleteDialogOpen(true);
-  };
+  }, []);
 
   const confirmDelete = async () => {
     try {
       await api.deleteInquiry(selectedInquiry.id);
       toast.success("Inquiry deleted successfully");
-      fetchAllInquiries();
       fetchInquiries();
     } catch (error) {
       toast.error(error.message || "Failed to delete inquiry");
@@ -326,30 +319,44 @@ export default function Inquiries() {
     }
   };
 
-  // Table columns setup
-  const allColumns = createColumns({
-    users,
-    onView: (inquiry) => {
-      setSelectedInquiry(inquiry);
-      setIsViewDialogOpen(true);
-    },
-    onEdit: (inquiry) => {
-      setSelectedInquiry(inquiry);
-      setIsEditDialogOpen(true);
-    },
-    onRequestProposal: (inquiry) => {
-      setSelectedInquiry(inquiry);
-      setIsRequestProposalDialogOpen(true);
-    },
-    onDelete: handleDeleteInquiry,
-    userRole: user?.role,
-  });
+  // Stable callbacks for columns
+  const handleViewInquiry = useCallback((inquiry) => {
+    setSelectedInquiry(inquiry);
+    setIsViewDialogOpen(true);
+  }, []);
 
-  // Filter columns based on visibility
-  const columns = allColumns.filter((column) => {
-    if (!column.accessorKey) return true; // Always show actions column
-    return columnVisibility[column.accessorKey];
-  });
+  const handleEditInquiry = useCallback((inquiry) => {
+    setSelectedInquiry(inquiry);
+    setIsEditDialogOpen(true);
+  }, []);
+
+  const handleRequestProposal = useCallback((inquiry) => {
+    setSelectedInquiry(inquiry);
+    setIsRequestProposalDialogOpen(true);
+  }, []);
+
+  // Memoize columns — only recompute when actual deps change
+  const allColumns = useMemo(
+    () =>
+      createColumns({
+        users,
+        onView: handleViewInquiry,
+        onEdit: handleEditInquiry,
+        onRequestProposal: handleRequestProposal,
+        onDelete: handleDeleteInquiry,
+        userRole: user?.role,
+      }),
+    [users, handleViewInquiry, handleEditInquiry, handleRequestProposal, handleDeleteInquiry, user?.role],
+  );
+
+  const columns = useMemo(
+    () =>
+      allColumns.filter((column) => {
+        if (!column.accessorKey) return true;
+        return columnVisibility[column.accessorKey];
+      }),
+    [allColumns, columnVisibility],
+  );
 
   return (
     <div className="space-y-4">
@@ -744,7 +751,6 @@ export default function Inquiries() {
         onOpenChange={setIsRequestProposalDialogOpen}
         inquiry={selectedInquiry}
         onSuccess={() => {
-          fetchAllInquiries();
           fetchInquiries();
         }}
       />
