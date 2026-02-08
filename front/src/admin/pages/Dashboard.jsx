@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Users, FileText, FolderKanban, UserCheck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
+import socketService from "../services/socketService";
 import DashboardCard from "../components/common/DashboardCard";
 import UpcomingEvents from "../components/dashboard/UpcomingEvents";
 import RecentActivity from "../components/dashboard/RecentActivity";
@@ -50,30 +51,67 @@ const ContentSkeleton = () => (
 );
 
 
+// Socket events that should trigger a dashboard refresh
+const REFRESH_EVENTS = [
+  "ticket:created",
+  "ticket:updated",
+  "ticket:statusChanged",
+  "proposal:requested",
+  "proposal:approved",
+  "proposal:rejected",
+  "proposal:sent",
+  "proposal:accepted",
+  "proposal:declined",
+  "contract:requested",
+  "contract:sentToSales",
+  "contract:sentToClient",
+  "contract:signed",
+  "lead:created",
+  "lead:updated",
+  "lead:claimed",
+  "lead:deleted",
+];
+
 export default function Dashboard() {
   const { user } = useAuth();
   const fetchIdRef = useRef(0);
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      const currentFetchId = ++fetchIdRef.current;
-      setIsLoading(true);
+  const fetchDashboard = useCallback(async (showLoader = false) => {
+    const currentFetchId = ++fetchIdRef.current;
+    if (showLoader) setIsLoading(true);
 
-      try {
-        const response = await api.getSalesDashboard();
-        if (currentFetchId !== fetchIdRef.current) return;
-        setData(response.data);
-      } catch (error) {
-        console.error("Failed to load dashboard:", error);
-      } finally {
-        if (currentFetchId === fetchIdRef.current) setIsLoading(false);
+    try {
+      const response = await api.getSalesDashboard();
+      if (currentFetchId !== fetchIdRef.current) return;
+      setData(response.data);
+    } catch (error) {
+      console.error("Failed to load dashboard:", error);
+    } finally {
+      if (currentFetchId === fetchIdRef.current) setIsLoading(false);
+    }
+  }, []);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchDashboard(true);
+  }, [fetchDashboard]);
+
+  // Real-time: silently refresh when any relevant socket event fires
+  useEffect(() => {
+    const handleRefresh = () => fetchDashboard(false);
+
+    for (const event of REFRESH_EVENTS) {
+      socketService.on(event, handleRefresh);
+    }
+
+    return () => {
+      for (const event of REFRESH_EVENTS) {
+        socketService.off(event, handleRefresh);
       }
     };
-
-    fetchDashboard();
-  }, []);
+  }, [fetchDashboard]);
 
   return (
     <div className="space-y-6">

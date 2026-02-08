@@ -50,6 +50,16 @@ class SocketService {
       this.isConnected = true;
       this.reconnectAttempts = 0;
       console.log("✅ WebSocket connected:", this.socket.id);
+
+      // Register any handlers that were queued before the socket was ready
+      this.eventHandlers.forEach((handlers, event) => {
+        if (event.startsWith("connection:")) return;
+        handlers.forEach((handler) => {
+          // Avoid duplicates — remove first, then re-add
+          this.socket.off(event, handler);
+          this.socket.on(event, handler);
+        });
+      });
     });
 
     this.socket.on("connection:success", (data) => {
@@ -135,11 +145,9 @@ class SocketService {
       return;
     }
 
-    // For other events, register with socket
+    // For other events, register with socket (if not ready yet, stored handlers
+    // will be registered automatically when the socket connects)
     if (!this.socket) {
-      console.warn(
-        "Socket not initialized yet. Handler stored, will register on connect."
-      );
       return;
     }
 
@@ -152,17 +160,16 @@ class SocketService {
    * @param {Function} handler - Event handler function
    */
   off(event, handler) {
-    if (!this.socket) return;
-
-    this.socket.off(event, handler);
-
-    // Remove from stored handlers
+    // Always remove from stored handlers (even if socket isn't ready yet)
     if (this.eventHandlers.has(event)) {
       this.eventHandlers.get(event).delete(handler);
       if (this.eventHandlers.get(event).size === 0) {
         this.eventHandlers.delete(event);
       }
     }
+
+    if (!this.socket) return;
+    this.socket.off(event, handler);
   }
 
   /**

@@ -104,9 +104,11 @@ const ACTION_MAP = {
   client_deleted: { label: "Deleted a client", icon: Trash2 },
 };
 
+const formatStatus = (s) => (s ? s.replace(/_/g, " ") : s);
+
 /**
  * Build a summary line from the enriched context object
- * returned by the backend (real names from joined tables).
+ * returned by the backend (real names from joined tables + parsed details).
  */
 const buildSummary = (context) => {
   if (!context || typeof context !== "object") return null;
@@ -130,6 +132,14 @@ const buildSummary = (context) => {
 
   // Ticket subject
   if (context.subject) parts.push(context.subject);
+
+  // Status change (e.g. "open → resolved")
+  if (context.oldStatus && context.newStatus) {
+    parts.push(`${formatStatus(context.oldStatus)} → ${formatStatus(context.newStatus)}`);
+  }
+
+  // Rejection reason
+  if (context.rejectionReason) parts.push(context.rejectionReason);
 
   return parts.length > 0 ? parts.join(" — ") : null;
 };

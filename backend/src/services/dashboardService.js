@@ -9,7 +9,7 @@ import {
   inquiryTable,
   clientTicketsTable,
 } from "../db/schema.js";
-import { eq, and, sql, gte, inArray, notInArray, desc } from "drizzle-orm";
+import { eq, and, or, sql, gte, inArray, notInArray, desc } from "drizzle-orm";
 
 class DashboardService {
   /**
@@ -145,11 +145,77 @@ class DashboardService {
   }
 
   /**
-   * Last 10 activity log entries for this user, enriched with
+   * Last 10 activity log entries relevant to this user, enriched with
    * entity names (company, proposal number, contract number, etc.)
    * via parallel lookups per entity type.
+   *
+   * Includes:
+   * - Actions the user performed themselves
+   * - Actions by others on entities the user owns (their proposals,
+   *   contracts, tickets, inquiries, etc.)
    */
   async _getRecentActivity(userId) {
+    // First, gather IDs of entities the user owns (parallel)
+    const [myProposalIds, myContractIds, myTicketIds, myInquiryIds] =
+      await Promise.all([
+        db
+          .select({ id: proposalTable.id })
+          .from(proposalTable)
+          .where(eq(proposalTable.requestedBy, userId))
+          .then((r) => r.map((row) => row.id)),
+        db
+          .select({ id: contractsTable.id })
+          .from(contractsTable)
+          .where(eq(contractsTable.requestedBy, userId))
+          .then((r) => r.map((row) => row.id)),
+        db
+          .select({ id: clientTicketsTable.id })
+          .from(clientTicketsTable)
+          .where(eq(clientTicketsTable.createdBy, userId))
+          .then((r) => r.map((row) => row.id)),
+        db
+          .select({ id: inquiryTable.id })
+          .from(inquiryTable)
+          .where(eq(inquiryTable.assignedTo, userId))
+          .then((r) => r.map((row) => row.id)),
+      ]);
+
+    // Build OR conditions: user's own actions + actions on their entities
+    const conditions = [eq(activityLogTable.userId, userId)];
+
+    if (myProposalIds.length > 0) {
+      conditions.push(
+        and(
+          eq(activityLogTable.entityType, "proposal"),
+          inArray(activityLogTable.entityId, myProposalIds),
+        ),
+      );
+    }
+    if (myContractIds.length > 0) {
+      conditions.push(
+        and(
+          eq(activityLogTable.entityType, "contract"),
+          inArray(activityLogTable.entityId, myContractIds),
+        ),
+      );
+    }
+    if (myTicketIds.length > 0) {
+      conditions.push(
+        and(
+          eq(activityLogTable.entityType, "ticket"),
+          inArray(activityLogTable.entityId, myTicketIds),
+        ),
+      );
+    }
+    if (myInquiryIds.length > 0) {
+      conditions.push(
+        and(
+          eq(activityLogTable.entityType, "inquiry"),
+          inArray(activityLogTable.entityId, myInquiryIds),
+        ),
+      );
+    }
+
     const rows = await db
       .select({
         id: activityLogTable.id,
@@ -160,7 +226,7 @@ class DashboardService {
         createdAt: activityLogTable.createdAt,
       })
       .from(activityLogTable)
-      .where(eq(activityLogTable.userId, userId))
+      .where(or(...conditions))
       .orderBy(desc(activityLogTable.createdAt))
       .limit(10);
 
@@ -297,11 +363,12 @@ class DashboardService {
       }
     }
 
-    // Enrich each activity row with entity context
+    // Enrich each activity row with entity context + parsed details
     return rows.map((row) => {
       const entity = lookups[row.entityType]?.get(row.entityId);
       const context = {};
 
+      // --- Entity-level info (from joined tables) ---
       if (row.entityType === "proposal" && entity) {
         context.proposalNumber = entity.proposalNumber;
         const inq = lookups.inquiry?.get(entity.inquiryId);
@@ -313,7 +380,6 @@ class DashboardService {
         context.contractNumber = entity.contractNumber;
         context.clientName = entity.clientName;
         context.company = entity.companyName;
-        context.status = entity.status;
       } else if (row.entityType === "inquiry" && entity) {
         context.inquiryNumber = entity.inquiryNumber;
         context.clientName = entity.name;
@@ -327,6 +393,28 @@ class DashboardService {
       } else if (row.entityType === "ticket" && entity) {
         context.ticketNumber = entity.ticketNumber;
         context.subject = entity.subject;
+      }
+
+      // --- Details-level info (from stored JSON in activity log) ---
+      if (row.details) {
+        try {
+          const d = typeof row.details === "string"
+            ? JSON.parse(row.details)
+            : row.details;
+          if (d && typeof d === "object") {
+            if (d.oldStatus) context.oldStatus = d.oldStatus;
+            if (d.newStatus) context.newStatus = d.newStatus;
+            if (d.rejectionReason) context.rejectionReason = d.rejectionReason;
+            if (d.clientEmail) context.clientEmail = d.clientEmail;
+            if (d.contractType) context.contractType = d.contractType;
+            if (d.requestNotes) context.requestNotes = d.requestNotes;
+            if (d.ticketNumber && !context.ticketNumber) context.ticketNumber = d.ticketNumber;
+            if (d.clientName && !context.clientName) context.clientName = d.clientName;
+            if (d.source) context.source = d.source;
+          }
+        } catch {
+          // ignore unparseable details
+        }
       }
 
       return {
