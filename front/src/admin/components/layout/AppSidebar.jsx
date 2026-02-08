@@ -5,7 +5,6 @@ import {
   Trash2,
   ChevronsUpDown,
   User,
-  Bell,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import {
@@ -167,12 +166,6 @@ export function AppSidebar() {
                 >
                   <User className="mr-2 h-4 w-4" />
                   <span>Account</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-slate-700 dark:text-white/80 dark:focus:bg-white/5"
-                >
-                  <Bell className="mr-2 h-4 w-4" />
-                  <span>Notifications</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator
                   className="bg-slate-200 dark:bg-white/10"
