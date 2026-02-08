@@ -1033,8 +1033,9 @@ class ProposalService {
         clientId = existing.id;
       } else {
         // 4. Create new client
-        const clientService = (await import("./clientService.js")).default;
-        const client = await clientService.createClient(
+        const ClientService = (await import("./clientService.js")).default;
+        const clientServiceInstance = new ClientService();
+        const client = await clientServiceInstance.createClient(
           {
             companyName: parsed.clientCompany || row.inquiryCompany || "Unknown",
             contactPerson: parsed.clientName || row.inquiryName || "Unknown",
