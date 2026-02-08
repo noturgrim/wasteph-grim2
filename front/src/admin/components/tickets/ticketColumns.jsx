@@ -57,7 +57,14 @@ export const createTicketColumns = ({ userRole, onView, onEdit, clients, user })
     accessorKey: "ticketNumber",
     header: "Ticket #",
     cell: ({ row }) => (
-      <div className="font-mono text-sm">{row.original.ticketNumber}</div>
+      <button
+        type="button"
+        onClick={() => onView(row.original)}
+        className="font-mono text-sm text-primary hover:underline cursor-pointer"
+        aria-label={`View ticket ${row.original.ticketNumber}`}
+      >
+        {row.original.ticketNumber}
+      </button>
     ),
   },
   {
