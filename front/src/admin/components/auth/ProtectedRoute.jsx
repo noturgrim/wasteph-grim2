@@ -9,7 +9,7 @@ import { hasAccess } from "../../config/navigation";
  * @param {string[]} props.allowedRoles - Array of roles allowed to access this route
  */
 export default function ProtectedRoute({ children, allowedRoles = [] }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, isLoggingOut } = useAuth();
   const location = useLocation();
 
   // Show loading state while checking authentication
@@ -19,6 +19,23 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
           <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show logout overlay while signing out
+  if (isLoggingOut) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center space-y-3">
+          <div className="h-10 w-10 mx-auto animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-base font-medium text-foreground">
+            Signing out...
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Please wait while we securely log you out.
+          </p>
         </div>
       </div>
     );

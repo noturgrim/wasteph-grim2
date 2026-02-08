@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import {
   LogOut,
+  Loader2,
   Trash2,
   ChevronsUpDown,
   User,
@@ -32,7 +33,7 @@ import {
 import { getNavigationByRole } from "../../config/navigation";
 
 export function AppSidebar() {
-  const { user, logout } = useAuth();
+  const { user, logout, isLoggingOut } = useAuth();
   const location = useLocation();
 
   // Get navigation items based on user role and master sales status
@@ -176,10 +177,15 @@ export function AppSidebar() {
                 />
                 <DropdownMenuItem
                   onClick={logout}
+                  disabled={isLoggingOut}
                   className="text-red-600 focus:bg-red-50 focus:text-red-600 dark:text-red-400 dark:focus:bg-red-500/10 dark:focus:text-red-400"
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
+                  {isLoggingOut ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <LogOut className="mr-2 h-4 w-4" />
+                  )}
+                  <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

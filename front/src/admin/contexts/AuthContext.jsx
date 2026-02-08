@@ -11,6 +11,7 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSocketConnected, setIsSocketConnected] = useState(false);
 
   useEffect(() => {
@@ -99,6 +100,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    setIsLoggingOut(true);
     try {
       // Cleanup socket services before logout
       if (socketService.isSocketConnected()) {
@@ -114,6 +116,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setUser(null);
       setIsSocketConnected(false);
+      setIsLoggingOut(false);
     }
   };
 
@@ -122,7 +125,8 @@ export const AuthProvider = ({ children }) => {
       user, 
       login, 
       logout, 
-      isLoading, 
+      isLoading,
+      isLoggingOut,
       checkAuth,
       isSocketConnected 
     }}>
