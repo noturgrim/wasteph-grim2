@@ -379,13 +379,36 @@ export function RequestProposalDialog({
           ? styleMatch.map((s) => s.replace(/<\/?style[^>]*>/gi, "")).join("\n")
           : "";
 
+        const fullBodyHtml = bodyMatch[1] || "";
+
+        // Default editable content is full body, but if template uses a
+        // conventional ".content" wrapper (as in DEFAULT_TEMPLATE_HTML),
+        // only load that inner HTML into the editor so we can preserve
+        // the surrounding layout structure (header, footer, etc.).
+        let editorBodyContent = fullBodyHtml;
+        try {
+          const container = document.createElement("div");
+          container.innerHTML = fullBodyHtml;
+          const contentNode = container.querySelector(".content");
+          if (contentNode) {
+            editorBodyContent = contentNode.innerHTML || "";
+          }
+        } catch {
+          // Fallback: if DOM parsing fails for any reason, keep full body HTML
+          editorBodyContent = fullBodyHtml;
+        }
+
         templateStructureRef.current = {
           head: headMatch[0],
           bodyTag: bodyTagMatch ? bodyTagMatch[0] : "<body>",
           styles: inlineStyles,
+          // Keep original body HTML so we can surgically replace just the
+          // editable section when saving, instead of losing layout wrappers.
+          bodyHtml: fullBodyHtml,
+          contentSelector: ".content",
         };
 
-        setEditorInitialContent(bodyMatch[1]);
+        setEditorInitialContent(editorBodyContent);
         setSavedEditorContent({ html: rendered, json: null });
       } else {
         // Fallback: no head/body structure, use as-is
@@ -407,16 +430,38 @@ export function RequestProposalDialog({
   // Handle editor save callback
   const handleEditorSave = ({ html, json }) => {
     // Reconstruct full HTML with template structure (head + styles)
-    const { head, bodyTag } = templateStructureRef.current;
+    const { head, bodyTag, bodyHtml, contentSelector } =
+      templateStructureRef.current;
 
-    let fullHtml = html;
+    // By default, use the editor's HTML as the body content.
+    // If we have the original body HTML and a known editable container
+    // (".content"), surgically replace only that inner HTML so we preserve
+    // the outer layout wrappers from the template.
+    let bodyContentForSave = html;
+
+    if (bodyHtml && contentSelector) {
+      try {
+        const container = document.createElement("div");
+        container.innerHTML = bodyHtml;
+        const target = container.querySelector(contentSelector);
+
+        if (target) {
+          target.innerHTML = html;
+          bodyContentForSave = container.innerHTML;
+        }
+      } catch {
+        bodyContentForSave = html;
+      }
+    }
+
+    let fullHtml = bodyContentForSave;
     if (head && bodyTag) {
       // Build complete HTML document
       fullHtml = `<!DOCTYPE html>
 <html>
 ${head}
 ${bodyTag}
-  ${html}
+  ${bodyContentForSave}
 </body>
 </html>`;
     }

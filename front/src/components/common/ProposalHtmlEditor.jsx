@@ -26,19 +26,37 @@ import {
 import { Button } from "@/components/ui/button";
 
 // Scope CSS selectors so template styles only apply inside the editor
+// Safer handling of @-rules and nested blocks
 const scopeStyles = (css, scopeSelector) => {
+  if (!css || !scopeSelector) {
+    return "";
+  }
+
   return css.replace(/([^{}]+)\{/g, (match, selectors) => {
-    const scoped = selectors
+    const raw = selectors.trim();
+
+    if (!raw) {
+      return match;
+    }
+
+    // Leave at-rules like @media, @supports, @font-face, @keyframes untouched.
+    // Their inner rules will be matched separately and scoped.
+    if (raw.startsWith("@")) {
+      return match;
+    }
+
+    const scoped = raw
       .split(",")
       .map((selector) => {
         const trimmed = selector.trim();
-        if (!trimmed || trimmed === "*") return `${scopeSelector} ${trimmed}`;
+        if (!trimmed) return "";
+        if (trimmed === "*") return `${scopeSelector} ${trimmed}`;
         if (trimmed.startsWith(scopeSelector)) return trimmed;
-        // Skip @-rules (@media, @keyframes, etc.) — they're not selectors
-        if (trimmed.startsWith("@")) return trimmed;
         return `${scopeSelector} ${trimmed}`;
       })
+      .filter(Boolean)
       .join(", ");
+
     return `${scoped} {`;
   });
 };
@@ -53,7 +71,9 @@ const MenuBar = ({ editor, onSave, onReset, hasUnsavedChanges, canReset }) => {
         : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
     }`;
 
-  const isInTable = editor.isActive("table");
+  // Check if cursor is inside a table (either in a cell or header)
+  // This is more reliable than checking if table node is active
+  const isInTable = editor.isActive("tableCell") || editor.isActive("tableHeader") || editor.isActive("table");
 
   return (
     <div className="flex flex-wrap gap-1 p-2 bg-gray-50 border-b border-gray-200 items-center justify-between">
@@ -202,20 +222,45 @@ const MenuBar = ({ editor, onSave, onReset, hasUnsavedChanges, canReset }) => {
  */
 const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange, className = "" }) => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const originalContentRef = useRef(content || "");
-  const savedContentRef = useRef(content || "");
+  // Track selection changes to force MenuBar re-render when cursor moves
+  const [selectionUpdate, setSelectionUpdate] = useState(0);
+  // Store the RAW HTML string BEFORE Tiptap parses it (preserves structure for reset)
+  const originalRawHtmlRef = useRef(content || "");
+  // Don't initialize savedContentRef with raw content - wait for Tiptap to render first
+  const savedContentRef = useRef("");
   const onUnsavedChangeRef = useRef(onUnsavedChange);
+  const isInitializingRef = useRef(true);
 
   useEffect(() => {
     onUnsavedChangeRef.current = onUnsavedChange;
   }, [onUnsavedChange]);
+
+  // Store original raw HTML whenever content prop changes (before Tiptap parsing)
+  // This ensures reset can restore the original structure even if Tiptap simplified it
+  useEffect(() => {
+    if (content !== undefined) {
+      const rawHtml = content || "";
+      originalRawHtmlRef.current = rawHtml;
+    }
+  }, [content]);
 
   const scopedStyles = templateStyles ? scopeStyles(templateStyles, ".proposal-editor-scope") : "";
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        paragraph: { HTMLAttributes: { class: null } },
+        paragraph: {
+          HTMLAttributes: {
+            // Allow classes on paragraphs to preserve template styling
+            class: null,
+          },
+        },
+        // Configure hardBreak to preserve line breaks
+        hardBreak: {
+          HTMLAttributes: {
+            class: null,
+          },
+        },
       }),
       Underline,
       TextAlign.configure({ types: ["heading", "paragraph", "tableCell", "tableHeader"] }),
@@ -226,8 +271,31 @@ const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange
     ],
     content: content || "",
     immediatelyRender: false,
-    parseOptions: { preserveWhitespace: "full" },
+    parseOptions: {
+      preserveWhitespace: "full",
+      // Preserve HTML structure better by not stripping unknown elements
+      findPositions: false,
+    },
+    onCreate: ({ editor: ed }) => {
+      // On initial creation, sync savedContentRef to what Tiptap actually rendered
+      // This prevents false "unsaved changes" on initial load
+      const renderedHtml = ed.getHTML();
+      savedContentRef.current = renderedHtml;
+      isInitializingRef.current = false;
+      setHasUnsavedChanges(false);
+      if (onUnsavedChangeRef.current) {
+        onUnsavedChangeRef.current(false);
+      }
+    },
+    onSelectionUpdate: () => {
+      // Force MenuBar re-render when selection changes (e.g., clicking in table)
+      setSelectionUpdate((prev) => prev + 1);
+    },
     onUpdate: ({ editor: ed }) => {
+      // Skip comparison during initialization to avoid false positives
+      if (isInitializingRef.current) {
+        return;
+      }
       const currentHtml = ed.getHTML();
       const hasChanges = currentHtml !== savedContentRef.current;
       setHasUnsavedChanges(hasChanges);
@@ -239,16 +307,34 @@ const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange
       attributes: {
         class: "proposal-editor-scope p-4 focus:outline-none min-h-[300px] bg-white",
       },
+      // Preserve HTML attributes when parsing
+      transformPastedHTML: (html) => {
+        return html;
+      },
     },
   });
 
   // Sync when parent passes new content (e.g. navigating back to step 3)
   useEffect(() => {
-    if (editor && content !== undefined && content !== savedContentRef.current) {
-      editor.commands.setContent(content || "");
-      originalContentRef.current = content || "";
-      savedContentRef.current = content || "";
-      setHasUnsavedChanges(false);
+    if (editor && content !== undefined) {
+      const rawHtml = content || "";
+      originalRawHtmlRef.current = rawHtml;
+      // Mark as initializing to prevent false "unsaved changes" during content update
+      isInitializingRef.current = true;
+      // Always re-parse from raw HTML to ensure we get the latest structure
+      editor.commands.setContent(rawHtml);
+      // After content is set, update savedContentRef to match what Tiptap rendered
+      // Use setTimeout to ensure Tiptap has finished rendering
+      setTimeout(() => {
+        if (editor) {
+          savedContentRef.current = editor.getHTML();
+          isInitializingRef.current = false;
+          setHasUnsavedChanges(false);
+          if (onUnsavedChangeRef.current) {
+            onUnsavedChangeRef.current(false);
+          }
+        }
+      }, 0);
     }
   }, [content, editor]);
 
@@ -263,20 +349,28 @@ const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange
 
   const handleReset = useCallback(() => {
     if (!editor) return;
-    const original = originalContentRef.current;
-    editor.commands.setContent(original);
-    savedContentRef.current = original;
+    // Reset to the ORIGINAL raw HTML (before Tiptap parsing) to restore structure
+    const originalRaw = originalRawHtmlRef.current;
+    editor.commands.setContent(originalRaw);
+    const resetHtml = editor.getHTML(); // Get what Tiptap rendered after reset
+    savedContentRef.current = resetHtml;
     setHasUnsavedChanges(false);
     if (onUnsavedChangeRef.current) onUnsavedChangeRef.current(false);
-    if (onChange) onChange({ html: original, json: null });
+    if (onChange) onChange({ html: resetHtml, json: null });
   }, [editor, onChange]);
 
-  const canReset = editor ? editor.getHTML() !== originalContentRef.current : false;
+  const canReset = editor ? editor.getHTML() !== savedContentRef.current : false;
 
   return (
     <div className={`border border-gray-200 rounded-lg overflow-hidden flex flex-col ${className}`}>
       {/* Inject scoped template styles so the template's own CSS applies inside the editor */}
-      {scopedStyles && <style>{scopedStyles}</style>}
+      {scopedStyles && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: scopedStyles,
+          }}
+        />
+      )}
 
       {/* Ensure tables render correctly inside ProseMirror regardless of template styles */}
       <style>{`
@@ -317,6 +411,7 @@ const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange
         onReset={handleReset}
         hasUnsavedChanges={hasUnsavedChanges}
         canReset={canReset}
+        key={selectionUpdate}
       />
 
       <div className="flex-1 overflow-y-auto min-h-0">
