@@ -216,31 +216,37 @@ class TicketService {
       throw new AppError("You don't have permission to view this ticket", 403);
     }
 
-    // Get attachments
-    const attachments = await db
-      .select()
-      .from(ticketAttachmentsTable)
-      .where(eq(ticketAttachmentsTable.ticketId, ticketId))
-      .orderBy(desc(ticketAttachmentsTable.createdAt));
-
-    // Get comments
-    const comments = await db
-      .select({
-        id: ticketCommentsTable.id,
-        ticketId: ticketCommentsTable.ticketId,
-        content: ticketCommentsTable.content,
-        createdBy: ticketCommentsTable.createdBy,
-        createdAt: ticketCommentsTable.createdAt,
-        // Join user info
-        firstName: userTable.firstName,
-        lastName: userTable.lastName,
-        email: userTable.email,
-        role: userTable.role,
-      })
-      .from(ticketCommentsTable)
-      .leftJoin(userTable, eq(ticketCommentsTable.createdBy, userTable.id))
-      .where(eq(ticketCommentsTable.ticketId, ticketId))
-      .orderBy(ticketCommentsTable.createdAt);
+    // Fetch attachments and comments in parallel
+    const [attachments, comments] = await Promise.all([
+      db
+        .select({
+          id: ticketAttachmentsTable.id,
+          ticketId: ticketAttachmentsTable.ticketId,
+          fileName: ticketAttachmentsTable.fileName,
+          fileUrl: ticketAttachmentsTable.fileUrl,
+          fileSize: ticketAttachmentsTable.fileSize,
+          createdAt: ticketAttachmentsTable.createdAt,
+        })
+        .from(ticketAttachmentsTable)
+        .where(eq(ticketAttachmentsTable.ticketId, ticketId))
+        .orderBy(desc(ticketAttachmentsTable.createdAt)),
+      db
+        .select({
+          id: ticketCommentsTable.id,
+          ticketId: ticketCommentsTable.ticketId,
+          content: ticketCommentsTable.content,
+          createdBy: ticketCommentsTable.createdBy,
+          createdAt: ticketCommentsTable.createdAt,
+          firstName: userTable.firstName,
+          lastName: userTable.lastName,
+          email: userTable.email,
+          role: userTable.role,
+        })
+        .from(ticketCommentsTable)
+        .leftJoin(userTable, eq(ticketCommentsTable.createdBy, userTable.id))
+        .where(eq(ticketCommentsTable.ticketId, ticketId))
+        .orderBy(ticketCommentsTable.createdAt),
+    ]);
 
     return {
       ...ticket,
