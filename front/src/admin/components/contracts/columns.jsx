@@ -243,8 +243,8 @@ export const createColumns = ({
             </Button>
           )}
 
-          {/* Dropdown menu */}
-          <DropdownMenu>
+          {/* Dropdown menu — modal={false} so clicking another row's trigger works */}
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
                 <span className="sr-only">Open menu</span>
@@ -253,26 +253,26 @@ export const createColumns = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               {/* View Contract Details (if requested) */}
-              {(status !== "pending_request") && (
-                <>
-                  <DropdownMenuItem onClick={() => onViewDetails(contract)}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    View Request Details
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
+              {status !== "pending_request" && (
+                <DropdownMenuItem onClick={() => onViewDetails(contract)}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  View Request Details
+                </DropdownMenuItem>
               )}
 
               {/* View Contract PDF (if exists) */}
               {hasPdf && (
-                <>
-                  <DropdownMenuItem onClick={() => onViewContract(contract)}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    View Contract PDF
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                </>
+                <DropdownMenuItem onClick={() => onViewContract(contract)}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Contract PDF
+                </DropdownMenuItem>
               )}
+
+              {/* Separator before action items */}
+              {((userRole === "admin" || userRole === "super_admin") && status === "sent_to_sales") ||
+              (userRole === "sales" && status === "pending_request") ? (
+                <DropdownMenuSeparator />
+              ) : null}
 
               {/* Admin: Re-submit if sent_to_sales */}
               {(userRole === "admin" || userRole === "super_admin") && status === "sent_to_sales" && (

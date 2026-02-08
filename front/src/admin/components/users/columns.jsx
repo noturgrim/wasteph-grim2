@@ -137,7 +137,7 @@ export const createUserColumns = ({ onView, onEdit, onDelete }) => [
     cell: ({ row }) => {
       const user = row.original;
       return (
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
               <span className="sr-only">Open menu</span>

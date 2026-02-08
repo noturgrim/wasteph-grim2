@@ -213,7 +213,7 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestP
             </Button>
           )}
 
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
                 <span className="sr-only">Open menu</span>
