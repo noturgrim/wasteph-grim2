@@ -112,11 +112,12 @@ class ContractService {
       conditions.push(eq(contractsTable.status, status));
     }
 
-    // Search by client name or email
+    // Search by contract number, client name, email, or company
     if (search) {
       const escaped = search.replace(/[%_\\]/g, "\\$&");
       conditions.push(
         or(
+          like(contractsTable.contractNumber, `%${escaped}%`),
           like(inquiryTable.name, `%${escaped}%`),
           like(inquiryTable.email, `%${escaped}%`),
           like(inquiryTable.company, `%${escaped}%`),

@@ -324,7 +324,7 @@ export default function ContractRequests() {
         <div className="flex items-center gap-2">
           {/* Search */}
           <SearchInput
-            placeholder="Search by client name, email, or company..."
+            placeholder="Search by contract no., client name, email, or company..."
             value={searchTerm}
             onChange={setSearchTerm}
           />
