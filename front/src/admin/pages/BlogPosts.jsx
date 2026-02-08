@@ -23,7 +23,6 @@ import {
   createPost,
   updatePost,
   deletePost,
-  fetchBlogStats,
   uploadBlogCoverImage,
 } from "../../services/blogService";
 import {
@@ -101,11 +100,6 @@ const BlogPosts = () => {
   const [coverImagePreview, setCoverImagePreview] = useState(null);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
 
-  // Load stats on mount
-  useEffect(() => {
-    loadStats();
-  }, []);
-
   // Reset to page 1 on filter/search change
   useEffect(() => {
     setPagination((prev) => ({ ...prev, page: 1 }));
@@ -126,21 +120,13 @@ const BlogPosts = () => {
 
       setPosts(response.data || []);
       setPagination(response.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 });
+      if (response.stats) setStats(response.stats);
     } catch (error) {
       if (currentFetchId !== fetchIdRef.current) return;
       console.error("Failed to load posts:", error);
       toast.error("Failed to load blog posts. Please try again.");
     } finally {
       if (currentFetchId === fetchIdRef.current) setIsLoading(false);
-    }
-  };
-
-  const loadStats = async () => {
-    try {
-      const data = await fetchBlogStats();
-      setStats(data);
-    } catch (error) {
-      console.error("Failed to load stats:", error);
     }
   };
 
@@ -213,7 +199,6 @@ const BlogPosts = () => {
       setCoverImageFile(null);
       setCoverImagePreview(null);
       loadPosts(pagination.page, pagination.limit);
-      loadStats();
     } catch (error) {
       console.error("Failed to create post:", error);
       const errorMessage = error.message || "Failed to create blog post";
@@ -272,7 +257,6 @@ const BlogPosts = () => {
       setCoverImageFile(null);
       setCoverImagePreview(null);
       loadPosts(pagination.page, pagination.limit);
-      loadStats();
     } catch (error) {
       console.error("Failed to update post:", error);
       const errorMessage = error.message || "Failed to update blog post";
@@ -308,7 +292,6 @@ const BlogPosts = () => {
       setIsDeleteDialogOpen(false);
       setSelectedPost(null);
       loadPosts(pagination.page, pagination.limit);
-      loadStats();
     } catch (error) {
       console.error("Failed to delete post:", error);
       toast.error(error.message || "Failed to delete blog post");

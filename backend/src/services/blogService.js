@@ -144,9 +144,20 @@ export async function getAllPosts(filters = {}) {
 
   const total = rows.length > 0 ? rows[0].totalCount : 0;
 
-  // Strip totalCount and add presigned URLs only for posts that have cover images
+  // Strip totalCount and add presigned URLs, fetch stats — all in parallel
   const posts = rows.map(({ totalCount, ...rest }) => rest);
-  const postsWithUrls = await Promise.all(posts.map((p) => addPresignedUrls(p)));
+  const [postsWithUrls, [stats]] = await Promise.all([
+    Promise.all(posts.map((p) => addPresignedUrls(p))),
+    db
+      .select({
+        total: sql`count(*)::int`,
+        published: sql`count(*) filter (where ${blogPostTable.status} = 'published')::int`,
+        draft: sql`count(*) filter (where ${blogPostTable.status} = 'draft')::int`,
+        archived: sql`count(*) filter (where ${blogPostTable.status} = 'archived')::int`,
+        totalViews: sql`sum(${blogPostTable.views})::int`,
+      })
+      .from(blogPostTable),
+  ]);
 
   return {
     data: postsWithUrls,
@@ -156,6 +167,7 @@ export async function getAllPosts(filters = {}) {
       limit,
       totalPages: Math.ceil(total / limit),
     },
+    stats,
   };
 }
 
