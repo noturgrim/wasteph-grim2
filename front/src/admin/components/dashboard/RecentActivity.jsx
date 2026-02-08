@@ -105,45 +105,33 @@ const ACTION_MAP = {
 };
 
 /**
- * Parse JSON details string into readable key-value pairs.
+ * Build a summary line from the enriched context object
+ * returned by the backend (real names from joined tables).
  */
-const parseDetails = (raw) => {
-  if (!raw) return [];
+const buildSummary = (context) => {
+  if (!context || typeof context !== "object") return null;
 
-  try {
-    const obj = typeof raw === "string" ? JSON.parse(raw) : raw;
-    if (!obj || typeof obj !== "object") return [];
+  const parts = [];
 
-    const items = [];
+  // Identifier (proposal number, contract number, etc.)
+  if (context.proposalNumber) parts.push(context.proposalNumber);
+  if (context.contractNumber) parts.push(context.contractNumber);
+  if (context.inquiryNumber) parts.push(context.inquiryNumber);
+  if (context.ticketNumber) parts.push(context.ticketNumber);
 
-    if (obj.proposalNumber) items.push({ label: "Proposal", value: obj.proposalNumber });
-    if (obj.contractNumber) items.push({ label: "Contract", value: obj.contractNumber });
-    if (obj.inquiryNumber) items.push({ label: "Inquiry", value: obj.inquiryNumber });
-    if (obj.ticketNumber) items.push({ label: "Ticket", value: obj.ticketNumber });
-    if (obj.companyName || obj.company)
-      items.push({ label: "Company", value: obj.companyName || obj.company });
-    if (obj.clientName) items.push({ label: "Client", value: obj.clientName });
-    if (obj.name) items.push({ label: "Name", value: obj.name });
-    if (obj.clientEmail) items.push({ label: "Email", value: obj.clientEmail });
-    if (obj.contractType)
-      items.push({ label: "Type", value: obj.contractType.replace(/_/g, " ") });
-    if (obj.oldStatus && obj.newStatus)
-      items.push({
-        label: "Status",
-        value: `${obj.oldStatus.replace(/_/g, " ")} → ${obj.newStatus.replace(/_/g, " ")}`,
-      });
-    else if (obj.status)
-      items.push({ label: "Status", value: obj.status.replace(/_/g, " ") });
-    if (obj.rejectionReason) items.push({ label: "Reason", value: obj.rejectionReason });
-    if (obj.requestNotes) items.push({ label: "Notes", value: obj.requestNotes });
-    if (obj.serviceRequestsCount != null)
-      items.push({ label: "Service Requests", value: String(obj.serviceRequestsCount) });
-    if (obj.source) items.push({ label: "Source", value: obj.source });
-
-    return items;
-  } catch {
-    return [];
+  // Who — client name and/or company
+  if (context.clientName && context.company) {
+    parts.push(`${context.clientName} (${context.company})`);
+  } else if (context.company) {
+    parts.push(context.company);
+  } else if (context.clientName) {
+    parts.push(context.clientName);
   }
+
+  // Ticket subject
+  if (context.subject) parts.push(context.subject);
+
+  return parts.length > 0 ? parts.join(" — ") : null;
 };
 
 // --- Component ---
@@ -184,7 +172,7 @@ const RecentActivity = ({ activities = [] }) => {
               const entityColor =
                 ENTITY_COLORS[activity.entityType] || DEFAULT_ENTITY_COLOR;
               const iconBg = ICON_BG[activity.entityType] || DEFAULT_ICON_BG;
-              const details = parseDetails(activity.details);
+              const summary = buildSummary(activity.context);
 
               return (
                 <div
@@ -207,18 +195,10 @@ const RecentActivity = ({ activities = [] }) => {
                         })}
                       </span>
                     </div>
-                    {details.length > 0 && (
-                      <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                        {details.map((d) => (
-                          <span
-                            key={d.label}
-                            className="text-xs text-muted-foreground"
-                          >
-                            <span className="font-medium">{d.label}:</span>{" "}
-                            {d.value}
-                          </span>
-                        ))}
-                      </div>
+                    {summary && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {summary}
+                      </p>
                     )}
                     <Badge
                       variant="outline"
