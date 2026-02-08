@@ -56,6 +56,9 @@ class CounterService {
         case 'ticket':
           prefix = 'TKT';
           break;
+        case 'contract':
+          prefix = 'CONT';
+          break;
         default:
           prefix = 'UNK';
       }
@@ -93,6 +96,14 @@ class CounterService {
    */
   async getNextTicketNumber() {
     return this.getNextNumber('ticket');
+  }
+
+  /**
+   * Generate contract number
+   * @returns {Promise<string>} Format: CONT-YYYYMMDD-NNNN
+   */
+  async getNextContractNumber() {
+    return this.getNextNumber('contract');
   }
 
   /**

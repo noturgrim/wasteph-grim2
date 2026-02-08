@@ -641,7 +641,7 @@ class EmailService {
    * @param {Buffer} pdfBuffer - Contract PDF buffer
    * @returns {Promise<Object>} Email result
    */
-  async sendContractToClientEmail(to, proposalData, inquiryData, pdfBuffer, contractId, responseToken) {
+  async sendContractToClientEmail(to, proposalData, inquiryData, pdfBuffer, contractId, responseToken, contractNumber = null) {
     try {
       // Handle both old format and new format
       const isNewFormat = !!proposalData.editedHtmlContent;
@@ -650,21 +650,29 @@ class EmailService {
         : inquiryData.name;
 
       // Generate email HTML
-      const htmlContent = this.generateContractEmailHTML(clientName, contractId, responseToken);
+      const htmlContent = this.generateContractEmailHTML(clientName, contractId, responseToken, contractNumber);
+
+      // Build subject and filename with contract number
+      const subject = contractNumber
+        ? `Contract ${contractNumber} - WastePH`
+        : "Contract from WastePH";
+      const pdfFilename = contractNumber
+        ? `WastePH_Contract_${contractNumber}.pdf`
+        : "WastePH_Contract.pdf";
 
       // Send email with PDF attachment
-      console.log(`📤 Sending contract email to: ${to}`);
-      console.log(`   From: ${process.env.SMTP_USER}`);
+      console.log(`Sending contract email to: ${to}`);
+      console.log(`   Contract: ${contractNumber || "N/A"}`);
       console.log(`   PDF attached: ${pdfBuffer ? `Yes (${pdfBuffer.length} bytes)` : "No"}`);
 
       const info = await this.transporter.sendMail({
         from: process.env.SMTP_USER,
         to,
-        subject: "Contract from WastePH",
+        subject,
         html: htmlContent,
         attachments: [
           {
-            filename: "WastePH_Contract.pdf",
+            filename: pdfFilename,
             content: pdfBuffer,
             contentType: "application/pdf",
           },
@@ -693,7 +701,7 @@ class EmailService {
    * @param {string} clientName - Client name
    * @returns {string} HTML content
    */
-  generateContractEmailHTML(clientName, contractId, responseToken) {
+  generateContractEmailHTML(clientName, contractId, responseToken, contractNumber = null) {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     return `
 <!DOCTYPE html>
@@ -795,6 +803,7 @@ class EmailService {
       <p>Thank you for your continued interest in our services. We are pleased to provide you with your finalized contract.</p>
 
       <div class="highlight-box">
+        ${contractNumber ? `<p style="margin-bottom: 8px; font-size: 13px; color: #166534;"><strong>Contract No:</strong> ${contractNumber}</p>` : ""}
         <p><strong>Your contract is attached to this email as a PDF document.</strong></p>
         <p style="margin-top: 10px; font-size: 14px;">Please review the contract carefully and contact us if you have any questions.</p>
       </div>

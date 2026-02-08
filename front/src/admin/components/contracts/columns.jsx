@@ -49,6 +49,19 @@ export const createColumns = ({
   onViewDetails,
 }) => [
   {
+    accessorKey: "contractNumber",
+    header: "Contract No.",
+    cell: ({ row }) => {
+      const contract = row.original;
+      const num = contract.contract?.contractNumber;
+      return num ? (
+        <span className="font-mono text-sm">{num}</span>
+      ) : (
+        <span className="text-muted-foreground text-sm">—</span>
+      );
+    },
+  },
+  {
     accessorKey: "clientName",
     accessorFn: (row) => row.inquiry?.name || "",
     header: ({ column }) => {

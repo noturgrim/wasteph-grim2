@@ -7,6 +7,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,6 +22,7 @@ import {
   Calendar as CalendarIcon,
   FileSignature,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import { format } from "date-fns";
 import { api } from "../../services/api";
@@ -32,6 +38,10 @@ import { NotesTimeline } from "../clientNotes/NotesTimeline";
 
 // Calendar components
 import { ScheduleEventDialog } from "../calendar/ScheduleEventDialog";
+
+// Contract details
+import { ContractDetailsSection } from "../contracts/ContractDetailsSection";
+
 
 const getStatusBadge = (status) => {
   const statusConfig = {
@@ -278,37 +288,10 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
                       <p className="text-sm text-muted-foreground">Address</p>
                       <p className="text-sm">{client.address || "-"}</p>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">City</p>
-                      <p className="text-sm">{client.city || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Province</p>
-                      <p className="text-sm">{client.province || "-"}</p>
-                    </div>
                   </div>
                 </div>
 
-                {/* Business info */}
-                <div>
-                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                    Business Information
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Industry</p>
-                      <p className="text-sm">{client.industry || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Waste Types
-                      </p>
-                      <p className="text-sm">{client.wasteTypes || "-"}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contract info */}
+                {/* Contract period */}
                 <div>
                   <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                     Contract Information
@@ -362,74 +345,45 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {contracts.map((contract) => (
-                      <div
+                    {contracts.map((contract, index) => (
+                      <Collapsible
                         key={contract.id}
-                        className="rounded-lg border p-4 hover:bg-accent/50 transition-colors"
+                        defaultOpen={index === 0}
+                        className="rounded-lg border"
                       >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-semibold">
-                                {contract.contractData 
-                                  ? JSON.parse(contract.contractData).contractNumber 
-                                  : contract.id?.slice(0, 8).toUpperCase() || "N/A"}
-                              </h4>
-                              <Badge
-                                variant="outline"
-                                className={
-                                  contract.status === "signed" || contract.status === "hardbound_received"
-                                    ? "bg-green-100 text-green-700 border-green-300"
-                                    : contract.status === "sent_to_client"
-                                    ? "bg-blue-100 text-blue-700 border-blue-300"
-                                    : "bg-gray-100 text-gray-700 border-gray-300"
-                                }
-                              >
-                                {contract.status?.replace(/_/g, " ").toUpperCase()}
-                              </Badge>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                              <div>
-                                <span className="text-muted-foreground">Company: </span>
-                                <span className="font-medium">{contract.companyName || "—"}</span>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Type: </span>
-                                <span className="font-medium">
-                                  {contract.contractType?.replace(/_/g, " ") || "—"}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Start Date: </span>
-                                <span className="font-medium">
-                                  {formatDate(contract.contractStartDate)}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">End Date: </span>
-                                <span className="font-medium">
-                                  {formatDate(contract.contractEndDate)}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Created: </span>
-                                <span className="font-medium">
-                                  {formatDate(contract.createdAt)}
-                                </span>
-                              </div>
-                              {contract.signedAt && (
-                                <div>
-                                  <span className="text-muted-foreground">Signed: </span>
-                                  <span className="font-medium">
-                                    {formatDate(contract.signedAt)}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
+                        <CollapsibleTrigger className="flex w-full items-center justify-between p-4 hover:bg-accent/50 transition-colors rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-sm">
+                              {contract.contractNumber || contract.id?.slice(0, 8).toUpperCase() || "N/A"}
+                            </h4>
+                            <Badge
+                              variant="outline"
+                              className={
+                                contract.status === "signed" || contract.status === "hardbound_received"
+                                  ? "bg-green-100 text-green-700 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-700"
+                                  : contract.status === "sent_to_client"
+                                  ? "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700"
+                                  : "bg-gray-100 text-gray-700 border-gray-300 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600"
+                              }
+                            >
+                              {contract.status?.replace(/_/g, " ").toUpperCase()}
+                            </Badge>
+                            {contract.signedAt && (
+                              <span className="text-xs text-muted-foreground">
+                                Signed: {formatDate(contract.signedAt)}
+                              </span>
+                            )}
                           </div>
-                        </div>
-                      </div>
+                          <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="px-4 pb-4">
+                            <ContractDetailsSection
+                              contract={{ contract }}
+                            />
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
                     ))}
                   </div>
                 )}

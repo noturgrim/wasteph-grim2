@@ -580,6 +580,9 @@ export const contractsTable = pgTable(
       .unique()
       .references(() => proposalTable.id, { onDelete: "cascade" }),
 
+    // Sequential contract number (CONT-YYYYMMDD-NNNN)
+    contractNumber: text("contract_number").unique(),
+
     // Contract Status
     status: contractStatusEnum("status").notNull().default("pending_request"),
 

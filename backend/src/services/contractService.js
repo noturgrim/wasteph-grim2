@@ -17,6 +17,7 @@ const clientService = new ClientService();
 import pdfService from "./pdfService.js";
 import { uploadObject, getObject } from "./s3Service.js";
 import crypto from "crypto";
+import counterService from "./counterService.js";
 
 /**
  * Format two ISO date strings into a human-readable range for PDF templates.
@@ -53,11 +54,15 @@ class ContractService {
       throw new AppError("Contract already exists for this proposal", 400);
     }
 
+    // Generate sequential contract number
+    const contractNumber = await counterService.getNextContractNumber();
+
     // Create contract with pending_request status
     const [contract] = await db
       .insert(contractsTable)
       .values({
         proposalId,
+        contractNumber,
         status: "pending_request",
       })
       .returning();
@@ -125,6 +130,7 @@ class ContractService {
       .select({
         contract: {
           id: contractsTable.id,
+          contractNumber: contractsTable.contractNumber,
           proposalId: contractsTable.proposalId,
           status: contractsTable.status,
           requestedBy: contractsTable.requestedBy,
@@ -581,10 +587,8 @@ class ContractService {
       }
     }
 
-    // Add contract number if available
-    contractDataForPdf.contractNumber = contractData.proposal.proposalNumber
-      ? contractData.proposal.proposalNumber.replace("PROP-", "CONT-")
-      : "PENDING";
+    // Use stored contract number
+    contractDataForPdf.contractNumber = contract.contractNumber || "PENDING";
 
     // Generate PDF from template
     let pdfBuffer;
@@ -785,7 +789,8 @@ class ContractService {
       inquiry,
       pdfBuffer,
       contractId,
-      submissionToken
+      submissionToken,
+      contract.contractNumber,
     );
 
     // Update contract
@@ -942,11 +947,28 @@ class ContractService {
 
     let client;
     if (existingClient) {
-      // Use existing client
-      client = existingClient;
-      console.log(`✅ Found existing client: ${client.id} (${client.email})`);
+      // Update existing client with latest contract data
+      const updateFields = {};
+      if (contract.companyName) updateFields.companyName = contract.companyName;
+      if (contract.clientName) updateFields.contactPerson = contract.clientName;
+      if (contract.clientAddress) updateFields.address = contract.clientAddress;
+      if (contract.contractStartDate) updateFields.contractStartDate = contract.contractStartDate;
+      if (contract.contractEndDate) updateFields.contractEndDate = contract.contractEndDate;
+
+      if (Object.keys(updateFields).length > 0) {
+        updateFields.updatedAt = new Date();
+        const [updated] = await db
+          .update(clientTable)
+          .set(updateFields)
+          .where(eq(clientTable.id, existingClient.id))
+          .returning();
+        client = updated;
+      } else {
+        client = existingClient;
+      }
+      console.log(`Found existing client: ${client.id} (${client.email})`);
     } else {
-      // Create new client record
+      // Only store fields directly available from the contract
       const clientData = {
         companyName: contract.companyName || inquiry?.company || "Unknown",
         contactPerson: contract.clientName || inquiry?.name || "Unknown",
@@ -962,9 +984,9 @@ class ContractService {
       client = await clientService.createClient(
         clientData,
         contract.requestedBy || contract.sentToClientBy,
-        {}
+        {},
       );
-      console.log(`✅ Created new client: ${client.id} (${client.email})`);
+      console.log(`Created new client: ${client.id} (${client.email})`);
     }
 
     // Update contract status + link client (only after client creation succeeds)

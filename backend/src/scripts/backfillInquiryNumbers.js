@@ -1,5 +1,5 @@
 import { db } from "../db/index.js";
-import { inquiryTable, proposalTable } from "../db/schema.js";
+import { inquiryTable, proposalTable, contractsTable } from "../db/schema.js";
 import { sql } from "drizzle-orm";
 import counterService from "../services/counterService.js";
 
@@ -178,26 +178,100 @@ async function backfillProposalNumbers() {
   }
 }
 
+/**
+ * Backfill contract numbers for existing contracts
+ */
+async function backfillContractNumbers() {
+  console.log("\n\n--- Starting contract number backfill...\n");
+
+  try {
+    // Get contracts without a contract number, using requestedAt (when sales requested) or createdAt
+    const contracts = await db
+      .select()
+      .from(contractsTable)
+      .where(sql`${contractsTable.contractNumber} IS NULL OR ${contractsTable.contractNumber} = ''`)
+      .orderBy(contractsTable.createdAt);
+
+    if (contracts.length === 0) {
+      console.log("All contracts already have numbers!");
+      return;
+    }
+
+    console.log(`Found ${contracts.length} contracts without numbers\n`);
+
+    const contractsByDate = {};
+
+    for (const contract of contracts) {
+      // Use requestedAt if available (when it became a real contract), otherwise createdAt
+      const refDate = contract.requestedAt || contract.createdAt;
+      const date = new Date(refDate);
+      const dateKey = date.toISOString().split("T")[0];
+
+      if (!contractsByDate[dateKey]) {
+        contractsByDate[dateKey] = [];
+      }
+      contractsByDate[dateKey].push(contract);
+    }
+
+    console.log(`Processing contracts across ${Object.keys(contractsByDate).length} different dates\n`);
+
+    let totalUpdated = 0;
+
+    for (const [date, dateContracts] of Object.entries(contractsByDate)) {
+      console.log(`\nProcessing ${dateContracts.length} contracts from ${date}`);
+
+      for (const contract of dateContracts) {
+        try {
+          const refDate = new Date(contract.requestedAt || contract.createdAt);
+          const year = refDate.getFullYear();
+          const month = String(refDate.getMonth() + 1).padStart(2, "0");
+          const day = String(refDate.getDate()).padStart(2, "0");
+          const dateFormatted = `${year}${month}${day}`;
+
+          const number = await getNextNumberForDate("contract", date);
+          const contractNumber = `CONT-${dateFormatted}-${String(number).padStart(4, "0")}`;
+
+          await db
+            .update(contractsTable)
+            .set({ contractNumber })
+            .where(sql`${contractsTable.id} = ${contract.id}`);
+
+          console.log(`  > ${contract.id.substring(0, 8)}: ${contractNumber}`);
+          totalUpdated++;
+        } catch (error) {
+          console.error(`  x Failed to update contract ${contract.id}: ${error.message}`);
+        }
+      }
+    }
+
+    console.log(`\nContract backfill complete! Updated ${totalUpdated} out of ${contracts.length} contracts`);
+  } catch (error) {
+    console.error("\nError during contract backfill:", error);
+    throw error;
+  }
+}
+
 // Import counters table
 import { countersTable } from "../db/schema.js";
 
-// Run both backfills
+// Run all backfills
 async function main() {
   console.log("========================================");
-  console.log("   INQUIRY & PROPOSAL NUMBER BACKFILL   ");
+  console.log("   NUMBER BACKFILL SCRIPT               ");
   console.log("========================================\n");
 
   try {
     await backfillInquiryNumbers();
     await backfillProposalNumbers();
+    await backfillContractNumbers();
 
     console.log("\n========================================");
-    console.log("         BACKFILL COMPLETE! ✅          ");
+    console.log("         BACKFILL COMPLETE!             ");
     console.log("========================================\n");
 
     process.exit(0);
   } catch (error) {
-    console.error("\n❌ Backfill failed:", error);
+    console.error("\nBackfill failed:", error);
     process.exit(1);
   }
 }
