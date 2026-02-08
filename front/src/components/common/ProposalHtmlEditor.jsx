@@ -71,7 +71,9 @@ const MenuBar = ({ editor, onSave, onReset, hasUnsavedChanges, canReset }) => {
         : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
     }`;
 
-  const isInTable = editor.isActive("table");
+  // Check if cursor is inside a table (either in a cell or header)
+  // This is more reliable than checking if table node is active
+  const isInTable = editor.isActive("tableCell") || editor.isActive("tableHeader") || editor.isActive("table");
 
   return (
     <div className="flex flex-wrap gap-1 p-2 bg-gray-50 border-b border-gray-200 items-center justify-between">
@@ -220,6 +222,8 @@ const MenuBar = ({ editor, onSave, onReset, hasUnsavedChanges, canReset }) => {
  */
 const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange, className = "" }) => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  // Track selection changes to force MenuBar re-render when cursor moves
+  const [selectionUpdate, setSelectionUpdate] = useState(0);
   // Store the RAW HTML string BEFORE Tiptap parses it (preserves structure for reset)
   const originalRawHtmlRef = useRef(content || "");
   // Don't initialize savedContentRef with raw content - wait for Tiptap to render first
@@ -282,6 +286,10 @@ const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange
       if (onUnsavedChangeRef.current) {
         onUnsavedChangeRef.current(false);
       }
+    },
+    onSelectionUpdate: () => {
+      // Force MenuBar re-render when selection changes (e.g., clicking in table)
+      setSelectionUpdate((prev) => prev + 1);
     },
     onUpdate: ({ editor: ed }) => {
       // Skip comparison during initialization to avoid false positives
@@ -403,6 +411,7 @@ const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange
         onReset={handleReset}
         hasUnsavedChanges={hasUnsavedChanges}
         canReset={canReset}
+        key={selectionUpdate}
       />
 
       <div className="flex-1 overflow-y-auto min-h-0">
