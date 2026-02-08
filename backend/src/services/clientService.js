@@ -1,6 +1,6 @@
 import { db } from "../db/index.js";
 import { clientTable, contractsTable, activityLogTable } from "../db/schema.js";
-import { eq, desc, and, like, or, count, sql } from "drizzle-orm";
+import { eq, desc, and, like, or, count, sql, inArray } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 
 /**
@@ -79,75 +79,83 @@ class ClientService {
 
     if (status) {
       const statuses = status.split(",").map((s) => s.trim());
-      conditions.push(statuses.length === 1
-        ? eq(clientTable.status, statuses[0])
-        : clientTable.status.in(statuses));
+      conditions.push(
+        statuses.length === 1
+          ? eq(clientTable.status, statuses[0])
+          : inArray(clientTable.status, statuses),
+      );
     }
 
     if (search) {
+      const escaped = search.replace(/[%_\\]/g, "\\$&");
       conditions.push(
         or(
-          like(clientTable.companyName, `%${search}%`),
-          like(clientTable.contactPerson, `%${search}%`),
-          like(clientTable.email, `%${search}%`),
-          like(clientTable.city, `%${search}%`),
-          like(clientTable.province, `%${search}%`),
-        )
+          like(clientTable.companyName, `%${escaped}%`),
+          like(clientTable.contactPerson, `%${escaped}%`),
+          like(clientTable.email, `%${escaped}%`),
+          like(clientTable.city, `%${escaped}%`),
+          like(clientTable.province, `%${escaped}%`),
+        ),
       );
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    // Count total
-    const [{ value: total }] = await db
-      .select({ value: count() })
-      .from(clientTable)
-      .where(whereClause);
-
-    // Paginated data - get clients with DISTINCT to prevent duplicates from joins
-    const clientRows = await db
-      .selectDistinct()
+    // Single query: data + count via window function
+    const rows = await db
+      .select({
+        id: clientTable.id,
+        companyName: clientTable.companyName,
+        contactPerson: clientTable.contactPerson,
+        email: clientTable.email,
+        phone: clientTable.phone,
+        address: clientTable.address,
+        city: clientTable.city,
+        province: clientTable.province,
+        industry: clientTable.industry,
+        wasteTypes: clientTable.wasteTypes,
+        contractStartDate: clientTable.contractStartDate,
+        contractEndDate: clientTable.contractEndDate,
+        status: clientTable.status,
+        accountManager: clientTable.accountManager,
+        notes: clientTable.notes,
+        createdAt: clientTable.createdAt,
+        updatedAt: clientTable.updatedAt,
+        totalCount: sql`(count(*) over())::int`,
+      })
       .from(clientTable)
       .where(whereClause)
       .orderBy(desc(clientTable.createdAt))
       .limit(limit)
       .offset(offset);
 
-    // For each client, get their latest contract status efficiently using a batch query
-    const clientIds = clientRows.map((c) => c.id);
-    
-    // Get latest contract for each client in one query using IN clause
-    let latestContracts = [];
+    const total = rows.length > 0 ? rows[0].totalCount : 0;
+    const clientIds = rows.map((c) => c.id);
+
+    // Batch fetch latest contract status per client (only if we have clients)
+    const contractMap = new Map();
     if (clientIds.length > 0) {
-      const { inArray } = await import("drizzle-orm");
-      
-      // Get all contracts for these clients
-      const allContracts = await db
-        .select({
+      // Use DISTINCT ON to get only the latest contract per client in one query
+      const latestContracts = await db
+        .selectDistinctOn([contractsTable.clientId], {
           clientId: contractsTable.clientId,
           status: contractsTable.status,
-          createdAt: contractsTable.createdAt,
         })
         .from(contractsTable)
         .where(inArray(contractsTable.clientId, clientIds))
-        .orderBy(desc(contractsTable.createdAt));
+        .orderBy(contractsTable.clientId, desc(contractsTable.createdAt));
 
-      // Group by clientId and take only the first (latest) for each
-      const contractMap = new Map();
-      allContracts.forEach((contract) => {
-        if (!contractMap.has(contract.clientId)) {
-          contractMap.set(contract.clientId, contract.status);
-        }
-      });
-
-      latestContracts = contractMap;
+      latestContracts.forEach((c) => contractMap.set(c.clientId, c.status));
     }
 
+    // Strip totalCount and attach contract status
+    const data = rows.map(({ totalCount, ...client }) => ({
+      ...client,
+      contractStatus: contractMap.get(client.id) || null,
+    }));
+
     return {
-      data: clientRows.map((client) => ({
-        ...client,
-        contractStatus: latestContracts.get(client.id) || null,
-      })),
+      data,
       pagination: {
         total,
         page,

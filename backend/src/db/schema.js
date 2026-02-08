@@ -342,29 +342,39 @@ export const potentialTable = pgTable("potential", {
     .defaultNow(),
 });
 
-export const clientTable = pgTable("client", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  companyName: text("company_name").notNull(),
-  contactPerson: text("contact_person").notNull(),
-  email: text("email").notNull().unique(),
-  phone: text("phone").notNull(),
-  address: text("address").notNull(),
-  city: text("city").notNull(),
-  province: text("province").notNull(),
-  industry: text("industry"),
-  wasteTypes: text("waste_types"),
-  contractStartDate: timestamp("contract_start_date", { withTimezone: true }),
-  contractEndDate: timestamp("contract_end_date", { withTimezone: true }),
-  status: clientStatusEnum("status").notNull().default("active"),
-  accountManager: text("account_manager").references(() => userTable.id),
-  notes: text("notes"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const clientTable = pgTable(
+  "client",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    companyName: text("company_name").notNull(),
+    contactPerson: text("contact_person").notNull(),
+    email: text("email").notNull().unique(),
+    phone: text("phone").notNull(),
+    address: text("address").notNull(),
+    city: text("city").notNull(),
+    province: text("province").notNull(),
+    industry: text("industry"),
+    wasteTypes: text("waste_types"),
+    contractStartDate: timestamp("contract_start_date", { withTimezone: true }),
+    contractEndDate: timestamp("contract_end_date", { withTimezone: true }),
+    status: clientStatusEnum("status").notNull().default("active"),
+    accountManager: text("account_manager").references(() => userTable.id),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    statusIdx: index("client_status_idx").on(table.status),
+    createdAtIdx: index("client_created_at_idx").on(table.createdAt),
+    accountManagerIdx: index("client_account_manager_idx").on(
+      table.accountManager,
+    ),
+  }),
+);
 
 // Service Requests
 export const serviceRequestTable = pgTable("service_request", {
