@@ -264,10 +264,25 @@ const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange
       }),
       Underline,
       TextAlign.configure({ types: ["heading", "paragraph", "tableCell", "tableHeader"] }),
-      Table.configure({ resizable: false }),
+      Table.configure({
+        resizable: false,
+        HTMLAttributes: {
+          class: 'pricing-table',
+        },
+      }),
       TableRow,
-      TableHeader,
-      TableCell,
+      TableHeader.configure({
+        HTMLAttributes: {
+          // Preserve any classes on table headers
+          class: null,
+        },
+      }),
+      TableCell.configure({
+        HTMLAttributes: {
+          // Preserve any classes on table cells
+          class: null,
+        },
+      }),
     ],
     content: content || "",
     immediatelyRender: false,

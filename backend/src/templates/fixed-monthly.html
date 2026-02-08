@@ -118,6 +118,19 @@
       display: table-row !important;
     }
 
+    /* Also target first row as header in case thead is stripped */
+    .pricing-table tr:first-child {
+      background-color: #104806 !important;
+      color: white !important;
+    }
+
+    .pricing-table tr:first-child th,
+    .pricing-table tr:first-child td {
+      background-color: #104806 !important;
+      color: white !important;
+      font-weight: bold !important;
+    }
+
     .pricing-table th,
     .pricing-table td {
       border: 1px solid #000 !important;
@@ -128,6 +141,8 @@
 
     .pricing-table th {
       font-weight: bold !important;
+      background-color: #104806 !important;
+      color: white !important;
     }
 
     .note {
