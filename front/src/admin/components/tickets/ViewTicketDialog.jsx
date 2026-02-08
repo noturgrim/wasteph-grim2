@@ -177,8 +177,6 @@ export const ViewTicketDialog = ({
     }
   };
 
-  if (!ticket) return null;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -195,10 +193,10 @@ export const ViewTicketDialog = ({
                 Ticket Details
               </DialogTitle>
               <DialogDescription className="text-xs sm:text-sm">
-                {ticket.ticketNumber}
+                {ticket?.ticketNumber || "Loading..."}
               </DialogDescription>
             </div>
-            {onEdit && canEditTicket(ticket, user) && (
+            {ticket && onEdit && canEditTicket(ticket, user) && (
               <Button
                 variant="outline"
                 size="sm"
@@ -215,6 +213,12 @@ export const ViewTicketDialog = ({
           </div>
         </DialogHeader>
 
+        {isLoading || !ticket ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Loading ticket details...</p>
+          </div>
+        ) : (
         <ScrollArea className="h-[calc(90vh-120px)]">
           <div className="space-y-5 pr-4">
             {/* Ticket Header */}
@@ -428,6 +432,7 @@ export const ViewTicketDialog = ({
             </div>
           </div>
         </ScrollArea>
+        )}
       </DialogContent>
 
       <PDFViewer
