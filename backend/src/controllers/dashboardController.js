@@ -18,3 +18,21 @@ export const getSalesDashboard = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Controller: Get super admin dashboard data
+ * Route: GET /api/dashboard/admin
+ * Access: Protected (admin, super_admin)
+ */
+export const getSuperAdminDashboard = async (req, res, next) => {
+  try {
+    const data = await dashboardService.getSuperAdminDashboard();
+
+    res.json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

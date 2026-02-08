@@ -146,7 +146,7 @@ const buildSummary = (context) => {
 
 // --- Component ---
 
-const RecentActivity = ({ activities = [] }) => {
+const RecentActivity = ({ activities = [], showActor = false }) => {
   if (activities.length === 0) {
     return (
       <Card className="border-slate-200 bg-white dark:border-white/10 dark:bg-black/40">
@@ -196,9 +196,16 @@ const RecentActivity = ({ activities = [] }) => {
                   </div>
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-medium text-slate-900 dark:text-white">
-                        {label}
-                      </p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-slate-900 dark:text-white">
+                          {label}
+                        </p>
+                        {showActor && activity.context?.actorName && (
+                          <p className="text-xs text-muted-foreground">
+                            by {activity.context.actorName}
+                          </p>
+                        )}
+                      </div>
                       <span className="shrink-0 text-xs text-muted-foreground whitespace-nowrap">
                         {formatDistanceToNow(new Date(activity.createdAt), {
                           addSuffix: true,

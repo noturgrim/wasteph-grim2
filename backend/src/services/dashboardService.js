@@ -8,8 +8,9 @@ import {
   activityLogTable,
   inquiryTable,
   clientTicketsTable,
+  userTable,
 } from "../db/schema.js";
-import { eq, and, or, sql, gte, inArray, notInArray, desc } from "drizzle-orm";
+import { eq, and, or, sql, gte, isNull, inArray, notInArray, desc } from "drizzle-orm";
 
 class DashboardService {
   /**
@@ -230,6 +231,197 @@ class DashboardService {
       .orderBy(desc(activityLogTable.createdAt))
       .limit(10);
 
+    return this._enrichActivityRows(rows);
+  }
+
+  // ============================================================
+  // SUPER ADMIN DASHBOARD
+  // ============================================================
+
+  /**
+   * Get super admin / admin dashboard data.
+   * System-wide overview, pending actions, recent activity.
+   */
+  async getSuperAdminDashboard() {
+    const [stats, pendingActions, recentActivity] = await Promise.all([
+      this._getSystemWideCounts(),
+      this._getPendingActions(),
+      this._getSystemWideRecentActivity(),
+    ]);
+
+    return { stats, pendingActions, recentActivity };
+  }
+
+  /**
+   * System-wide KPI counts — 6 parallel count queries.
+   */
+  async _getSystemWideCounts() {
+    const [
+      totalInquiries,
+      totalLeads,
+      activeProposals,
+      activeContracts,
+      totalClients,
+      openTickets,
+    ] = await Promise.all([
+      db.select({ c: sql`count(*)::int` }).from(inquiryTable).then((r) => r[0].c),
+      db.select({ c: sql`count(*)::int` }).from(leadTable).then((r) => r[0].c),
+      db
+        .select({ c: sql`count(*)::int` })
+        .from(proposalTable)
+        .where(inArray(proposalTable.status, ["pending", "approved", "sent"]))
+        .then((r) => r[0].c),
+      db
+        .select({ c: sql`count(*)::int` })
+        .from(contractsTable)
+        .where(notInArray(contractsTable.status, ["signed", "hardbound_received"]))
+        .then((r) => r[0].c),
+      db.select({ c: sql`count(*)::int` }).from(clientTable).then((r) => r[0].c),
+      db
+        .select({ c: sql`count(*)::int` })
+        .from(clientTicketsTable)
+        .where(inArray(clientTicketsTable.status, ["open", "in_progress"]))
+        .then((r) => r[0].c),
+    ]);
+
+    return {
+      totalInquiries,
+      totalLeads,
+      activeProposals,
+      activeContracts,
+      totalClients,
+      openTickets,
+    };
+  }
+
+  /**
+   * Pending items that need admin attention.
+   */
+  async _getPendingActions() {
+    const [
+      pendingProposals,
+      pendingContracts,
+      unassignedInquiries,
+      urgentTickets,
+    ] = await Promise.all([
+      // Proposals awaiting approval (count + top 5)
+      db
+        .select({
+          id: proposalTable.id,
+          proposalNumber: proposalTable.proposalNumber,
+          createdAt: proposalTable.createdAt,
+          requesterFirstName: userTable.firstName,
+          requesterLastName: userTable.lastName,
+          company: inquiryTable.company,
+          clientName: inquiryTable.name,
+          totalCount: sql`(count(*) over())::int`,
+        })
+        .from(proposalTable)
+        .leftJoin(userTable, eq(proposalTable.requestedBy, userTable.id))
+        .leftJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id))
+        .where(eq(proposalTable.status, "pending"))
+        .orderBy(desc(proposalTable.createdAt))
+        .limit(5),
+
+      // Contracts awaiting upload (count + top 5)
+      db
+        .select({
+          id: contractsTable.id,
+          contractNumber: contractsTable.contractNumber,
+          clientName: contractsTable.clientName,
+          companyName: contractsTable.companyName,
+          requestedAt: contractsTable.requestedAt,
+          requesterFirstName: userTable.firstName,
+          requesterLastName: userTable.lastName,
+          totalCount: sql`(count(*) over())::int`,
+        })
+        .from(contractsTable)
+        .leftJoin(userTable, eq(contractsTable.requestedBy, userTable.id))
+        .where(eq(contractsTable.status, "requested"))
+        .orderBy(desc(contractsTable.requestedAt))
+        .limit(5),
+
+      // Unassigned inquiry count
+      db
+        .select({ c: sql`count(*)::int` })
+        .from(inquiryTable)
+        .where(isNull(inquiryTable.assignedTo))
+        .then((r) => r[0].c),
+
+      // Urgent open tickets count
+      db
+        .select({ c: sql`count(*)::int` })
+        .from(clientTicketsTable)
+        .where(
+          and(
+            eq(clientTicketsTable.priority, "urgent"),
+            inArray(clientTicketsTable.status, ["open", "in_progress"]),
+          ),
+        )
+        .then((r) => r[0].c),
+    ]);
+
+    return {
+      proposals: {
+        total: pendingProposals[0]?.totalCount ?? 0,
+        items: pendingProposals.map((p) => ({
+          id: p.id,
+          proposalNumber: p.proposalNumber,
+          requester: `${p.requesterFirstName || ""} ${p.requesterLastName || ""}`.trim(),
+          company: p.company,
+          clientName: p.clientName,
+          createdAt: p.createdAt,
+        })),
+      },
+      contracts: {
+        total: pendingContracts[0]?.totalCount ?? 0,
+        items: pendingContracts.map((c) => ({
+          id: c.id,
+          contractNumber: c.contractNumber,
+          requester: `${c.requesterFirstName || ""} ${c.requesterLastName || ""}`.trim(),
+          clientName: c.clientName,
+          companyName: c.companyName,
+          requestedAt: c.requestedAt,
+        })),
+      },
+      unassignedInquiries,
+      urgentTickets,
+    };
+  }
+
+  /**
+   * System-wide recent activity — last 15 across all users,
+   * enriched with entity context + actor name.
+   */
+  async _getSystemWideRecentActivity() {
+    const rows = await db
+      .select({
+        id: activityLogTable.id,
+        action: activityLogTable.action,
+        entityType: activityLogTable.entityType,
+        entityId: activityLogTable.entityId,
+        details: activityLogTable.details,
+        createdAt: activityLogTable.createdAt,
+        actorFirstName: userTable.firstName,
+        actorLastName: userTable.lastName,
+      })
+      .from(activityLogTable)
+      .leftJoin(userTable, eq(activityLogTable.userId, userTable.id))
+      .orderBy(desc(activityLogTable.createdAt))
+      .limit(15);
+
+    return this._enrichActivityRows(rows, true);
+  }
+
+  // ============================================================
+  // SHARED HELPERS
+  // ============================================================
+
+  /**
+   * Enrich raw activity rows with entity context (names, numbers)
+   * and parsed details JSON. Optionally includes actor name.
+   */
+  async _enrichActivityRows(rows, includeActor = false) {
     if (rows.length === 0) return rows;
 
     // Group entity IDs by type for batch lookups
@@ -266,7 +458,6 @@ class DashboardService {
             contractNumber: contractsTable.contractNumber,
             clientName: contractsTable.clientName,
             companyName: contractsTable.companyName,
-            status: contractsTable.status,
           })
           .from(contractsTable)
           .where(inArray(contractsTable.id, [...idsByType.contract]))
@@ -331,29 +522,22 @@ class DashboardService {
       );
     }
 
-    // Also look up inquiry names for proposals (to show who the proposal is for)
     await Promise.all(promises);
 
-    // If we have proposals, also resolve their inquiry names
+    // Resolve inquiry names for proposals
     const proposalInquiryIds = new Set();
     if (lookups.proposal) {
       for (const p of lookups.proposal.values()) {
         if (p.inquiryId) proposalInquiryIds.add(p.inquiryId);
       }
     }
-    let inquiryNameMap = new Map();
     if (proposalInquiryIds.size > 0) {
-      // Some inquiry IDs may already be in lookups.inquiry
       const missingIds = [...proposalInquiryIds].filter(
         (id) => !lookups.inquiry?.has(id),
       );
       if (missingIds.length > 0) {
         const extra = await db
-          .select({
-            id: inquiryTable.id,
-            name: inquiryTable.name,
-            company: inquiryTable.company,
-          })
+          .select({ id: inquiryTable.id, name: inquiryTable.name, company: inquiryTable.company })
           .from(inquiryTable)
           .where(inArray(inquiryTable.id, missingIds));
         for (const i of extra) {
@@ -363,19 +547,16 @@ class DashboardService {
       }
     }
 
-    // Enrich each activity row with entity context + parsed details
+    // Map rows to enriched objects
     return rows.map((row) => {
       const entity = lookups[row.entityType]?.get(row.entityId);
       const context = {};
 
-      // --- Entity-level info (from joined tables) ---
+      // Entity-level info
       if (row.entityType === "proposal" && entity) {
         context.proposalNumber = entity.proposalNumber;
         const inq = lookups.inquiry?.get(entity.inquiryId);
-        if (inq) {
-          context.clientName = inq.name;
-          context.company = inq.company;
-        }
+        if (inq) { context.clientName = inq.name; context.company = inq.company; }
       } else if (row.entityType === "contract" && entity) {
         context.contractNumber = entity.contractNumber;
         context.clientName = entity.clientName;
@@ -395,12 +576,10 @@ class DashboardService {
         context.subject = entity.subject;
       }
 
-      // --- Details-level info (from stored JSON in activity log) ---
+      // Details-level info (from stored JSON)
       if (row.details) {
         try {
-          const d = typeof row.details === "string"
-            ? JSON.parse(row.details)
-            : row.details;
+          const d = typeof row.details === "string" ? JSON.parse(row.details) : row.details;
           if (d && typeof d === "object") {
             if (d.oldStatus) context.oldStatus = d.oldStatus;
             if (d.newStatus) context.newStatus = d.newStatus;
@@ -412,9 +591,12 @@ class DashboardService {
             if (d.clientName && !context.clientName) context.clientName = d.clientName;
             if (d.source) context.source = d.source;
           }
-        } catch {
-          // ignore unparseable details
-        }
+        } catch { /* ignore */ }
+      }
+
+      // Actor name (for admin dashboard)
+      if (includeActor && row.actorFirstName) {
+        context.actorName = `${row.actorFirstName} ${row.actorLastName || ""}`.trim();
       }
 
       return {

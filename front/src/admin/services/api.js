@@ -901,6 +901,10 @@ class ApiClient {
     return this.request("/dashboard/sales");
   }
 
+  async getAdminDashboard() {
+    return this.request("/dashboard/admin");
+  }
+
   // Notifications
   async getNotifications(params = {}) {
     return this.request("/notifications", { params });
