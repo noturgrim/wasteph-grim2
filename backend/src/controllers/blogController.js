@@ -106,18 +106,20 @@ export async function getRelatedPosts(req, res) {
  */
 export async function getAllPosts(req, res) {
   try {
-    const { status, category, search } = req.query;
+    const { status, category, search, page, limit } = req.query;
     const filters = {};
 
     if (status) filters.status = status;
     if (category) filters.category = category;
     if (search) filters.search = search;
+    if (page) filters.page = page;
+    if (limit) filters.limit = limit;
 
-    const posts = await blogService.getAllPosts(filters);
+    const result = await blogService.getAllPosts(filters);
 
     return res.status(200).json({
       success: true,
-      data: posts,
+      ...result,
     });
   } catch (error) {
     console.error("Error fetching all posts:", error);

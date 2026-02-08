@@ -86,40 +86,77 @@ export async function getPublishedPostBySlug(slug) {
 }
 
 /**
- * Get all blog posts with optional filtering (admin)
+ * Get all blog posts with optional filtering and pagination (admin)
+ * Excludes heavy `content` column for list view
  */
 export async function getAllPosts(filters = {}) {
-  let query = db.select().from(blogPostTable);
+  const { status, category, search, page: rawPage = 1, limit: rawLimit = 10 } = filters;
+  const page = Number(rawPage) || 1;
+  const limit = Number(rawLimit) || 10;
+  const offset = (page - 1) * limit;
 
-  // Apply filters
   const conditions = [];
-  
-  if (filters.status) {
-    conditions.push(eq(blogPostTable.status, filters.status));
+
+  if (status) {
+    conditions.push(eq(blogPostTable.status, status));
   }
-  
-  if (filters.category) {
-    conditions.push(eq(blogPostTable.category, filters.category));
+
+  if (category) {
+    conditions.push(eq(blogPostTable.category, category));
   }
-  
-  if (filters.search) {
+
+  if (search) {
+    const escaped = search.replace(/[%_\\]/g, "\\$&");
     conditions.push(
       or(
-        like(blogPostTable.title, `%${filters.search}%`),
-        like(blogPostTable.excerpt, `%${filters.search}%`),
-        like(blogPostTable.content, `%${filters.search}%`)
+        like(blogPostTable.title, `%${escaped}%`),
+        like(blogPostTable.excerpt, `%${escaped}%`)
       )
     );
   }
 
-  if (conditions.length > 0) {
-    query = query.where(and(...conditions));
-  }
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const posts = await query.orderBy(desc(blogPostTable.createdAt));
-  
-  // Add presigned URLs for cover images
-  return await Promise.all(posts.map(p => addPresignedUrls(p)));
+  // Select only list-view columns (exclude content), with window count
+  const rows = await db
+    .select({
+      id: blogPostTable.id,
+      title: blogPostTable.title,
+      slug: blogPostTable.slug,
+      excerpt: blogPostTable.excerpt,
+      coverImage: blogPostTable.coverImage,
+      category: blogPostTable.category,
+      tags: blogPostTable.tags,
+      status: blogPostTable.status,
+      author: blogPostTable.author,
+      publishedAt: blogPostTable.publishedAt,
+      views: blogPostTable.views,
+      readTime: blogPostTable.readTime,
+      createdAt: blogPostTable.createdAt,
+      updatedAt: blogPostTable.updatedAt,
+      totalCount: sql`(count(*) over())::int`,
+    })
+    .from(blogPostTable)
+    .where(whereClause)
+    .orderBy(desc(blogPostTable.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  const total = rows.length > 0 ? rows[0].totalCount : 0;
+
+  // Strip totalCount and add presigned URLs only for posts that have cover images
+  const posts = rows.map(({ totalCount, ...rest }) => rest);
+  const postsWithUrls = await Promise.all(posts.map((p) => addPresignedUrls(p)));
+
+  return {
+    data: postsWithUrls,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 }
 
 /**

@@ -73,6 +73,8 @@ export async function fetchAllPosts(filters = {}) {
   if (filters.status) params.append("status", filters.status);
   if (filters.category) params.append("category", filters.category);
   if (filters.search) params.append("search", filters.search);
+  if (filters.page) params.append("page", filters.page);
+  if (filters.limit) params.append("limit", filters.limit);
 
   const cacheKey = `fetchAllPosts-${params.toString()}`;
 
@@ -98,8 +100,8 @@ export async function fetchAllPosts(filters = {}) {
         throw new Error(error.message || "Failed to fetch blog posts");
       }
 
-      const data = await response.json();
-      return data.data;
+      const result = await response.json();
+      return result;
     } catch (error) {
       console.error("Error fetching all posts:", error);
       throw error;

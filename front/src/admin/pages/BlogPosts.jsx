@@ -8,6 +8,10 @@ import {
   Calendar,
   Tag,
   Loader2,
+  ChevronsLeft,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsRight,
 } from "lucide-react";
 import { toast } from "../utils/toast";
 import { Button } from "@/components/ui/button";
@@ -15,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "../components/showcase/RichTextEditor";
 import {
   fetchAllPosts,
+  fetchPostById,
   createPost,
   updatePost,
   deletePost,
@@ -44,48 +49,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-// Mock data - will be replaced with API calls later
-const MOCK_POSTS = [
-  {
-    id: "1",
-    title: "The Future of Waste Management in the Philippines",
-    excerpt:
-      "Exploring innovative solutions and sustainable practices that are transforming how we handle waste in our communities.",
-    category: "Industry Insights",
-    status: "published",
-    author: "WastePH Team",
-    publishedAt: "2024-12-20",
-    tags: ["sustainability", "innovation", "waste management"],
-    views: 1245,
-  },
-  {
-    id: "2",
-    title: "Understanding Different Waste Streams",
-    excerpt:
-      "A comprehensive guide to identifying and properly managing various types of waste in your business operations.",
-    category: "Education",
-    status: "published",
-    author: "WastePH Team",
-    publishedAt: "2024-12-18",
-    tags: ["education", "waste streams", "best practices"],
-    views: 892,
-  },
-  {
-    id: "3",
-    title: "New Regulations Coming in 2025",
-    excerpt:
-      "Draft article about upcoming environmental regulations and their impact on businesses.",
-    category: "Compliance",
-    status: "draft",
-    author: "WastePH Team",
-    publishedAt: null,
-    tags: ["compliance", "regulations"],
-    views: 0,
-  },
-];
-
 const CATEGORIES = [
   "Industry Insights",
   "Education",
@@ -106,12 +69,20 @@ const BlogPosts = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+  });
+  const fetchIdRef = useRef(0);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
+  const [loadingPostId, setLoadingPostId] = useState(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -130,26 +101,37 @@ const BlogPosts = () => {
   const [coverImagePreview, setCoverImagePreview] = useState(null);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
 
-  // Load posts and stats on mount
+  // Load stats on mount
   useEffect(() => {
-    loadPosts();
     loadStats();
-  }, [statusFilter]);
+  }, []);
 
-  const loadPosts = async () => {
+  // Reset to page 1 on filter/search change
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    loadPosts(1);
+  }, [statusFilter, searchQuery]);
+
+  const loadPosts = async (page = pagination.page, limit = pagination.limit) => {
+    const currentFetchId = ++fetchIdRef.current;
     setIsLoading(true);
     try {
-      const filters = {};
+      const filters = { page, limit };
       if (statusFilter !== "all") filters.status = statusFilter;
       if (searchQuery) filters.search = searchQuery;
 
-      const data = await fetchAllPosts(filters);
-      setPosts(data);
+      const response = await fetchAllPosts(filters);
+
+      if (currentFetchId !== fetchIdRef.current) return;
+
+      setPosts(response.data || []);
+      setPagination(response.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 });
     } catch (error) {
+      if (currentFetchId !== fetchIdRef.current) return;
       console.error("Failed to load posts:", error);
       toast.error("Failed to load blog posts. Please try again.");
     } finally {
-      setIsLoading(false);
+      if (currentFetchId === fetchIdRef.current) setIsLoading(false);
     }
   };
 
@@ -162,15 +144,7 @@ const BlogPosts = () => {
     }
   };
 
-  const filteredPosts = posts.filter((post) => {
-    const matchesSearch =
-      searchQuery === "" ||
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || post.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Posts are already filtered server-side
 
   const handleCoverImageChange = (e) => {
     const file = e.target.files[0];
@@ -238,7 +212,7 @@ const BlogPosts = () => {
       });
       setCoverImageFile(null);
       setCoverImagePreview(null);
-      loadPosts();
+      loadPosts(pagination.page, pagination.limit);
       loadStats();
     } catch (error) {
       console.error("Failed to create post:", error);
@@ -297,7 +271,7 @@ const BlogPosts = () => {
       setSelectedPost(null);
       setCoverImageFile(null);
       setCoverImagePreview(null);
-      loadPosts();
+      loadPosts(pagination.page, pagination.limit);
       loadStats();
     } catch (error) {
       console.error("Failed to update post:", error);
@@ -333,7 +307,7 @@ const BlogPosts = () => {
       toast.success("Blog post deleted successfully");
       setIsDeleteDialogOpen(false);
       setSelectedPost(null);
-      loadPosts();
+      loadPosts(pagination.page, pagination.limit);
       loadStats();
     } catch (error) {
       console.error("Failed to delete post:", error);
@@ -343,19 +317,28 @@ const BlogPosts = () => {
     }
   };
 
-  const openEditDialog = (post) => {
-    setSelectedPost(post);
-    setFormData({
-      title: post.title,
-      excerpt: post.excerpt,
-      content: post.content || "",
-      category: post.category,
-      status: post.status,
-      tags: Array.isArray(post.tags) ? post.tags.join(", ") : "",
-      coverImage: post.coverImage || "",
-      author: post.author || "WastePH Team",
-    });
-    setIsEditDialogOpen(true);
+  const openEditDialog = async (post) => {
+    setLoadingPostId(post.id);
+    try {
+      // Fetch full post (including content) by ID
+      const fullPost = await fetchPostById(post.id);
+      setSelectedPost(fullPost);
+      setFormData({
+        title: fullPost.title,
+        excerpt: fullPost.excerpt,
+        content: fullPost.content || "",
+        category: fullPost.category,
+        status: fullPost.status,
+        tags: Array.isArray(fullPost.tags) ? fullPost.tags.join(", ") : "",
+        coverImage: fullPost.coverImage || "",
+        author: fullPost.author || "WastePH Team",
+      });
+      setIsEditDialogOpen(true);
+    } catch (error) {
+      toast.error("Failed to load post details");
+    } finally {
+      setLoadingPostId(null);
+    }
   };
 
   const openDeleteDialog = (post) => {
@@ -376,15 +359,7 @@ const BlogPosts = () => {
     }
   };
 
-  // Apply search filter
-  useEffect(() => {
-    if (searchQuery) {
-      const timer = setTimeout(() => {
-        loadPosts();
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [searchQuery]);
+  // Search is now handled by the filter useEffect above
 
   return (
     <div className="space-y-6">
@@ -481,8 +456,8 @@ const BlogPosts = () => {
                 <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-[#15803d]" />
                 <p className="text-muted-foreground">Loading posts...</p>
               </div>
-            ) : filteredPosts.length > 0 ? (
-              filteredPosts.map((post) => (
+            ) : posts.length > 0 ? (
+              posts.map((post) => (
                 <div
                   key={post.id}
                   className="group rounded-lg border p-4 transition-all hover:shadow-lg border-slate-200 bg-white hover:border-[#15803d]/50 dark:border-white/10 dark:bg-white/5"
@@ -535,14 +510,20 @@ const BlogPosts = () => {
                         variant="outline"
                         size="icon"
                         onClick={() => openEditDialog(post)}
+                        disabled={loadingPostId === post.id}
                         className="hover:bg-[#15803d]/10 hover:text-[#15803d]"
                       >
-                        <Edit className="h-4 w-4" />
+                        {loadingPostId === post.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Edit className="h-4 w-4" />
+                        )}
                       </Button>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => openDeleteDialog(post)}
+                        disabled={!!loadingPostId}
                         className="hover:bg-red-500/10 hover:text-red-600"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -559,6 +540,57 @@ const BlogPosts = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-end gap-8">
+          <span className="text-sm">
+            Page {pagination.page} of {pagination.totalPages}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => loadPosts(1)}
+              disabled={pagination.page === 1 || isLoading}
+            >
+              <span className="sr-only">First page</span>
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => loadPosts(Math.max(pagination.page - 1, 1))}
+              disabled={pagination.page === 1 || isLoading}
+            >
+              <span className="sr-only">Previous page</span>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => loadPosts(Math.min(pagination.page + 1, pagination.totalPages))}
+              disabled={pagination.page >= pagination.totalPages || isLoading}
+            >
+              <span className="sr-only">Next page</span>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => loadPosts(pagination.totalPages)}
+              disabled={pagination.page >= pagination.totalPages || isLoading}
+            >
+              <span className="sr-only">Last page</span>
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Create/Edit Dialog */}
       <Dialog
