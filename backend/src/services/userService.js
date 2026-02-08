@@ -34,7 +34,8 @@ class UserService {
     }
 
     if (search) {
-      const searchTerm = `%${search}%`;
+      const escaped = search.replace(/[%_\\]/g, "\\$&");
+      const searchTerm = `%${escaped}%`;
       conditions.push(
         or(
           like(sql`${userTable.firstName} || ' ' || ${userTable.lastName}`, searchTerm),
