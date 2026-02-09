@@ -141,7 +141,9 @@ export function AppSidebar() {
                     <span
                       className="truncate text-xs font-medium capitalize text-slate-500 dark:text-white/50"
                     >
-                      {user?.role}
+                      {user?.role === "sales" && user?.isMasterSales
+                        ? "Master Sales"
+                        : user?.role}
                     </span>
                   </div>
                   <ChevronsUpDown className="ml-auto h-4 w-4" />
