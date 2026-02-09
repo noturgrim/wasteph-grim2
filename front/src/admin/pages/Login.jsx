@@ -11,13 +11,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Lock, Mail } from "lucide-react";
+import { Lock, Mail, Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login, user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -118,7 +119,7 @@ const Login = () => {
                       placeholder="sales@wasteph.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-12 border-white/10 bg-white/5 pl-11 text-white placeholder:text-white/30 focus:border-[#15803d]/50 focus:bg-white/10 focus:ring-[#15803d]/20"
+                      className="h-12 border-white/10 bg-white/5 pl-11 text-white caret-white placeholder:text-white/30 focus:border-[#15803d]/50 focus:bg-white/10 focus:ring-[#15803d]/20"
                       required
                     />
                   </div>
@@ -131,13 +132,28 @@ const Login = () => {
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-white/30" />
                     <Input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 border-white/10 bg-white/5 pl-11 text-white placeholder:text-white/30 focus:border-[#15803d]/50 focus:bg-white/10 focus:ring-[#15803d]/20"
+                      className="h-12 border-white/10 bg-white/5 pl-11 pr-11 text-white caret-white placeholder:text-white/30 focus:border-[#15803d]/50 focus:bg-white/10 focus:ring-[#15803d]/20"
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 transition-colors hover:text-white/60"
+                      tabIndex={0}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
                   </div>
                 </div>
 
@@ -172,7 +188,7 @@ const Login = () => {
 
           {/* Footer */}
           <p className="mt-8 text-center text-xs font-medium uppercase tracking-wider text-white/30">
-            © 2024 WastePH. All rights reserved.
+            © 2026 WastePH. All rights reserved.
           </p>
         </div>
       </div>
