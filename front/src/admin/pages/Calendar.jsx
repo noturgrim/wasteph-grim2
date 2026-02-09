@@ -29,8 +29,45 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ScheduleEventDialog } from "../components/calendar/ScheduleEventDialog";
 import { ViewEventDialog } from "../components/calendar/ViewEventDialog";
+
+/**
+ * Reusable event chip rendered inside calendar cells and overflow popover
+ */
+const EventChip = ({ event, userId, canViewAll, getStatusColor, getStatusIcon, onClick }) => {
+  const isOwnEvent = event.userId === userId;
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick(event);
+      }}
+      className={`w-full text-left p-1.5 rounded text-xs ${getStatusColor(
+        event.status,
+      )} hover:opacity-80 transition-opacity`}
+    >
+      <div className="flex items-center gap-1">
+        {getStatusIcon(event.status)}
+        <span className="truncate font-medium">{event.title}</span>
+      </div>
+      {event.startTime && (
+        <div className="text-xs opacity-75 mt-0.5">{event.startTime}</div>
+      )}
+      {canViewAll && !isOwnEvent && event.user?.name && (
+        <div className="text-xs opacity-60 mt-0.5 truncate">
+          {event.user.name}
+        </div>
+      )}
+    </button>
+  );
+};
 
 export default function Calendar() {
   const { user } = useAuth();
@@ -261,6 +298,7 @@ export default function Calendar() {
               const dayEvents = eventsByDate[dateKey] || [];
               const isCurrentMonth = isSameMonth(day, currentDate);
               const isDayToday = isToday(day);
+              const overflowCount = dayEvents.length - 3;
 
               return (
                 <div
@@ -293,43 +331,73 @@ export default function Calendar() {
 
                   {/* Events for this day */}
                   <div className="space-y-1">
-                    {dayEvents.slice(0, 3).map((event) => {
-                      const isOwnEvent = event.userId === user?.id;
-                      return (
-                        <button
-                          key={event.id}
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEventClick(event);
-                          }}
-                          className={`w-full text-left p-1.5 rounded text-xs ${getStatusColor(
-                            event.status,
-                          )} hover:opacity-80 transition-opacity`}
+                    {dayEvents.slice(0, 3).map((event) => (
+                      <EventChip
+                        key={event.id}
+                        event={event}
+                        userId={user?.id}
+                        canViewAll={canViewAll}
+                        getStatusColor={getStatusColor}
+                        getStatusIcon={getStatusIcon}
+                        onClick={handleEventClick}
+                      />
+                    ))}
+                    {overflowCount > 0 && (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full text-left text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded px-1.5 py-0.5 transition-colors"
+                            aria-label={`Show ${overflowCount} more event${overflowCount !== 1 ? "s" : ""}`}
+                          >
+                            +{overflowCount} more
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-72 p-0"
+                          align="start"
+                          side="bottom"
+                          avoidCollisions
+                          collisionPadding={16}
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <div className="flex items-center gap-1">
-                            {getStatusIcon(event.status)}
-                            <span className="truncate font-medium">
-                              {event.title}
-                            </span>
+                          <div className="px-3 py-2 border-b">
+                            <p className="font-semibold text-sm">
+                              {format(day, "EEEE, MMMM d")}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {dayEvents.length} event{dayEvents.length !== 1 ? "s" : ""}
+                            </p>
                           </div>
-                          {event.startTime && (
-                            <div className="text-xs opacity-75 mt-0.5">
-                              {event.startTime}
-                            </div>
-                          )}
-                          {canViewAll && !isOwnEvent && event.user?.name && (
-                            <div className="text-xs opacity-60 mt-0.5 truncate">
-                              {event.user.name}
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                    {dayEvents.length > 3 && (
-                      <div className="text-xs text-muted-foreground pl-1.5">
-                        +{dayEvents.length - 3} more
-                      </div>
+                          <div className="max-h-64 overflow-y-auto p-2 space-y-1">
+                            {dayEvents.map((event) => (
+                              <EventChip
+                                key={event.id}
+                                event={event}
+                                userId={user?.id}
+                                canViewAll={canViewAll}
+                                getStatusColor={getStatusColor}
+                                getStatusIcon={getStatusIcon}
+                                onClick={handleEventClick}
+                              />
+                            ))}
+                          </div>
+                          <div className="px-3 py-2 border-t">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDateClick(day);
+                              }}
+                              className="text-xs font-medium text-primary hover:underline"
+                            >
+                              <Plus className="inline h-3 w-3 mr-0.5" />
+                              Add event
+                            </button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
                     )}
                   </div>
                 </div>
