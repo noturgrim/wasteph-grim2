@@ -9,6 +9,7 @@ import { userTable, activityLogTable } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 import { generateIdFromEntropySize } from "lucia";
 import { AppError } from "../middleware/errorHandler.js";
+import { generateCsrfToken } from "../middleware/csrf.js";
 
 export const register = async (req, res, next) => {
   try {
@@ -76,6 +77,9 @@ export const register = async (req, res, next) => {
       sessionCookie.value,
       sessionCookie.attributes
     );
+
+    // Provide CSRF token so the frontend can send it on subsequent requests
+    res.setHeader("X-CSRF-Token", generateCsrfToken(session.id));
 
     res.status(201).json({
       success: true,
@@ -149,6 +153,9 @@ export const login = async (req, res, next) => {
       sessionCookie.value,
       sessionCookie.attributes
     );
+
+    // Provide CSRF token so the frontend can send it on subsequent requests
+    res.setHeader("X-CSRF-Token", generateCsrfToken(session.id));
 
     res.json({
       success: true,
@@ -307,6 +314,9 @@ export const changePassword = async (req, res, next) => {
       sessionCookie.value,
       sessionCookie.attributes
     );
+
+    // New session means a new CSRF token
+    res.setHeader("X-CSRF-Token", generateCsrfToken(session.id));
 
     res.json({
       success: true,

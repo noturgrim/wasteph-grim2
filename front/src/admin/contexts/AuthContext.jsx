@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { api } from "../services/api";
+import { api, clearCsrfToken } from "../services/api";
 import socketService from "../services/socketService";
 import ticketSocketService from "../services/ticketSocketService";
 import proposalSocketService from "../services/proposalSocketService";
@@ -114,6 +114,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
+      clearCsrfToken();
       setUser(null);
       setIsSocketConnected(false);
       setIsLoggingOut(false);

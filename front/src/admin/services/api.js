@@ -2,10 +2,51 @@
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
+// CSRF token stored in memory (not localStorage -- safe from XSS reading persisted data)
+let csrfToken = null;
+
+/** Read the current CSRF token (used by other modules if needed). */
+export const getCsrfToken = () => csrfToken;
+
+/** Clear the CSRF token (call on logout). */
+export const clearCsrfToken = () => {
+  csrfToken = null;
+};
+
+/**
+ * Update the stored CSRF token from a fetch Response.
+ * The backend sends the token in the X-CSRF-Token response header.
+ */
+const updateCsrfFromResponse = (response) => {
+  const token = response.headers.get("X-CSRF-Token");
+  if (token) {
+    csrfToken = token;
+  }
+};
+
 // API Client with credentials for cookie-based auth
 class ApiClient {
   constructor(baseURL) {
     this.baseURL = baseURL;
+  }
+
+  /**
+   * Core fetch wrapper that handles CSRF headers and credentials.
+   * Used by both `request()` and direct FormData uploads.
+   */
+  async _fetch(url, options = {}) {
+    const config = {
+      ...options,
+      headers: {
+        ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+        ...(options.headers || {}),
+      },
+      credentials: "include",
+    };
+
+    const response = await fetch(url, config);
+    updateCsrfFromResponse(response);
+    return response;
   }
 
   async request(endpoint, options = {}) {
@@ -16,17 +57,14 @@ class ApiClient {
       ? {} // Let browser set Content-Type for multipart uploads
       : { "Content-Type": "application/json" };
 
-    const config = {
-      ...options,
-      headers: {
-        ...defaultHeaders,
-        ...options.headers,
-      },
-      credentials: "include", // Important for cookies!
-    };
-
     try {
-      const response = await fetch(url, config);
+      const response = await this._fetch(url, {
+        ...options,
+        headers: {
+          ...defaultHeaders,
+          ...options.headers,
+        },
+      });
 
       // Handle non-JSON responses
       const contentType = response.headers.get("content-type");
@@ -529,11 +567,10 @@ class ApiClient {
         }
       });
 
-      const response = await fetch(`${this.baseURL}/contracts/${id}/request`, {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
+      const response = await this._fetch(
+        `${this.baseURL}/contracts/${id}/request`,
+        { method: "POST", body: formData },
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -556,12 +593,10 @@ class ApiClient {
     if (adminNotes) formData.append("adminNotes", adminNotes);
     if (editedData) formData.append("editedData", JSON.stringify(editedData));
 
-    const response = await fetch(`${this.baseURL}/contracts/${id}/upload-pdf`, {
-      method: "POST",
-      credentials: "include",
-      body: formData,
-      // Don't set Content-Type header - browser will set it with boundary
-    });
+    const response = await this._fetch(
+      `${this.baseURL}/contracts/${id}/upload-pdf`,
+      { method: "POST", body: formData },
+    );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -575,11 +610,10 @@ class ApiClient {
     const formData = new FormData();
     formData.append("hardboundContract", pdfFile);
 
-    const response = await fetch(`${this.baseURL}/contracts/${id}/upload-hardbound`, {
-      method: "POST",
-      credentials: "include",
-      body: formData,
-    });
+    const response = await this._fetch(
+      `${this.baseURL}/contracts/${id}/upload-hardbound`,
+      { method: "POST", body: formData },
+    );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -603,7 +637,7 @@ class ApiClient {
 
   async previewContractPdf(id) {
     const url = `${this.baseURL}/contracts/${id}/preview-pdf`;
-    const response = await fetch(url, { method: "GET", credentials: "include" });
+    const response = await this._fetch(url, { method: "GET" });
     if (!response.ok) throw new Error("Failed to fetch contract PDF");
     const blob = await response.blob();
     return new Promise((resolve, reject) => {

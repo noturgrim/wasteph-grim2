@@ -1,0 +1,513 @@
+================================================================================
+COMPREHENSIVE SECURITY AUDIT - WASTEPH APPLICATION
+================================================================================
+
+Date: February 10, 2026
+Scope: Backend (Node.js/Express), Frontend (React/Vite), WebSocket (Socket.IO), 
+       S3 file uploads, Environment configuration
+
+Total Findings: 55
+- CRITICAL: 12
+- HIGH: 16
+- MEDIUM: 17
+- LOW: 10
+
+================================================================================
+CRITICAL FINDINGS (12) -- FIX IMMEDIATELY
+================================================================================
+
+C1. Missing CSRF Protection [FIXED]
+────────────────────────────────────────────────────────────────────────────
+Location: Entire backend -- no CSRF middleware anywhere
+Risk: Cookie-based auth is inherently vulnerable to CSRF. Attackers can forge 
+      requests from malicious sites.
+Fix: Implemented HMAC-signed CSRF token tied to session ID. Token sent via
+     X-CSRF-Token response header, validated on all state-changing requests
+     through requireAuth middleware. Frontend stores token in memory and
+     attaches it to every mutating request.
+     Files: backend/src/middleware/csrf.js (new), auth.js, authController.js,
+            index.js, front/src/admin/services/api.js, AuthContext.jsx
+
+C2. Rate Limiting Not Applied to Auth Routes
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/routes/authRoutes.js (lines 20-21)
+Risk: `authRateLimiter` exists but is never applied to `/login` or `/register`, 
+      enabling brute-force attacks.
+Fix:
+    import { authRateLimiter } from "../middleware/rateLimiter.js";
+    router.post("/login", authRateLimiter, loginValidation, validate, login);
+    router.post("/register", authRateLimiter, registerValidation, validate, register);
+
+C3. Account Enumeration via Different Error Messages
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/controllers/authController.js (lines 108-121)
+Risk: "Invalid email or password" vs "Account is inactive" reveals whether an 
+      email is registered.
+Fix: Always return the same generic message regardless of failure reason. Use 
+     a dummy hash comparison when user not found to prevent timing attacks.
+
+C4. XSS via dangerouslySetInnerHTML Without Sanitization
+────────────────────────────────────────────────────────────────────────────
+Locations:
+- front/src/pages/BlogPost.jsx (line 278)
+- front/src/components/common/ProposalHtmlEditor.jsx (line 384)
+- front/src/admin/components/contracts/ContractTemplatePreviewDialog.jsx (line 240)
+- front/src/admin/components/inquiries/RequestProposalDialog.jsx (11+ instances)
+- front/src/admin/components/showcase/RichTextEditor.jsx (line 13)
+
+Risk: User-generated HTML rendered without sanitization enables stored XSS.
+Fix: Install and use DOMPurify:
+    import DOMPurify from "dompurify";
+    <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }} />
+
+C5. Mass Assignment Vulnerabilities
+────────────────────────────────────────────────────────────────────────────
+Locations:
+- backend/src/services/leadService.js (lines 217-220)
+- backend/src/services/clientService.js (lines 287-292)
+
+Risk: `...updateData` spread directly into `.set()` allows attackers to modify 
+      protected fields (`isClaimed`, `claimedBy`, `status`, `accountManager`).
+Fix: Whitelist allowed fields before updating:
+    const allowedFields = ["clientName", "company", "email", "phone", "location", "notes"];
+    const safeUpdate = {};
+    for (const key of allowedFields) {
+      if (key in updateData) safeUpdate[key] = updateData[key];
+    }
+
+C6. Blog Admin Routes Missing Role Checks
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/routes/blogRoutes.js (lines 52-57)
+Risk: Routes `/admin/stats`, `/admin/all`, POST/PUT/DELETE only use `requireAuth` 
+      -- any authenticated user (including `social_media` or `sales`) can manage 
+      all blog posts.
+Fix: Add `requireRole("super_admin", "social_media")` to all blog admin routes.
+
+C7. Filename Path Traversal in S3 Uploads
+────────────────────────────────────────────────────────────────────────────
+Locations:
+- backend/src/routes/ticketRoutes.js:61
+- backend/src/routes/blogRoutes.js:31
+- backend/src/routes/showcaseRoutes.js:41
+- backend/src/routes/clientsShowcaseRoutes.js:46
+
+Risk: `req.file.originalname` used directly in S3 keys. Malicious filenames like 
+      `../../../etc/passwd` can manipulate storage paths.
+Fix:
+    const sanitizeFilename = (name) => 
+      name.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/\.\./g, "");
+    const fileName = `${crypto.randomUUID()}-${sanitizeFilename(req.file.originalname)}`;
+
+C8. MIME Type Validation Only (No Magic Bytes)
+────────────────────────────────────────────────────────────────────────────
+Location: All multer configurations across routes
+Risk: Only checks `file.mimetype` which is client-controlled. Attackers can 
+      upload malicious files with spoofed MIME types.
+Fix: Validate file signatures (magic bytes) after receiving the buffer, before 
+     uploading to S3.
+
+C9. Socket Room Subscriptions Lack Authorization
+────────────────────────────────────────────────────────────────────────────
+Locations:
+- backend/src/socket/events/proposalEvents.js (lines 474-497)
+- backend/src/socket/events/contractEvents.js (lines 179-188)
+
+Risk: Any authenticated user can subscribe to any proposal/contract room without 
+      permission checks.
+Fix: Verify user has access to the specific resource before allowing room join.
+
+C10. No Body Parser Size Limits (DoS)
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/index.js (lines 72-73)
+Risk: `express.json()` and `express.urlencoded()` have no size limits, allowing 
+      payload-based DoS.
+Fix:
+    app.use(express.json({ limit: "10mb" }));
+    app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+C11. Express.js CVE-2024-43796 (XSS in redirect)
+────────────────────────────────────────────────────────────────────────────
+Location: backend/package.json -- Express 4.18.2
+Risk: Known XSS vulnerability via `response.redirect()`.
+Fix: Upgrade: npm install express@^4.20.0
+
+C12. Missing Validation on Multiple Routes
+────────────────────────────────────────────────────────────────────────────
+Locations:
+- backend/src/routes/calendarEventRoutes.js:49 -- PATCH has no validation
+- backend/src/routes/serviceRequestRoutes.js -- create/update lack validation
+
+Risk: Unvalidated input flows directly to database operations.
+Fix: Add express-validator or Zod validation middleware to all routes accepting 
+     user input.
+
+================================================================================
+HIGH FINDINGS (16) -- FIX WITHIN DAYS
+================================================================================
+
+H1. Hardcoded Default Passwords in Seed + Docs
+────────────────────────────────────────────────────────────────────────────
+Locations:
+- backend/src/scripts/seedAdmin.js
+- docs/API_EXAMPLES.md
+- docs/START_HERE.md
+
+Risk: `Admin@123456`, `Sales@123456` in repository. Attackers who find these 
+      can access production if defaults aren't changed.
+Fix: Generate random passwords in seeds, remove credentials from docs, force 
+     password change on first login.
+
+H2. Missing Session Fixation Protection
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/controllers/authController.js (lines 134, 61)
+Risk: Old sessions are not invalidated on login. Session fixation attacks possible.
+Fix: await lucia.invalidateUserSessions(user.id) before creating new session.
+
+H3. SameSite Cookie Set to "none"
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/auth/lucia.js (line 19)
+Risk: Combined with missing CSRF protection (C1), this maximizes CSRF attack 
+      surface.
+Fix: Use `sameSite: "lax"` if possible, or ensure CSRF protection is added first.
+
+H4. Service Request Operations Lack Ownership Validation
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/services/serviceRequestService.js (lines 90-165)
+Risk: Any authenticated user can modify/delete any service request.
+Fix: Add ownership checks or restrict to admin/master_sales.
+
+H5. Proposal Send/Cancel Missing Ownership Validation
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/controllers/proposalController.js (lines 203-257)
+Risk: Sales users can send/cancel any proposal, not just their own.
+Fix: Verify `proposal.requestedBy === req.user.id` for non-admin users.
+
+H6. Contract Request/Send Missing Ownership Validation
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/controllers/contractController.js (lines 65-97, 375-410)
+Risk: Sales users can request/send contracts for other users' proposals.
+Fix: Add ownership validation like other operations.
+
+H7. User Can Modify Own isMasterSales Flag
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/controllers/userController.js (lines 111-129)
+Risk: Self-service profile update doesn't prevent `isMasterSales` modification, 
+      allowing privilege escalation.
+Fix: Block `isMasterSales` changes in self-update the same way `role` changes 
+     are blocked.
+
+H8. Inquiry Deletion Missing Role Check
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/routes/inquiryRoutes.js (line 43)
+Risk: `DELETE /:id` only uses `requireAuth` -- any authenticated user can delete 
+      inquiries.
+Fix: Add `requireRole("admin", "super_admin")`.
+
+H9. XSS in Stored Content (Notes, Descriptions)
+────────────────────────────────────────────────────────────────────────────
+Locations:
+- backend/src/services/inquiryNotesService.js:29
+- backend/src/services/calendarEventService.js:583-591
+- backend/src/controllers/contractController.js:160,210,249
+
+Risk: HTML content stored without sanitization, served back and rendered.
+Fix: Sanitize all user text input before storage using a server-side HTML 
+     sanitizer.
+
+H10. S3 Bucket ACL Not Explicitly Set
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/services/s3Service.js (lines 32-39)
+Risk: `PutObjectCommand` doesn't specify ACL. Objects may be publicly accessible 
+      depending on bucket policy.
+Fix: Add `ACL: "private"` to all S3 uploads, enforce via bucket policy.
+
+H11. CORS Fallback to Localhost in Production
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/index.js (line 55)
+Risk: If `FRONTEND_URL` env var is missing, CORS defaults to 
+      `http://localhost:5173`.
+Fix: Throw error if `FRONTEND_URL` is not set in production.
+
+H12. Error Handler May Leak Stack Traces
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/middleware/errorHandler.js (line 16)
+Risk: If `NODE_ENV` is not explicitly set to "production", stack traces are 
+      exposed.
+Fix: Default to hiding stack traces unless `NODE_ENV === "development"`.
+
+H13. Helmet Using Default Config (Missing CSP)
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/index.js (line 51)
+Risk: No Content-Security-Policy, no HSTS config, no frameguard customization.
+Fix: Configure Helmet explicitly with CSP, HSTS, frameguard, and noSniff:
+    app.use(helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", "data:", "https:"],
+        },
+      },
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true
+      },
+      frameguard: { action: 'deny' },
+      noSniff: true,
+      xssFilter: true,
+    }));
+
+H14. Missing Password Reset Flow
+────────────────────────────────────────────────────────────────────────────
+Location: Entire backend -- no forgot password/reset endpoints
+Risk: Users locked out of accounts have no recovery path. Increases support 
+      burden and social engineering risk.
+Fix: Implement password reset with cryptographically secure tokens, expiry, and 
+     rate limiting.
+
+H15. Socket Bug: socket.userId vs socket.user.id
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/socket/events/proposalEvents.js (lines 476, 482, 488, 495)
+Risk: Authorization checks reference wrong property, effectively bypassing them.
+Fix: Replace `socket.userId` with `socket.user.id`.
+
+H16. Outdated Puppeteer (21.6.1)
+────────────────────────────────────────────────────────────────────────────
+Location: backend/package.json
+Risk: Old, unsupported Chromium with known vulnerabilities for PDF generation.
+Fix: Upgrade to latest Puppeteer: npm install puppeteer@latest
+
+================================================================================
+MEDIUM FINDINGS (17) -- FIX WITHIN WEEKS
+================================================================================
+
+M1. No Rate Limiting on File Upload Endpoints
+────────────────────────────────────────────────────────────────────────────
+Location: All upload routes
+Fix: Add upload-specific rate limiter to prevent DoS via many/large uploads.
+
+M2. No Rate Limiting on Socket Events
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/socket/socketServer.js
+Fix: Implement per-socket event throttling to prevent flood attacks.
+
+M3. S3 Keys Use Predictable Patterns
+────────────────────────────────────────────────────────────────────────────
+Location: Multiple routes
+Risk: Keys like `tickets/${ticketId}/${timestamp}-${filename}` enable enumeration.
+Fix: Use UUIDs instead of timestamps.
+
+M4. "manager" Role Referenced But Doesn't Exist
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/routes/clientRoutes.js (lines 20-21)
+Fix: Remove "manager" from role checks or add it to the role system.
+
+M5. Missing Query Param Validation on List Endpoints
+────────────────────────────────────────────────────────────────────────────
+Location: Multiple controllers
+Risk: Unvalidated query params used in DB queries.
+Fix: Add schema validation for query parameters.
+
+M6. Handlebars Template XSS Risk with editedHtmlContent
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/services/pdfService.js
+Risk: User-provided data in `editedHtmlContent` bypasses Handlebars escaping.
+Fix: Sanitize HTML before template rendering.
+
+M7. Blog Content Not Sanitized
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/services/blogService.js
+Fix: If HTML is allowed, sanitize with DOMPurify; otherwise strip HTML.
+
+M8. Inconsistent File Size Limits
+────────────────────────────────────────────────────────────────────────────
+Location: Various routes (5MB for images, 10MB for PDFs)
+Fix: Standardize limits in a config file.
+
+M9. Rate Limiter Uses In-Memory Storage
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/middleware/rateLimiter.js
+Risk: Doesn't scale across instances and resets on restart.
+Fix: Use Redis for distributed rate limiting in production.
+
+M10. No Virus/Malware Scanning on Uploads
+────────────────────────────────────────────────────────────────────────────
+Location: All upload handlers
+Fix: Integrate ClamAV or AWS S3 Object Lambda for scanning.
+
+M11. HTTP Parameter Pollution Risk
+────────────────────────────────────────────────────────────────────────────
+Location: Multiple controllers
+Risk: Duplicate query params like `?status=open&status=closed` cause unexpected 
+      behavior.
+Fix: Add normalization middleware.
+
+M12. SMTP Password Logged (Masked)
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/services/emailService.js (line 26)
+Fix: Log only "CONFIGURED" / "NOT SET" instead of masking password.
+
+M13. Notification IDOR Potential
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/controllers/notificationController.js
+Fix: Verify notification belongs to user before marking as read.
+
+M14. Missing .env.example Files
+────────────────────────────────────────────────────────────────────────────
+Location: Both projects
+Fix: Create example files with placeholders to guide developers.
+
+M15. DB Pool Settings Hardcoded
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/db/index.js
+Fix: Make configurable via environment variables.
+
+M16. Missing X-Frame-Options Globally
+────────────────────────────────────────────────────────────────────────────
+Location: Only on public routes
+Fix: Set via Helmet globally for clickjacking protection.
+
+M17. Contract Template Routes Inconsistent Role Checks
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/routes/contractTemplateRoutes.js
+Fix: Add route-level role checks consistently.
+
+================================================================================
+LOW FINDINGS (10) -- FIX WHEN CONVENIENT
+================================================================================
+
+L1. Password Validation Inconsistency
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/middleware/validation.js vs backend/src/auth/password.js
+Issue: Route validation only checks length (8 chars), while validatePasswordStrength 
+       enforces more rules.
+
+L2. Console.log Statements in Production Code
+────────────────────────────────────────────────────────────────────────────
+Location: Multiple backend files
+Issue: May expose sensitive information or clutter logs.
+
+L3. Hardcoded Fallback URLs Don't Match Port
+────────────────────────────────────────────────────────────────────────────
+Location: front/src/pages/ProposalResponse.jsx, ContractResponse.jsx
+Issue: Fallback is `http://localhost:3000/api` but backend runs on port 5000.
+
+L4. Error Messages May Leak S3 Key Structure
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/services/s3Service.js
+Issue: Console logs include full S3 keys.
+
+L5. No Content-Disposition Sanitization on Downloads
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/controllers/contractController.js
+Issue: Filename in Content-Disposition uses key.split("/").pop() without sanitization.
+
+L6. No Per-User Socket Connection Limit
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/socket/socketServer.js
+Issue: No limit on concurrent socket connections per user.
+
+L7. Cookie Parsing in Sockets May Fail Edge Cases
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/socket/socketServer.js (lines 54-57)
+Issue: Simple cookie parsing may fail on cookies with `=` in values.
+
+L8. Health Check Exposes Server Timestamp
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/index.js (lines 89-95)
+Issue: /health exposes server timestamp, which can aid timing attacks.
+
+L9. Activity Logged Before Operation Confirmed
+────────────────────────────────────────────────────────────────────────────
+Location: backend/src/controllers/authController.js
+Issue: Login activity logged before confirming cookie was set successfully.
+
+L10. No Root .gitignore for .env Files
+────────────────────────────────────────────────────────────────────────────
+Location: Root directory
+Issue: No root .gitignore to prevent .env files from being committed.
+
+================================================================================
+POSITIVE SECURITY PRACTICES FOUND
+================================================================================
+
+Your application already implements many security best practices:
+
+✓ Drizzle ORM used everywhere (no raw SQL -- prevents SQL injection)
+✓ No eval(), Function(), exec(), or child_process usage
+✓ Password hashing with bcrypt (10 rounds)
+✓ HttpOnly cookies for session management
+✓ No tokens in localStorage
+✓ credentials: "include" handled by API client
+✓ Source maps disabled in production
+✓ VITE_ prefix used correctly for frontend env vars
+✓ Socket authentication via session cookies
+✓ crypto.timingSafeEqual() for token comparison
+✓ Session invalidation on password change
+✓ Cascading deletes for sessions on user deletion
+✓ Helmet security headers enabled
+✓ CORS properly configured
+✓ Input validation with express-validator and Zod
+✓ Rate limiting implemented for public endpoints
+✓ Activity logging for auth events
+
+================================================================================
+RECOMMENDED FIX PRIORITY
+================================================================================
+
+WEEK 1 (CRITICAL - Quick Wins):
+────────────────────────────────────────────────────────────────────────────
+1. Apply rate limiter to auth routes (C2) -- 5 min fix
+2. Add body parser limits (C10) -- 2 min fix
+3. Upgrade Express (C11) -- npm update
+4. Add role checks to blog admin routes (C6) -- 5 min fix
+5. Fix socket.userId bug (H15) -- 5 min fix
+6. Sanitize filenames in S3 uploads (C7) -- 30 min
+7. Fix mass assignment with field whitelists (C5) -- 1 hour
+8. Install DOMPurify and sanitize all dangerouslySetInnerHTML (C4) -- 1-2 hours
+
+WEEK 2 (HIGH Priority):
+────────────────────────────────────────────────────────────────────────────
+1. Implement CSRF protection (C1)
+2. Fix account enumeration (C3)
+3. Add ownership validation to proposals/contracts/service requests (H4-H6)
+4. Block isMasterSales self-modification (H7)
+5. Add role check to inquiry deletion (H8)
+6. Configure Helmet with CSP (H13)
+7. Fix CORS production fallback (H11)
+8. Server-side input sanitization for stored content (H9)
+9. Set S3 ACL to private (H10)
+10. Add missing session fixation protection (H2)
+
+WEEK 3+ (MEDIUM/LOW):
+────────────────────────────────────────────────────────────────────────────
+- Socket rate limiting and authorization checks
+- Magic bytes validation for file uploads
+- Redis rate store for production
+- Query param validation
+- Password reset flow implementation
+- All Medium and Low priority items
+
+================================================================================
+TESTING RECOMMENDATIONS
+================================================================================
+
+1. Run `npm audit` in both backend/ and front/ directories
+2. Use `snyk test` to check for additional vulnerabilities
+3. Verify .env files are not committed: git ls-files | grep .env
+4. Test database connection with SSL disabled in development
+5. Review all console.log statements for sensitive data leakage
+6. Perform penetration testing on API endpoints
+7. Review error messages for information disclosure
+8. Test all file upload endpoints with malicious filenames
+9. Test socket room subscriptions with unauthorized users
+10. Test CSRF protection after implementation
+
+================================================================================
+END OF REPORT
+================================================================================
+
+Generated by: Claude Sonnet 4.5
+Date: February 10, 2026

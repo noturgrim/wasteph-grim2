@@ -61,8 +61,9 @@ const corsOptions = {
     "Cookie",
     "X-Requested-With",
     "Accept",
+    "X-CSRF-Token",
   ],
-  exposedHeaders: ["Set-Cookie"],
+  exposedHeaders: ["Set-Cookie", "X-CSRF-Token"],
   maxAge: 86400, // 24 hours
   optionsSuccessStatus: 200,
 };
