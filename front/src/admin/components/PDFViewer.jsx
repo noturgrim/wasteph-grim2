@@ -52,9 +52,9 @@ export function PDFViewer({
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 sm:p-6">
-      <div className="relative w-full h-full max-w-7xl flex flex-col bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden">
+      <div className="relative w-full h-full max-w-7xl flex flex-col bg-white dark:bg-[#111111] rounded-xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111111] shrink-0">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
               {title}
@@ -79,10 +79,10 @@ export function PDFViewer({
         </div>
 
         {/* PDF Content */}
-        <div className="flex-1 relative bg-gray-50 dark:bg-slate-800 overflow-hidden">
+        <div className="flex-1 relative bg-gray-50 dark:bg-[#0a0a0a] overflow-hidden">
           {/* Loading State */}
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-50 dark:bg-slate-800 z-10">
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-50 dark:bg-[#0a0a0a] z-10">
               <div className="flex flex-col items-center gap-4">
                 <Loader2 className="h-10 w-10 animate-spin text-green-600" />
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
@@ -94,7 +94,7 @@ export function PDFViewer({
 
           {/* Error State */}
           {hasError && !isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-50 dark:bg-slate-800 z-10">
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-50 dark:bg-[#0a0a0a] z-10">
               <div className="text-center px-6 max-w-md">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/20 mb-4">
                   <AlertCircle className="h-8 w-8 text-red-500" />
@@ -115,7 +115,7 @@ export function PDFViewer({
           {/* Content: img for images, iframe for PDFs and other docs */}
           {fileUrl ? (
             isImage ? (
-              <div className="w-full h-full flex items-center justify-center p-4 overflow-auto bg-gray-100 dark:bg-gray-900">
+              <div className="w-full h-full flex items-center justify-center p-4 overflow-auto bg-gray-100 dark:bg-black">
                 <img
                   src={fileUrl}
                   alt={fileName || "Image"}
