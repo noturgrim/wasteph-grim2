@@ -281,9 +281,10 @@ export const createColumns = ({
                 </DropdownMenuItem>
               )}
 
-              {/* Separator before action items */}
-              {((userRole === "admin" || userRole === "super_admin") && status === "sent_to_sales") ||
-              (userRole === "sales" && status === "pending_request") ? (
+              {/* Separator before action items (only if there are items above) */}
+              {(status !== "pending_request" || hasPdf) &&
+                (((userRole === "admin" || userRole === "super_admin") && status === "sent_to_sales") ||
+                (userRole === "sales" && status === "pending_request")) ? (
                 <DropdownMenuSeparator />
               ) : null}
 
