@@ -48,13 +48,13 @@ router.get("/", blogController.getPublishedPosts);
 router.get("/category/:category", blogController.getPostsByCategory);
 router.get("/:slug", blogController.getPublishedPostBySlug);
 
-// Admin routes (protected)
-router.get("/admin/stats", requireAuth, blogController.getBlogStats);
-router.get("/admin/all", requireAuth, blogController.getAllPosts);
-router.get("/admin/:id", requireAuth, blogController.getPostById);
-router.post("/admin", requireAuth, blogController.createPost);
-router.put("/admin/:id", requireAuth, blogController.updatePost);
-router.delete("/admin/:id", requireAuth, blogController.deletePost);
+// Admin routes (protected - super_admin and social_media only)
+router.get("/admin/stats", requireAuth, requireRole("super_admin", "social_media"), blogController.getBlogStats);
+router.get("/admin/all", requireAuth, requireRole("super_admin", "social_media"), blogController.getAllPosts);
+router.get("/admin/:id", requireAuth, requireRole("super_admin", "social_media"), blogController.getPostById);
+router.post("/admin", requireAuth, requireRole("super_admin", "social_media"), blogController.createPost);
+router.put("/admin/:id", requireAuth, requireRole("super_admin", "social_media"), blogController.updatePost);
+router.delete("/admin/:id", requireAuth, requireRole("super_admin", "social_media"), blogController.deletePost);
 
 // Cover image upload route
 router.post(

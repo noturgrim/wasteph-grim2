@@ -81,13 +81,16 @@ Fix: Implemented field whitelisting in both services.
                     notes). Protected: status, accountManager, contract dates.
      Files: backend/src/services/leadService.js, clientService.js
 
-C6. Blog Admin Routes Missing Role Checks
+C6. Blog Admin Routes Missing Role Checks [FIXED]
 ────────────────────────────────────────────────────────────────────────────
 Location: backend/src/routes/blogRoutes.js (lines 52-57)
 Risk: Routes `/admin/stats`, `/admin/all`, POST/PUT/DELETE only use `requireAuth` 
       -- any authenticated user (including `social_media` or `sales`) can manage 
       all blog posts.
-Fix: Add `requireRole("super_admin", "social_media")` to all blog admin routes.
+Fix: Added `requireRole("super_admin", "social_media")` to all 6 blog admin 
+     routes (stats, list, get, create, update, delete). Sales and other roles 
+     can no longer access blog management endpoints.
+     File: backend/src/routes/blogRoutes.js
 
 C7. Filename Path Traversal in S3 Uploads
 ────────────────────────────────────────────────────────────────────────────
