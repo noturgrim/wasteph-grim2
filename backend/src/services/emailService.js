@@ -750,7 +750,7 @@ class EmailService {
           <!-- Header -->
           <div class="header">
             <span class="badge">Business Proposal</span>
-            <h1>Waste Management Solutions</h1>
+            <h1>Private Waste Management</h1>
             <p class="subtitle">Professional services tailored for your needs</p>
           </div>
 
