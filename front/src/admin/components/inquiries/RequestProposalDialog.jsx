@@ -7,6 +7,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +59,7 @@ export function RequestProposalDialog({
 }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [isLoadingEditor, setIsLoadingEditor] = useState(false);
   const [template, setTemplate] = useState(null);
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
@@ -693,19 +704,22 @@ ${bodyTag}
     setHasUnsavedEditorChanges(hasChanges);
   };
 
-  // Handle submit
-  const handleSubmit = async () => {
-    // Check if there are unsaved changes
+  // Show confirmation before submitting
+  const handleSubmitClick = () => {
     if (hasUnsavedEditorChanges) {
       toast.error("Please save your changes before submitting");
       return;
     }
-
     if (!savedEditorContent.html) {
       toast.error("No proposal content to submit");
       return;
     }
+    setShowSubmitConfirm(true);
+  };
 
+  // Actual submit after confirmation
+  const handleSubmit = async () => {
+    setShowSubmitConfirm(false);
     setIsSubmitting(true);
     try {
       // Prepare proposal data with structured format + edited HTML
@@ -1654,7 +1668,7 @@ ${templateStructureRef.current.styles}
                       Back
                     </Button>
                     <Button
-                      onClick={handleSubmit}
+                      onClick={handleSubmitClick}
                       disabled={!canSubmit}
                       className={`min-w-[140px] ${
                         !canSubmit ? "opacity-50" : ""
@@ -1674,6 +1688,38 @@ ${templateStructureRef.current.styles}
           </div>
         </div>
       </DialogContent>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Proposal Submission</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  Please verify that all client information is accurate before submitting. Once submitted, the following details will be locked into the proposal:
+                </p>
+                <div className="rounded-md border p-3 bg-muted/50 text-sm space-y-1">
+                  <p><span className="font-medium text-foreground">Name:</span> {formData.clientName}</p>
+                  <p><span className="font-medium text-foreground">Email:</span> {formData.clientEmail}</p>
+                  <p><span className="font-medium text-foreground">Company:</span> {formData.clientCompany}</p>
+                  <p><span className="font-medium text-foreground">Phone:</span> {formData.clientPhone || "Not provided"}</p>
+                  <p><span className="font-medium text-foreground">Address:</span> {formData.clientAddress || "Not provided"}</p>
+                </div>
+                <p className="text-amber-600 dark:text-amber-500 text-sm font-medium">
+                  This data cannot be changed after submission. If any detail is incorrect, go back and update the inquiry first.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go Back</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSubmit}>
+              Confirm & Submit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

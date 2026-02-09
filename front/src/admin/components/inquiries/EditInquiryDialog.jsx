@@ -99,6 +99,18 @@ export function EditInquiryDialog({
       errors.email = "Please enter a valid email address.";
     }
     if (!formData.message?.trim()) errors.message = "Message is required.";
+
+    // Stricter validation when marking as Information Complete
+    if (formData.isInformationComplete) {
+      if (!formData.phone?.trim()) errors.phone = "Phone is required when marking as complete.";
+      if (!formData.company?.trim()) errors.company = "Company is required when marking as complete.";
+      if (!formData.location?.trim()) errors.location = "Location is required when marking as complete.";
+      if (!formData.serviceId) errors.serviceId = "Service type is required when marking as complete.";
+      if (formData.email === "noemail@wasteph.com") {
+        errors.email = "Please provide the client's actual email before marking as complete.";
+      }
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -133,7 +145,7 @@ export function EditInquiryDialog({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Name */}
             <div className="space-y-2">
-              <Label htmlFor="edit-name">Name *</Label>
+              <Label htmlFor="edit-name">Name <span className="text-red-500">*</span></Label>
               <Input
                 id="edit-name"
                 value={formData.name}
@@ -152,7 +164,7 @@ export function EditInquiryDialog({
 
             {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="edit-email">Email *</Label>
+              <Label htmlFor="edit-email">Email <span className="text-red-500">*</span></Label>
               <Input
                 id="edit-email"
                 type="email"
@@ -172,51 +184,83 @@ export function EditInquiryDialog({
 
             {/* Phone */}
             <div className="space-y-2">
-              <Label htmlFor="edit-phone">Phone Number</Label>
+              <Label htmlFor="edit-phone">
+                Phone Number {formData.isInformationComplete && <span className="text-red-500">*</span>}
+              </Label>
               <Input
                 id="edit-phone"
                 value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, phone: e.target.value });
+                  if (formErrors.phone) {
+                    setFormErrors({ ...formErrors, phone: null });
+                  }
+                }}
+                className={formErrors.phone ? "border-red-500" : ""}
               />
+              {formErrors.phone && (
+                <p className="text-sm text-red-500">{formErrors.phone}</p>
+              )}
             </div>
 
             {/* Company */}
             <div className="space-y-2">
-              <Label htmlFor="edit-company">Company</Label>
+              <Label htmlFor="edit-company">
+                Company {formData.isInformationComplete && <span className="text-red-500">*</span>}
+              </Label>
               <Input
                 id="edit-company"
                 value={formData.company}
-                onChange={(e) =>
-                  setFormData({ ...formData, company: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, company: e.target.value });
+                  if (formErrors.company) {
+                    setFormErrors({ ...formErrors, company: null });
+                  }
+                }}
+                className={formErrors.company ? "border-red-500" : ""}
               />
+              {formErrors.company && (
+                <p className="text-sm text-red-500">{formErrors.company}</p>
+              )}
             </div>
 
             {/* Location */}
             <div className="space-y-2">
-              <Label htmlFor="edit-location">Location</Label>
+              <Label htmlFor="edit-location">
+                Location {formData.isInformationComplete && <span className="text-red-500">*</span>}
+              </Label>
               <Input
                 id="edit-location"
                 value={formData.location}
-                onChange={(e) =>
-                  setFormData({ ...formData, location: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, location: e.target.value });
+                  if (formErrors.location) {
+                    setFormErrors({ ...formErrors, location: null });
+                  }
+                }}
                 placeholder="City, Province or Address"
+                className={formErrors.location ? "border-red-500" : ""}
               />
+              {formErrors.location && (
+                <p className="text-sm text-red-500">{formErrors.location}</p>
+              )}
             </div>
 
             {/* Service */}
             <div className="space-y-2">
-              <Label htmlFor="edit-service">Service</Label>
+              <Label htmlFor="edit-service">
+                Service {formData.isInformationComplete && <span className="text-red-500">*</span>}
+              </Label>
               <Select
                 value={formData.serviceId}
-                onValueChange={(val) =>
-                  setFormData({ ...formData, serviceId: val })
-                }
+                onValueChange={(val) => {
+                  setFormData({ ...formData, serviceId: val });
+                  if (formErrors.serviceId) {
+                    setFormErrors({ ...formErrors, serviceId: null });
+                  }
+                }}
               >
-                <SelectTrigger id="edit-service">
+                <SelectTrigger id="edit-service" className={formErrors.serviceId ? "border-red-500" : ""}>
                   <SelectValue placeholder="Select service type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -233,6 +277,9 @@ export function EditInquiryDialog({
                   )}
                 </SelectContent>
               </Select>
+              {formErrors.serviceId && (
+                <p className="text-sm text-red-500">{formErrors.serviceId}</p>
+              )}
             </div>
 
             {/* Source */}
@@ -325,7 +372,7 @@ export function EditInquiryDialog({
 
           {/* Message - Full width */}
           <div className="space-y-2">
-            <Label htmlFor="edit-message">Message *</Label>
+            <Label htmlFor="edit-message">Message <span className="text-red-500">*</span></Label>
             <Textarea
               id="edit-message"
               rows={3}
@@ -344,7 +391,7 @@ export function EditInquiryDialog({
           </div>
 
           {/* Information Complete Checkbox */}
-          <div className="flex items-start space-x-3 rounded-md border p-4 bg-muted/30 dark:bg-muted/20">
+          <div className={`flex items-start space-x-3 rounded-md border p-4 ${formData.isInformationComplete ? "border-green-500/30 bg-green-50/50 dark:bg-green-950/20" : "bg-muted/30 dark:bg-muted/20"}`}>
             <Checkbox
               id="edit-info-complete"
               checked={formData.isInformationComplete}
@@ -364,6 +411,11 @@ export function EditInquiryDialog({
                 required information. You can only request a proposal when
                 information is complete.
               </p>
+              {formData.isInformationComplete && (
+                <p className="text-xs text-amber-600 dark:text-amber-500 mt-2 font-medium">
+                  All fields marked with * must be filled in. Ensure client name, email, company, phone, location, and service are accurate — this data will be used in the proposal and cannot be changed after submission.
+                </p>
+              )}
               {!formData.isInformationComplete && (
                 <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-500 mt-2">
                   <span>
