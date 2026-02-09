@@ -18,12 +18,22 @@ class EmailService {
     console.log("📧 Initializing Email Service...");
     console.log(`   SMTP_HOST: ${process.env.SMTP_HOST || "NOT SET"}`);
     console.log(`   SMTP_PORT: ${process.env.SMTP_PORT || "587 (default)"}`);
-    console.log(`   SMTP_SECURE: ${process.env.SMTP_SECURE || "false (default)"}`);
+    console.log(
+      `   SMTP_SECURE: ${process.env.SMTP_SECURE || "false (default)"}`,
+    );
     console.log(`   SMTP_USER: ${process.env.SMTP_USER || "NOT SET"}`);
-    console.log(`   SMTP_PASSWORD: ${process.env.SMTP_PASSWORD ? "****" : "NOT SET"}`);
+    console.log(
+      `   SMTP_PASSWORD: ${process.env.SMTP_PASSWORD ? "****" : "NOT SET"}`,
+    );
 
-    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-      console.warn("⚠️  Warning: SMTP credentials not fully configured. Emails will fail.");
+    if (
+      !process.env.SMTP_HOST ||
+      !process.env.SMTP_USER ||
+      !process.env.SMTP_PASSWORD
+    ) {
+      console.warn(
+        "⚠️  Warning: SMTP credentials not fully configured. Emails will fail.",
+      );
     }
 
     this.transporter = nodemailer.createTransport({
@@ -50,7 +60,14 @@ class EmailService {
    * @param {string} responseToken - Secure token for client response
    * @returns {Promise<Object>} Email result
    */
-  async sendProposalEmail(to, proposalData, inquiryData, pdfBuffer, proposalId, responseToken) {
+  async sendProposalEmail(
+    to,
+    proposalData,
+    inquiryData,
+    pdfBuffer,
+    proposalId,
+    responseToken,
+  ) {
     try {
       // Handle both old format (pricing/terms objects) and new format (flat structure with editedHtmlContent)
       const isNewFormat = !!proposalData.editedHtmlContent;
@@ -72,17 +89,34 @@ class EmailService {
       const validityDays = proposalData.terms?.validityDays || 30;
       const validUntilDate = new Date();
       validUntilDate.setDate(validUntilDate.getDate() + validityDays);
-      const validUntilStr = validUntilDate.toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" });
+      const validUntilStr = validUntilDate.toLocaleDateString("en-PH", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
 
       // Generate email HTML
       const htmlContent = isNewFormat
-        ? this.generateSimpleProposalEmailHTML(clientName, proposalId, responseToken, validUntilStr)
-        : this.generateProposalEmailHTML(clientName, total, proposalId, responseToken, validUntilStr);
+        ? this.generateSimpleProposalEmailHTML(
+            clientName,
+            proposalId,
+            responseToken,
+            validUntilStr,
+          )
+        : this.generateProposalEmailHTML(
+            clientName,
+            total,
+            proposalId,
+            responseToken,
+            validUntilStr,
+          );
 
       // Send email with PDF attachment
       console.log(`📤 Sending proposal email to: ${to}`);
       console.log(`   From: ${process.env.SMTP_USER}`);
-      console.log(`   PDF attached: ${pdfBuffer ? `Yes (${pdfBuffer.length} bytes)` : "No"}`);
+      console.log(
+        `   PDF attached: ${pdfBuffer ? `Yes (${pdfBuffer.length} bytes)` : "No"}`,
+      );
 
       const info = await this.transporter.sendMail({
         from: process.env.SMTP_USER,
@@ -153,7 +187,12 @@ class EmailService {
    * @param {string} responseToken - Secure token for client response
    * @returns {string} HTML content
    */
-  generateSimpleProposalEmailHTML(clientName, proposalId, responseToken, validUntilStr) {
+  generateSimpleProposalEmailHTML(
+    clientName,
+    proposalId,
+    responseToken,
+    validUntilStr,
+  ) {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     return `
 <!DOCTYPE html>
@@ -332,7 +371,13 @@ class EmailService {
    * @param {string} responseToken - Secure token for client response
    * @returns {string} HTML content
    */
-  generateProposalEmailHTML(clientName, total, proposalId, responseToken, validUntilStr) {
+  generateProposalEmailHTML(
+    clientName,
+    total,
+    proposalId,
+    responseToken,
+    validUntilStr,
+  ) {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     return `
 <!DOCTYPE html>
@@ -641,7 +686,15 @@ class EmailService {
    * @param {Buffer} pdfBuffer - Contract PDF buffer
    * @returns {Promise<Object>} Email result
    */
-  async sendContractToClientEmail(to, proposalData, inquiryData, pdfBuffer, contractId, responseToken, contractNumber = null) {
+  async sendContractToClientEmail(
+    to,
+    proposalData,
+    inquiryData,
+    pdfBuffer,
+    contractId,
+    responseToken,
+    contractNumber = null,
+  ) {
     try {
       // Handle both old format and new format
       const isNewFormat = !!proposalData.editedHtmlContent;
@@ -650,7 +703,12 @@ class EmailService {
         : inquiryData.name;
 
       // Generate email HTML
-      const htmlContent = this.generateContractEmailHTML(clientName, contractId, responseToken, contractNumber);
+      const htmlContent = this.generateContractEmailHTML(
+        clientName,
+        contractId,
+        responseToken,
+        contractNumber,
+      );
 
       // Build subject and filename with contract number
       const subject = contractNumber
@@ -663,7 +721,9 @@ class EmailService {
       // Send email with PDF attachment
       console.log(`Sending contract email to: ${to}`);
       console.log(`   Contract: ${contractNumber || "N/A"}`);
-      console.log(`   PDF attached: ${pdfBuffer ? `Yes (${pdfBuffer.length} bytes)` : "No"}`);
+      console.log(
+        `   PDF attached: ${pdfBuffer ? `Yes (${pdfBuffer.length} bytes)` : "No"}`,
+      );
 
       const info = await this.transporter.sendMail({
         from: process.env.SMTP_USER,
@@ -701,7 +761,12 @@ class EmailService {
    * @param {string} clientName - Client name
    * @returns {string} HTML content
    */
-  generateContractEmailHTML(clientName, contractId, responseToken, contractNumber = null) {
+  generateContractEmailHTML(
+    clientName,
+    contractId,
+    responseToken,
+    contractNumber = null,
+  ) {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     return `
 <!DOCTYPE html>
@@ -866,7 +931,10 @@ class EmailService {
         messageId: info.messageId,
       };
     } catch (error) {
-      console.error(`❌ Failed to send new lead notification to ${to}:`, error.message);
+      console.error(
+        `❌ Failed to send new lead notification to ${to}:`,
+        error.message,
+      );
       return {
         success: false,
         error: error.message,
@@ -881,7 +949,8 @@ class EmailService {
    */
   generateNewLeadEmailHTML(leadData) {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const { name, email, phoneNumber, companyName, serviceInterest, message } = leadData;
+    const { name, email, phoneNumber, companyName, serviceInterest, message } =
+      leadData;
 
     return `
 <!DOCTYPE html>
@@ -890,153 +959,265 @@ class EmailService {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
+    * {
       margin: 0;
       padding: 0;
-      background-color: #f4f4f4;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #ffffff;
+      background-color: #0a0a0a;
+      margin: 0;
+      padding: 0;
+    }
+    .wrapper {
+      width: 100%;
+      background-color: #0a0a0a;
+      padding: 32px 16px;
     }
     .container {
       max-width: 600px;
-      margin: 20px auto;
-      background: #ffffff;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin: 0 auto;
+      background: #111111;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #1f1f1f;
+    }
+    .logo-section {
+      background: linear-gradient(135deg, #0f2618 0%, #0a1f0f 100%);
+      padding: 32px 32px 28px 32px;
+      text-align: center;
+      border-bottom: 1px solid #15803d;
+    }
+    .logo-text {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      text-transform: uppercase;
+      margin: 0 0 6px 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1;
+    }
+    .logo-waste {
+      color: #ffffff;
+    }
+    .logo-bullet {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: #16a34a;
+      border-radius: 50%;
+      margin: 0 5px;
+      vertical-align: middle;
+    }
+    .logo-ph {
+      background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .logo-tagline {
+      color: #15803d;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin: 0;
     }
     .header {
-      text-align: center;
-      border-bottom: 3px solid #106934;
-      padding-bottom: 20px;
-      margin-bottom: 30px;
+      padding: 28px 32px 24px 32px;
+      border-bottom: 1px solid #1f1f1f;
     }
-    .header h1 {
-      color: #106934;
-      margin: 0 0 10px 0;
-      font-size: 26px;
-    }
-    .header p {
-      color: #666;
-      margin: 0;
-      font-size: 14px;
-    }
-    .badge {
+    .status-badge {
       display: inline-block;
-      background: #dcfce7;
-      color: #166534;
-      padding: 6px 12px;
+      background: #15803d;
+      color: #ffffff;
+      padding: 6px 14px;
       border-radius: 6px;
-      font-size: 12px;
-      font-weight: bold;
-      margin-top: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      margin-bottom: 14px;
+      text-transform: uppercase;
     }
-    .info-table {
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 0 8px 0;
+      letter-spacing: -0.025em;
+    }
+    .subtitle {
+      color: #9ca3af;
+      font-size: 14px;
+      font-weight: 400;
+    }
+    .content {
+      padding: 24px 32px 32px 32px;
+    }
+    .data-grid {
       width: 100%;
-      border-collapse: collapse;
       margin: 20px 0;
-      background: #f8f9fa;
+      background: #1a1a1a;
       border-radius: 8px;
       overflow: hidden;
+      border: 1px solid #262626;
     }
-    .info-table td {
-      padding: 12px 15px;
-      border-bottom: 1px solid #e5e7eb;
+    .data-row td {
+      padding: 14px 20px;
+      border-bottom: 1px solid #262626;
+      font-size: 14px;
     }
-    .info-table td:first-child {
-      font-weight: bold;
-      color: #555;
-      width: 140px;
-    }
-    .info-table tr:last-child td {
+    .data-row:last-child td {
       border-bottom: none;
     }
-    .message-box {
-      background: #f0fdf4;
-      border-left: 4px solid #166534;
-      padding: 15px;
-      margin: 20px 0;
-      border-radius: 4px;
+    .label {
+      color: #737373;
+      width: 110px;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
-    .message-box p {
-      margin: 0;
-      color: #166534;
+    .value {
+      color: #f5f5f5;
+      font-weight: 500;
     }
-    .cta-button {
+    .message-section {
+      background: #1a1a1a;
+      border: 1px solid #15803d;
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin-top: 20px;
+    }
+    .message-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #16a34a;
+      margin-bottom: 10px;
+      display: block;
+      font-weight: 700;
+    }
+    .btn {
       display: inline-block;
-      background: #106934;
+      background: #16a34a;
       color: #ffffff !important;
-      text-decoration: none !important;
-      padding: 12px 24px;
-      border-radius: 6px;
-      font-size: 15px;
-      font-weight: bold;
-      margin: 20px 0;
-      text-align: center;
+      padding: 14px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      margin: 24px 0 20px 0;
+      letter-spacing: 0.025em;
+      transition: background 0.2s ease;
+    }
+    .tip-section {
+      background: #1a1a1a;
+      border-left: 3px solid #16a34a;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-top: 20px;
     }
     .footer {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 2px solid #ddd;
       text-align: center;
+      padding: 24px 32px;
+      background: #0a0a0a;
+      border-top: 1px solid #1f1f1f;
+    }
+    .footer p {
+      color: #737373;
       font-size: 12px;
-      color: #666;
+      line-height: 1.5;
+    }
+    @media only screen and (max-width: 600px) {
+      .wrapper { padding: 16px 10px !important; }
+      .logo-section { padding: 24px 16px 20px 16px !important; }
+      .logo-text { font-size: 32px !important; }
+      .logo-bullet { width: 5px !important; height: 5px !important; margin: 0 4px !important; }
+      .logo-tagline { font-size: 8px !important; letter-spacing: 0.25em !important; margin-top: 4px !important; }
+      .header, .content { padding: 20px 16px !important; }
+      .footer { padding: 20px 16px !important; }
+      .header h1 { font-size: 22px !important; }
+      .data-row td { padding: 12px 14px !important; font-size: 13px !important; }
+      .btn { padding: 12px 28px !important; font-size: 13px !important; }
+      .tip-section { padding: 14px 16px !important; font-size: 13px !important; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>New Lead Received</h1>
-      <p>A new lead has been submitted from the landing page</p>
-      <span class="badge">REQUIRES ATTENTION</span>
-    </div>
+  <table role="presentation" class="wrapper" cellpadding="0" cellspacing="0">
+    <tr>
+      <td>
+        <div class="container">
+          <!-- Logo -->
+          <div class="logo-section">
+            <h1 class="logo-text">
+              <span class="logo-waste">WASTE</span><span class="logo-bullet"></span><span class="logo-ph">PH</span>
+            </h1>
+            <p class="logo-tagline">Private Waste Management</p>
+          </div>
 
-    <table class="info-table">
-      <tr>
-        <td>Contact Name:</td>
-        <td><strong>${name}</strong></td>
-      </tr>
-      ${companyName ? `<tr><td>Company:</td><td><strong>${companyName}</strong></td></tr>` : ""}
-      <tr>
-        <td>Email:</td>
-        <td><a href="mailto:${email}" style="color: #106934;">${email}</a></td>
-      </tr>
-      ${phoneNumber ? `<tr><td>Phone:</td><td>${phoneNumber}</td></tr>` : ""}
-      ${serviceInterest ? `<tr><td>Service Interest:</td><td>${serviceInterest}</td></tr>` : ""}
-    </table>
+          <!-- Header -->
+          <div class="header">
+            <span class="status-badge">New Inquiry</span>
+            <h1>New Lead Received</h1>
+            <p class="subtitle">A new submission from your landing page</p>
+          </div>
 
-    ${message ? `
-    <div class="message-box">
-      <p style="font-weight: bold; margin-bottom: 8px;">Message:</p>
-      <p style="white-space: pre-wrap;">${message}</p>
-    </div>
-    ` : ""}
+          <!-- Content -->
+          <div class="content">
+            <table class="data-grid" cellpadding="0" cellspacing="0">
+              <tr class="data-row">
+                <td class="label">Contact</td>
+                <td class="value">${name}</td>
+              </tr>
+              ${companyName ? `<tr class="data-row"><td class="label">Company</td><td class="value">${companyName}</td></tr>` : ""}
+              <tr class="data-row">
+                <td class="label">Email</td>
+                <td class="value"><a href="mailto:${email}" style="color: #22c55e; text-decoration: none;">${email}</a></td>
+              </tr>
+              ${phoneNumber ? `<tr class="data-row"><td class="label">Phone</td><td class="value">${phoneNumber}</td></tr>` : ""}
+              ${serviceInterest ? `<tr class="data-row"><td class="label">Interest</td><td class="value">${serviceInterest}</td></tr>` : ""}
+            </table>
 
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="${frontendUrl}/admin/leads" class="cta-button">View Lead in CRM</a>
-    </div>
+            ${
+              message
+                ? `
+            <div class="message-section">
+              <span class="message-label">Message</span>
+              <p style="margin: 0; color: #e5e5e5; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+            </div>
+            `
+                : ""
+            }
 
-    <p style="font-size: 13px; color: #666; margin-top: 20px;">
-      <strong>Next Steps:</strong><br>
-      • Claim this lead in the CRM<br>
-      • Reach out within 24 hours for best conversion<br>
-      • Qualify and convert to an inquiry
-    </p>
+            <div style="text-align: center;">
+              <a href="${frontendUrl}/admin/leads" class="btn">View in CRM →</a>
+            </div>
 
-    <div class="footer">
-      <p><strong>WastePH CRM</strong> - Lead Notification System</p>
-      <p style="margin-top: 10px; font-size: 11px; color: #999;">
-        This is an automated notification. Do not reply to this email.
-      </p>
-    </div>
-  </div>
+            <div class="tip-section">
+              <p style="font-size: 13px; color: #e5e5e5; margin: 0; line-height: 1.5;">
+                <strong style="color: #22c55e;">Tip:</strong> Responding within 5 minutes increases conversion by 900%.
+              </p>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="footer">
+            <p style="margin: 0 0 6px 0; font-weight: 600;">WastePH CRM</p>
+            <p style="margin: 0; font-size: 12px; color: #525252;">Automated Lead Notification System</p>
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
     `;
   }
-
   /**
    * Send proposal response notification to sales person
    * @param {string} to - Sales person email
@@ -1046,10 +1227,11 @@ class EmailService {
   async sendProposalResponseNotification(to, data) {
     try {
       const { clientName, proposalNumber, action, companyName } = data;
-      const subject = action === "accepted" 
-        ? `Proposal Accepted: ${companyName || clientName}`
-        : `Proposal Declined: ${companyName || clientName}`;
-      
+      const subject =
+        action === "accepted"
+          ? `Proposal Accepted: ${companyName || clientName}`
+          : `Proposal Declined: ${companyName || clientName}`;
+
       const htmlContent = this.generateProposalResponseEmailHTML(data);
 
       const info = await this.transporter.sendMail({
@@ -1065,7 +1247,10 @@ class EmailService {
         messageId: info.messageId,
       };
     } catch (error) {
-      console.error(`❌ Failed to send proposal response notification to ${to}:`, error.message);
+      console.error(
+        `❌ Failed to send proposal response notification to ${to}:`,
+        error.message,
+      );
       return {
         success: false,
         error: error.message,
@@ -1080,7 +1265,8 @@ class EmailService {
    */
   generateProposalResponseEmailHTML(data) {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const { clientName, proposalNumber, action, companyName, clientEmail } = data;
+    const { clientName, proposalNumber, action, companyName, clientEmail } =
+      data;
     const isAccepted = action === "accepted";
 
     return `
@@ -1090,153 +1276,262 @@ class EmailService {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
+    * {
       margin: 0;
       padding: 0;
-      background-color: #f4f4f4;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #ffffff;
+      background-color: #0a0a0a;
+      margin: 0;
+      padding: 0;
+    }
+    .wrapper {
+      width: 100%;
+      background-color: #0a0a0a;
+      padding: 32px 16px;
     }
     .container {
       max-width: 600px;
-      margin: 20px auto;
-      background: #ffffff;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin: 0 auto;
+      background: #111111;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #1f1f1f;
+    }
+    .logo-section {
+      background: linear-gradient(135deg, #0f2618 0%, #0a1f0f 100%);
+      padding: 32px 32px 28px 32px;
+      text-align: center;
+      border-bottom: 1px solid #15803d;
+    }
+    .logo-text {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      text-transform: uppercase;
+      margin: 0 0 6px 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1;
+    }
+    .logo-waste {
+      color: #ffffff;
+    }
+    .logo-bullet {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: #16a34a;
+      border-radius: 50%;
+      margin: 0 5px;
+      vertical-align: middle;
+    }
+    .logo-ph {
+      background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .logo-tagline {
+      color: #15803d;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin: 0;
     }
     .header {
-      text-align: center;
-      border-bottom: 3px solid ${isAccepted ? "#16a34a" : "#dc2626"};
-      padding-bottom: 20px;
-      margin-bottom: 30px;
+      padding: 28px 32px 24px 32px;
+      border-bottom: 1px solid #1f1f1f;
     }
-    .header h1 {
-      color: ${isAccepted ? "#16a34a" : "#dc2626"};
-      margin: 0 0 10px 0;
-      font-size: 26px;
-    }
-    .badge {
+    .status-badge {
       display: inline-block;
-      background: ${isAccepted ? "#dcfce7" : "#fee2e2"};
-      color: ${isAccepted ? "#166534" : "#991b1b"};
-      padding: 6px 12px;
+      background: ${isAccepted ? "#15803d" : "#991b1b"};
+      color: #ffffff;
+      padding: 6px 14px;
       border-radius: 6px;
-      font-size: 12px;
-      font-weight: bold;
-      margin-top: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      margin-bottom: 14px;
+      text-transform: uppercase;
     }
-    .info-table {
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: ${isAccepted ? "#22c55e" : "#ef4444"};
+      margin: 0 0 8px 0;
+      letter-spacing: -0.025em;
+    }
+    .subtitle {
+      color: #9ca3af;
+      font-size: 14px;
+      font-weight: 400;
+    }
+    .content {
+      padding: 24px 32px 32px 32px;
+    }
+    .data-grid {
       width: 100%;
-      border-collapse: collapse;
       margin: 20px 0;
-      background: #f8f9fa;
+      background: #1a1a1a;
       border-radius: 8px;
       overflow: hidden;
+      border: 1px solid #262626;
     }
-    .info-table td {
-      padding: 12px 15px;
-      border-bottom: 1px solid #e5e7eb;
+    .data-row td {
+      padding: 14px 20px;
+      border-bottom: 1px solid #262626;
+      font-size: 14px;
     }
-    .info-table td:first-child {
-      font-weight: bold;
-      color: #555;
-      width: 140px;
-    }
-    .info-table tr:last-child td {
+    .data-row:last-child td {
       border-bottom: none;
     }
-    .highlight-box {
-      background: ${isAccepted ? "#f0fdf4" : "#fef2f2"};
-      border-left: 4px solid ${isAccepted ? "#16a34a" : "#dc2626"};
-      padding: 15px;
-      margin: 20px 0;
-      border-radius: 4px;
+    .label {
+      color: #737373;
+      width: 110px;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
-    .cta-button {
+    .value {
+      color: #f5f5f5;
+      font-weight: 500;
+    }
+    .highlight-box {
+      background: ${isAccepted ? "#0f2618" : "#2d1212"};
+      border: 1px solid ${isAccepted ? "#15803d" : "#991b1b"};
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin-top: 20px;
+    }
+    .btn {
       display: inline-block;
       background: ${isAccepted ? "#16a34a" : "#dc2626"};
       color: #ffffff !important;
-      text-decoration: none !important;
-      padding: 12px 24px;
-      border-radius: 6px;
-      font-size: 15px;
-      font-weight: bold;
-      margin: 20px 0;
+      padding: 14px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      margin: 24px 0 20px 0;
+      letter-spacing: 0.025em;
+      transition: background 0.2s ease;
+    }
+    .next-steps {
+      background: #1a1a1a;
+      border-left: 3px solid ${isAccepted ? "#16a34a" : "#dc2626"};
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-top: 20px;
     }
     .footer {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 2px solid #ddd;
       text-align: center;
+      padding: 24px 32px;
+      background: #0a0a0a;
+      border-top: 1px solid #1f1f1f;
+    }
+    .footer p {
+      color: #737373;
       font-size: 12px;
-      color: #666;
+      line-height: 1.5;
+    }
+    @media only screen and (max-width: 600px) {
+      .wrapper { padding: 16px 10px !important; }
+      .logo-section { padding: 24px 16px 20px 16px !important; }
+      .logo-text { font-size: 32px !important; }
+      .logo-bullet { width: 5px !important; height: 5px !important; margin: 0 4px !important; }
+      .logo-tagline { font-size: 8px !important; letter-spacing: 0.25em !important; margin-top: 4px !important; }
+      .header, .content { padding: 20px 16px !important; }
+      .footer { padding: 20px 16px !important; }
+      .header h1 { font-size: 22px !important; }
+      .data-row td { padding: 12px 14px !important; font-size: 13px !important; }
+      .btn { padding: 12px 28px !important; font-size: 13px !important; }
+      .next-steps { padding: 14px 16px !important; font-size: 13px !important; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Proposal ${isAccepted ? "Accepted" : "Declined"}</h1>
-      <p>Client has responded to your proposal</p>
-      <span class="badge">${isAccepted ? "ACTION REQUIRED" : "FOLLOW-UP NEEDED"}</span>
-    </div>
+  <table role="presentation" class="wrapper" cellpadding="0" cellspacing="0">
+    <tr>
+      <td>
+        <div class="container">
+          <!-- Logo -->
+          <div class="logo-section">
+            <h1 class="logo-text">
+              <span class="logo-waste">WASTE</span><span class="logo-bullet"></span><span class="logo-ph">PH</span>
+            </h1>
+            <p class="logo-tagline">Private Waste Management</p>
+          </div>
 
-    <table class="info-table">
-      <tr>
-        <td>Proposal:</td>
-        <td><strong>${proposalNumber}</strong></td>
-      </tr>
-      <tr>
-        <td>Client:</td>
-        <td><strong>${clientName}</strong></td>
-      </tr>
-      ${companyName ? `<tr><td>Company:</td><td>${companyName}</td></tr>` : ""}
-      <tr>
-        <td>Email:</td>
-        <td><a href="mailto:${clientEmail}" style="color: #106934;">${clientEmail}</a></td>
-      </tr>
-      <tr>
-        <td>Status:</td>
-        <td><strong style="color: ${isAccepted ? "#16a34a" : "#dc2626"};">${isAccepted ? "ACCEPTED" : "DECLINED"}</strong></td>
-      </tr>
-    </table>
+          <!-- Header -->
+          <div class="header">
+            <span class="status-badge">${isAccepted ? "Action Required" : "Follow-Up Needed"}</span>
+            <h1>Proposal ${isAccepted ? "Accepted" : "Declined"}</h1>
+            <p class="subtitle">Client has responded to your proposal</p>
+          </div>
 
-    <div class="highlight-box">
-      ${isAccepted 
-        ? `<p><strong>Great news!</strong> The client has accepted your proposal. A contract will be automatically generated and is now pending admin approval.</p>`
-        : `<p><strong>The client has declined this proposal.</strong> Consider reaching out to understand their concerns and see if you can provide an alternative solution.</p>`
-      }
-    </div>
+          <!-- Content -->
+          <div class="content">
+            <table class="data-grid" cellpadding="0" cellspacing="0">
+              <tr class="data-row">
+                <td class="label">Proposal</td>
+                <td class="value">${proposalNumber}</td>
+              </tr>
+              <tr class="data-row">
+                <td class="label">Client</td>
+                <td class="value">${clientName}</td>
+              </tr>
+              ${companyName ? `<tr class="data-row"><td class="label">Company</td><td class="value">${companyName}</td></tr>` : ""}
+              <tr class="data-row">
+                <td class="label">Email</td>
+                <td class="value"><a href="mailto:${clientEmail}" style="color: #22c55e; text-decoration: none;">${clientEmail}</a></td>
+              </tr>
+              <tr class="data-row">
+                <td class="label">Status</td>
+                <td class="value" style="color: ${isAccepted ? "#22c55e" : "#ef4444"}; font-weight: 700;">${isAccepted ? "ACCEPTED" : "DECLINED"}</td>
+              </tr>
+            </table>
 
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="${frontendUrl}/admin/proposals" class="cta-button">View in CRM</a>
-    </div>
+            <div class="highlight-box">
+              <p style="font-size: 14px; color: #e5e5e5; margin: 0; line-height: 1.6;">
+                ${
+                  isAccepted
+                    ? `<strong style="color: #22c55e;">Great news!</strong> The client has accepted your proposal.`
+                    : `<strong style="color: #ef4444;">The client has declined this proposal.</strong> Consider reaching out to understand their concerns and see if you can provide an alternative solution.`
+                }
+              </p>
+            </div>
 
-    ${isAccepted ? `
-    <p style="font-size: 13px; color: #666; margin-top: 20px;">
-      <strong>Next Steps:</strong><br>
-      • Contract has been auto-created (status: pending_request)<br>
-      • Request contract generation from admin<br>
-      • Once approved, send contract to client
-    </p>
-    ` : `
-    <p style="font-size: 13px; color: #666; margin-top: 20px;">
-      <strong>Suggested Actions:</strong><br>
-      • Reach out to understand concerns<br>
-      • Offer alternative solutions or pricing<br>
-      • Schedule a follow-up meeting
-    </p>
-    `}
+            <div style="text-align: center;">
+              <a href="${frontendUrl}/admin/proposals" class="btn">View in CRM →</a>
+            </div>
 
-    <div class="footer">
-      <p><strong>WastePH CRM</strong> - Proposal Notification System</p>
-      <p style="margin-top: 10px; font-size: 11px; color: #999;">
-        This is an automated notification. Do not reply to this email.
-      </p>
-    </div>
-  </div>
+            <div class="next-steps">
+              <p style="font-size: 13px; color: #e5e5e5; margin: 0; line-height: 1.5;">
+                <strong style="color: ${isAccepted ? "#22c55e" : "#ef4444"};">${isAccepted ? "Next Steps:" : "Suggested Actions:"}</strong><br>
+                ${
+                  isAccepted
+                    ? `• Contract has been auto-created (status: pending_request)<br>• Request contract generation from admin<br>• Once approved, send contract to client`
+                    : `• Reach out to understand concerns<br>• Offer alternative solutions or pricing<br>• Schedule a follow-up meeting`
+                }
+              </p>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="footer">
+            <p style="margin: 0 0 6px 0; font-weight: 600;">WastePH CRM</p>
+            <p style="margin: 0; font-size: 12px; color: #525252;">Automated Proposal Notification System</p>
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
     `;
@@ -1267,7 +1562,10 @@ class EmailService {
         messageId: info.messageId,
       };
     } catch (error) {
-      console.error(`❌ Failed to send contract signed notification to ${to}:`, error.message);
+      console.error(
+        `❌ Failed to send contract signed notification to ${to}:`,
+        error.message,
+      );
       return {
         success: false,
         error: error.message,
@@ -1282,7 +1580,15 @@ class EmailService {
    */
   generateContractSignedEmailHTML(data) {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const { clientName, contractNumber, companyName, clientEmail, address, contractStartDate, contractEndDate } = data;
+    const {
+      clientName,
+      contractNumber,
+      companyName,
+      clientEmail,
+      address,
+      contractStartDate,
+      contractEndDate,
+    } = data;
 
     return `
 <!DOCTYPE html>
@@ -1291,140 +1597,255 @@ class EmailService {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
+    * {
       margin: 0;
       padding: 0;
-      background-color: #f4f4f4;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #ffffff;
+      background-color: #0a0a0a;
+      margin: 0;
+      padding: 0;
+    }
+    .wrapper {
+      width: 100%;
+      background-color: #0a0a0a;
+      padding: 32px 16px;
     }
     .container {
       max-width: 600px;
-      margin: 20px auto;
-      background: #ffffff;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      margin: 0 auto;
+      background: #111111;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #1f1f1f;
+    }
+    .logo-section {
+      background: linear-gradient(135deg, #0f2618 0%, #0a1f0f 100%);
+      padding: 32px 32px 28px 32px;
+      text-align: center;
+      border-bottom: 1px solid #15803d;
+    }
+    .logo-text {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      text-transform: uppercase;
+      margin: 0 0 6px 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1;
+    }
+    .logo-waste {
+      color: #ffffff;
+    }
+    .logo-bullet {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: #16a34a;
+      border-radius: 50%;
+      margin: 0 5px;
+      vertical-align: middle;
+    }
+    .logo-ph {
+      background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .logo-tagline {
+      color: #15803d;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin: 0;
     }
     .header {
-      text-align: center;
-      border-bottom: 3px solid #16a34a;
-      padding-bottom: 20px;
-      margin-bottom: 30px;
+      padding: 28px 32px 24px 32px;
+      border-bottom: 1px solid #1f1f1f;
     }
-    .header h1 {
-      color: #16a34a;
-      margin: 0 0 10px 0;
-      font-size: 26px;
-    }
-    .badge {
+    .status-badge {
       display: inline-block;
-      background: #dcfce7;
-      color: #166534;
-      padding: 6px 12px;
+      background: #15803d;
+      color: #ffffff;
+      padding: 6px 14px;
       border-radius: 6px;
-      font-size: 12px;
-      font-weight: bold;
-      margin-top: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      margin-bottom: 14px;
+      text-transform: uppercase;
     }
-    .info-table {
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #22c55e;
+      margin: 0 0 8px 0;
+      letter-spacing: -0.025em;
+    }
+    .subtitle {
+      color: #9ca3af;
+      font-size: 14px;
+      font-weight: 400;
+    }
+    .content {
+      padding: 24px 32px 32px 32px;
+    }
+    .data-grid {
       width: 100%;
-      border-collapse: collapse;
       margin: 20px 0;
-      background: #f8f9fa;
+      background: #1a1a1a;
       border-radius: 8px;
       overflow: hidden;
+      border: 1px solid #262626;
     }
-    .info-table td {
-      padding: 12px 15px;
-      border-bottom: 1px solid #e5e7eb;
+    .data-row td {
+      padding: 14px 20px;
+      border-bottom: 1px solid #262626;
+      font-size: 14px;
     }
-    .info-table td:first-child {
-      font-weight: bold;
-      color: #555;
-      width: 140px;
-    }
-    .info-table tr:last-child td {
+    .data-row:last-child td {
       border-bottom: none;
     }
-    .highlight-box {
-      background: #f0fdf4;
-      border-left: 4px solid #16a34a;
-      padding: 15px;
-      margin: 20px 0;
-      border-radius: 4px;
+    .label {
+      color: #737373;
+      width: 110px;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
-    .cta-button {
+    .value {
+      color: #f5f5f5;
+      font-weight: 500;
+    }
+    .highlight-box {
+      background: #0f2618;
+      border: 1px solid #15803d;
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin-top: 20px;
+    }
+    .btn {
       display: inline-block;
       background: #16a34a;
       color: #ffffff !important;
-      text-decoration: none !important;
-      padding: 12px 24px;
-      border-radius: 6px;
-      font-size: 15px;
-      font-weight: bold;
-      margin: 20px 0;
+      padding: 14px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      margin: 24px 0 20px 0;
+      letter-spacing: 0.025em;
+      transition: background 0.2s ease;
+    }
+    .next-steps {
+      background: #1a1a1a;
+      border-left: 3px solid #16a34a;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-top: 20px;
     }
     .footer {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 2px solid #ddd;
       text-align: center;
+      padding: 24px 32px;
+      background: #0a0a0a;
+      border-top: 1px solid #1f1f1f;
+    }
+    .footer p {
+      color: #737373;
       font-size: 12px;
-      color: #666;
+      line-height: 1.5;
+    }
+    @media only screen and (max-width: 600px) {
+      .wrapper { padding: 16px 10px !important; }
+      .logo-section { padding: 24px 16px 20px 16px !important; }
+      .logo-text { font-size: 32px !important; }
+      .logo-bullet { width: 5px !important; height: 5px !important; margin: 0 4px !important; }
+      .logo-tagline { font-size: 8px !important; letter-spacing: 0.25em !important; margin-top: 4px !important; }
+      .header, .content { padding: 20px 16px !important; }
+      .footer { padding: 20px 16px !important; }
+      .header h1 { font-size: 22px !important; }
+      .data-row td { padding: 12px 14px !important; font-size: 13px !important; }
+      .btn { padding: 12px 28px !important; font-size: 13px !important; }
+      .next-steps { padding: 14px 16px !important; font-size: 13px !important; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Contract Signed</h1>
-      <p>A new client has been created</p>
-      <span class="badge">DEAL CLOSED</span>
-    </div>
+  <table role="presentation" class="wrapper" cellpadding="0" cellspacing="0">
+    <tr>
+      <td>
+        <div class="container">
+          <!-- Logo -->
+          <div class="logo-section">
+            <h1 class="logo-text">
+              <span class="logo-waste">WASTE</span><span class="logo-bullet"></span><span class="logo-ph">PH</span>
+            </h1>
+            <p class="logo-tagline">Private Waste Management</p>
+          </div>
 
-    <table class="info-table">
-      <tr>
-        <td>Contract:</td>
-        <td><strong>${contractNumber}</strong></td>
-      </tr>
-      <tr>
-        <td>Client:</td>
-        <td><strong>${clientName}</strong></td>
-      </tr>
-      ${companyName ? `<tr><td>Company:</td><td>${companyName}</td></tr>` : ""}
-      <tr>
-        <td>Email:</td>
-        <td><a href="mailto:${clientEmail}" style="color: #106934;">${clientEmail}</a></td>
-      </tr>
-      ${address ? `<tr><td>Address:</td><td>${address}</td></tr>` : ""}
-      ${contractStartDate ? `<tr><td>Contract Period:</td><td>${new Date(contractStartDate).toLocaleDateString("en-PH")} - ${new Date(contractEndDate).toLocaleDateString("en-PH")}</td></tr>` : ""}
-    </table>
+          <!-- Header -->
+          <div class="header">
+            <span class="status-badge">Deal Closed</span>
+            <h1>Contract Signed</h1>
+            <p class="subtitle">A new client has been created</p>
+          </div>
 
-    <div class="highlight-box">
-      <p><strong>Congratulations!</strong> The client has uploaded their signed contract and a new client record has been automatically created in the system.</p>
-    </div>
+          <!-- Content -->
+          <div class="content">
+            <table class="data-grid" cellpadding="0" cellspacing="0">
+              <tr class="data-row">
+                <td class="label">Contract</td>
+                <td class="value">${contractNumber}</td>
+              </tr>
+              <tr class="data-row">
+                <td class="label">Client</td>
+                <td class="value">${clientName}</td>
+              </tr>
+              ${companyName ? `<tr class="data-row"><td class="label">Company</td><td class="value">${companyName}</td></tr>` : ""}
+              <tr class="data-row">
+                <td class="label">Email</td>
+                <td class="value"><a href="mailto:${clientEmail}" style="color: #22c55e; text-decoration: none;">${clientEmail}</a></td>
+              </tr>
+              ${address ? `<tr class="data-row"><td class="label">Address</td><td class="value">${address}</td></tr>` : ""}
+              ${contractStartDate ? `<tr class="data-row"><td class="label">Period</td><td class="value">${new Date(contractStartDate).toLocaleDateString("en-PH")} - ${new Date(contractEndDate).toLocaleDateString("en-PH")}</td></tr>` : ""}
+            </table>
 
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="${frontendUrl}/admin/clients" class="cta-button">View Client in CRM</a>
-    </div>
+            <div class="highlight-box">
+              <p style="font-size: 14px; color: #e5e5e5; margin: 0; line-height: 1.6;">
+                <strong style="color: #22c55e;">Congratulations!</strong> The client has uploaded their signed contract and a new client record has been automatically created in the system.
+              </p>
+            </div>
 
-    <p style="font-size: 13px; color: #666; margin-top: 20px;">
-      <strong>Next Steps:</strong><br>
-      • Schedule monthly check-ins with the client<br>
-      • Set up service schedules and collection points<br>
-      • Send welcome/onboarding materials<br>
-      • Ensure all documentation is complete
-    </p>
+            <div style="text-align: center;">
+              <a href="${frontendUrl}/admin/clients" class="btn">View Client in CRM →</a>
+            </div>
 
-    <div class="footer">
-      <p><strong>WastePH CRM</strong> - Contract Notification System</p>
-      <p style="margin-top: 10px; font-size: 11px; color: #999;">
-        This is an automated notification. Do not reply to this email.
-      </p>
-    </div>
-  </div>
+            <div class="next-steps">
+              <p style="font-size: 13px; color: #e5e5e5; margin: 0; line-height: 1.5;">
+                <strong style="color: #22c55e;">Next Steps:</strong><br>
+                • Schedule monthly check-ins with the client<br>
+                • Set up service schedules and collection points<br>
+                • Send welcome/onboarding materials<br>
+                • Ensure all documentation is complete
+              </p>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="footer">
+            <p style="margin: 0 0 6px 0; font-weight: 600;">WastePH CRM</p>
+            <p style="margin: 0; font-size: 12px; color: #525252;">Automated Contract Notification System</p>
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
     `;

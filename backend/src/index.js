@@ -31,6 +31,7 @@ import ticketRoutes from "./routes/ticketRoutes.js";
 import clientNotesRoutes from "./routes/clientNotesRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import emailPreviewRoutes from "./routes/emailPreviewRoutes.js";
 
 dotenv.config();
 
@@ -76,6 +77,9 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("combined"));
 }
 
+// Serve static files (for email images, logos, etc.)
+app.use("/public", express.static("public"));
+
 // Health check route
 app.get("/health", (req, res) => {
   res.json({
@@ -109,6 +113,7 @@ app.use("/api/tickets", ticketRoutes);
 app.use("/api/client-notes", clientNotesRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/email-preview", emailPreviewRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
