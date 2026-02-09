@@ -136,10 +136,10 @@ export function AutoScheduleDialog({ open, onOpenChange, client, onSchedule }) {
     );
   }, [existingEvents, selectedContract]);
 
-  const isManageMode = eventsForContract.length > 0;
   const activeEvents = eventsForContract.filter(
     (e) => e.status !== "cancelled",
   );
+  const isManageMode = activeEvents.length > 0;
 
   // Preview the dates that will be created (only in create mode)
   const previewDates = useMemo(() => {
@@ -156,6 +156,7 @@ export function AutoScheduleDialog({ open, onOpenChange, client, onSchedule }) {
     try {
       await onSchedule({
         clientId: client.id,
+        contractId: selectedContract.id,
         contractNumber: selectedContract.contractNumber,
         companyName: client.companyName,
         startDate: selectedContract.contractStartDate,

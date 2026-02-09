@@ -15,6 +15,8 @@ import {
   previewEventAssignedEmail,
   preview24HourReminderEmail,
   preview1HourReminderEmail,
+  previewAutoScheduleSalesEmail,
+  previewAutoScheduleClientEmail,
 } from "../controllers/emailPreviewController.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 
@@ -40,6 +42,8 @@ router.get("/ticket-comment", previewTicketCommentEmail);
 router.get("/event-assigned", previewEventAssignedEmail);
 router.get("/event-reminder-24h", preview24HourReminderEmail);
 router.get("/event-reminder-1h", preview1HourReminderEmail);
+router.get("/auto-schedule-sales", previewAutoScheduleSalesEmail);
+router.get("/auto-schedule-client", previewAutoScheduleClientEmail);
 
 // Client-facing email previews
 router.get("/simple-proposal", previewSimpleProposalEmail);

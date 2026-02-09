@@ -440,6 +440,18 @@ export const previewEmailList = async (req, res, next) => {
         <p>Email sent 1 hour before a scheduled event (hourly check).</p>
         <a href="${baseUrl}/api/email-preview/event-reminder-1h" target="_blank">Preview →</a>
       </div>
+
+      <div class="card">
+        <h2>Auto-Schedule (Sales) <span class="badge">Internal</span></h2>
+        <p>Email sent to sales person when monthly check-ins are auto-created via "Auto Schedule" button.</p>
+        <a href="${baseUrl}/api/email-preview/auto-schedule-sales" target="_blank">Preview →</a>
+      </div>
+
+      <div class="card">
+        <h2>Auto-Schedule (Client) <span class="badge">Client-facing</span></h2>
+        <p>Email sent to client when monthly check-ins are auto-created. Includes contact info for rescheduling.</p>
+        <a href="${baseUrl}/api/email-preview/auto-schedule-client" target="_blank">Preview →</a>
+      </div>
     </div>
   </div>
 </body>
@@ -531,6 +543,84 @@ export const preview1HourReminderEmail = (req, res, next) => {
     };
 
     const htmlContent = emailService.generateEventReminderEmailHTML(sampleData, "1h");
+    
+    res.setHeader("Content-Type", "text/html");
+    res.send(htmlContent);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Preview auto-schedule notification to sales
+ */
+export const previewAutoScheduleSalesEmail = (req, res, next) => {
+  try {
+    const events = [
+      {
+        scheduledDate: new Date("2026-02-05T01:00:00.000Z"),
+        startTime: "09:00",
+        endTime: "10:00",
+      },
+      {
+        scheduledDate: new Date("2026-03-05T01:00:00.000Z"),
+        startTime: "09:00",
+        endTime: "10:00",
+      },
+      {
+        scheduledDate: new Date("2026-04-05T01:00:00.000Z"),
+        startTime: "09:00",
+        endTime: "10:00",
+      },
+    ];
+
+    const sampleData = {
+      events,
+      contractNumber: "CONT-20260209-0001",
+      companyName: "Green Solutions Inc.",
+      salesPersonName: "John Sales",
+    };
+
+    const htmlContent = emailService.generateAutoScheduleSalesEmailHTML(sampleData);
+    
+    res.setHeader("Content-Type", "text/html");
+    res.send(htmlContent);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Preview auto-schedule notification to client
+ */
+export const previewAutoScheduleClientEmail = (req, res, next) => {
+  try {
+    const events = [
+      {
+        scheduledDate: new Date("2026-02-05T01:00:00.000Z"),
+        startTime: "09:00",
+        endTime: "10:00",
+      },
+      {
+        scheduledDate: new Date("2026-03-05T01:00:00.000Z"),
+        startTime: "09:00",
+        endTime: "10:00",
+      },
+      {
+        scheduledDate: new Date("2026-04-05T01:00:00.000Z"),
+        startTime: "09:00",
+        endTime: "10:00",
+      },
+    ];
+
+    const sampleData = {
+      events,
+      contractNumber: "CONT-20260209-0001",
+      companyName: "Green Solutions Inc.",
+      contactPerson: "Michael Chen",
+    };
+
+    const htmlContent = emailService.generateAutoScheduleClientEmailHTML(sampleData);
     
     res.setHeader("Content-Type", "text/html");
     res.send(htmlContent);

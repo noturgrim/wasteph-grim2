@@ -4,6 +4,7 @@ import {
   activityLogTable,
   inquiryTable,
   clientTable,
+  contractsTable,
   userTable,
 } from "../db/schema.js";
 import { eq, and, gte, lte, desc, count, sql } from "drizzle-orm";
@@ -210,6 +211,7 @@ class CalendarEventService {
   async bulkCreateMonthlyEvents(params, metadata = {}) {
     const {
       clientId,
+      contractId,
       contractNumber,
       companyName,
       startDate,
@@ -252,6 +254,7 @@ class CalendarEventService {
     const values = dates.map((date) => ({
       userId,
       clientId,
+      contractId,
       title,
       description: `Scheduled monthly check-in for ${companyName}. Contract: ${contractNumber}`,
       eventType: "client_checkup",
@@ -281,6 +284,57 @@ class CalendarEventService {
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent,
     });
+
+    // Send auto-schedule notifications (fire and forget)
+    // Get sales person info
+    const [salesPerson] = await db
+      .select({
+        email: userTable.email,
+        firstName: userTable.firstName,
+        lastName: userTable.lastName,
+      })
+      .from(userTable)
+      .where(eq(userTable.id, userId));
+
+    // Get contract info for client email notification
+    const [contract] = await db
+      .select({
+        clientEmailContract: contractsTable.clientEmailContract,
+        clientName: contractsTable.clientName,
+        companyName: contractsTable.companyName,
+      })
+      .from(contractsTable)
+      .where(eq(contractsTable.id, contractId));
+
+    if (salesPerson && salesPerson.email) {
+      const salesEmailData = {
+        events,
+        contractNumber,
+        companyName,
+        salesPersonName: `${salesPerson.firstName} ${salesPerson.lastName}`,
+      };
+
+      emailService
+        .sendAutoScheduleNotificationToSales(salesPerson.email, salesEmailData)
+        .catch((err) =>
+          console.error(`Failed to send auto-schedule notification to sales:`, err.message)
+        );
+    }
+
+    if (contract && contract.clientEmailContract) {
+      const clientEmailData = {
+        events,
+        contractNumber,
+        companyName: contract.companyName || companyName,
+        contactPerson: contract.clientName,
+      };
+
+      emailService
+        .sendAutoScheduleNotificationToClient(contract.clientEmailContract, clientEmailData)
+        .catch((err) =>
+          console.error(`Failed to send auto-schedule notification to client:`, err.message)
+        );
+    }
 
     return events;
   }

@@ -151,17 +151,17 @@ export const completeEvent = async (req, res, next) => {
 export const autoSchedule = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const { clientId, contractNumber, companyName, startDate, endDate } = req.body;
+    const { clientId, contractId, contractNumber, companyName, startDate, endDate } = req.body;
 
-    if (!clientId || !contractNumber || !companyName || !startDate || !endDate) {
+    if (!clientId || !contractId || !contractNumber || !companyName || !startDate || !endDate) {
       return res.status(400).json({
         success: false,
-        message: "clientId, contractNumber, companyName, startDate, and endDate are required",
+        message: "clientId, contractId, contractNumber, companyName, startDate, and endDate are required",
       });
     }
 
     const events = await calendarEventService.bulkCreateMonthlyEvents(
-      { clientId, contractNumber, companyName, startDate, endDate, userId },
+      { clientId, contractId, contractNumber, companyName, startDate, endDate, userId },
       { ipAddress: req.ip, userAgent: req.get("user-agent") },
     );
 
