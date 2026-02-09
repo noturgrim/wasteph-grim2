@@ -85,6 +85,82 @@ export const previewContractSignedEmail = async (req, res, next) => {
   }
 };
 
+export const previewSimpleProposalEmail = async (req, res, next) => {
+  try {
+    const sampleData = {
+      clientName: "John Doe",
+      clientEmail: "john.doe@example.com",
+      proposalNumber: "PROP-20260209-0003",
+      validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+      acceptToken: "sample-accept-token-abc123",
+      declineToken: "sample-decline-token-xyz789",
+    };
+
+    const html = emailService.generateSimpleProposalEmailHTML(sampleData);
+
+    res.setHeader("Content-Type", "text/html");
+    res.send(html);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const previewFullProposalEmail = async (req, res, next) => {
+  try {
+    const sampleData = {
+      clientName: "Jane Smith",
+      clientEmail: "jane.smith@example.com",
+      proposalNumber: "PROP-20260209-0004",
+      validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      acceptToken: "sample-accept-token-def456",
+      declineToken: "sample-decline-token-uvw012",
+      serviceType: "Commercial Waste Management",
+      price: "PHP 15,000.00",
+      frequency: "Weekly Collection",
+      terms: "12-month contract with monthly billing",
+    };
+
+    const html = emailService.generateProposalEmailHTML(sampleData);
+
+    res.setHeader("Content-Type", "text/html");
+    res.send(html);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const previewContractEmail = async (req, res, next) => {
+  try {
+    const sampleData = {
+      clientName: "Michael Brown",
+      clientEmail: "michael.brown@example.com",
+      contractNumber: "CON-20260209-0002",
+      uploadToken: "sample-upload-token-ghi789",
+    };
+
+    const html = emailService.generateContractEmailHTML(sampleData);
+
+    res.setHeader("Content-Type", "text/html");
+    res.send(html);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const previewNotificationEmail = async (req, res, next) => {
+  try {
+    const subject = "System Notification";
+    const body = "This is a sample generic notification email. It can be used for various system notifications and alerts.";
+
+    const html = emailService.generateNotificationEmailHTML(subject, body);
+
+    res.setHeader("Content-Type", "text/html");
+    res.send(html);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const previewEmailList = async (req, res, next) => {
   try {
     const baseUrl = req.protocol + "://" + req.get("host");
@@ -109,7 +185,7 @@ export const previewEmailList = async (req, res, next) => {
       padding: 40px 20px;
     }
     .container {
-      max-width: 800px;
+      max-width: 1000px;
       margin: 0 auto;
     }
     h1 {
@@ -124,10 +200,18 @@ export const previewEmailList = async (req, res, next) => {
       margin-bottom: 40px;
       font-size: 14px;
     }
+    .section-title {
+      color: #16a34a;
+      font-size: 20px;
+      margin: 30px 0 20px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid rgba(21,128,61,0.3);
+    }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 20px;
+      margin-bottom: 30px;
     }
     .card {
       background: rgba(255,255,255,0.05);
@@ -144,12 +228,12 @@ export const previewEmailList = async (req, res, next) => {
     }
     .card h2 {
       color: #16a34a;
-      font-size: 20px;
+      font-size: 18px;
       margin-bottom: 12px;
     }
     .card p {
       color: rgba(255,255,255,0.7);
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.6;
       margin-bottom: 20px;
     }
@@ -178,6 +262,17 @@ export const previewEmailList = async (req, res, next) => {
       font-size: 13px;
       text-align: center;
     }
+    .badge {
+      display: inline-block;
+      background: rgba(21,128,61,0.2);
+      color: #22c55e;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-left: 8px;
+      text-transform: uppercase;
+    }
   </style>
 </head>
 <body>
@@ -189,6 +284,7 @@ export const previewEmailList = async (req, res, next) => {
       ⚠️ Development Preview Mode - No actual emails will be sent
     </div>
 
+    <h3 class="section-title">Internal Notifications <span class="badge">Staff</span></h3>
     <div class="grid">
       <div class="card">
         <h2>New Lead Notification</h2>
@@ -212,6 +308,33 @@ export const previewEmailList = async (req, res, next) => {
         <h2>Contract Signed</h2>
         <p>Email sent to sales person when a client uploads a signed contract.</p>
         <a href="${baseUrl}/api/email-preview/contract-signed" target="_blank">Preview →</a>
+      </div>
+    </div>
+
+    <h3 class="section-title">Client-Facing Emails <span class="badge">Public</span></h3>
+    <div class="grid">
+      <div class="card">
+        <h2>Simple Proposal Email</h2>
+        <p>Basic proposal email sent to clients with accept/decline buttons.</p>
+        <a href="${baseUrl}/api/email-preview/simple-proposal" target="_blank">Preview →</a>
+      </div>
+
+      <div class="card">
+        <h2>Full Proposal Email</h2>
+        <p>Detailed proposal email sent to clients with service details and pricing.</p>
+        <a href="${baseUrl}/api/email-preview/full-proposal" target="_blank">Preview →</a>
+      </div>
+
+      <div class="card">
+        <h2>Contract Email</h2>
+        <p>Email sent to clients with instructions to upload their signed contract.</p>
+        <a href="${baseUrl}/api/email-preview/contract" target="_blank">Preview →</a>
+      </div>
+
+      <div class="card">
+        <h2>Generic Notification</h2>
+        <p>Simple notification email template for various system alerts.</p>
+        <a href="${baseUrl}/api/email-preview/notification" target="_blank">Preview →</a>
       </div>
     </div>
   </div>

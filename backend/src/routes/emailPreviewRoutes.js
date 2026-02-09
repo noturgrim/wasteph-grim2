@@ -5,6 +5,10 @@ import {
   previewProposalAcceptedEmail,
   previewProposalDeclinedEmail,
   previewContractSignedEmail,
+  previewSimpleProposalEmail,
+  previewFullProposalEmail,
+  previewContractEmail,
+  previewNotificationEmail,
 } from "../controllers/emailPreviewController.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 
@@ -17,10 +21,16 @@ router.use(requireRole("admin", "super_admin"));
 // Email preview list page
 router.get("/", previewEmailList);
 
-// Individual email previews
+// Internal notification email previews
 router.get("/new-lead", previewNewLeadEmail);
 router.get("/proposal-accepted", previewProposalAcceptedEmail);
 router.get("/proposal-declined", previewProposalDeclinedEmail);
 router.get("/contract-signed", previewContractSignedEmail);
+
+// Client-facing email previews
+router.get("/simple-proposal", previewSimpleProposalEmail);
+router.get("/full-proposal", previewFullProposalEmail);
+router.get("/contract", previewContractEmail);
+router.get("/notification", previewNotificationEmail);
 
 export default router;
