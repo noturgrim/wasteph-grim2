@@ -161,6 +161,71 @@ export const previewNotificationEmail = async (req, res, next) => {
   }
 };
 
+export const previewNewTicketEmail = async (req, res, next) => {
+  try {
+    const sampleData = {
+      ticketNumber: "TKT-20260209-0001",
+      ticketId: "sample-ticket-id-123",
+      clientName: "Sarah Johnson",
+      companyName: "Green Solutions Inc.",
+      category: "technical",
+      priority: "urgent",
+      subject: "Collection truck did not arrive on scheduled date",
+      description: "Our regular collection was scheduled for yesterday morning but the truck never arrived. This is affecting our operations. Please advise ASAP.",
+      creatorName: "John Smith",
+      contractNumber: "CON-20260101-0005",
+    };
+
+    const html = emailService.generateNewTicketEmailHTML(sampleData);
+
+    res.setHeader("Content-Type", "text/html");
+    res.send(html);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const previewTicketStatusUpdateEmail = async (req, res, next) => {
+  try {
+    const sampleData = {
+      ticketNumber: "TKT-20260209-0001",
+      ticketId: "sample-ticket-id-123",
+      updateType: "status",
+      subject: "Collection truck did not arrive on scheduled date",
+      oldStatus: "open",
+      newStatus: "resolved",
+      resolutionNotes: "The collection has been rescheduled for tomorrow morning at 8 AM. Our team will ensure priority service. We apologize for the inconvenience.",
+    };
+
+    const html = emailService.generateTicketUpdateEmailHTML(sampleData);
+
+    res.setHeader("Content-Type", "text/html");
+    res.send(html);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const previewTicketCommentEmail = async (req, res, next) => {
+  try {
+    const sampleData = {
+      ticketNumber: "TKT-20260209-0001",
+      ticketId: "sample-ticket-id-123",
+      updateType: "comment",
+      subject: "Collection truck did not arrive on scheduled date",
+      commentText: "Thank you for reporting this issue. I've checked with our operations team and they confirmed the truck had a mechanical issue. We're sending a replacement truck tomorrow morning.",
+      commentAuthor: "Admin Support",
+    };
+
+    const html = emailService.generateTicketUpdateEmailHTML(sampleData);
+
+    res.setHeader("Content-Type", "text/html");
+    res.send(html);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const previewEmailList = async (req, res, next) => {
   try {
     const baseUrl = req.protocol + "://" + req.get("host");
@@ -308,6 +373,24 @@ export const previewEmailList = async (req, res, next) => {
         <h2>Contract Signed</h2>
         <p>Email sent to sales person when a client uploads a signed contract.</p>
         <a href="${baseUrl}/api/email-preview/contract-signed" target="_blank">Preview →</a>
+      </div>
+
+      <div class="card">
+        <h2>New Ticket Created</h2>
+        <p>Email sent to all admins when a new support ticket is created.</p>
+        <a href="${baseUrl}/api/email-preview/new-ticket" target="_blank">Preview →</a>
+      </div>
+
+      <div class="card">
+        <h2>Ticket Status Update</h2>
+        <p>Email sent to sales person when their ticket status is changed by admin.</p>
+        <a href="${baseUrl}/api/email-preview/ticket-status-update" target="_blank">Preview →</a>
+      </div>
+
+      <div class="card">
+        <h2>Ticket Comment Added</h2>
+        <p>Email sent to sales person when an admin adds a comment to their ticket.</p>
+        <a href="${baseUrl}/api/email-preview/ticket-comment" target="_blank">Preview →</a>
       </div>
     </div>
 

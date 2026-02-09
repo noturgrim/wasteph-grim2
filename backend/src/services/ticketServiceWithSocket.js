@@ -6,6 +6,7 @@ import {
   activityLogTable,
   userTable,
   contractsTable,
+  clientTable,
 } from "../db/schema.js";
 import { eq, desc, and, or, inArray, like, count, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
@@ -13,6 +14,7 @@ import counterService from "./counterService.js";
 import { getPresignedUrl } from "./s3Service.js";
 import socketServer from "../socket/socketServer.js";
 import TicketEventEmitter from "../socket/events/ticketEvents.js";
+import emailService from "./emailService.js";
 
 /**
  * TicketService with Real-Time Socket Support
@@ -79,22 +81,81 @@ class TicketService {
       userAgent: metadata.userAgent,
     });
 
-    // Emit socket event (get user info for notification)
-    if (this.ticketEvents) {
-      const [user] = await db
-        .select({
-          id: userTable.id,
-          firstName: userTable.firstName,
-          lastName: userTable.lastName,
-          email: userTable.email,
-          role: userTable.role,
-        })
-        .from(userTable)
-        .where(eq(userTable.id, userId));
+    // Get ticket details for notifications
+    const [fullTicket] = await db
+      .select({
+        id: clientTicketsTable.id,
+        ticketNumber: clientTicketsTable.ticketNumber,
+        clientId: clientTicketsTable.clientId,
+        category: clientTicketsTable.category,
+        priority: clientTicketsTable.priority,
+        subject: clientTicketsTable.subject,
+        description: clientTicketsTable.description,
+        contractId: clientTicketsTable.contractId,
+        contractNumber: contractsTable.contractNumber,
+        clientName: clientTable.name,
+        companyName: clientTable.companyName,
+        creatorFirstName: userTable.firstName,
+        creatorLastName: userTable.lastName,
+        creatorEmail: userTable.email,
+      })
+      .from(clientTicketsTable)
+      .leftJoin(userTable, eq(clientTicketsTable.createdBy, userTable.id))
+      .leftJoin(contractsTable, eq(clientTicketsTable.contractId, contractsTable.id))
+      .leftJoin(clientTable, eq(clientTicketsTable.clientId, clientTable.id))
+      .where(eq(clientTicketsTable.id, ticket.id));
 
-      if (user) {
+    // Emit socket event
+    if (this.ticketEvents && fullTicket) {
+      const user = {
+        id: fullTicket.creatorEmail ? userId : null,
+        firstName: fullTicket.creatorFirstName,
+        lastName: fullTicket.creatorLastName,
+        email: fullTicket.creatorEmail,
+        role: "sales",
+      };
+      if (user.id) {
         await this.ticketEvents.emitTicketCreated(ticket, user);
       }
+    }
+
+    // Send email notifications to all admins
+    if (fullTicket) {
+      const adminUsers = await db
+        .select({
+          email: userTable.email,
+          firstName: userTable.firstName,
+          lastName: userTable.lastName,
+        })
+        .from(userTable)
+        .where(
+          and(
+            inArray(userTable.role, ["admin", "super_admin"]),
+            eq(userTable.isActive, true)
+          )
+        );
+
+      const emailData = {
+        ticketNumber: fullTicket.ticketNumber,
+        ticketId: fullTicket.id,
+        clientName: fullTicket.clientName,
+        companyName: fullTicket.companyName,
+        category: fullTicket.category,
+        priority: fullTicket.priority,
+        subject: fullTicket.subject,
+        description: fullTicket.description,
+        creatorName: `${fullTicket.creatorFirstName} ${fullTicket.creatorLastName}`,
+        contractNumber: fullTicket.contractNumber,
+      };
+
+      // Send emails to all admins (fire and forget)
+      adminUsers.forEach((admin) => {
+        emailService
+          .sendNewTicketNotification(admin.email, emailData)
+          .catch((err) =>
+            console.error(`Failed to send ticket notification to ${admin.email}:`, err.message)
+          );
+      });
     }
 
     return ticket;
@@ -468,6 +529,34 @@ class TicketService {
       );
     }
 
+    // Send email notification to the sales person who created the ticket
+    const [creator] = await db
+      .select({
+        email: userTable.email,
+        firstName: userTable.firstName,
+        lastName: userTable.lastName,
+      })
+      .from(userTable)
+      .where(eq(userTable.id, existingTicket.createdBy));
+
+    if (creator && creator.email) {
+      const emailData = {
+        ticketNumber: existingTicket.ticketNumber,
+        ticketId: existingTicket.id,
+        updateType: "status",
+        subject: existingTicket.subject,
+        oldStatus: existingTicket.status,
+        newStatus: status,
+        resolutionNotes: resolutionNotes || null,
+      };
+
+      emailService
+        .sendTicketUpdateNotification(creator.email, emailData)
+        .catch((err) =>
+          console.error(`Failed to send ticket update notification to ${creator.email}:`, err.message)
+        );
+    }
+
     return updatedTicket;
   }
 
@@ -543,6 +632,42 @@ class TicketService {
     // Emit socket event
     if (this.ticketEvents && user) {
       await this.ticketEvents.emitCommentAdded(comment, ticket, user);
+    }
+
+    // Send email notification to ticket creator if comment is from admin/super_admin
+    if (
+      user &&
+      (user.role === "admin" || user.role === "super_admin") &&
+      ticket.createdBy !== userId
+    ) {
+      const [creator] = await db
+        .select({
+          email: userTable.email,
+          firstName: userTable.firstName,
+          lastName: userTable.lastName,
+        })
+        .from(userTable)
+        .where(eq(userTable.id, ticket.createdBy));
+
+      if (creator && creator.email) {
+        const emailData = {
+          ticketNumber: ticket.ticketNumber,
+          ticketId: ticket.id,
+          updateType: "comment",
+          subject: ticket.subject,
+          commentText: content,
+          commentAuthor: `${user.firstName} ${user.lastName}`,
+        };
+
+        emailService
+          .sendTicketUpdateNotification(creator.email, emailData)
+          .catch((err) =>
+            console.error(
+              `Failed to send comment notification to ${creator.email}:`,
+              err.message
+            )
+          );
+      }
     }
 
     return comment;

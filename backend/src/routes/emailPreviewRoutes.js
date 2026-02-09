@@ -9,6 +9,9 @@ import {
   previewFullProposalEmail,
   previewContractEmail,
   previewNotificationEmail,
+  previewNewTicketEmail,
+  previewTicketStatusUpdateEmail,
+  previewTicketCommentEmail,
 } from "../controllers/emailPreviewController.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 
@@ -26,6 +29,9 @@ router.get("/new-lead", previewNewLeadEmail);
 router.get("/proposal-accepted", previewProposalAcceptedEmail);
 router.get("/proposal-declined", previewProposalDeclinedEmail);
 router.get("/contract-signed", previewContractSignedEmail);
+router.get("/new-ticket", previewNewTicketEmail);
+router.get("/ticket-status-update", previewTicketStatusUpdateEmail);
+router.get("/ticket-comment", previewTicketCommentEmail);
 
 // Client-facing email previews
 router.get("/simple-proposal", previewSimpleProposalEmail);
