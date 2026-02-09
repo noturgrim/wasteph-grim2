@@ -12,13 +12,14 @@ import {
   registerValidation,
   validate,
 } from "../middleware/validation.js";
+import { authRateLimiter } from "../middleware/rateLimiter.js";
 import { body } from "express-validator";
 
 const router = express.Router();
 
 // Public routes
-router.post("/register", registerValidation, validate, register);
-router.post("/login", loginValidation, validate, login);
+router.post("/register", authRateLimiter, registerValidation, validate, register);
+router.post("/login", authRateLimiter, loginValidation, validate, login);
 
 // Protected routes
 router.post("/logout", optionalAuth, logout);

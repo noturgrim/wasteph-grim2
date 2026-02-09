@@ -28,15 +28,14 @@ Fix: Implemented HMAC-signed CSRF token tied to session ID. Token sent via
      Files: backend/src/middleware/csrf.js (new), auth.js, authController.js,
             index.js, front/src/admin/services/api.js, AuthContext.jsx
 
-C2. Rate Limiting Not Applied to Auth Routes
+C2. Rate Limiting Not Applied to Auth Routes [FIXED]
 ────────────────────────────────────────────────────────────────────────────
 Location: backend/src/routes/authRoutes.js (lines 20-21)
 Risk: `authRateLimiter` exists but is never applied to `/login` or `/register`, 
       enabling brute-force attacks.
-Fix:
-    import { authRateLimiter } from "../middleware/rateLimiter.js";
-    router.post("/login", authRateLimiter, loginValidation, validate, login);
-    router.post("/register", authRateLimiter, registerValidation, validate, register);
+Fix: Applied authRateLimiter middleware to both login and register routes.
+     Rate limit: 5 attempts per 15 minutes per IP, skips successful requests.
+     File: backend/src/routes/authRoutes.js
 
 C3. Account Enumeration via Different Error Messages
 ────────────────────────────────────────────────────────────────────────────
