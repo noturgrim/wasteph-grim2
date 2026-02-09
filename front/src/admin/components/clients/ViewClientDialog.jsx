@@ -5,7 +5,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
@@ -19,11 +20,18 @@ const getStatusBadge = (status) => {
   return <Badge className={config.className}>{config.label}</Badge>;
 };
 
-export function ViewClientDialog({ open, onOpenChange, client, users }) {
+export function ViewClientDialog({ open, onOpenChange, client, users, onAutoSchedule }) {
   if (!client) return null;
 
   const manager = users.find((u) => u.id === client.accountManager);
   const managerName = manager ? `${manager.firstName} ${manager.lastName}` : "-";
+
+  const hasSchedulableContract = (client.contracts || []).some(
+    (c) =>
+      (c.status === "signed" || c.status === "hardbound_received") &&
+      c.contractStartDate &&
+      c.contractEndDate,
+  );
 
   const formatDate = (date) => (date ? format(new Date(date), "MMM dd, yyyy") : "-");
 
@@ -72,6 +80,20 @@ export function ViewClientDialog({ open, onOpenChange, client, users }) {
                   })
                 ) : (
                   <span className="text-sm text-muted-foreground">—</span>
+                )}
+                {hasSchedulableContract && onAutoSchedule && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="ml-auto h-7 text-xs"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onAutoSchedule(client);
+                    }}
+                  >
+                    <CalendarDays className="mr-1.5 h-3.5 w-3.5" />
+                    Auto Schedule
+                  </Button>
                 )}
               </div>
             </div>

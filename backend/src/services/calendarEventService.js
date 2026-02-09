@@ -77,6 +77,90 @@ class CalendarEventService {
   }
 
   /**
+   * Bulk-create monthly check-in events for a client contract
+   * @param {Object} params - { clientId, contractId, contractNumber, companyName, startDate, endDate, userId }
+   * @param {Object} metadata - { ipAddress, userAgent }
+   * @returns {Promise<Array>} Created events
+   */
+  async bulkCreateMonthlyEvents(params, metadata = {}) {
+    const {
+      clientId,
+      contractNumber,
+      companyName,
+      startDate,
+      endDate,
+      userId,
+    } = params;
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      throw new AppError("Invalid start or end date", 400);
+    }
+    if (start >= end) {
+      throw new AppError("Start date must be before end date", 400);
+    }
+
+    // Generate monthly dates (same day each month from start to end)
+    const dates = [];
+    const current = new Date(start);
+    const dayOfMonth = start.getDate();
+
+    while (current <= end) {
+      dates.push(new Date(current));
+      // Move to next month, preserving the day
+      const nextMonth = current.getMonth() + 1;
+      current.setMonth(nextMonth);
+      // Handle months with fewer days (e.g., Jan 31 -> Feb 28)
+      if (current.getDate() !== dayOfMonth) {
+        current.setDate(0); // Last day of previous month
+      }
+    }
+
+    if (dates.length === 0) {
+      throw new AppError("No dates generated for the given range", 400);
+    }
+
+    // Build values for bulk insert
+    const title = `Monthly Check-in - ${contractNumber} (${companyName})`;
+    const values = dates.map((date) => ({
+      userId,
+      clientId,
+      title,
+      description: `Scheduled monthly check-in for ${companyName}. Contract: ${contractNumber}`,
+      eventType: "client_checkup",
+      scheduledDate: date,
+      startTime: "09:00",
+      endTime: "10:00",
+      status: "scheduled",
+    }));
+
+    const events = await db
+      .insert(calendarEventTable)
+      .values(values)
+      .returning();
+
+    // Log activity (fire-and-forget)
+    this._logInBackground({
+      userId,
+      action: "calendar_bulk_schedule_created",
+      entityType: "client",
+      entityId: clientId,
+      details: {
+        contractNumber,
+        companyName,
+        eventsCreated: events.length,
+        dateRange: { from: start.toISOString(), to: end.toISOString() },
+      },
+      ipAddress: metadata.ipAddress,
+      userAgent: metadata.userAgent,
+    });
+
+    return events;
+  }
+
+  /**
    * Get events for a user with optional filters
    * If viewAll is true (Master Sales), return all users' events
    * OPTIMIZED: Reduced joins, smaller payload
@@ -90,6 +174,7 @@ class CalendarEventService {
       status,
       inquiryId,
       clientId,
+      eventType,
       page = 1,
       limit = 50,
     } = options;
@@ -128,6 +213,11 @@ class CalendarEventService {
     // Client filter
     if (clientId) {
       conditions.push(eq(calendarEventTable.clientId, clientId));
+    }
+
+    // Event type filter
+    if (eventType) {
+      conditions.push(eq(calendarEventTable.eventType, eventType));
     }
 
     // Single query: data + count via window function (1 round-trip instead of 2)

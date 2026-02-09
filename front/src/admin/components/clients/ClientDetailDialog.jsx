@@ -53,7 +53,7 @@ const getStatusBadge = (status) => {
   return <Badge className={config.className}>{config.label}</Badge>;
 };
 
-export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
+export const ClientDetailDialog = ({ open, onOpenChange, client, users, onAutoSchedule }) => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [tickets, setTickets] = useState([]);
@@ -180,6 +180,13 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
   };
 
   if (!client) return null;
+
+  const hasSchedulableContract = (client.contracts || []).some(
+    (c) =>
+      (c.status === "signed" || c.status === "hardbound_received") &&
+      c.contractStartDate &&
+      c.contractEndDate,
+  );
 
   const manager = users?.find((u) => u.id === client.accountManager);
   const managerName = manager
@@ -429,10 +436,27 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users }) => {
               <TabsContent value="calendar" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Scheduled Events</h3>
-                  <Button size="sm" onClick={() => setIsCreateEventOpen(true)}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    Schedule Event
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {hasSchedulableContract && onAutoSchedule && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          onOpenChange(false);
+                          onAutoSchedule(client);
+                        }}
+                      >
+                        <CalendarIcon className="h-4 w-4 mr-1" />
+                        {events.some((e) => e.eventType === "client_checkup")
+                          ? "Manage Schedule"
+                          : "Auto Schedule"}
+                      </Button>
+                    )}
+                    <Button size="sm" onClick={() => setIsCreateEventOpen(true)}>
+                      <Plus className="h-4 w-4 mr-1" />
+                      Schedule Event
+                    </Button>
+                  </div>
                 </div>
 
                 {isLoadingEvents ? (

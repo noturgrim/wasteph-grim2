@@ -6,6 +6,7 @@ import {
   updateEvent,
   completeEvent,
   deleteEvent,
+  autoSchedule,
 } from "../controllers/calendarEventController.js";
 import { requireAuth } from "../middleware/auth.js";
 import { body, validationResult } from "express-validator";
@@ -41,6 +42,7 @@ const eventValidation = [
 router.use(requireAuth);
 
 // Routes
+router.post("/auto-schedule", autoSchedule); // Must be before /:id
 router.post("/", eventValidation, validate, createEvent);
 router.get("/", getEvents);
 router.get("/:id", getEventById);

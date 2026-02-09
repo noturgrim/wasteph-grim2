@@ -708,6 +708,7 @@ class ApiClient {
     if (filters.status) params.append("status", filters.status);
     if (filters.inquiryId) params.append("inquiryId", filters.inquiryId);
     if (filters.clientId) params.append("clientId", filters.clientId);
+    if (filters.eventType) params.append("eventType", filters.eventType);
     if (filters.viewAll !== undefined)
       params.append("viewAll", filters.viewAll);
     if (filters.page) params.append("page", filters.page);
@@ -747,6 +748,13 @@ class ApiClient {
   async deleteCalendarEvent(id) {
     return this.request(`/calendar-events/${id}`, {
       method: "DELETE",
+    });
+  }
+
+  async autoScheduleClientEvents(data) {
+    return this.request("/calendar-events/auto-schedule", {
+      method: "POST",
+      body: JSON.stringify(data),
     });
   }
 

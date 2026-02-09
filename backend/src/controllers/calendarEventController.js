@@ -38,7 +38,7 @@ export const getEvents = async (req, res, next) => {
       isMasterSales ||
       userRole === "admin" ||
       userRole === "super_admin";
-    const { startDate, endDate, status, inquiryId, clientId, viewAll, page, limit } =
+    const { startDate, endDate, status, inquiryId, clientId, eventType, viewAll, page, limit } =
       req.query;
 
     const result = await calendarEventService.getEvents({
@@ -49,6 +49,7 @@ export const getEvents = async (req, res, next) => {
       status,
       inquiryId,
       clientId,
+      eventType,
       page: page ? parseInt(page) : 1,
       limit: limit ? parseInt(limit) : 50,
     });
@@ -137,6 +138,37 @@ export const completeEvent = async (req, res, next) => {
       success: true,
       message: "Event marked as completed",
       data: event,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Route: POST /api/calendar-events/auto-schedule
+ * Bulk-create monthly check-in events for a client contract
+ */
+export const autoSchedule = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { clientId, contractNumber, companyName, startDate, endDate } = req.body;
+
+    if (!clientId || !contractNumber || !companyName || !startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        message: "clientId, contractNumber, companyName, startDate, and endDate are required",
+      });
+    }
+
+    const events = await calendarEventService.bulkCreateMonthlyEvents(
+      { clientId, contractNumber, companyName, startDate, endDate, userId },
+      { ipAddress: req.ip, userAgent: req.get("user-agent") },
+    );
+
+    res.status(201).json({
+      success: true,
+      message: `${events.length} monthly check-in event(s) scheduled`,
+      data: events,
     });
   } catch (error) {
     next(error);

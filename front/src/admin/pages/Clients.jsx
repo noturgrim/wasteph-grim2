@@ -27,6 +27,7 @@ import { SearchInput } from "../components/SearchInput";
 import { createClientColumns } from "../components/clients/columns";
 import { ClientDetailDialog } from "../components/clients/ClientDetailDialog";
 import { EditClientDialog } from "../components/clients/EditClientDialog";
+import { AutoScheduleDialog } from "../components/clients/AutoScheduleDialog";
 import { DeleteConfirmationModal } from "../components/modals/DeleteConfirmationModal";
 
 export default function Clients() {
@@ -70,6 +71,7 @@ export default function Clients() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isAutoScheduleOpen, setIsAutoScheduleOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
 
   // Fetch users on mount
@@ -144,6 +146,21 @@ export default function Clients() {
     setIsDeleteModalOpen(true);
   };
 
+  const handleAutoSchedule = (client) => {
+    setSelectedClient(client);
+    setIsAutoScheduleOpen(true);
+  };
+
+  const confirmAutoSchedule = async (scheduleData) => {
+    try {
+      const response = await api.autoScheduleClientEvents(scheduleData);
+      toast.success(response.message || "Events scheduled successfully");
+    } catch (error) {
+      toast.error(error.message || "Failed to schedule events");
+      throw error;
+    }
+  };
+
   const confirmEdit = async (formData) => {
     try {
       await api.updateClient(selectedClient.id, formData);
@@ -178,6 +195,7 @@ export default function Clients() {
     onView: handleView,
     onEdit: handleEdit,
     onDelete: handleDelete,
+    onAutoSchedule: handleAutoSchedule,
   });
 
   const columns = allColumns.filter((column) => {
@@ -367,6 +385,7 @@ export default function Clients() {
         onOpenChange={setIsViewDialogOpen}
         client={selectedClient}
         users={users}
+        onAutoSchedule={handleAutoSchedule}
       />
 
       <EditClientDialog
@@ -382,6 +401,13 @@ export default function Clients() {
         onConfirm={confirmDelete}
         itemName={selectedClient?.companyName}
         itemType="client"
+      />
+
+      <AutoScheduleDialog
+        open={isAutoScheduleOpen}
+        onOpenChange={setIsAutoScheduleOpen}
+        client={selectedClient}
+        onSchedule={confirmAutoSchedule}
       />
     </div>
   );

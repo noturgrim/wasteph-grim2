@@ -11,7 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { MoreHorizontal, Eye, Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown } from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
@@ -57,7 +57,7 @@ const formatPeriod = (startDate, endDate) => {
   return null;
 };
 
-export const createClientColumns = ({ userRole, onView, onEdit, onDelete }) => [
+export const createClientColumns = ({ userRole, onView, onEdit, onDelete, onAutoSchedule }) => [
   {
     accessorKey: "companyName",
     header: ({ column }) => {
@@ -262,6 +262,12 @@ export const createClientColumns = ({ userRole, onView, onEdit, onDelete }) => [
     id: "actions",
     cell: ({ row }) => {
       const client = row.original;
+      const hasSignedContract = (client.contracts || []).some(
+        (c) =>
+          (c.status === "signed" || c.status === "hardbound_received") &&
+          c.contractStartDate &&
+          c.contractEndDate,
+      );
       return (
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
@@ -275,6 +281,12 @@ export const createClientColumns = ({ userRole, onView, onEdit, onDelete }) => [
               <Eye className="mr-2 h-4 w-4" />
               View Details
             </DropdownMenuItem>
+            {hasSignedContract && (
+              <DropdownMenuItem onClick={() => onAutoSchedule(client)}>
+                <CalendarDays className="mr-2 h-4 w-4" />
+                Auto Schedule
+              </DropdownMenuItem>
+            )}
             {(userRole === "admin" || userRole === "super_admin") && (
               <>
                 <DropdownMenuItem onClick={() => onEdit(client)}>
