@@ -263,6 +263,8 @@ export const calendarEventTable = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    reminder24hSentAt: timestamp("reminder_24h_sent_at", { withTimezone: true }),
+    reminder1hSentAt: timestamp("reminder_1h_sent_at", { withTimezone: true }),
   },
   (table) => ({
     userIdIdx: index("calendar_event_user_id_idx").on(table.userId),
@@ -278,6 +280,17 @@ export const calendarEventTable = pgTable(
     ),
     // OPTIMIZATION: Index for status filtering (for completed/cancelled views)
     statusIdx: index("calendar_event_status_idx").on(table.status),
+    // OPTIMIZATION: Composite index for reminder queries (status + scheduled date + reminder flags)
+    reminder24hIdx: index("calendar_event_reminder_24h_idx").on(
+      table.status,
+      table.scheduledDate,
+      table.reminder24hSentAt
+    ),
+    reminder1hIdx: index("calendar_event_reminder_1h_idx").on(
+      table.status,
+      table.scheduledDate,
+      table.reminder1hSentAt
+    ),
   })
 );
 

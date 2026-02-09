@@ -895,6 +895,91 @@ class EmailService {
   }
 
   /**
+   * Send event assigned notification (immediate)
+   * @param {string} to - Assigned user email
+   * @param {Object} data - Event data
+   * @returns {Promise<Object>} Email result
+   */
+  async sendEventAssignedEmail(to, data) {
+    try {
+      const { title, scheduledDate } = data;
+      const dateStr = new Date(scheduledDate).toLocaleDateString("en-PH", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+      const subject = `New Event: ${title} on ${dateStr}`;
+
+      const htmlContent = this.generateEventAssignedEmailHTML(data);
+
+      const info = await this.transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to,
+        subject,
+        html: htmlContent,
+      });
+
+      console.log(`✅ Event assigned notification sent to: ${to}`);
+      return {
+        success: true,
+        messageId: info.messageId,
+      };
+    } catch (error) {
+      console.error(
+        `❌ Failed to send event assigned notification to ${to}:`,
+        error.message,
+      );
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
+   * Send event reminder email
+   * @param {string} to - User email
+   * @param {Object} data - Event data
+   * @param {string} timeType - '24h' or '1h'
+   * @returns {Promise<Object>} Email result
+   */
+  async sendEventReminderEmail(to, data, timeType) {
+    try {
+      const { title, scheduledDate } = data;
+      const dateStr = new Date(scheduledDate).toLocaleDateString("en-PH", {
+        month: "short",
+        day: "numeric",
+      });
+      const timeLabel = timeType === "24h" ? "tomorrow" : "in 1 hour";
+      const subject = `Reminder: ${title} ${timeLabel}`;
+
+      const htmlContent = this.generateEventReminderEmailHTML(data, timeType);
+
+      const info = await this.transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to,
+        subject,
+        html: htmlContent,
+      });
+
+      console.log(`✅ Event ${timeType} reminder sent to: ${to}`);
+      return {
+        success: true,
+        messageId: info.messageId,
+      };
+    } catch (error) {
+      console.error(
+        `❌ Failed to send event ${timeType} reminder to ${to}:`,
+        error.message,
+      );
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
    * Send new ticket notification to admins
    * @param {string} to - Admin email
    * @param {Object} data - Ticket data
@@ -2935,6 +3020,548 @@ class EmailService {
             <p style="margin: 0; font-size: 12px; color: #525252;">Automated Ticket Notification System</p>
           </div>
         </div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
+  }
+
+  /**
+   * Generate event assigned email HTML
+   * @param {Object} data - Event data
+   * @returns {string} HTML content
+   */
+  generateEventAssignedEmailHTML(data) {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const {
+      title,
+      description,
+      eventType,
+      scheduledDate,
+      startTime,
+      endTime,
+      creatorName,
+      clientName,
+      companyName,
+    } = data;
+
+    const eventDate = new Date(scheduledDate);
+    const dateStr = eventDate.toLocaleDateString("en-PH", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    const eventTypeLabels = {
+      site_visit: "Site Visit",
+      call: "Phone Call",
+      meeting: "Meeting",
+      follow_up: "Follow-up",
+      client_checkup: "Client Check-in",
+    };
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #ffffff;
+      background-color: #0a0a0a;
+      margin: 0;
+      padding: 0;
+    }
+    .wrapper {
+      width: 100%;
+      background-color: #0a0a0a;
+      padding: 32px 16px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #111111;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #1f1f1f;
+    }
+    .logo-section {
+      background: linear-gradient(135deg, #0f2618 0%, #0a1f0f 100%);
+      padding: 32px 32px 28px 32px;
+      text-align: center;
+      border-bottom: 1px solid #15803d;
+    }
+    .logo-text {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      text-transform: uppercase;
+      margin: 0 0 6px 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1;
+    }
+    .logo-waste {
+      color: #ffffff;
+    }
+    .logo-bullet {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: #16a34a;
+      border-radius: 50%;
+      margin: 0 5px;
+      vertical-align: middle;
+    }
+    .logo-ph {
+      background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .logo-tagline {
+      color: #15803d;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin: 0;
+    }
+    .header {
+      padding: 28px 32px 24px 32px;
+      border-bottom: 1px solid #1f1f1f;
+    }
+    .event-card {
+      background: #1a1a1a;
+      border-left: 4px solid #16a34a;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin: 24px 32px;
+    }
+    .event-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0 0 12px 0;
+      letter-spacing: -0.025em;
+    }
+    .event-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+    }
+    .meta-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      color: #16a34a;
+    }
+    .meta-label {
+      color: #9ca3af;
+      font-weight: 500;
+    }
+    .meta-value {
+      color: #f5f5f5;
+      font-weight: 500;
+    }
+    .description-box {
+      background: #111111;
+      border: 1px solid #262626;
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin: 20px 32px;
+    }
+    .description-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #9ca3af;
+      margin-bottom: 10px;
+      display: block;
+      font-weight: 700;
+    }
+    .content {
+      padding: 24px 32px 32px 32px;
+    }
+    .btn {
+      display: inline-block;
+      background: #16a34a;
+      color: #ffffff !important;
+      padding: 14px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      margin: 0;
+      letter-spacing: 0.025em;
+      transition: background 0.2s ease;
+    }
+    .footer {
+      text-align: center;
+      padding: 24px 32px;
+      background: #0a0a0a;
+      border-top: 1px solid #1f1f1f;
+    }
+    .footer p {
+      color: #737373;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    @media only screen and (max-width: 600px) {
+      .wrapper { padding: 16px 10px !important; }
+      .logo-section { padding: 24px 16px 20px 16px !important; }
+      .logo-text { font-size: 32px !important; }
+      .logo-bullet { width: 5px !important; height: 5px !important; margin: 0 4px !important; }
+      .logo-tagline { font-size: 8px !important; letter-spacing: 0.25em !important; margin-top: 4px !important; }
+      .event-card, .description-box { margin: 20px 16px !important; padding: 16px !important; }
+      .content { padding: 20px 16px !important; }
+      .footer { padding: 20px 16px !important; }
+      .event-title { font-size: 18px !important; }
+      .btn { padding: 12px 28px !important; font-size: 13px !important; }
+    }
+  </style>
+</head>
+<body>
+  <table role="presentation" class="wrapper" cellpadding="0" cellspacing="0">
+    <tr>
+      <td>
+        <div class="container">
+          <!-- Logo -->
+          <div class="logo-section">
+            <h1 class="logo-text">
+              <span class="logo-waste">WASTE</span><span class="logo-bullet"></span><span class="logo-ph">PH</span>
+            </h1>
+            <p class="logo-tagline">Private Waste Management</p>
+          </div>
+
+          <!-- Header -->
+          <div class="header">
+            <p style="font-size: 12px; color: #9ca3af; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;">New Event Assigned</p>
+            <h1 style="font-size: 16px; font-weight: 500; color: #9ca3af; margin: 0;">${creatorName} invited you to</h1>
+          </div>
+
+          <!-- Event Card (Google Calendar style) -->
+          <div class="event-card">
+            <h2 class="event-title">${title}</h2>
+            
+            <div class="event-meta">
+              <div class="meta-row">
+                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <span class="meta-value">${dateStr}</span>
+              </div>
+              
+              ${startTime ? `
+              <div class="meta-row">
+                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                <span class="meta-value">${startTime}${endTime ? ` – ${endTime}` : ""}</span>
+              </div>
+              ` : ""}
+              
+              ${eventType ? `
+              <div class="meta-row">
+                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <span class="meta-value">${eventTypeLabels[eventType] || eventType}</span>
+              </div>
+              ` : ""}
+              
+              ${clientName ? `
+              <div class="meta-row">
+                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+                <span class="meta-value">${clientName}${companyName ? ` (${companyName})` : ""}</span>
+              </div>
+              ` : ""}
+            </div>
+          </div>
+
+          ${description ? `
+          <div class="description-box">
+            <span class="description-label">Description</span>
+            <p style="margin: 0; color: #e5e5e5; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${description}</p>
+          </div>
+          ` : ""}
+
+          <!-- Action -->
+          <div class="content">
+            <div style="text-align: center;">
+              <a href="${frontendUrl}/admin/calendar" class="btn">View Calendar</a>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="footer">
+            <p style="margin: 0 0 6px 0; font-weight: 600;">WastePH CRM</p>
+            <p style="margin: 0; font-size: 12px; color: #525252;">Calendar Notification System</p>
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
+  }
+
+  /**
+   * Generate event reminder email HTML (Google Calendar style - light theme)
+   * @param {Object} data - Event data
+   * @param {string} timeType - '24h' or '1h'
+   * @returns {string} HTML content
+   */
+  generateEventReminderEmailHTML(data, timeType) {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const {
+      title,
+      description,
+      eventType,
+      scheduledDate,
+      startTime,
+      endTime,
+      clientName,
+      companyName,
+      hoursUntil,
+      minutesUntil,
+    } = data;
+
+    const eventDate = new Date(scheduledDate);
+    const dateStr = eventDate.toLocaleDateString("en-PH", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    const dayStr = eventDate.toLocaleDateString("en-PH", {
+      weekday: "short",
+    });
+
+    const monthDay = eventDate.toLocaleDateString("en-PH", {
+      month: "short",
+      day: "numeric",
+    });
+
+    const is24h = timeType === "24h";
+    const reminderText = is24h ? "Tomorrow" : "Soon";
+    const accentColor = is24h ? "#16a34a" : "#ea580c";
+
+    const eventTypeLabels = {
+      site_visit: "Site Visit",
+      call: "Phone Call",
+      meeting: "Meeting",
+      follow_up: "Follow-up",
+      client_checkup: "Client Check-in",
+    };
+
+    return `
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!--[if mso]>
+  <style type="text/css">
+    table { border-collapse: collapse; border-spacing: 0; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    td { border-collapse: collapse; mso-line-height-rule: exactly; }
+  </style>
+  <![endif]-->
+  <style type="text/css">
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background-color: #f8f9fa;
+      font-family: Arial, Helvetica, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    table {
+      border-collapse: collapse !important;
+      border-spacing: 0 !important;
+      mso-table-lspace: 0pt !important;
+      mso-table-rspace: 0pt !important;
+    }
+    td {
+      border-collapse: collapse !important;
+    }
+    img {
+      border: 0;
+      display: block;
+      outline: none;
+      text-decoration: none;
+    }
+    p, h1, h2 {
+      margin: 0;
+      padding: 0;
+    }
+    a {
+      text-decoration: none;
+    }
+    @media only screen and (max-width: 600px) {
+      .mobile-padding { padding: 20px !important; }
+      .mobile-title { font-size: 20px !important; line-height: 1.4 !important; }
+      .mobile-hide { display: none !important; }
+      .mobile-full-width { width: 100% !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8f9fa; font-family: Arial, sans-serif;">
+  <!-- Wrapper -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f9fa; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <!-- Main Container -->
+        <!--[if mso]>
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;">
+        <tr>
+        <td>
+        <![endif]-->
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" class="mobile-full-width">
+          
+          <!-- Header -->
+          <tr>
+            <td style="padding: 32px 40px; border-bottom: 1px solid #e8eaed;" class="mobile-padding">
+              <h1 style="margin: 0 0 6px 0; font-size: 26px; font-weight: 700; color: #1f1f1f; letter-spacing: -0.5px; line-height: 1.2; mso-line-height-rule: exactly; font-family: Arial, Helvetica, sans-serif;">
+                WASTE <span style="color: #16a34a;">• PH</span>
+              </h1>
+              <p style="margin: 0; font-size: 12px; color: #5f6368; letter-spacing: 0.3px; line-height: 1.4; font-family: Arial, Helvetica, sans-serif;">Private Waste Management</p>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 36px 40px;" class="mobile-padding">
+              <!-- Reminder Label -->
+              <p style="margin: 0 0 24px 0; font-size: 13px; font-weight: 600; color: ${accentColor}; text-transform: uppercase; letter-spacing: 1px; line-height: 1.4; font-family: Arial, Helvetica, sans-serif;">
+                ${is24h ? "TOMORROW" : "COMING UP"}
+              </p>
+              
+              <!-- Event Title -->
+              <h2 style="margin: 0 0 24px 0; font-size: 24px; font-weight: 500; color: #202124; line-height: 1.3; mso-line-height-rule: exactly; font-family: Arial, Helvetica, sans-serif;" class="mobile-title">
+                ${title}
+              </h2>
+              
+              <!-- Event Card -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f9fa; border-left: 4px solid ${accentColor}; border-radius: 8px;">
+                <tr>
+                  <td style="padding: 24px;">
+                    <!-- Date Section -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="70" valign="top" style="padding-right: 20px;">
+                          <!-- Date Icon -->
+                          <table role="presentation" width="64" height="64" cellpadding="0" cellspacing="0" border="0" style="background-color: ${accentColor}; border-radius: 8px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+                            <tr>
+                              <td align="center" valign="middle" style="padding: 8px;">
+                                <p style="margin: 0; font-size: 11px; font-weight: 600; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2; font-family: Arial, Helvetica, sans-serif; mso-line-height-rule: exactly;">${dayStr.toUpperCase()}</p>
+                                <p style="margin: 4px 0 0 0; font-size: 22px; font-weight: 700; color: #ffffff; line-height: 1.1; font-family: Arial, Helvetica, sans-serif; mso-line-height-rule: exactly;">${eventDate.getDate()}</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td valign="top" style="padding-top: 4px;">
+                          <p style="margin: 0 0 4px 0; font-size: 17px; font-weight: 500; color: #202124; line-height: 1.4; font-family: Arial, Helvetica, sans-serif; mso-line-height-rule: exactly;">${monthDay}, ${eventDate.getFullYear()}</p>
+                          <p style="margin: 0; font-size: 15px; color: #5f6368; line-height: 1.4; font-family: Arial, Helvetica, sans-serif;">${startTime ? `${startTime}${endTime ? ` – ${endTime}` : ""}` : "All day"}</p>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    ${eventType || clientName ? `
+                    <!-- Event Details -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e8eaed;">
+                      ${eventType ? `
+                      <tr>
+                        <td style="padding: 8px 0 8px 0; font-size: 14px; color: #3c4043; line-height: 1.5;">
+                          <strong style="color: #5f6368; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Type:</strong> ${eventTypeLabels[eventType] || eventType}
+                        </td>
+                      </tr>
+                      ` : ""}
+                      ${clientName ? `
+                      <tr>
+                        <td style="padding: 8px 0 8px 0; font-size: 14px; color: #3c4043; line-height: 1.5;">
+                          <strong style="color: #5f6368; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">Client:</strong> ${clientName}${companyName ? ` (${companyName})` : ""}
+                        </td>
+                      </tr>
+                      ` : ""}
+                    </table>
+                    ` : ""}
+                  </td>
+                </tr>
+              </table>
+              
+              ${description ? `
+              <!-- Description -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 24px; background-color: #f8f9fa; border-radius: 8px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+                <tr>
+                  <td style="padding: 20px 24px;">
+                    <p style="margin: 0; font-size: 15px; color: #3c4043; line-height: 1.7; font-family: Arial, Helvetica, sans-serif; mso-line-height-rule: exactly; white-space: pre-wrap;">${description}</p>
+                  </td>
+                </tr>
+              </table>
+              ` : ""}
+              
+              <!-- CTA Button -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 36px;">
+                <tr>
+                  <td align="center" style="padding: 0;">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${frontendUrl}/admin/calendar" style="height:48px;v-text-anchor:middle;width:200px;" arcsize="13%" stroke="f" fillcolor="${accentColor}">
+                      <w:anchorlock/>
+                      <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:15px;font-weight:500;">View in Calendar</center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-->
+                    <a href="${frontendUrl}/admin/calendar" target="_blank" style="display: inline-block; background-color: ${accentColor}; color: #ffffff !important; padding: 14px 32px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 15px; letter-spacing: 0.3px; font-family: Arial, Helvetica, sans-serif; mso-hide: all;">View in Calendar</a>
+                    <!--<![endif]-->
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 28px 40px; background-color: #f8f9fa; border-top: 1px solid #e8eaed; text-align: center;" class="mobile-padding">
+              <p style="margin: 0; font-size: 13px; color: #5f6368; line-height: 1.7; font-family: Arial, Helvetica, sans-serif;">
+                <strong style="color: #3c4043;">WastePH CRM</strong><br>
+                Calendar Reminder System
+              </p>
+            </td>
+          </tr>
+        </table>
+        <!--[if mso]>
+        </td>
+        </tr>
+        </table>
+        <![endif]-->
       </td>
     </tr>
   </table>

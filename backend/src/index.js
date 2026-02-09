@@ -1,3 +1,6 @@
+// Set timezone to Manila for consistent date operations across the application
+process.env.TZ = "Asia/Manila";
+
 import express from "express";
 import { createServer } from "http";
 import cors from "cors";
@@ -5,9 +8,11 @@ import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import cron from "node-cron";
 import { testConnection } from "./db/index.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 import socketServer from "./socket/socketServer.js";
+import eventReminderService from "./services/eventReminderService.js";
 
 // Import routes
 import authRoutes from "./routes/authRoutes.js";
@@ -167,10 +172,43 @@ const startServer = async () => {
     httpServer.listen(PORT, () => {
       console.log(`\n🚀 Server is running on port ${PORT}`);
       console.log(`📍 Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log(`🕐 Timezone: ${process.env.TZ || Intl.DateTimeFormat().resolvedOptions().timeZone}`);
+      console.log(`🕐 Current time: ${new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" })}`);
       console.log(`🔗 Health check: http://localhost:${PORT}/health`);
       console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
       console.log(`🔌 WebSocket server ready\n`);
     });
+
+    // Schedule calendar event reminders
+    // 24-hour reminders: Daily at 8:00 AM Manila time
+    cron.schedule(
+      "0 8 * * *",
+      async () => {
+        console.log("⏰ Running 24-hour reminder check...");
+        await eventReminderService.send24HourReminders();
+      },
+      {
+        scheduled: true,
+        timezone: "Asia/Manila",
+      },
+    );
+
+    // 1-hour reminders: Every 15 minutes for better accuracy
+    cron.schedule(
+      "*/15 * * * *",
+      async () => {
+        console.log("⏰ Running 1-hour reminder check...");
+        await eventReminderService.send1HourReminders();
+      },
+      {
+        scheduled: true,
+        timezone: "Asia/Manila",
+      },
+    );
+
+    console.log("📅 Calendar reminder cron jobs scheduled:");
+    console.log("   • 24-hour reminders: Daily at 8:00 AM");
+    console.log("   • 1-hour reminders: Every 15 minutes\n");
   } catch (error) {
     console.error("Failed to start server:", error);
     process.exit(1);

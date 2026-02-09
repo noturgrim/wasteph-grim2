@@ -8,6 +8,7 @@ import {
 } from "../db/schema.js";
 import { eq, and, gte, lte, desc, count, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
+import emailService from "./emailService.js";
 
 class CalendarEventService {
   /**
@@ -25,7 +26,7 @@ class CalendarEventService {
   /**
    * Create a new calendar event
    */
-  async createEvent(eventData, userId, metadata = {}) {
+  async createEvent(eventData, creatorUserId, metadata = {}) {
     const {
       title,
       description,
@@ -36,12 +37,16 @@ class CalendarEventService {
       inquiryId,
       clientId,
       notes,
+      userId: assignedUserId, // Optional: assign to specific user
     } = eventData;
+
+    // Determine who the event is assigned to (default: creator)
+    const eventUserId = assignedUserId || creatorUserId;
 
     const [event] = await db
       .insert(calendarEventTable)
       .values({
-        userId,
+        userId: eventUserId,
         inquiryId: inquiryId || null,
         clientId: clientId || null,
         title,
@@ -57,7 +62,7 @@ class CalendarEventService {
 
     // Log activity (fire-and-forget)
     this._logInBackground({
-      userId,
+      userId: creatorUserId,
       inquiryId: event.inquiryId, // Link to inquiry for timeline (if applicable)
       action: "calendar_event_created",
       entityType: "calendar_event",
@@ -68,10 +73,130 @@ class CalendarEventService {
         scheduledDate: event.scheduledDate,
         inquiryId: event.inquiryId,
         clientId: event.clientId,
+        assignedTo: eventUserId,
       },
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent,
     });
+
+    // Send "Event Assigned" notification if assigned to someone else
+    if (assignedUserId && assignedUserId !== creatorUserId) {
+      // Get assigned user info
+      const [assignedUser] = await db
+        .select({
+          email: userTable.email,
+          firstName: userTable.firstName,
+          lastName: userTable.lastName,
+        })
+        .from(userTable)
+        .where(eq(userTable.id, assignedUserId));
+
+      // Get creator info
+      const [creator] = await db
+        .select({
+          firstName: userTable.firstName,
+          lastName: userTable.lastName,
+        })
+        .from(userTable)
+        .where(eq(userTable.id, creatorUserId));
+
+      // Get client info if applicable
+      let clientInfo = null;
+      if (clientId) {
+        const [client] = await db
+          .select({
+            contactPerson: clientTable.contactPerson,
+            companyName: clientTable.companyName,
+          })
+          .from(clientTable)
+          .where(eq(clientTable.id, clientId));
+        clientInfo = client;
+      }
+
+      if (assignedUser && assignedUser.email && creator) {
+        const emailData = {
+          eventId: event.id,
+          title: event.title,
+          description: event.description,
+          eventType: event.eventType,
+          scheduledDate: event.scheduledDate,
+          startTime: event.startTime,
+          endTime: event.endTime,
+          creatorName: `${creator.firstName} ${creator.lastName}`,
+          clientName: clientInfo?.contactPerson,
+          companyName: clientInfo?.companyName,
+        };
+
+        // Send email (fire and forget)
+        emailService
+          .sendEventAssignedEmail(assignedUser.email, emailData)
+          .catch((err) =>
+            console.error(`Failed to send event assigned notification:`, err.message)
+          );
+      }
+    }
+
+    // Check if event is within 24-hour window and send immediate reminder
+    const now = new Date();
+    const eventTime = new Date(event.scheduledDate);
+    const hoursUntilEvent = (eventTime - now) / (1000 * 60 * 60);
+
+    // Send immediate 24h reminder if event is 23-25 hours away (catches same-day/next-day events)
+    if (hoursUntilEvent >= 23 && hoursUntilEvent <= 25) {
+      // Get user info for email
+      const [eventUser] = await db
+        .select({
+          email: userTable.email,
+          firstName: userTable.firstName,
+          lastName: userTable.lastName,
+        })
+        .from(userTable)
+        .where(eq(userTable.id, eventUserId));
+
+      // Get client info if applicable (reuse if already fetched)
+      let clientInfo = null;
+      if (clientId) {
+        const [client] = await db
+          .select({
+            contactPerson: clientTable.contactPerson,
+            companyName: clientTable.companyName,
+          })
+          .from(clientTable)
+          .where(eq(clientTable.id, clientId));
+        clientInfo = client;
+      }
+
+      if (eventUser && eventUser.email) {
+        const emailData = {
+          eventId: event.id,
+          title: event.title,
+          description: event.description,
+          eventType: event.eventType,
+          scheduledDate: event.scheduledDate,
+          startTime: event.startTime,
+          endTime: event.endTime,
+          userName: `${eventUser.firstName} ${eventUser.lastName}`,
+          clientName: clientInfo?.contactPerson,
+          companyName: clientInfo?.companyName,
+          hoursUntil: Math.round(hoursUntilEvent),
+        };
+
+        // Send 24h reminder immediately (fire and forget)
+        emailService
+          .sendEventReminderEmail(eventUser.email, emailData, "24h")
+          .catch((err) =>
+            console.error(`Failed to send immediate 24h reminder for event ${event.id}:`, err.message)
+          );
+
+        // Mark as sent in database
+        await db
+          .update(calendarEventTable)
+          .set({ reminder24hSentAt: now })
+          .where(eq(calendarEventTable.id, event.id));
+
+        console.log(`✅ Immediate 24h reminder sent for event ${event.id} (${hoursUntilEvent.toFixed(1)}h away)`);
+      }
+    }
 
     return event;
   }

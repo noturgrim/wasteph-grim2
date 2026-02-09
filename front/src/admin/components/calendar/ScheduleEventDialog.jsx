@@ -139,11 +139,22 @@ export function ScheduleEventDialog({
 
     setIsSubmitting(true);
     try {
+      // Combine date with start time (if provided) for accurate scheduled date
+      let scheduledDateTime = new Date(formData.scheduledDate);
+      
+      if (formData.startTime) {
+        const [hours, minutes] = formData.startTime.split(":");
+        scheduledDateTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+      } else {
+        // If no start time, default to start of day
+        scheduledDateTime.setHours(0, 0, 0, 0);
+      }
+
       const eventData = {
         title: formData.title,
         description: formData.description || undefined,
         eventType: formData.eventType || undefined,
-        scheduledDate: formData.scheduledDate.toISOString(),
+        scheduledDate: scheduledDateTime.toISOString(),
         startTime: formData.startTime || undefined,
         endTime: formData.endTime || undefined,
         inquiryId:

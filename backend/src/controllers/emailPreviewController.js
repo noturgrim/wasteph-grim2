@@ -420,6 +420,27 @@ export const previewEmailList = async (req, res, next) => {
         <a href="${baseUrl}/api/email-preview/notification" target="_blank">Preview →</a>
       </div>
     </div>
+
+    <h3 class="section-title">Calendar Event Emails <span class="badge">Internal</span></h3>
+    <div class="grid">
+      <div class="card">
+        <h2>Event Assigned</h2>
+        <p>Email sent immediately when someone assigns an event to another user.</p>
+        <a href="${baseUrl}/api/email-preview/event-assigned" target="_blank">Preview →</a>
+      </div>
+
+      <div class="card">
+        <h2>24-Hour Reminder</h2>
+        <p>Email sent 24 hours before a scheduled event (daily at 8 AM).</p>
+        <a href="${baseUrl}/api/email-preview/event-reminder-24h" target="_blank">Preview →</a>
+      </div>
+
+      <div class="card">
+        <h2>1-Hour Reminder</h2>
+        <p>Email sent 1 hour before a scheduled event (hourly check).</p>
+        <a href="${baseUrl}/api/email-preview/event-reminder-1h" target="_blank">Preview →</a>
+      </div>
+    </div>
   </div>
 </body>
 </html>
@@ -427,6 +448,92 @@ export const previewEmailList = async (req, res, next) => {
 
     res.setHeader("Content-Type", "text/html");
     res.send(html);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Preview event assigned email
+ */
+export const previewEventAssignedEmail = (req, res, next) => {
+  try {
+    const sampleData = {
+      eventId: "evt-123",
+      title: "Monthly Client Check-in: Green Solutions Inc.",
+      description: "Discuss service satisfaction, upcoming needs, and renewal options.",
+      eventType: "client_checkup",
+      scheduledDate: new Date("2026-02-15T10:00:00"),
+      startTime: "10:00",
+      endTime: "11:00",
+      creatorName: "Sarah Admin",
+      clientName: "Michael Chen",
+      companyName: "Green Solutions Inc.",
+    };
+
+    const htmlContent = emailService.generateEventAssignedEmailHTML(sampleData);
+    
+    res.setHeader("Content-Type", "text/html");
+    res.send(htmlContent);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Preview 24-hour reminder email
+ */
+export const preview24HourReminderEmail = (req, res, next) => {
+  try {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const sampleData = {
+      eventId: "evt-456",
+      title: "Site Visit: ABC Manufacturing",
+      description: "Quarterly waste audit and service review. Bring inspection checklist and safety equipment.",
+      eventType: "site_visit",
+      scheduledDate: tomorrow,
+      startTime: "14:00",
+      endTime: "16:00",
+      clientName: "David Rodriguez",
+      companyName: "ABC Manufacturing",
+      hoursUntil: 24,
+    };
+
+    const htmlContent = emailService.generateEventReminderEmailHTML(sampleData, "24h");
+    
+    res.setHeader("Content-Type", "text/html");
+    res.send(htmlContent);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Preview 1-hour reminder email
+ */
+export const preview1HourReminderEmail = (req, res, next) => {
+  try {
+    const inOneHour = new Date();
+    inOneHour.setHours(inOneHour.getHours() + 1);
+
+    const sampleData = {
+      eventId: "evt-789",
+      title: "Follow-up Call: Contract Renewal Discussion",
+      description: "Discuss renewal terms and answer any questions about the new service package.",
+      eventType: "call",
+      scheduledDate: inOneHour,
+      startTime: inOneHour.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", hour12: false }),
+      clientName: "Emma Johnson",
+      companyName: "TechStart Solutions",
+      minutesUntil: 60,
+    };
+
+    const htmlContent = emailService.generateEventReminderEmailHTML(sampleData, "1h");
+    
+    res.setHeader("Content-Type", "text/html");
+    res.send(htmlContent);
   } catch (error) {
     next(error);
   }

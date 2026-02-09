@@ -12,6 +12,9 @@ import {
   previewNewTicketEmail,
   previewTicketStatusUpdateEmail,
   previewTicketCommentEmail,
+  previewEventAssignedEmail,
+  preview24HourReminderEmail,
+  preview1HourReminderEmail,
 } from "../controllers/emailPreviewController.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 
@@ -32,6 +35,11 @@ router.get("/contract-signed", previewContractSignedEmail);
 router.get("/new-ticket", previewNewTicketEmail);
 router.get("/ticket-status-update", previewTicketStatusUpdateEmail);
 router.get("/ticket-comment", previewTicketCommentEmail);
+
+// Calendar event email previews
+router.get("/event-assigned", previewEventAssignedEmail);
+router.get("/event-reminder-24h", preview24HourReminderEmail);
+router.get("/event-reminder-1h", preview1HourReminderEmail);
 
 // Client-facing email previews
 router.get("/simple-proposal", previewSimpleProposalEmail);
