@@ -348,7 +348,7 @@ export const clientTable = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     companyName: text("company_name").notNull(),
     contactPerson: text("contact_person").notNull(),
-    email: text("email").notNull().unique(),
+    email: text("email").notNull(),
     phone: text("phone").notNull(),
     address: text("address").notNull(),
     city: text("city").notNull(),
@@ -368,6 +368,10 @@ export const clientTable = pgTable(
       .defaultNow(),
   },
   (table) => ({
+    emailCompanyUniq: unique("client_email_company_uniq").on(
+      table.email,
+      table.companyName,
+    ),
     statusIdx: index("client_status_idx").on(table.status),
     createdAtIdx: index("client_created_at_idx").on(table.createdAt),
     accountManagerIdx: index("client_account_manager_idx").on(

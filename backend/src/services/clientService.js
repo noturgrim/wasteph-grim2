@@ -31,26 +31,39 @@ class ClientService {
       notes,
     } = clientData;
 
-    const [client] = await db
-      .insert(clientTable)
-      .values({
-        companyName,
-        contactPerson,
-        email,
-        phone,
-        address,
-        city,
-        province,
-        industry,
-        wasteTypes,
-        contractStartDate: contractStartDate
-          ? new Date(contractStartDate)
-          : null,
-        contractEndDate: contractEndDate ? new Date(contractEndDate) : null,
-        notes,
-        accountManager: userId, // Auto-assign to creator
-      })
-      .returning();
+    let client;
+    try {
+      const [inserted] = await db
+        .insert(clientTable)
+        .values({
+          companyName,
+          contactPerson,
+          email,
+          phone,
+          address,
+          city,
+          province,
+          industry,
+          wasteTypes,
+          contractStartDate: contractStartDate
+            ? new Date(contractStartDate)
+            : null,
+          contractEndDate: contractEndDate ? new Date(contractEndDate) : null,
+          notes,
+          accountManager: userId, // Auto-assign to creator
+        })
+        .returning();
+      client = inserted;
+    } catch (error) {
+      // Handle unique constraint violation (email + company_name)
+      if (error.code === "23505") {
+        throw new AppError(
+          `A client with email "${email}" and company "${companyName}" already exists`,
+          409,
+        );
+      }
+      throw error;
+    }
 
     // Log activity
     await this.logActivity({
@@ -216,6 +229,39 @@ class ClientService {
     }
     if ("contractEndDate" in updateData) {
       updateData.contractEndDate = updateData.contractEndDate ? new Date(updateData.contractEndDate) : null;
+    }
+
+    // If email or companyName is being changed, check for conflicts
+    if (updateData.email || updateData.companyName) {
+      const [current] = await db
+        .select({ email: clientTable.email, companyName: clientTable.companyName })
+        .from(clientTable)
+        .where(eq(clientTable.id, clientId))
+        .limit(1);
+
+      if (!current) throw new AppError("Client not found", 404);
+
+      const newEmail = updateData.email || current.email;
+      const newCompanyName = updateData.companyName || current.companyName;
+
+      const [conflict] = await db
+        .select({ id: clientTable.id })
+        .from(clientTable)
+        .where(
+          and(
+            eq(clientTable.email, newEmail),
+            eq(clientTable.companyName, newCompanyName),
+            sql`${clientTable.id} != ${clientId}`,
+          ),
+        )
+        .limit(1);
+
+      if (conflict) {
+        throw new AppError(
+          `A client with email "${newEmail}" and company "${newCompanyName}" already exists`,
+          409,
+        );
+      }
     }
 
     const [client] = await db

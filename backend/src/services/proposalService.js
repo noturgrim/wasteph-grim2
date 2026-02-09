@@ -1027,12 +1027,18 @@ class ProposalService {
         return;
       }
 
-      // 3. Check for existing client (prevent duplicates)
+      // 3. Check for existing client by email + company name (prevent duplicates)
       const { clientTable } = await import("../db/schema.js");
+      const companyName = parsed.clientCompany || row.inquiryCompany || "Unknown";
       const [existing] = await db
         .select({ id: clientTable.id })
         .from(clientTable)
-        .where(eq(clientTable.email, clientEmail))
+        .where(
+          and(
+            eq(clientTable.email, clientEmail),
+            eq(clientTable.companyName, companyName),
+          ),
+        )
         .limit(1);
 
       let clientId;
@@ -1044,7 +1050,7 @@ class ProposalService {
         const clientServiceInstance = new ClientService();
         const client = await clientServiceInstance.createClient(
           {
-            companyName: parsed.clientCompany || row.inquiryCompany || "Unknown",
+            companyName,
             contactPerson: parsed.clientName || row.inquiryName || "Unknown",
             email: clientEmail,
             phone: parsed.clientPhone || row.inquiryPhone || "",

@@ -1000,42 +1000,28 @@ class ContractService {
       );
     }
 
-    // Check if client already exists by email (case-insensitive)
+    // Check if client already exists by email + company name
+    const companyName = contract.companyName || inquiry?.company || "Unknown";
     const [existingClient] = await db
       .select()
       .from(clientTable)
-      .where(eq(clientTable.email, clientEmail))
+      .where(
+        and(
+          eq(clientTable.email, clientEmail),
+          eq(clientTable.companyName, companyName),
+        ),
+      )
       .limit(1);
 
     let client;
     if (existingClient) {
-      // Update existing client with latest contract data
-      const updateFields = {};
-      if (contract.companyName) updateFields.companyName = contract.companyName;
-      if (contract.clientName) updateFields.contactPerson = contract.clientName;
-      if (contract.clientAddress) updateFields.address = contract.clientAddress;
-      if (contract.contractStartDate)
-        updateFields.contractStartDate = contract.contractStartDate;
-      if (contract.contractEndDate)
-        updateFields.contractEndDate = contract.contractEndDate;
-
-      if (Object.keys(updateFields).length > 0) {
-        updateFields.updatedAt = new Date();
-        const [updated] = await db
-          .update(clientTable)
-          .set(updateFields)
-          .where(eq(clientTable.id, existingClient.id))
-          .returning();
-        client = updated;
-      } else {
-        client = existingClient;
-      }
-      console.log(`Found existing client: ${client.id} (${client.email})`);
+      client = existingClient;
+      console.log(`Found existing client: ${client.id} (${client.email}, ${client.companyName})`);
     } else {
       // Parse proposal data and contract data for industry
       // Only store fields directly available from the contract
       const clientData = {
-        companyName: contract.companyName || inquiry?.company || "Unknown",
+        companyName,
         contactPerson: contract.clientName || inquiry?.name || "Unknown",
         email: clientEmail,
         phone: inquiry?.phone || "",
