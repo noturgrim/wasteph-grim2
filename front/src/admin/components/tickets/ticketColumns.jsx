@@ -112,9 +112,17 @@ export const createTicketColumns = ({ userRole, onView, onEdit, clients, user })
     header: "Client",
     cell: ({ row }) => {
       const client = clients.find((c) => c.id === row.original.clientId);
+      const contractNumber = row.original.contractNumber;
       return (
-        <div className="text-sm">
-          {client ? client.companyName : "-"}
+        <div>
+          <div className="text-sm font-medium">
+            {client ? client.companyName : "-"}
+          </div>
+          {contractNumber && (
+            <div className="text-xs text-muted-foreground font-mono">
+              {contractNumber}
+            </div>
+          )}
         </div>
       );
     },

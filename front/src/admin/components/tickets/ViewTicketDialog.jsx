@@ -250,6 +250,14 @@ export const ViewTicketDialog = ({
                     {ticket.creatorFirstName} {ticket.creatorLastName}
                   </p>
                 </div>
+                {ticket.contractNumber && (
+                  <div>
+                    <p className="text-muted-foreground text-xs">Related Contract</p>
+                    <p className="font-medium text-sm font-mono">
+                      {ticket.contractNumber}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

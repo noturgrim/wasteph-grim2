@@ -5,6 +5,7 @@ import {
   ticketCommentsTable,
   activityLogTable,
   userTable,
+  contractsTable,
 } from "../db/schema.js";
 import { eq, desc, and, or, inArray, like, count, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
@@ -183,6 +184,8 @@ class TicketService {
           id: clientTicketsTable.id,
           ticketNumber: clientTicketsTable.ticketNumber,
           clientId: clientTicketsTable.clientId,
+          contractId: clientTicketsTable.contractId,
+          contractNumber: contractsTable.contractNumber,
           category: clientTicketsTable.category,
           priority: clientTicketsTable.priority,
           subject: clientTicketsTable.subject,
@@ -200,6 +203,7 @@ class TicketService {
         })
         .from(clientTicketsTable)
         .leftJoin(userTable, eq(clientTicketsTable.createdBy, userTable.id))
+        .leftJoin(contractsTable, eq(clientTicketsTable.contractId, contractsTable.id))
         .where(whereClause)
         .orderBy(desc(clientTicketsTable.createdAt))
         .limit(limit)
@@ -253,6 +257,8 @@ class TicketService {
         id: clientTicketsTable.id,
         ticketNumber: clientTicketsTable.ticketNumber,
         clientId: clientTicketsTable.clientId,
+        contractId: clientTicketsTable.contractId,
+        contractNumber: contractsTable.contractNumber,
         category: clientTicketsTable.category,
         priority: clientTicketsTable.priority,
         subject: clientTicketsTable.subject,
@@ -271,6 +277,7 @@ class TicketService {
       })
       .from(clientTicketsTable)
       .leftJoin(userTable, eq(clientTicketsTable.createdBy, userTable.id))
+      .leftJoin(contractsTable, eq(clientTicketsTable.contractId, contractsTable.id))
       .where(eq(clientTicketsTable.id, ticketId));
 
     if (!ticket) {
