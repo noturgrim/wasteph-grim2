@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { validateRequestContract } from "../middleware/contractValidation.js";
 import multer from "multer";
 import * as controller from "../controllers/contractController.js";
+import { validateFileSignature } from "../utils/fileUtils.js";
 
 const router = Router();
 
@@ -47,7 +48,7 @@ const uploadTemplate = multer({
  * Accessed from client email links
  */
 router.get("/public/:id/status", controller.getContractStatusPublic);
-router.post("/public/:id/submit", uploadPdf.single("signedContract"), controller.handleClientSubmission);
+router.post("/public/:id/submit", uploadPdf.single("signedContract"), validateFileSignature, controller.handleClientSubmission);
 
 // All routes below require authentication
 router.use(requireAuth);
@@ -60,6 +61,7 @@ router.get("/:id", controller.getContractById);
 router.post(
   "/:id/request",
   uploadTemplate.single("customTemplate"),
+  validateFileSignature,
   validateRequestContract,
   controller.requestContract,
 );
@@ -69,6 +71,7 @@ router.post("/:id/send-to-client", controller.sendToClient);
 router.post(
   "/:id/upload-pdf",
   uploadPdf.single("contractPdf"),
+  validateFileSignature,
   controller.uploadContractPdf,
 );
 router.post("/:id/generate-from-template", controller.generateContractFromTemplate);
@@ -85,6 +88,6 @@ router.get("/:id/preview-pdf", controller.previewContractPdf);
 router.get("/:id/custom-template", controller.downloadCustomTemplate);
 
 // HARDBOUND CONTRACT UPLOAD (Admin — after client has signed)
-router.post("/:id/upload-hardbound", uploadPdf.single("hardboundContract"), controller.uploadHardboundContract);
+router.post("/:id/upload-hardbound", uploadPdf.single("hardboundContract"), validateFileSignature, controller.uploadHardboundContract);
 
 export default router;

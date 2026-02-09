@@ -20,7 +20,7 @@ import {
 } from "../middleware/ticketValidation.js";
 import multer from "multer";
 import { uploadObject } from "../services/s3Service.js";
-import { generateSafeFilename, sanitizeFilename } from "../utils/fileUtils.js";
+import { generateSafeFilename, sanitizeFilename, validateFileSignature } from "../utils/fileUtils.js";
 
 const router = express.Router();
 
@@ -106,6 +106,7 @@ router.post(
 router.post(
   "/:id/attachments",
   uploadAttachment.single("file"),
+  validateFileSignature,
   s3Upload,
   addTicketAttachment
 );

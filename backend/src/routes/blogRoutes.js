@@ -3,7 +3,7 @@ import multer from "multer";
 import * as blogController from "../controllers/blogController.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { uploadObject } from "../services/s3Service.js";
-import { generateSafeFilename, sanitizeFilename } from "../utils/fileUtils.js";
+import { generateSafeFilename, sanitizeFilename, validateFileSignature } from "../utils/fileUtils.js";
 
 const router = express.Router();
 
@@ -63,6 +63,7 @@ router.post(
   requireAuth,
   requireRole("super_admin", "social_media"),
   uploadCoverImage.single("coverImage"),
+  validateFileSignature,
   s3UploadCoverImage,
   blogController.uploadCoverImage
 );

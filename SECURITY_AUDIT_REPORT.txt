@@ -111,13 +111,18 @@ Fix: Created shared utility (backend/src/utils/fileUtils.js) with two functions:
      Files: backend/src/utils/fileUtils.js (new), ticketRoutes.js, blogRoutes.js,
             showcaseRoutes.js, clientsShowcaseRoutes.js
 
-C8. MIME Type Validation Only (No Magic Bytes)
+C8. MIME Type Validation Only (No Magic Bytes) [FIXED]
 ────────────────────────────────────────────────────────────────────────────
 Location: All multer configurations across routes
 Risk: Only checks `file.mimetype` which is client-controlled. Attackers can 
       upload malicious files with spoofed MIME types.
-Fix: Validate file signatures (magic bytes) after receiving the buffer, before 
-     uploading to S3.
+Fix: Added magic bytes validation to backend/src/utils/fileUtils.js with
+     signatures for JPEG, PNG, GIF, WebP, PDF, DOC, DOCX, XLS, XLSX.
+     Created validateFileSignature middleware applied after multer on all
+     upload routes (6 routes across 5 files). Text/SVG exempted (no magic
+     bytes). Unknown MIME types allowed through (no false blocks).
+     Files: backend/src/utils/fileUtils.js, ticketRoutes.js, blogRoutes.js,
+            showcaseRoutes.js, clientsShowcaseRoutes.js, contractRoutes.js
 
 C9. Socket Room Subscriptions Lack Authorization
 ────────────────────────────────────────────────────────────────────────────

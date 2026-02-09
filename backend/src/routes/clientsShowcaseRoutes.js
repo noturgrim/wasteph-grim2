@@ -2,7 +2,7 @@ import express from "express";
 import multer from "multer";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { uploadObject } from "../services/s3Service.js";
-import { generateSafeFilename, sanitizeFilename } from "../utils/fileUtils.js";
+import { generateSafeFilename, sanitizeFilename, validateFileSignature } from "../utils/fileUtils.js";
 import {
   getActiveClientsShowcase,
   getAllClientsShowcase,
@@ -122,6 +122,7 @@ router.post(
       next();
     });
   },
+  validateFileSignature,
   s3UploadClientLogo,
   uploadLogo
 );
