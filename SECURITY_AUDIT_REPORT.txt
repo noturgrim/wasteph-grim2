@@ -92,7 +92,7 @@ Fix: Added `requireRole("super_admin", "social_media")` to all 6 blog admin
      can no longer access blog management endpoints.
      File: backend/src/routes/blogRoutes.js
 
-C7. Filename Path Traversal in S3 Uploads
+C7. Filename Path Traversal in S3 Uploads [FIXED]
 ────────────────────────────────────────────────────────────────────────────
 Locations:
 - backend/src/routes/ticketRoutes.js:61
@@ -102,10 +102,14 @@ Locations:
 
 Risk: `req.file.originalname` used directly in S3 keys. Malicious filenames like 
       `../../../etc/passwd` can manipulate storage paths.
-Fix:
-    const sanitizeFilename = (name) => 
-      name.replace(/[^a-zA-Z0-9._-]/g, "_").replace(/\.\./g, "");
-    const fileName = `${crypto.randomUUID()}-${sanitizeFilename(req.file.originalname)}`;
+Fix: Created shared utility (backend/src/utils/fileUtils.js) with two functions:
+     - sanitizeFilename(): strips path traversal (..), dangerous characters,
+       leading dots, and limits length to 100 chars
+     - generateSafeFilename(): combines UUID with sanitized filename for
+       unpredictability (better than timestamps)
+     Applied to all 4 upload routes. Filenames now safe and enumeration-resistant.
+     Files: backend/src/utils/fileUtils.js (new), ticketRoutes.js, blogRoutes.js,
+            showcaseRoutes.js, clientsShowcaseRoutes.js
 
 C8. MIME Type Validation Only (No Magic Bytes)
 ────────────────────────────────────────────────────────────────────────────

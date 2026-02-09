@@ -20,6 +20,7 @@ import {
 } from "../middleware/ticketValidation.js";
 import multer from "multer";
 import { uploadObject } from "../services/s3Service.js";
+import { generateSafeFilename, sanitizeFilename } from "../utils/fileUtils.js";
 
 const router = express.Router();
 
@@ -58,7 +59,7 @@ const s3Upload = async (req, res, next) => {
     }
 
     const ticketId = req.params.id;
-    const fileName = `${Date.now()}-${req.file.originalname}`;
+    const fileName = generateSafeFilename(req.file.originalname);
     const s3Key = `tickets/${ticketId}/${fileName}`;
 
     // Upload to S3
@@ -66,7 +67,7 @@ const s3Upload = async (req, res, next) => {
 
     // Add S3 key to request body
     req.body.fileUrl = s3Key;
-    req.body.fileName = req.file.originalname;
+    req.body.fileName = sanitizeFilename(req.file.originalname);
 
     next();
   } catch (error) {

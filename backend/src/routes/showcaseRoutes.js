@@ -2,6 +2,7 @@ import express from "express";
 import multer from "multer";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { uploadObject } from "../services/s3Service.js";
+import { generateSafeFilename, sanitizeFilename } from "../utils/fileUtils.js";
 import {
   getActiveShowcases,
   getAllShowcases,
@@ -38,14 +39,14 @@ const s3UploadShowcaseImage = async (req, res, next) => {
     }
 
     const showcaseId = req.params.id;
-    const fileName = `${Date.now()}-${req.file.originalname}`;
+    const fileName = generateSafeFilename(req.file.originalname);
     const s3Key = `showcases/images/${showcaseId}/${fileName}`;
 
     await uploadObject(s3Key, req.file.buffer, req.file.mimetype);
 
     // Attach S3 key to request body
     req.body.image = s3Key;
-    req.body.imageName = req.file.originalname;
+    req.body.imageName = sanitizeFilename(req.file.originalname);
 
     next();
   } catch (error) {

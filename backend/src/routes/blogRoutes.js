@@ -3,6 +3,7 @@ import multer from "multer";
 import * as blogController from "../controllers/blogController.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { uploadObject } from "../services/s3Service.js";
+import { generateSafeFilename, sanitizeFilename } from "../utils/fileUtils.js";
 
 const router = express.Router();
 
@@ -28,14 +29,14 @@ const s3UploadCoverImage = async (req, res, next) => {
     }
 
     const postId = req.params.id;
-    const fileName = `${Date.now()}-${req.file.originalname}`;
+    const fileName = generateSafeFilename(req.file.originalname);
     const s3Key = `blog/covers/${postId}/${fileName}`;
 
     await uploadObject(s3Key, req.file.buffer, req.file.mimetype);
 
     // Attach S3 key to request body
     req.body.coverImage = s3Key;
-    req.body.coverImageName = req.file.originalname;
+    req.body.coverImageName = sanitizeFilename(req.file.originalname);
 
     next();
   } catch (error) {
