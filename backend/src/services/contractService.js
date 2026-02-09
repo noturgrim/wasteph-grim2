@@ -1009,6 +1009,17 @@ class ContractService {
       }
       console.log(`Found existing client: ${client.id} (${client.email})`);
     } else {
+      // Parse proposal data for industry if available
+      let parsedProposalData = {};
+      try {
+        const proposal = contractData.proposal;
+        if (proposal?.proposalData) {
+          parsedProposalData = typeof proposal.proposalData === "string"
+            ? JSON.parse(proposal.proposalData)
+            : proposal.proposalData;
+        }
+      } catch { /* ignore parse errors */ }
+
       // Only store fields directly available from the contract
       const clientData = {
         companyName: contract.companyName || inquiry?.company || "Unknown",
@@ -1018,6 +1029,7 @@ class ContractService {
         address: contract.clientAddress || "",
         city: "",
         province: "",
+        industry: parsedProposalData.clientIndustry || "",
         contractStartDate: contract.contractStartDate || null,
         contractEndDate: contract.contractEndDate || null,
       };

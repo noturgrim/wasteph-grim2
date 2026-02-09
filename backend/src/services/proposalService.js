@@ -1051,6 +1051,7 @@ class ProposalService {
             address: parsed.clientAddress || "",
             city: "",
             province: "",
+            industry: parsed.clientIndustry || "",
           },
           salesUserId,
           { ipAddress },

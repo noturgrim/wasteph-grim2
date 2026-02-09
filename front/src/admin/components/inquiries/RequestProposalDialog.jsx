@@ -12,6 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import {
   ArrowLeft,
@@ -72,6 +79,7 @@ export function RequestProposalDialog({
     clientCompany: "",
     clientPosition: "",
     clientAddress: "",
+    clientIndustry: "",
     proposalDate: new Date().toISOString().split("T")[0],
     validityDays: 30,
     notes: "",
@@ -83,6 +91,7 @@ export function RequestProposalDialog({
     clientEmail: "",
     clientPhone: "",
     clientCompany: "",
+    clientIndustry: "",
     clientAddress: "",
     proposalDate: "",
   });
@@ -352,6 +361,12 @@ export function RequestProposalDialog({
           error = "Company name is required";
         } else if (value.trim().length < 2) {
           error = "Company name must be at least 2 characters";
+        }
+        break;
+
+      case "clientIndustry":
+        if (!value) {
+          error = "Industry is required";
         }
         break;
 
@@ -702,6 +717,7 @@ ${bodyTag}
         clientCompany: formData.clientCompany,
         clientPosition: formData.clientPosition,
         clientAddress: formData.clientAddress,
+        clientIndustry: formData.clientIndustry,
 
         // Proposal metadata
         proposalDate: formData.proposalDate,
@@ -808,12 +824,14 @@ ${bodyTag}
     formData.clientEmail &&
     formData.clientPhone &&
     formData.clientCompany &&
+    formData.clientIndustry &&
     formData.clientAddress &&
     formData.proposalDate &&
     !validationErrors.clientName &&
     !validationErrors.clientEmail &&
     !validationErrors.clientPhone &&
     !validationErrors.clientCompany &&
+    !validationErrors.clientIndustry &&
     !validationErrors.clientAddress &&
     !validationErrors.proposalDate;
   const canSubmit =
@@ -1335,6 +1353,45 @@ ${bodyTag}
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="clientIndustry">
+                            Industry <span className="text-red-500">*</span>
+                          </Label>
+                          <Select
+                            value={formData.clientIndustry || undefined}
+                            onValueChange={(value) =>
+                              handleInputChange("clientIndustry", value)
+                            }
+                          >
+                            <SelectTrigger
+                              id="clientIndustry"
+                              aria-invalid={!!validationErrors.clientIndustry}
+                            >
+                              <SelectValue placeholder="Select industry" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="food_and_beverage">Food & Beverage</SelectItem>
+                              <SelectItem value="retail">Retail</SelectItem>
+                              <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                              <SelectItem value="healthcare">Healthcare</SelectItem>
+                              <SelectItem value="hospitality">Hospitality</SelectItem>
+                              <SelectItem value="education">Education</SelectItem>
+                              <SelectItem value="construction">Construction</SelectItem>
+                              <SelectItem value="real_estate">Real Estate</SelectItem>
+                              <SelectItem value="logistics">Logistics</SelectItem>
+                              <SelectItem value="agriculture">Agriculture</SelectItem>
+                              <SelectItem value="technology">Technology</SelectItem>
+                              <SelectItem value="government">Government</SelectItem>
+                              <SelectItem value="residential">Residential</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {validationErrors.clientIndustry && (
+                            <p className="text-xs text-red-500 mt-1">
+                              {validationErrors.clientIndustry}
+                            </p>
+                          )}
+                        </div>
                         <div className="space-y-2">
                           <Label htmlFor="validityDays">
                             Proposal Validity (Days)

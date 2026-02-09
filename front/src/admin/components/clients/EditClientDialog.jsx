@@ -146,10 +146,30 @@ export function EditClientDialog({ open, onOpenChange, client, onConfirm }) {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label>Industry</Label>
-              <Input
-                value={formData.industry}
-                onChange={(e) => handleChange("industry", e.target.value)}
-              />
+              <Select
+                value={formData.industry || ""}
+                onValueChange={(value) => handleChange("industry", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select industry" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="food_and_beverage">Food & Beverage</SelectItem>
+                  <SelectItem value="retail">Retail</SelectItem>
+                  <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                  <SelectItem value="healthcare">Healthcare</SelectItem>
+                  <SelectItem value="hospitality">Hospitality</SelectItem>
+                  <SelectItem value="education">Education</SelectItem>
+                  <SelectItem value="construction">Construction</SelectItem>
+                  <SelectItem value="real_estate">Real Estate</SelectItem>
+                  <SelectItem value="logistics">Logistics</SelectItem>
+                  <SelectItem value="agriculture">Agriculture</SelectItem>
+                  <SelectItem value="technology">Technology</SelectItem>
+                  <SelectItem value="government">Government</SelectItem>
+                  <SelectItem value="residential">Residential</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1">
               <Label>Waste Types</Label>

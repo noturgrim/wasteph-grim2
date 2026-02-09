@@ -82,7 +82,26 @@ export const createClientColumns = ({ userRole, onView, onEdit, onDelete }) => [
   {
     accessorKey: "industry",
     header: "Industry",
-    cell: ({ row }) => row.original.industry || "-",
+    cell: ({ row }) => {
+      const industryMap = {
+        food_and_beverage: "Food & Beverage",
+        retail: "Retail",
+        manufacturing: "Manufacturing",
+        healthcare: "Healthcare",
+        hospitality: "Hospitality",
+        education: "Education",
+        construction: "Construction",
+        real_estate: "Real Estate",
+        logistics: "Logistics",
+        agriculture: "Agriculture",
+        technology: "Technology",
+        government: "Government",
+        residential: "Residential",
+        other: "Other",
+      };
+      const val = row.original.industry;
+      return val ? (industryMap[val] || val) : "-";
+    },
   },
   {
     accessorKey: "status",
