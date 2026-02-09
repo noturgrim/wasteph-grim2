@@ -349,6 +349,7 @@ class ApiClient {
     const params = new URLSearchParams();
     if (filters.status) params.append("status", filters.status);
     if (filters.inquiryId) params.append("inquiryId", filters.inquiryId);
+    if (filters.requestedBy) params.append("requestedBy", filters.requestedBy);
     if (filters.search) params.append("search", filters.search);
     if (filters.page) params.append("page", filters.page);
     if (filters.limit) params.append("limit", filters.limit);
@@ -501,6 +502,7 @@ class ApiClient {
     if (filters.status) params.append("status", filters.status);
     if (filters.search) params.append("search", filters.search);
     if (filters.clientId) params.append("clientId", filters.clientId);
+    if (filters.requestedBy) params.append("requestedBy", filters.requestedBy);
     if (filters.page) params.append("page", filters.page);
     if (filters.limit) params.append("limit", filters.limit);
 

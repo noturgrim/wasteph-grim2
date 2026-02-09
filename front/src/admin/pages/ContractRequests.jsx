@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable } from "../components/DataTable";
 import { FacetedFilter } from "../components/FacetedFilter";
 import { SearchInput } from "../components/SearchInput";
@@ -39,6 +40,8 @@ import { PDFViewer } from "../components/PDFViewer";
 export default function ContractRequests() {
   const { user } = useAuth();
   const location = useLocation();
+  const isMasterSales = user?.isMasterSales || false;
+  const [viewMode, setViewMode] = useState("all");
   const [contracts, setContracts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -96,7 +99,7 @@ export default function ContractRequests() {
   useEffect(() => {
     setPagination((prev) => ({ ...prev, page: 1 })); // Reset to page 1 on filter change
     fetchContracts(1);
-  }, [statusFilter, searchTerm]);
+  }, [statusFilter, searchTerm, viewMode]);
 
   // Listen for contract socket events
   useEffect(() => {
@@ -153,6 +156,7 @@ export default function ContractRequests() {
         limit,
         ...(statusFilter.length > 0 && { status: statusFilter.join(",") }),
         ...(searchTerm && { search: searchTerm }),
+        ...(isMasterSales && viewMode === "my" && user?.id && { requestedBy: user.id }),
       };
 
       const response = await api.getContracts(filters);
@@ -326,6 +330,15 @@ export default function ContractRequests() {
       {/* Filters */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
+          {isMasterSales && (
+            <Tabs value={viewMode} onValueChange={setViewMode}>
+              <TabsList className="h-8">
+                <TabsTrigger value="all" className="text-xs px-3">All</TabsTrigger>
+                <TabsTrigger value="my" className="text-xs px-3">My</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          )}
+
           {/* Search */}
           <SearchInput
             placeholder="Search by contract no., client name, email, or company..."

@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable } from "../components/DataTable";
 import { FacetedFilter } from "../components/FacetedFilter";
 import { SearchInput } from "../components/SearchInput";
@@ -34,6 +35,8 @@ import { SendProposalDialog } from "../components/inquiries/SendProposalDialog";
 
 export default function Proposals() {
   const { user } = useAuth();
+  const isMasterSales = user?.isMasterSales || false;
+  const [viewMode, setViewMode] = useState("all");
   const [proposals, setProposals] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -87,7 +90,7 @@ export default function Proposals() {
   useEffect(() => {
     setPagination(prev => ({ ...prev, page: 1 })); // Reset to page 1 on filter change
     fetchProposals(1);
-  }, [statusFilter, searchTerm]);
+  }, [statusFilter, searchTerm, viewMode]);
 
   // Subscribe to proposal socket events
   useEffect(() => {
@@ -134,6 +137,7 @@ export default function Proposals() {
         limit,
         ...(statusFilter.length > 0 && { status: statusFilter.join(",") }),
         ...(searchTerm && { search: searchTerm }),
+        ...(isMasterSales && viewMode === "my" && user?.id && { requestedBy: user.id }),
       };
 
       const response = await api.getProposals(filters);
@@ -275,6 +279,15 @@ export default function Proposals() {
       {/* Filters */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
+          {isMasterSales && (
+            <Tabs value={viewMode} onValueChange={setViewMode}>
+              <TabsList className="h-8">
+                <TabsTrigger value="all" className="text-xs px-3">All</TabsTrigger>
+                <TabsTrigger value="my" className="text-xs px-3">My</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          )}
+
           {/* Search */}
           <SearchInput
             placeholder="Search by client name, email, or company..."

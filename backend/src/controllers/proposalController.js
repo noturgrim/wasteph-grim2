@@ -38,10 +38,10 @@ export const createProposal = async (req, res, next) => {
  */
 export const getAllProposals = async (req, res, next) => {
   try {
-    const { status, inquiryId, search, page, limit } = req.query;
+    const { status, inquiryId, requestedBy, search, page, limit } = req.query;
 
     const result = await proposalServiceWithSocket.getProposals(
-      { status, inquiryId, search, page, limit },
+      { status, inquiryId, requestedBy, search, page, limit },
       req.user.id,
       req.user.role,
       req.user.isMasterSales

@@ -90,7 +90,7 @@ class ContractService {
    * @returns {Promise<Object>} Contracts with pagination
    */
   async getAllContracts(options = {}, userId, userRole, isMasterSales) {
-    const { status, search, clientId, page: rawPage = 1, limit: rawLimit = 10 } = options;
+    const { status, search, clientId, requestedBy, page: rawPage = 1, limit: rawLimit = 10 } = options;
     const page = Number(rawPage) || 1;
     const limit = Number(rawLimit) || 10;
     const offset = (page - 1) * limit;
@@ -99,7 +99,9 @@ class ContractService {
     const permissionFilter =
       userRole === "sales" && !isMasterSales
         ? sql`p.requested_by = ${userId}`
-        : sql`1=1`;
+        : requestedBy
+          ? sql`p.requested_by = ${requestedBy}`
+          : sql`1=1`;
 
     const conditions = [];
 
@@ -111,6 +113,11 @@ class ContractService {
     // Permission: Sales can only see their own contracts (unless master sales)
     if (userRole === "sales" && !isMasterSales) {
       conditions.push(eq(proposalTable.requestedBy, userId));
+    }
+
+    // Optional requestedBy filter (used by master sales "My" view)
+    if (requestedBy) {
+      conditions.push(eq(proposalTable.requestedBy, requestedBy));
     }
 
     // Filter by status - support multiple statuses

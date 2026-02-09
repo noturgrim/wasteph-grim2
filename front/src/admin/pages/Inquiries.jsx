@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DataTable } from "../components/DataTable";
 import { FacetedFilter } from "../components/FacetedFilter";
 import { SearchInput } from "../components/SearchInput";
@@ -163,6 +164,7 @@ export default function Inquiries() {
   const [monthFilter, setMonthFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 400);
+  const [viewMode, setViewMode] = useState("all"); // "all" | "my" (master sales only)
 
   // Stale-response guard
   const fetchIdRef = useRef(0);
@@ -211,7 +213,7 @@ export default function Inquiries() {
   useEffect(() => {
     setPagination((prev) => ({ ...prev, page: 1 }));
     fetchInquiries(1);
-  }, [statusFilter, sourceFilter, serviceTypeFilter, monthFilter, debouncedSearch]);
+  }, [statusFilter, sourceFilter, serviceTypeFilter, monthFilter, debouncedSearch, viewMode]);
 
   const fetchInquiries = async (
     page = pagination.page,
@@ -233,7 +235,7 @@ export default function Inquiries() {
         limit,
       };
 
-      if (!isMasterSales && user?.id) {
+      if ((!isMasterSales || viewMode === "my") && user?.id) {
         filters.assignedTo = user.id;
       }
 
@@ -375,6 +377,15 @@ export default function Inquiries() {
       {/* Filters */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
+          {isMasterSales && (
+            <Tabs value={viewMode} onValueChange={setViewMode}>
+              <TabsList className="h-8">
+                <TabsTrigger value="all" className="text-xs px-3">All</TabsTrigger>
+                <TabsTrigger value="my" className="text-xs px-3">My</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          )}
+
           <SearchInput
             value={searchTerm}
             onChange={setSearchTerm}

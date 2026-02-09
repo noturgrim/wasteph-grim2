@@ -142,7 +142,7 @@ class ProposalService {
    * @returns {Promise<Object>} Proposals with pagination
    */
   async getAllProposals(options = {}, userId, userRole, isMasterSales) {
-    const { status, inquiryId, search, page: rawPage = 1, limit: rawLimit = 10 } = options;
+    const { status, inquiryId, requestedBy, search, page: rawPage = 1, limit: rawLimit = 10 } = options;
     const page = Number(rawPage) || 1;
     const limit = Number(rawLimit) || 10;
     const offset = (page - 1) * limit;
@@ -151,13 +151,20 @@ class ProposalService {
     const permissionFilter =
       userRole === "sales" && !isMasterSales
         ? sql`requested_by = ${userId}`
-        : sql`1=1`;
+        : requestedBy
+          ? sql`requested_by = ${requestedBy}`
+          : sql`1=1`;
 
     const conditions = [];
 
     // Permission check: Regular sales see only their proposals
     if (userRole === "sales" && !isMasterSales) {
       conditions.push(eq(proposalTable.requestedBy, userId));
+    }
+
+    // Optional requestedBy filter (used by master sales "My" view)
+    if (requestedBy) {
+      conditions.push(eq(proposalTable.requestedBy, requestedBy));
     }
 
     // Status filter - support multiple statuses

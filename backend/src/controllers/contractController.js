@@ -13,10 +13,10 @@ import { AppError } from "../middleware/errorHandler.js";
  */
 export const getAllContracts = async (req, res, next) => {
   try {
-    const { status, search, clientId, page, limit } = req.query;
+    const { status, search, clientId, requestedBy, page, limit } = req.query;
 
     const result = await contractServiceWithSocket.getAllContracts(
-      { status, search, clientId, page, limit },
+      { status, search, clientId, requestedBy, page, limit },
       req.user.id,
       req.user.role,
       req.user.isMasterSales
