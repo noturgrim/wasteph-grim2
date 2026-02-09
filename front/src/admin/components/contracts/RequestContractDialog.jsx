@@ -22,12 +22,14 @@ import { FileText, Loader2, Plus, X, Upload, FileCheck, AlertCircle } from "luci
 import { Checkbox } from "@/components/ui/checkbox";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
+import { api } from "../../services/api";
 import { toast } from "../../utils/toast";
 
 const INITIAL_FORM_STATE = {
   contractType: "",
   clientName: "",
   companyName: "",
+  clientIndustry: "",
   clientEmailContract: "",
   clientAddress: "",
   contractStartDate: "",
@@ -76,29 +78,59 @@ export function RequestContractDialog({
 
   // Auto-fill data from proposal/inquiry when dialog opens
   useEffect(() => {
-    if (contract && open) {
-      const inquiry = contract.inquiry || {};
-      const proposal = contract.proposal || {};
+    if (!contract || !open) return;
 
-      // Parse proposal data if it exists
-      let proposalData = {};
-      if (proposal.proposalData) {
-        try {
-          proposalData =
-            typeof proposal.proposalData === "string"
-              ? JSON.parse(proposal.proposalData)
-              : proposal.proposalData;
-        } catch (e) {
-          console.error("Failed to parse proposal data:", e);
-        }
+    const inquiry = contract.inquiry || {};
+    const proposal = contract.proposal || {};
+
+    // Try to parse inline proposalData first (if present in list response)
+    let proposalData = {};
+    if (proposal.proposalData) {
+      try {
+        proposalData =
+          typeof proposal.proposalData === "string"
+            ? JSON.parse(proposal.proposalData)
+            : proposal.proposalData;
+      } catch (e) {
+        console.error("Failed to parse proposal data:", e);
       }
+    }
 
-      setFormData((prev) => ({
-        ...prev,
-        clientName: proposalData.clientName || inquiry.name || "",
-        companyName: proposalData.clientCompany || inquiry.company || "",
-        clientEmailContract: proposalData.clientEmail || inquiry.email || "",
-      }));
+    // Set what we have immediately
+    setFormData((prev) => ({
+      ...prev,
+      clientName: proposalData.clientName || inquiry.name || "",
+      companyName: proposalData.clientCompany || inquiry.company || "",
+      clientIndustry: proposalData.clientIndustry || "",
+      clientEmailContract: proposalData.clientEmail || inquiry.email || "",
+    }));
+
+    // If proposalData wasn't in the list response, fetch full proposal to get industry
+    if (!proposalData.clientIndustry && proposal.id) {
+      api
+        .getProposalById(proposal.id)
+        .then((res) => {
+          if (!res?.data?.proposalData) return;
+          try {
+            const fullData =
+              typeof res.data.proposalData === "string"
+                ? JSON.parse(res.data.proposalData)
+                : res.data.proposalData;
+            setFormData((prev) => ({
+              ...prev,
+              clientName: prev.clientName || fullData.clientName || "",
+              companyName: prev.companyName || fullData.clientCompany || "",
+              clientIndustry: prev.clientIndustry || fullData.clientIndustry || "",
+              clientEmailContract:
+                prev.clientEmailContract || fullData.clientEmail || "",
+            }));
+          } catch (e) {
+            console.error("Failed to parse fetched proposal data:", e);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to fetch proposal for auto-fill:", err);
+        });
     }
   }, [contract, open]);
 
@@ -133,6 +165,7 @@ export function RequestContractDialog({
     if (!formData.contractType) errors.push("Contract type is required");
     if (!formData.clientName) errors.push("Client name is required");
     if (!formData.companyName) errors.push("Company name is required");
+    if (!formData.clientIndustry) errors.push("Industry is required");
     if (!formData.clientEmailContract) errors.push("Client email is required");
     if (!formData.clientAddress) errors.push("Client address is required");
     if (!formData.contractStartDate) errors.push("Contract start date is required");
@@ -296,6 +329,40 @@ export function RequestContractDialog({
             />
             <p className="text-xs text-muted-foreground mt-1">
               Full corporate or company name
+            </p>
+          </div>
+
+          {/* Industry - Required */}
+          <div>
+            <Label htmlFor="clientIndustry">
+              Industry <span className="text-red-500">*</span>
+            </Label>
+            <Select
+              value={formData.clientIndustry || undefined}
+              onValueChange={(value) => handleChange("clientIndustry", value)}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Select industry" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="food_and_beverage">Food & Beverage</SelectItem>
+                <SelectItem value="retail">Retail</SelectItem>
+                <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                <SelectItem value="healthcare">Healthcare</SelectItem>
+                <SelectItem value="hospitality">Hospitality</SelectItem>
+                <SelectItem value="education">Education</SelectItem>
+                <SelectItem value="construction">Construction</SelectItem>
+                <SelectItem value="real_estate">Real Estate</SelectItem>
+                <SelectItem value="logistics">Logistics</SelectItem>
+                <SelectItem value="agriculture">Agriculture</SelectItem>
+                <SelectItem value="technology">Technology</SelectItem>
+                <SelectItem value="government">Government</SelectItem>
+                <SelectItem value="residential">Residential</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              Auto-filled from proposal if available
             </p>
           </div>
 

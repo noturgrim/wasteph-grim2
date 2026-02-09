@@ -99,10 +99,22 @@ export function GenerateContractDialog({
         }
       }
 
+      // Parse clientIndustry from contractData JSON
+      let clientIndustry = "";
+      if (contractData.contractData) {
+        try {
+          const parsed = typeof contractData.contractData === "string"
+            ? JSON.parse(contractData.contractData)
+            : contractData.contractData;
+          clientIndustry = parsed.clientIndustry || "";
+        } catch { /* ignore */ }
+      }
+
       const data = {
         contractType: contractData.contractType || "",
         clientName: contractData.clientName || "",
         companyName: contractData.companyName || "",
+        clientIndustry,
         clientEmailContract: contractData.clientEmailContract || "",
         clientAddress: contractData.clientAddress || "",
         contractStartDate: contractData.contractStartDate ? contractData.contractStartDate.slice(0, 10) : "",
@@ -482,6 +494,34 @@ export function GenerateContractDialog({
                             onChange={(e) => handleFieldChange("companyName", e.target.value)}
                             disabled={!isEditing}
                           />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Industry</Label>
+                          <Select
+                            value={d.clientIndustry || undefined}
+                            onValueChange={(value) => handleFieldChange("clientIndustry", value)}
+                            disabled={!isEditing}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select industry" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="food_and_beverage">Food & Beverage</SelectItem>
+                              <SelectItem value="retail">Retail</SelectItem>
+                              <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                              <SelectItem value="healthcare">Healthcare</SelectItem>
+                              <SelectItem value="hospitality">Hospitality</SelectItem>
+                              <SelectItem value="education">Education</SelectItem>
+                              <SelectItem value="construction">Construction</SelectItem>
+                              <SelectItem value="real_estate">Real Estate</SelectItem>
+                              <SelectItem value="logistics">Logistics</SelectItem>
+                              <SelectItem value="agriculture">Agriculture</SelectItem>
+                              <SelectItem value="technology">Technology</SelectItem>
+                              <SelectItem value="government">Government</SelectItem>
+                              <SelectItem value="residential">Residential</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="space-y-2">
                           <Label>Client Email *</Label>

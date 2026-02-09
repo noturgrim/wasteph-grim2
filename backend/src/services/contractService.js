@@ -90,7 +90,14 @@ class ContractService {
    * @returns {Promise<Object>} Contracts with pagination
    */
   async getAllContracts(options = {}, userId, userRole, isMasterSales) {
-    const { status, search, clientId, requestedBy, page: rawPage = 1, limit: rawLimit = 10 } = options;
+    const {
+      status,
+      search,
+      clientId,
+      requestedBy,
+      page: rawPage = 1,
+      limit: rawLimit = 10,
+    } = options;
     const page = Number(rawPage) || 1;
     const limit = Number(rawLimit) || 10;
     const offset = (page - 1) * limit;
@@ -176,6 +183,7 @@ class ContractService {
               clientRequests: contractsTable.clientRequests,
               customTemplateUrl: contractsTable.customTemplateUrl,
               templateId: contractsTable.templateId,
+              contractData: contractsTable.contractData,
               contractUploadedBy: contractsTable.contractUploadedBy,
               contractUploadedAt: contractsTable.contractUploadedAt,
               contractPdfUrl: contractsTable.contractPdfUrl,
@@ -219,7 +227,10 @@ class ContractService {
             totalCount: sql`(count(*) over())::int`,
           })
           .from(contractsTable)
-          .leftJoin(proposalTable, eq(contractsTable.proposalId, proposalTable.id))
+          .leftJoin(
+            proposalTable,
+            eq(contractsTable.proposalId, proposalTable.id),
+          )
           .leftJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id))
           .leftJoin(userTable, eq(contractsTable.requestedBy, userTable.id));
 
@@ -321,7 +332,7 @@ class ContractService {
     contractDetails,
     userId,
     customTemplateBuffer = null,
-    metadata = {}
+    metadata = {},
   ) {
     // Get contract
     const contractData = await this.getContractById(contractId);
@@ -336,7 +347,7 @@ class ContractService {
     if (contractData.proposal.requestedBy !== userId) {
       throw new AppError(
         "You can only request contracts for your own proposals",
-        403
+        403,
       );
     }
 
@@ -348,7 +359,7 @@ class ContractService {
       // Custom template provided - save it
       customTemplateUrl = await this.saveCustomTemplate(
         customTemplateBuffer,
-        contractId
+        contractId,
       );
     } else {
       // No custom template - use system template
@@ -356,7 +367,7 @@ class ContractService {
       try {
         const suggestedTemplate =
           await contractTemplateService.suggestTemplateForContract(
-            contractType
+            contractType,
           );
         templateId = suggestedTemplate.id;
       } catch (error) {
@@ -370,6 +381,7 @@ class ContractService {
       contractType,
       clientName,
       companyName,
+      clientIndustry,
       clientEmailContract,
       clientAddress,
       contractStartDate,
@@ -389,7 +401,7 @@ class ContractService {
     // Derive the display string used by PDF Handlebars templates
     const contractDuration = formatDateRange(
       contractStartDate,
-      contractEndDate
+      contractEndDate,
     );
 
     // Prepare contract data for template rendering (if using template)
@@ -397,6 +409,7 @@ class ContractService {
       contractType,
       clientName,
       companyName,
+      clientIndustry,
       clientEmailContract,
       clientAddress,
       contractDuration,
@@ -477,7 +490,7 @@ class ContractService {
     adminNotes,
     userId,
     editedData = null,
-    metadata = {}
+    metadata = {},
   ) {
     // Get contract
     const contractData = await this.getContractById(contractId);
@@ -490,7 +503,7 @@ class ContractService {
     ) {
       throw new AppError(
         "Can only upload contract when status is requested or sent_to_sales",
-        400
+        400,
       );
     }
 
@@ -515,7 +528,7 @@ class ContractService {
         editedData.contractStartDate && editedData.contractEndDate
           ? formatDateRange(
               editedData.contractStartDate,
-              editedData.contractEndDate
+              editedData.contractEndDate,
             )
           : editedData.contractDuration;
       Object.assign(updateData, {
@@ -585,7 +598,7 @@ class ContractService {
     adminNotes = null,
     editedHtmlContent = null,
     userId,
-    metadata = {}
+    metadata = {},
   ) {
     // Get contract
     const contractData = await this.getContractById(contractId);
@@ -598,7 +611,7 @@ class ContractService {
     ) {
       throw new AppError(
         "Can only generate contract when status is requested or sent_to_sales",
-        400
+        400,
       );
     }
 
@@ -606,13 +619,13 @@ class ContractService {
     if (!contract.templateId) {
       throw new AppError(
         "Contract does not have a template. Use upload PDF instead.",
-        400
+        400,
       );
     }
 
     // Get template
     const template = await contractTemplateService.getTemplateById(
-      contract.templateId
+      contract.templateId,
     );
 
     // Get contract data - use edited data if provided, otherwise use stored data
@@ -641,7 +654,7 @@ class ContractService {
       // Generate from template
       pdfBuffer = await pdfService.generateContractPDF(
         contractDataForPdf,
-        template.htmlTemplate
+        template.htmlTemplate,
       );
     }
 
@@ -671,7 +684,7 @@ class ContractService {
         editedData.contractStartDate && editedData.contractEndDate
           ? formatDateRange(
               editedData.contractStartDate,
-              editedData.contractEndDate
+              editedData.contractEndDate,
             )
           : editedData.contractDuration;
       // Ensure the stored JSON also carries the derived display string for template re-renders
@@ -749,7 +762,7 @@ class ContractService {
     ) {
       throw new AppError(
         "Can only edit contract when status is requested or sent_to_sales",
-        400
+        400,
       );
     }
 
@@ -794,7 +807,7 @@ class ContractService {
     if (contract.status !== "sent_to_sales") {
       throw new AppError(
         "Can only send to client after admin sends to sales",
-        400
+        400,
       );
     }
 
@@ -802,7 +815,7 @@ class ContractService {
     if (proposal.requestedBy !== userId) {
       throw new AppError(
         "You can only send contracts for your own proposals",
-        403
+        403,
       );
     }
 
@@ -949,7 +962,7 @@ class ContractService {
         contract.signedAt
           ? "This contract has already been signed"
           : "This contract is not available for submission",
-        400
+        400,
       );
     }
 
@@ -970,13 +983,18 @@ class ContractService {
 
     // Get or create client record
     const clientEmail = (
-      contract.clientEmailContract || 
-      inquiry?.email || 
+      contract.clientEmailContract ||
+      inquiry?.email ||
       contract.clientEmail
-    )?.toLowerCase().trim();
+    )
+      ?.toLowerCase()
+      .trim();
 
     if (!clientEmail) {
-      throw new AppError("Client email is required to create client record", 400);
+      throw new AppError(
+        "Client email is required to create client record",
+        400,
+      );
     }
 
     // Check if client already exists by email (case-insensitive)
@@ -993,8 +1011,10 @@ class ContractService {
       if (contract.companyName) updateFields.companyName = contract.companyName;
       if (contract.clientName) updateFields.contactPerson = contract.clientName;
       if (contract.clientAddress) updateFields.address = contract.clientAddress;
-      if (contract.contractStartDate) updateFields.contractStartDate = contract.contractStartDate;
-      if (contract.contractEndDate) updateFields.contractEndDate = contract.contractEndDate;
+      if (contract.contractStartDate)
+        updateFields.contractStartDate = contract.contractStartDate;
+      if (contract.contractEndDate)
+        updateFields.contractEndDate = contract.contractEndDate;
 
       if (Object.keys(updateFields).length > 0) {
         updateFields.updatedAt = new Date();
@@ -1009,16 +1029,34 @@ class ContractService {
       }
       console.log(`Found existing client: ${client.id} (${client.email})`);
     } else {
-      // Parse proposal data for industry if available
-      let parsedProposalData = {};
+      // Parse proposal data and contract data for industry
+      // contractData (admin-edited) takes priority over proposalData (original)
+      let clientIndustry = "";
       try {
-        const proposal = contractData.proposal;
-        if (proposal?.proposalData) {
-          parsedProposalData = typeof proposal.proposalData === "string"
-            ? JSON.parse(proposal.proposalData)
-            : proposal.proposalData;
+        if (contract.contractData) {
+          const parsed =
+            typeof contract.contractData === "string"
+              ? JSON.parse(contract.contractData)
+              : contract.contractData;
+          clientIndustry = parsed.clientIndustry || "";
         }
-      } catch { /* ignore parse errors */ }
+      } catch {
+        /* ignore parse errors */
+      }
+      if (!clientIndustry) {
+        try {
+          const proposal = contractData.proposal;
+          if (proposal?.proposalData) {
+            const parsed =
+              typeof proposal.proposalData === "string"
+                ? JSON.parse(proposal.proposalData)
+                : proposal.proposalData;
+            clientIndustry = parsed.clientIndustry || "";
+          }
+        } catch {
+          /* ignore parse errors */
+        }
+      }
 
       // Only store fields directly available from the contract
       const clientData = {
@@ -1029,7 +1067,7 @@ class ContractService {
         address: contract.clientAddress || "",
         city: "",
         province: "",
-        industry: parsedProposalData.clientIndustry || "",
+        industry: clientIndustry,
         contractStartDate: contract.contractStartDate || null,
         contractEndDate: contract.contractEndDate || null,
       };
@@ -1083,7 +1121,7 @@ class ContractService {
     if (contract.status !== "signed") {
       throw new AppError(
         "Can only upload hardbound contract after client has signed",
-        400
+        400,
       );
     }
 
