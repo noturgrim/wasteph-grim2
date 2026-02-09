@@ -35,6 +35,8 @@ export function ScheduleEventDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inquiries, setInquiries] = useState([]);
   const [clients, setClients] = useState([]);
+  const [clientContracts, setClientContracts] = useState([]);
+  const [isLoadingContracts, setIsLoadingContracts] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -44,6 +46,7 @@ export function ScheduleEventDialog({
     endTime: "",
     inquiryId: inquiryId || prefilledData.inquiryId || "",
     clientId: prefilledData.clientId || "",
+    contractId: "",
     notes: "",
   });
 
@@ -95,6 +98,50 @@ export function ScheduleEventDialog({
     loadData();
   }, [open]);
 
+  // Fetch contracts when client is selected
+  useEffect(() => {
+    const fetchClientContracts = async () => {
+      if (!formData.clientId || formData.clientId === "none") {
+        setClientContracts([]);
+        setFormData((prev) => ({ ...prev, contractId: "" }));
+        return;
+      }
+
+      setIsLoadingContracts(true);
+      try {
+        // Fetch signed and hardbound contracts (active contracts)
+        const response = await api.getContracts({
+          clientId: formData.clientId,
+          limit: 100,
+        });
+        
+        // Filter for signed or hardbound contracts (active contracts only)
+        // API returns nested structure: { contract: {...}, proposal: {...} }
+        const activeContracts = (response.data || [])
+          .filter(
+            (item) => item.contract.status === "signed" || item.contract.status === "hardbound_received"
+          )
+          .map((item) => item.contract); // Extract contract object
+        
+        setClientContracts(activeContracts);
+        
+        // Auto-select if only one active contract
+        if (activeContracts.length === 1) {
+          setFormData((prev) => ({ ...prev, contractId: activeContracts[0].id }));
+        } else {
+          setFormData((prev) => ({ ...prev, contractId: "" }));
+        }
+      } catch (error) {
+        console.error("Failed to fetch contracts:", error);
+        setClientContracts([]);
+      } finally {
+        setIsLoadingContracts(false);
+      }
+    };
+
+    fetchClientContracts();
+  }, [formData.clientId]);
+
   // Reset form when dialog opens
   useEffect(() => {
     if (open) {
@@ -110,9 +157,11 @@ export function ScheduleEventDialog({
         endTime: "",
         inquiryId: inquiryId || prefilledData?.inquiryId || "",
         clientId: prefilledData?.clientId || "",
+        contractId: "",
         notes: "",
       });
       setFormErrors({});
+      setClientContracts([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, inquiryId, prefilledData?.scheduledDate]);
@@ -126,6 +175,16 @@ export function ScheduleEventDialog({
 
     if (!formData.scheduledDate) {
       errors.scheduledDate = "Date is required";
+    }
+
+    // If client has multiple contracts, contract selection is required
+    if (
+      formData.clientId &&
+      formData.clientId !== "none" &&
+      clientContracts.length > 1 &&
+      (!formData.contractId || formData.contractId === "none")
+    ) {
+      errors.contractId = "Please select a contract";
     }
 
     setFormErrors(errors);
@@ -164,6 +223,10 @@ export function ScheduleEventDialog({
         clientId:
           formData.clientId && formData.clientId !== "none"
             ? formData.clientId
+            : undefined,
+        contractId:
+          formData.contractId && formData.contractId !== "none"
+            ? formData.contractId
             : undefined,
         notes: formData.notes || undefined,
       };
@@ -348,6 +411,7 @@ export function ScheduleEventDialog({
                     ...formData,
                     clientId: newClientId,
                     inquiryId: newClientId ? "" : formData.inquiryId,
+                    contractId: "",
                   });
                 }}
                 disabled={!!formData.inquiryId && formData.inquiryId !== "none"}
@@ -364,6 +428,52 @@ export function ScheduleEventDialog({
                   ))}
                 </SelectContent>
               </Select>
+
+              {/* Contract Selection - Show if client has multiple contracts */}
+              {formData.clientId && formData.clientId !== "none" && clientContracts.length > 1 && (
+                <div className="mt-4">
+                  <Label htmlFor="contractId">
+                    Select Contract <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={formData.contractId || "none"}
+                    onValueChange={(value) => {
+                      const newContractId = value === "none" ? "" : value;
+                      setFormData({ ...formData, contractId: newContractId });
+                      if (formErrors.contractId) {
+                        setFormErrors({ ...formErrors, contractId: null });
+                      }
+                    }}
+                    disabled={isLoadingContracts}
+                  >
+                    <SelectTrigger id="contractId" className={formErrors.contractId ? "border-red-500" : ""}>
+                      <SelectValue placeholder={isLoadingContracts ? "Loading contracts..." : "Select contract"} />
+                    </SelectTrigger>
+                    <SelectContent className="max-w-[400px]">
+                      <SelectItem value="none">None</SelectItem>
+                      {clientContracts.map((contract) => {
+                        const startDate = contract.contractStartDate || contract.startDate;
+                        const endDate = contract.contractEndDate || contract.endDate;
+                        return (
+                          <SelectItem key={contract.id} value={contract.id}>
+                            <div className="flex flex-col gap-0.5">
+                              <span className="font-medium">{contract.contractNumber}</span>
+                              {startDate && endDate && (
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(startDate).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })} - {new Date(endDate).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  {formErrors.contractId && (
+                    <p className="text-sm text-red-500">{formErrors.contractId}</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

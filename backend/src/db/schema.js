@@ -246,6 +246,7 @@ export const calendarEventTable = pgTable(
     clientId: uuid("client_id").references(() => clientTable.id, {
       onDelete: "set null",
     }),
+    contractId: uuid("contract_id"),
     title: text("title").notNull(),
     description: text("description"),
     eventType: text("event_type"), // site_visit, call, meeting, follow_up, etc. (fully customizable)
@@ -273,6 +274,7 @@ export const calendarEventTable = pgTable(
     ),
     inquiryIdIdx: index("calendar_event_inquiry_id_idx").on(table.inquiryId),
     clientIdIdx: index("calendar_event_client_id_idx").on(table.clientId),
+    contractIdIdx: index("calendar_event_contract_id_idx").on(table.contractId),
     // OPTIMIZATION: Composite index for common query pattern (user + date range)
     userDateIdx: index("calendar_event_user_date_idx").on(
       table.userId,
