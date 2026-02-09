@@ -28,7 +28,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Popover,
   PopoverContent,
@@ -40,7 +39,14 @@ import { ViewEventDialog } from "../components/calendar/ViewEventDialog";
 /**
  * Reusable event chip rendered inside calendar cells and overflow popover
  */
-const EventChip = ({ event, userId, canViewAll, getStatusColor, getStatusIcon, onClick }) => {
+const EventChip = ({
+  event,
+  userId,
+  canViewAll,
+  getStatusColor,
+  getStatusIcon,
+  onClick,
+}) => {
   const isOwnEvent = event.userId === userId;
   return (
     <button
@@ -93,7 +99,9 @@ export default function Calendar() {
   // Handle opening event from timeline navigation
   useEffect(() => {
     if (location.state?.openEventId && events.length > 0) {
-      const eventToOpen = events.find(e => e.id === location.state.openEventId);
+      const eventToOpen = events.find(
+        (e) => e.id === location.state.openEventId,
+      );
       if (eventToOpen) {
         handleEventClick(eventToOpen);
         // Clear the state so it doesn't reopen on subsequent renders
@@ -367,7 +375,8 @@ export default function Calendar() {
                               {format(day, "EEEE, MMMM d")}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {dayEvents.length} event{dayEvents.length !== 1 ? "s" : ""}
+                              {dayEvents.length} event
+                              {dayEvents.length !== 1 ? "s" : ""}
                             </p>
                           </div>
                           <div className="max-h-64 overflow-y-auto p-2 space-y-1">
@@ -429,9 +438,7 @@ export default function Calendar() {
         onOpenChange={handleScheduleDialogClose}
         onSuccess={handleEventCreated}
         prefilledData={
-          schedulePrefilledDate
-            ? { scheduledDate: schedulePrefilledDate }
-            : {}
+          schedulePrefilledDate ? { scheduledDate: schedulePrefilledDate } : {}
         }
       />
 
