@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const ProposalResponse = () => {
   const { proposalId, action } = useParams(); // action: 'approve' or 'reject'
@@ -41,7 +41,7 @@ const ProposalResponse = () => {
 
       try {
         const response = await fetch(
-          `${API_URL}/proposals/public/${proposalId}/status?token=${token}`
+          `${API_URL}/proposals/public/${proposalId}/status?token=${token}`,
         );
         const data = await response.json();
 
@@ -51,14 +51,14 @@ const ProposalResponse = () => {
         } else {
           setStage("error");
           setMessage(
-            data.message || data.error || "Failed to load proposal details"
+            data.message || data.error || "Failed to load proposal details",
           );
         }
       } catch (error) {
         console.error("Error loading proposal:", error);
         setStage("error");
         setMessage(
-          "An error occurred while loading the proposal. Please try again or contact us directly."
+          "An error occurred while loading the proposal. Please try again or contact us directly.",
         );
       }
     };
@@ -88,20 +88,20 @@ const ProposalResponse = () => {
       if (response.ok) {
         setStage("success");
         setMessage(
-          data.message || "Your response has been recorded successfully"
+          data.message || "Your response has been recorded successfully",
         );
         setResponseData(data.data);
       } else {
         setStage("error");
         setMessage(
-          data.message || data.error || "Failed to record your response"
+          data.message || data.error || "Failed to record your response",
         );
       }
     } catch (error) {
       console.error("Error recording response:", error);
       setStage("error");
       setMessage(
-        "An error occurred while processing your response. Please try again or contact us directly."
+        "An error occurred while processing your response. Please try again or contact us directly.",
       );
     }
   };
@@ -166,7 +166,7 @@ const ProposalResponse = () => {
                   onClick={() =>
                     window.open(
                       `${API_URL}/proposals/public/${proposalId}/pdf?token=${token}`,
-                      "_blank"
+                      "_blank",
                     )
                   }
                   className="text-[#104806] hover:text-[#0a3004] hover:bg-green-50 border-[#104806] border-2 cursor-pointer font-semibold"
@@ -200,10 +200,10 @@ const ProposalResponse = () => {
                         proposalDetails.clientResponse === "approved"
                           ? "bg-green-600 text-white"
                           : proposalDetails.clientResponse === "rejected"
-                          ? "bg-red-600 text-white"
-                          : proposalDetails.status === "sent"
-                          ? "bg-blue-600 text-white"
-                          : "bg-yellow-600 text-white"
+                            ? "bg-red-600 text-white"
+                            : proposalDetails.status === "sent"
+                              ? "bg-blue-600 text-white"
+                              : "bg-yellow-600 text-white"
                       }`}
                     >
                       {proposalDetails.clientResponse?.toUpperCase() ||
@@ -223,7 +223,7 @@ const ProposalResponse = () => {
                               year: "numeric",
                               month: "long",
                               day: "numeric",
-                            }
+                            },
                           )
                         : "N/A"}
                     </p>
@@ -235,7 +235,7 @@ const ProposalResponse = () => {
                     <p className="text-base font-medium text-gray-900">
                       {proposalDetails.expiresAt
                         ? new Date(
-                            proposalDetails.expiresAt
+                            proposalDetails.expiresAt,
                           ).toLocaleDateString("en-US", {
                             year: "numeric",
                             month: "long",
@@ -399,8 +399,8 @@ const ProposalResponse = () => {
                               2
                             </div>
                             <p className="text-sm text-gray-800 leading-relaxed">
-                              We'll finalize the contract details and prepare all
-                              documentation
+                              We'll finalize the contract details and prepare
+                              all documentation
                             </p>
                           </div>
                           <div className="flex items-start gap-3">
@@ -417,8 +417,8 @@ const ProposalResponse = () => {
                               4
                             </div>
                             <p className="text-sm text-gray-800 leading-relaxed">
-                              A dedicated team member will contact you to discuss
-                              service implementation
+                              A dedicated team member will contact you to
+                              discuss service implementation
                             </p>
                           </div>
                         </>
@@ -501,7 +501,7 @@ const ProposalResponse = () => {
                           day: "numeric",
                           hour: "2-digit",
                           minute: "2-digit",
-                        }
+                        },
                       )}
                     </span>
                   </p>

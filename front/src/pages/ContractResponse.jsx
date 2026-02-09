@@ -1,10 +1,22 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import { CheckCircle, Loader2, AlertCircle, FileText, Upload } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  CheckCircle,
+  Loader2,
+  AlertCircle,
+  FileText,
+  Upload,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+const API_URL = import.meta.env.VITE_API_URL;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const ContractResponse = () => {
@@ -29,25 +41,33 @@ const ContractResponse = () => {
       }
 
       try {
-        const response = await fetch(`${API_URL}/contracts/public/${contractId}/status?token=${token}`);
+        const response = await fetch(
+          `${API_URL}/contracts/public/${contractId}/status?token=${token}`,
+        );
         const data = await response.json();
 
         if (response.ok) {
           if (data.data.alreadySigned) {
             setStage("error");
-            setMessage("This contract has already been signed. Please contact us if you need assistance.");
+            setMessage(
+              "This contract has already been signed. Please contact us if you need assistance.",
+            );
           } else {
             setContractDetails(data.data);
             setStage("confirmation");
           }
         } else {
           setStage("error");
-          setMessage(data.message || data.error || "Failed to load contract details");
+          setMessage(
+            data.message || data.error || "Failed to load contract details",
+          );
         }
       } catch (error) {
         console.error("Error loading contract:", error);
         setStage("error");
-        setMessage("An error occurred while loading the contract. Please try again or contact us directly.");
+        setMessage(
+          "An error occurred while loading the contract. Please try again or contact us directly.",
+        );
       }
     };
 
@@ -87,24 +107,33 @@ const ContractResponse = () => {
       const formData = new FormData();
       formData.append("signedContract", selectedFile);
 
-      const response = await fetch(`${API_URL}/contracts/public/${contractId}/submit?token=${token}`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `${API_URL}/contracts/public/${contractId}/submit?token=${token}`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
 
       const data = await response.json();
 
       if (response.ok) {
         setStage("success");
-        setMessage(data.message || "Your signed contract has been received successfully");
+        setMessage(
+          data.message || "Your signed contract has been received successfully",
+        );
       } else {
         setStage("error");
-        setMessage(data.message || data.error || "Failed to upload your signed contract");
+        setMessage(
+          data.message || data.error || "Failed to upload your signed contract",
+        );
       }
     } catch (error) {
       console.error("Error uploading contract:", error);
       setStage("error");
-      setMessage("An error occurred while uploading your contract. Please try again or contact us directly.");
+      setMessage(
+        "An error occurred while uploading your contract. Please try again or contact us directly.",
+      );
     }
   };
 
@@ -152,16 +181,22 @@ const ContractResponse = () => {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Company:</span>
-                    <span className="font-medium">{contractDetails.companyName || "N/A"}</span>
+                    <span className="font-medium">
+                      {contractDetails.companyName || "N/A"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Contact Person:</span>
-                    <span className="font-medium">{contractDetails.clientName || "N/A"}</span>
+                    <span className="font-medium">
+                      {contractDetails.clientName || "N/A"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Sent Date:</span>
                     <span className="font-medium">
-                      {contractDetails.sentAt ? new Date(contractDetails.sentAt).toLocaleDateString() : "N/A"}
+                      {contractDetails.sentAt
+                        ? new Date(contractDetails.sentAt).toLocaleDateString()
+                        : "N/A"}
                     </span>
                   </div>
                 </div>
@@ -176,8 +211,8 @@ const ContractResponse = () => {
                       Upload your signed contract
                     </p>
                     <p className="text-sm mt-1 text-blue-700">
-                      Please sign the attached contract PDF and upload the signed copy here.
-                      Only PDF files are accepted (max 10MB).
+                      Please sign the attached contract PDF and upload the
+                      signed copy here. Only PDF files are accepted (max 10MB).
                     </p>
                   </div>
                 </div>
@@ -192,14 +227,22 @@ const ContractResponse = () => {
                   {selectedFile ? (
                     <div className="flex items-center justify-center gap-2">
                       <FileText className="h-5 w-5 text-green-600" />
-                      <span className="text-sm text-green-700 font-medium">{selectedFile.name}</span>
-                      <span className="text-xs text-gray-500">({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)</span>
+                      <span className="text-sm text-green-700 font-medium">
+                        {selectedFile.name}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-2">
                       <Upload className="h-8 w-8 text-gray-400" />
-                      <p className="text-sm text-gray-600">Click to select your signed contract PDF</p>
-                      <p className="text-xs text-gray-400">PDF only, max 10MB</p>
+                      <p className="text-sm text-gray-600">
+                        Click to select your signed contract PDF
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        PDF only, max 10MB
+                      </p>
                     </div>
                   )}
                   <input
@@ -249,12 +292,12 @@ const ContractResponse = () => {
                 Thank You!
               </h3>
 
-              <p className="text-gray-700 text-center mb-6">
-                {message}
-              </p>
+              <p className="text-gray-700 text-center mb-6">{message}</p>
 
               <div className="bg-green-50 border border-green-200 rounded-lg p-5 w-full">
-                <h4 className="font-semibold text-green-900 mb-3">What happens next?</h4>
+                <h4 className="font-semibold text-green-900 mb-3">
+                  What happens next?
+                </h4>
                 <ul className="text-sm text-green-800 space-y-2">
                   <li className="flex items-start">
                     <span className="mr-2">•</span>
@@ -266,11 +309,17 @@ const ContractResponse = () => {
                   </li>
                   <li className="flex items-start">
                     <span className="mr-2">•</span>
-                    <span>A team member will contact you shortly to discuss onboarding and next steps</span>
+                    <span>
+                      A team member will contact you shortly to discuss
+                      onboarding and next steps
+                    </span>
                   </li>
                   <li className="flex items-start">
                     <span className="mr-2">•</span>
-                    <span>You will receive a confirmation email with your account details</span>
+                    <span>
+                      You will receive a confirmation email with your account
+                      details
+                    </span>
                   </li>
                 </ul>
               </div>
@@ -288,9 +337,7 @@ const ContractResponse = () => {
                 Something Went Wrong
               </h3>
 
-              <p className="text-gray-700 text-center mb-6">
-                {message}
-              </p>
+              <p className="text-gray-700 text-center mb-6">{message}</p>
 
               <div className="bg-red-50 border border-red-200 rounded-lg p-5 w-full">
                 <p className="text-sm text-red-800 mb-2 font-medium">
@@ -314,13 +361,19 @@ const ContractResponse = () => {
               <div className="text-sm text-gray-600 space-y-2">
                 <p className="text-center">
                   <strong className="text-green-700">Email:</strong>{" "}
-                  <a href="mailto:info@wasteph.com" className="text-blue-600 hover:underline">
+                  <a
+                    href="mailto:info@wasteph.com"
+                    className="text-blue-600 hover:underline"
+                  >
                     info@wasteph.com
                   </a>
                 </p>
                 <p className="text-center">
                   <strong className="text-green-700">Phone:</strong>{" "}
-                  <a href="tel:+639562461503" className="text-blue-600 hover:underline">
+                  <a
+                    href="tel:+639562461503"
+                    className="text-blue-600 hover:underline"
+                  >
                     +63 956 246 1503
                   </a>
                 </p>
