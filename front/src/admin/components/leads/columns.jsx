@@ -172,7 +172,7 @@ export const createColumns = ({ onView, onEdit, onClaim, onDelete, isMasterSales
 
       return (
         <div className="flex items-center gap-2">
-          {isUnclaimed && !isMasterSales && (
+          {isUnclaimed && (
             <Button
               variant="ghost"
               size="sm"
@@ -218,7 +218,7 @@ export const createColumns = ({ onView, onEdit, onClaim, onDelete, isMasterSales
                 </>
               )}
 
-              {isUnclaimed && !isMasterSales && (
+              {isUnclaimed && (
                 <>
                   <DropdownMenuItem onClick={() => onClaim(lead)} className="cursor-pointer">
                     <span className="flex-1">Claim Lead</span>
