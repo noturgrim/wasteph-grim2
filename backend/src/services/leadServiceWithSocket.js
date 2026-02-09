@@ -2,7 +2,8 @@ import LeadService from "./leadService.js";
 import LeadEventEmitter from "../socket/events/leadEvents.js";
 import { db } from "../db/index.js";
 import { userTable } from "../db/schema.js";
-import { eq } from "drizzle-orm";
+import { eq, or, inArray } from "drizzle-orm";
+import emailService from "./emailService.js";
 
 /**
  * LeadService with Real-Time Socket Support
@@ -62,7 +63,67 @@ class LeadServiceWithSocket extends LeadService {
         console.error("[LeadSocket] emit failed:", err.message),
       );
 
+    // Fire-and-forget email notifications to all sales users
+    this._sendNewLeadEmailNotifications(lead).catch((err) =>
+      console.error("[LeadEmail] notification failed:", err.message),
+    );
+
     return lead;
+  }
+
+  /**
+   * Send email notifications to all sales users for new lead
+   * @param {Object} lead - Created lead object
+   * @private
+   */
+  async _sendNewLeadEmailNotifications(lead) {
+    try {
+      // Fetch all sales users (role='sales' or isMasterSales=true)
+      const salesUsers = await db
+        .select({
+          id: userTable.id,
+          email: userTable.email,
+          firstName: userTable.firstName,
+          lastName: userTable.lastName,
+        })
+        .from(userTable)
+        .where(
+          or(
+            eq(userTable.role, "sales"),
+            eq(userTable.isMasterSales, true),
+          ),
+        );
+
+      if (salesUsers.length === 0) {
+        console.log("ℹ️  No sales users found to notify");
+        return;
+      }
+
+      // Prepare lead data for email template
+      const emailData = {
+        name: lead.clientName,
+        email: lead.email,
+        phoneNumber: lead.phone,
+        companyName: lead.company,
+        serviceInterest: lead.location, // Using location as service interest
+        message: lead.notes,
+      };
+
+      // Send emails to all sales users
+      const emailPromises = salesUsers.map((user) =>
+        emailService.sendNewLeadNotification(user.email, emailData),
+      );
+
+      const results = await Promise.allSettled(emailPromises);
+
+      const successCount = results.filter((r) => r.status === "fulfilled" && r.value.success).length;
+      const failCount = results.length - successCount;
+
+      console.log(`📧 New lead email notifications: ${successCount} sent, ${failCount} failed`);
+    } catch (error) {
+      console.error("❌ Failed to send new lead email notifications:", error);
+      // Don't throw — email failures shouldn't block the lead creation
+    }
   }
 
   /**

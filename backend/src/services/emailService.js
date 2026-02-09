@@ -300,12 +300,12 @@ class EmailService {
       <table class="btn-table" role="presentation" cellpadding="0" cellspacing="0">
         <tr>
           <td>
-            <a href="${frontendUrl}/proposal-response/${proposalId}/approve?token=${responseToken}" class="btn-approve">✓ Approve Proposal</a>
+            <a href="${frontendUrl}/proposal-response/${proposalId}/approve?token=${responseToken}" class="btn-approve">Approve Proposal</a>
           </td>
         </tr>
         <tr>
           <td>
-            <a href="${frontendUrl}/proposal-response/${proposalId}/reject?token=${responseToken}" class="btn-reject">✗ Reject Proposal</a>
+            <a href="${frontendUrl}/proposal-response/${proposalId}/reject?token=${responseToken}" class="btn-reject">Reject Proposal</a>
           </td>
         </tr>
       </table>
@@ -524,12 +524,12 @@ class EmailService {
       <table class="btn-table" role="presentation" cellpadding="0" cellspacing="0">
         <tr>
           <td>
-            <a href="${frontendUrl}/proposal-response/${proposalId}/approve?token=${responseToken}" class="btn-approve">✓ Approve Proposal</a>
+            <a href="${frontendUrl}/proposal-response/${proposalId}/approve?token=${responseToken}" class="btn-approve">Approve Proposal</a>
           </td>
         </tr>
         <tr>
           <td>
-            <a href="${frontendUrl}/proposal-response/${proposalId}/reject?token=${responseToken}" class="btn-reject">✗ Reject Proposal</a>
+            <a href="${frontendUrl}/proposal-response/${proposalId}/reject?token=${responseToken}" class="btn-reject">Reject Proposal</a>
           </td>
         </tr>
       </table>
@@ -834,6 +834,594 @@ class EmailService {
       <p>For questions or assistance, please contact our sales team.</p>
       <p style="margin-top: 15px; color: #999; font-size: 11px;">
         This email was sent automatically. Please do not reply to this email.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+  }
+
+  /**
+   * Send new lead notification email to all sales users
+   * @param {string} to - Recipient email
+   * @param {Object} leadData - Lead data
+   * @returns {Promise<Object>} Email result
+   */
+  async sendNewLeadNotification(to, leadData) {
+    try {
+      const subject = `New Lead: ${leadData.companyName || leadData.name}`;
+      const htmlContent = this.generateNewLeadEmailHTML(leadData);
+
+      const info = await this.transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to,
+        subject,
+        html: htmlContent,
+      });
+
+      console.log(`✅ New lead notification sent to: ${to}`);
+      return {
+        success: true,
+        messageId: info.messageId,
+      };
+    } catch (error) {
+      console.error(`❌ Failed to send new lead notification to ${to}:`, error.message);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
+   * Generate new lead notification email HTML
+   * @param {Object} leadData - Lead data
+   * @returns {string} HTML content
+   */
+  generateNewLeadEmailHTML(leadData) {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const { name, email, phoneNumber, companyName, serviceInterest, message } = leadData;
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      text-align: center;
+      border-bottom: 3px solid #106934;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      color: #106934;
+      margin: 0 0 10px 0;
+      font-size: 26px;
+    }
+    .header p {
+      color: #666;
+      margin: 0;
+      font-size: 14px;
+    }
+    .badge {
+      display: inline-block;
+      background: #dcfce7;
+      color: #166534;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background: #f8f9fa;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .info-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .info-table td:first-child {
+      font-weight: bold;
+      color: #555;
+      width: 140px;
+    }
+    .info-table tr:last-child td {
+      border-bottom: none;
+    }
+    .message-box {
+      background: #f0fdf4;
+      border-left: 4px solid #166534;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .message-box p {
+      margin: 0;
+      color: #166534;
+    }
+    .cta-button {
+      display: inline-block;
+      background: #106934;
+      color: #ffffff !important;
+      text-decoration: none !important;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: bold;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #ddd;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>New Lead Received</h1>
+      <p>A new lead has been submitted from the landing page</p>
+      <span class="badge">REQUIRES ATTENTION</span>
+    </div>
+
+    <table class="info-table">
+      <tr>
+        <td>Contact Name:</td>
+        <td><strong>${name}</strong></td>
+      </tr>
+      ${companyName ? `<tr><td>Company:</td><td><strong>${companyName}</strong></td></tr>` : ""}
+      <tr>
+        <td>Email:</td>
+        <td><a href="mailto:${email}" style="color: #106934;">${email}</a></td>
+      </tr>
+      ${phoneNumber ? `<tr><td>Phone:</td><td>${phoneNumber}</td></tr>` : ""}
+      ${serviceInterest ? `<tr><td>Service Interest:</td><td>${serviceInterest}</td></tr>` : ""}
+    </table>
+
+    ${message ? `
+    <div class="message-box">
+      <p style="font-weight: bold; margin-bottom: 8px;">Message:</p>
+      <p style="white-space: pre-wrap;">${message}</p>
+    </div>
+    ` : ""}
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${frontendUrl}/admin/leads" class="cta-button">View Lead in CRM</a>
+    </div>
+
+    <p style="font-size: 13px; color: #666; margin-top: 20px;">
+      <strong>Next Steps:</strong><br>
+      • Claim this lead in the CRM<br>
+      • Reach out within 24 hours for best conversion<br>
+      • Qualify and convert to an inquiry
+    </p>
+
+    <div class="footer">
+      <p><strong>WastePH CRM</strong> - Lead Notification System</p>
+      <p style="margin-top: 10px; font-size: 11px; color: #999;">
+        This is an automated notification. Do not reply to this email.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+  }
+
+  /**
+   * Send proposal response notification to sales person
+   * @param {string} to - Sales person email
+   * @param {Object} data - Notification data
+   * @returns {Promise<Object>} Email result
+   */
+  async sendProposalResponseNotification(to, data) {
+    try {
+      const { clientName, proposalNumber, action, companyName } = data;
+      const subject = action === "accepted" 
+        ? `Proposal Accepted: ${companyName || clientName}`
+        : `Proposal Declined: ${companyName || clientName}`;
+      
+      const htmlContent = this.generateProposalResponseEmailHTML(data);
+
+      const info = await this.transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to,
+        subject,
+        html: htmlContent,
+      });
+
+      console.log(`✅ Proposal ${action} notification sent to: ${to}`);
+      return {
+        success: true,
+        messageId: info.messageId,
+      };
+    } catch (error) {
+      console.error(`❌ Failed to send proposal response notification to ${to}:`, error.message);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
+   * Generate proposal response email HTML
+   * @param {Object} data - Notification data
+   * @returns {string} HTML content
+   */
+  generateProposalResponseEmailHTML(data) {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const { clientName, proposalNumber, action, companyName, clientEmail } = data;
+    const isAccepted = action === "accepted";
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      text-align: center;
+      border-bottom: 3px solid ${isAccepted ? "#16a34a" : "#dc2626"};
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      color: ${isAccepted ? "#16a34a" : "#dc2626"};
+      margin: 0 0 10px 0;
+      font-size: 26px;
+    }
+    .badge {
+      display: inline-block;
+      background: ${isAccepted ? "#dcfce7" : "#fee2e2"};
+      color: ${isAccepted ? "#166534" : "#991b1b"};
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background: #f8f9fa;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .info-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .info-table td:first-child {
+      font-weight: bold;
+      color: #555;
+      width: 140px;
+    }
+    .info-table tr:last-child td {
+      border-bottom: none;
+    }
+    .highlight-box {
+      background: ${isAccepted ? "#f0fdf4" : "#fef2f2"};
+      border-left: 4px solid ${isAccepted ? "#16a34a" : "#dc2626"};
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .cta-button {
+      display: inline-block;
+      background: ${isAccepted ? "#16a34a" : "#dc2626"};
+      color: #ffffff !important;
+      text-decoration: none !important;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #ddd;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Proposal ${isAccepted ? "Accepted" : "Declined"}</h1>
+      <p>Client has responded to your proposal</p>
+      <span class="badge">${isAccepted ? "ACTION REQUIRED" : "FOLLOW-UP NEEDED"}</span>
+    </div>
+
+    <table class="info-table">
+      <tr>
+        <td>Proposal:</td>
+        <td><strong>${proposalNumber}</strong></td>
+      </tr>
+      <tr>
+        <td>Client:</td>
+        <td><strong>${clientName}</strong></td>
+      </tr>
+      ${companyName ? `<tr><td>Company:</td><td>${companyName}</td></tr>` : ""}
+      <tr>
+        <td>Email:</td>
+        <td><a href="mailto:${clientEmail}" style="color: #106934;">${clientEmail}</a></td>
+      </tr>
+      <tr>
+        <td>Status:</td>
+        <td><strong style="color: ${isAccepted ? "#16a34a" : "#dc2626"};">${isAccepted ? "ACCEPTED" : "DECLINED"}</strong></td>
+      </tr>
+    </table>
+
+    <div class="highlight-box">
+      ${isAccepted 
+        ? `<p><strong>Great news!</strong> The client has accepted your proposal. A contract will be automatically generated and is now pending admin approval.</p>`
+        : `<p><strong>The client has declined this proposal.</strong> Consider reaching out to understand their concerns and see if you can provide an alternative solution.</p>`
+      }
+    </div>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${frontendUrl}/admin/proposals" class="cta-button">View in CRM</a>
+    </div>
+
+    ${isAccepted ? `
+    <p style="font-size: 13px; color: #666; margin-top: 20px;">
+      <strong>Next Steps:</strong><br>
+      • Contract has been auto-created (status: pending_request)<br>
+      • Request contract generation from admin<br>
+      • Once approved, send contract to client
+    </p>
+    ` : `
+    <p style="font-size: 13px; color: #666; margin-top: 20px;">
+      <strong>Suggested Actions:</strong><br>
+      • Reach out to understand concerns<br>
+      • Offer alternative solutions or pricing<br>
+      • Schedule a follow-up meeting
+    </p>
+    `}
+
+    <div class="footer">
+      <p><strong>WastePH CRM</strong> - Proposal Notification System</p>
+      <p style="margin-top: 10px; font-size: 11px; color: #999;">
+        This is an automated notification. Do not reply to this email.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+  }
+
+  /**
+   * Send contract signed notification to sales person
+   * @param {string} to - Sales person email
+   * @param {Object} data - Notification data
+   * @returns {Promise<Object>} Email result
+   */
+  async sendContractSignedNotification(to, data) {
+    try {
+      const { clientName, contractNumber, companyName } = data;
+      const subject = `Contract Signed: ${companyName || clientName}`;
+      const htmlContent = this.generateContractSignedEmailHTML(data);
+
+      const info = await this.transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to,
+        subject,
+        html: htmlContent,
+      });
+
+      console.log(`✅ Contract signed notification sent to: ${to}`);
+      return {
+        success: true,
+        messageId: info.messageId,
+      };
+    } catch (error) {
+      console.error(`❌ Failed to send contract signed notification to ${to}:`, error.message);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
+   * Generate contract signed email HTML
+   * @param {Object} data - Notification data
+   * @returns {string} HTML content
+   */
+  generateContractSignedEmailHTML(data) {
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const { clientName, contractNumber, companyName, clientEmail, address, contractStartDate, contractEndDate } = data;
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      text-align: center;
+      border-bottom: 3px solid #16a34a;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+    .header h1 {
+      color: #16a34a;
+      margin: 0 0 10px 0;
+      font-size: 26px;
+    }
+    .badge {
+      display: inline-block;
+      background: #dcfce7;
+      color: #166534;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background: #f8f9fa;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .info-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .info-table td:first-child {
+      font-weight: bold;
+      color: #555;
+      width: 140px;
+    }
+    .info-table tr:last-child td {
+      border-bottom: none;
+    }
+    .highlight-box {
+      background: #f0fdf4;
+      border-left: 4px solid #16a34a;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .cta-button {
+      display: inline-block;
+      background: #16a34a;
+      color: #ffffff !important;
+      text-decoration: none !important;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #ddd;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Contract Signed</h1>
+      <p>A new client has been created</p>
+      <span class="badge">DEAL CLOSED</span>
+    </div>
+
+    <table class="info-table">
+      <tr>
+        <td>Contract:</td>
+        <td><strong>${contractNumber}</strong></td>
+      </tr>
+      <tr>
+        <td>Client:</td>
+        <td><strong>${clientName}</strong></td>
+      </tr>
+      ${companyName ? `<tr><td>Company:</td><td>${companyName}</td></tr>` : ""}
+      <tr>
+        <td>Email:</td>
+        <td><a href="mailto:${clientEmail}" style="color: #106934;">${clientEmail}</a></td>
+      </tr>
+      ${address ? `<tr><td>Address:</td><td>${address}</td></tr>` : ""}
+      ${contractStartDate ? `<tr><td>Contract Period:</td><td>${new Date(contractStartDate).toLocaleDateString("en-PH")} - ${new Date(contractEndDate).toLocaleDateString("en-PH")}</td></tr>` : ""}
+    </table>
+
+    <div class="highlight-box">
+      <p><strong>Congratulations!</strong> The client has uploaded their signed contract and a new client record has been automatically created in the system.</p>
+    </div>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${frontendUrl}/admin/clients" class="cta-button">View Client in CRM</a>
+    </div>
+
+    <p style="font-size: 13px; color: #666; margin-top: 20px;">
+      <strong>Next Steps:</strong><br>
+      • Schedule monthly check-ins with the client<br>
+      • Set up service schedules and collection points<br>
+      • Send welcome/onboarding materials<br>
+      • Ensure all documentation is complete
+    </p>
+
+    <div class="footer">
+      <p><strong>WastePH CRM</strong> - Contract Notification System</p>
+      <p style="margin-top: 10px; font-size: 11px; color: #999;">
+        This is an automated notification. Do not reply to this email.
       </p>
     </div>
   </div>

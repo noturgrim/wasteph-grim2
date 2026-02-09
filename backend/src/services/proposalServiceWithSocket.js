@@ -1,5 +1,6 @@
 import proposalService from "./proposalService.js";
 import ProposalEventEmitter from "../socket/events/proposalEvents.js";
+import emailService from "./emailService.js";
 
 /**
  * ProposalServiceWithSocket - Extends ProposalService with real-time socket events
@@ -333,7 +334,7 @@ class ProposalServiceWithSocket {
     Promise.resolve()
       .then(async () => {
         const { db } = await import("../db/index.js");
-        const { proposalTable, inquiryTable } = await import("../db/schema.js");
+        const { proposalTable, inquiryTable, userTable } = await import("../db/schema.js");
         const { eq } = await import("drizzle-orm");
 
         const [fullProposal] = await db
@@ -345,17 +346,38 @@ class ProposalServiceWithSocket {
             clientResponseAt: proposalTable.clientResponseAt,
             inquiryName: inquiryTable.name,
             inquiryCompany: inquiryTable.company,
+            inquiryEmail: inquiryTable.email,
+            userEmail: userTable.email,
           })
           .from(proposalTable)
           .leftJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id))
+          .leftJoin(userTable, eq(proposalTable.requestedBy, userTable.id))
           .where(eq(proposalTable.id, proposal.id))
           .limit(1);
 
         if (fullProposal) {
+          // Emit socket event
           if (type === "accepted") {
             await this.proposalEvents.emitProposalAccepted(fullProposal);
           } else {
             await this.proposalEvents.emitProposalDeclined(fullProposal);
+          }
+
+          // Send email notification to sales person
+          if (fullProposal.userEmail) {
+            const emailData = {
+              clientName: fullProposal.inquiryName,
+              proposalNumber: fullProposal.proposalNumber,
+              action: type,
+              companyName: fullProposal.inquiryCompany,
+              clientEmail: fullProposal.inquiryEmail,
+            };
+
+            emailService
+              .sendProposalResponseNotification(fullProposal.userEmail, emailData)
+              .catch((err) =>
+                console.error(`Failed to send ${type} email to ${fullProposal.userEmail}:`, err.message),
+              );
           }
         }
       })

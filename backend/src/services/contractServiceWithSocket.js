@@ -1,5 +1,6 @@
 import contractService from "./contractService.js";
 import ContractEventEmitter from "../socket/events/contractEvents.js";
+import emailService from "./emailService.js";
 
 /**
  * ContractServiceWithSocket
@@ -370,6 +371,11 @@ class ContractServiceWithSocket {
             proposalNumber: proposalTable.proposalNumber,
             requestedBy: proposalTable.requestedBy,
             sentToClientBy: contractsTable.sentToClientBy,
+            contractNumber: contractsTable.contractNumber,
+            clientEmail: contractsTable.clientEmail,
+            address: contractsTable.address,
+            contractStartDate: contractsTable.contractStartDate,
+            contractEndDate: contractsTable.contractEndDate,
           })
           .from(contractsTable)
           .leftJoin(
@@ -442,6 +448,36 @@ class ContractServiceWithSocket {
               },
             }
           );
+
+          // Send email notification to sales person
+          if (salesUserId) {
+            const [salesUser] = await db
+              .select({ email: userTable.email })
+              .from(userTable)
+              .where(eq(userTable.id, salesUserId))
+              .limit(1);
+
+            if (salesUser?.email) {
+              const emailData = {
+                clientName: fullContract.clientName,
+                contractNumber: fullContract.contractNumber,
+                companyName: fullContract.companyName,
+                clientEmail: fullContract.clientEmail,
+                address: fullContract.address,
+                contractStartDate: fullContract.contractStartDate,
+                contractEndDate: fullContract.contractEndDate,
+              };
+
+              emailService
+                .sendContractSignedNotification(salesUser.email, emailData)
+                .catch((err) =>
+                  console.error(
+                    `Failed to send contract signed email to ${salesUser.email}:`,
+                    err.message
+                  )
+                );
+            }
+          }
 
           console.log(
             `✅ Contract signed event emitted for contract ${fullContract.id}`
