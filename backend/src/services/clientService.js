@@ -150,6 +150,7 @@ class ClientService {
     if (clientIds.length > 0) {
       const allContracts = await db
         .select({
+          id: contractsTable.id,
           clientId: contractsTable.clientId,
           contractNumber: contractsTable.contractNumber,
           status: contractsTable.status,
@@ -164,6 +165,7 @@ class ClientService {
       allContracts.forEach((c) => {
         if (!contractMap.has(c.clientId)) contractMap.set(c.clientId, []);
         contractMap.get(c.clientId).push({
+          id: c.id,
           contractNumber: c.contractNumber,
           status: c.status,
           contractStartDate: c.contractStartDate,

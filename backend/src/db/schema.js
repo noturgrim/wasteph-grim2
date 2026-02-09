@@ -877,6 +877,9 @@ export const clientTicketsTable = pgTable(
     clientId: uuid("client_id")
       .notNull()
       .references(() => clientTable.id, { onDelete: "cascade" }),
+    contractId: uuid("contract_id").references(() => contractsTable.id, {
+      onDelete: "set null",
+    }),
     category: ticketCategoryEnum("category").notNull(),
     priority: ticketPriorityEnum("priority").notNull().default("medium"),
     subject: text("subject").notNull(),
@@ -906,6 +909,7 @@ export const clientTicketsTable = pgTable(
       table.ticketNumber
     ),
     clientIdIdx: index("client_tickets_client_id_idx").on(table.clientId),
+    contractIdIdx: index("client_tickets_contract_id_idx").on(table.contractId),
     statusIdx: index("client_tickets_status_idx").on(table.status),
     createdByIdx: index("client_tickets_created_by_idx").on(table.createdBy),
     categoryIdx: index("client_tickets_category_idx").on(table.category),

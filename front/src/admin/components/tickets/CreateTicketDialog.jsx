@@ -18,7 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Ticket, AlertCircle, ImagePlus, X } from "lucide-react";
+import { Ticket, AlertCircle, ImagePlus, X, FileText } from "lucide-react";
+import { format } from "date-fns";
 
 const TICKET_CATEGORIES = [
   { value: "technical_issue", label: "Technical Issue" },
@@ -44,6 +45,7 @@ export const CreateTicketDialog = ({ open, onOpenChange, clientId: initialClient
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     clientId: initialClientId || "",
+    contractId: "",
     category: "",
     priority: "medium",
     subject: "",
@@ -52,6 +54,11 @@ export const CreateTicketDialog = ({ open, onOpenChange, clientId: initialClient
 
   const showClientSelector = !initialClientId && clients?.length > 0;
   const resolvedClientId = initialClientId || formData.clientId;
+
+  // Get contracts for the selected client
+  const selectedClient = clients.find((c) => c.id === resolvedClientId);
+  const clientContracts = selectedClient?.contracts || [];
+  const hasMultipleContracts = clientContracts.length > 1;
 
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
   const ALLOWED_FILE_TYPES = [
@@ -83,7 +90,12 @@ export const CreateTicketDialog = ({ open, onOpenChange, clientId: initialClient
   }, [initialClientId, showClientSelector]);
 
   const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value };
+      // Reset contractId when client changes
+      if (field === "clientId") next.contractId = "";
+      return next;
+    });
     setValidationErrors([]);
   };
 
@@ -142,18 +154,23 @@ export const CreateTicketDialog = ({ open, onOpenChange, clientId: initialClient
     setIsLoading(true);
 
     try {
-      await onSuccess(
-        {
-          clientId: resolvedClientId,
-          category: formData.category,
-          priority: formData.priority,
-          subject: formData.subject.trim(),
-          description: formData.description.trim(),
-        },
-        selectedFiles
-      );
+      const ticketPayload = {
+        clientId: resolvedClientId,
+        category: formData.category,
+        priority: formData.priority,
+        subject: formData.subject.trim(),
+        description: formData.description.trim(),
+      };
+      // Auto-set contractId: explicit selection, or auto if only 1 contract
+      const resolvedContractId =
+        formData.contractId || (clientContracts.length === 1 ? clientContracts[0].id : null);
+      if (resolvedContractId) {
+        ticketPayload.contractId = resolvedContractId;
+      }
+      await onSuccess(ticketPayload, selectedFiles);
       setFormData({
         clientId: initialClientId || "",
+        contractId: "",
         category: "",
         priority: "medium",
         subject: "",
@@ -209,6 +226,45 @@ export const CreateTicketDialog = ({ open, onOpenChange, clientId: initialClient
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {hasMultipleContracts && (
+            <div className="space-y-2">
+              <Label htmlFor="contract">
+                <span className="flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5" />
+                  Related Contract
+                  <span className="text-xs text-muted-foreground font-normal">(optional)</span>
+                </span>
+              </Label>
+              <Select
+                value={formData.contractId || undefined}
+                onValueChange={(value) => handleChange("contractId", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a contract" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientContracts.map((c) => {
+                    const start = c.contractStartDate
+                      ? format(new Date(c.contractStartDate), "MMM dd, yyyy")
+                      : null;
+                    const end = c.contractEndDate
+                      ? format(new Date(c.contractEndDate), "MMM dd, yyyy")
+                      : null;
+                    const period = start && end ? ` · ${start} – ${end}` : "";
+                    return (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.contractNumber}{period}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                This client has {clientContracts.length} contracts. Select which contract this ticket relates to.
+              </p>
             </div>
           )}
 

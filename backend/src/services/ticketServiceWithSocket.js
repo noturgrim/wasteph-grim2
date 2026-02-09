@@ -40,7 +40,7 @@ class TicketService {
    * @returns {Promise<Object>} Created ticket
    */
   async createTicket(ticketData, userId, metadata = {}) {
-    const { clientId, category, priority, subject, description } = ticketData;
+    const { clientId, contractId, category, priority, subject, description } = ticketData;
 
     // Generate ticket number (format: TKT-YYYYMMDD-NNNN)
     const ticketNumber = await counterService.getNextTicketNumber();
@@ -51,6 +51,7 @@ class TicketService {
       .values({
         ticketNumber,
         clientId,
+        contractId: contractId || null,
         category,
         priority,
         subject,
@@ -68,6 +69,7 @@ class TicketService {
       entityId: ticket.id,
       details: {
         clientId,
+        contractId: contractId || null,
         category,
         priority,
         ticketNumber,

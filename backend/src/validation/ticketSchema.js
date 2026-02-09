@@ -32,6 +32,11 @@ export const createTicketSchema = z.object({
     })
     .uuid("Invalid client ID format"),
 
+  contractId: z
+    .string()
+    .uuid("Invalid contract ID format")
+    .nullish(),
+
   category: z.enum(ticketCategories, {
     required_error: "Ticket category is required",
     invalid_type_error: "Invalid ticket category",
@@ -68,6 +73,8 @@ export const createTicketSchema = z.object({
 export const updateTicketSchema = z
   .object({
     clientId: z.string().uuid("Invalid client ID format").optional(),
+
+    contractId: z.string().uuid("Invalid contract ID format").nullish(),
 
     category: z
       .enum(ticketCategories, {
