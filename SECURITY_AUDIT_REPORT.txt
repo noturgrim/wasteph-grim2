@@ -49,7 +49,7 @@ Fix: Implemented timing-safe login with dummy hash comparison. Always verifies
      timing attacks.
      File: backend/src/controllers/authController.js
 
-C4. XSS via dangerouslySetInnerHTML Without Sanitization
+C4. XSS via dangerouslySetInnerHTML Without Sanitization [FIXED]
 ────────────────────────────────────────────────────────────────────────────
 Locations:
 - front/src/pages/BlogPost.jsx (line 278)
@@ -59,9 +59,11 @@ Locations:
 - front/src/admin/components/showcase/RichTextEditor.jsx (line 13)
 
 Risk: User-generated HTML rendered without sanitization enables stored XSS.
-Fix: Install and use DOMPurify:
-    import DOMPurify from "dompurify";
-    <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(content) }} />
+Fix: Created shared sanitization utility (front/src/utils/sanitize.js) with
+     three functions: sanitizeHtml (standard), sanitizeHtmlWithStyles (for
+     templates needing <style> tags), and sanitizeCss (for CSS-only content).
+     Applied DOMPurify sanitization to all dangerouslySetInnerHTML instances
+     and all innerHTML assignments across 7 files.
 
 C5. Mass Assignment Vulnerabilities
 ────────────────────────────────────────────────────────────────────────────

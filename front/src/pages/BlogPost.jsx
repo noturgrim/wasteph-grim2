@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import FadeInUp from "../components/common/FadeInUp";
 import RevealOnScroll from "../components/common/RevealOnScroll";
 import { fetchPostBySlug } from "../services/blogService";
+import { sanitizeHtml } from "../utils/sanitize";
 
 // Fallback data
 const FALLBACK_POSTS = {
@@ -275,7 +276,7 @@ const BlogPost = () => {
           <RevealOnScroll delay={0.2}>
             <div className="prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-white/80 prose-p:leading-relaxed prose-strong:text-white prose-strong:font-bold prose-ul:text-white/80 prose-ol:text-white/80 prose-li:text-white/80 prose-a:text-[#16a34a] prose-a:no-underline hover:prose-a:underline">
               <div
-                dangerouslySetInnerHTML={{ __html: post.content }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
                 className="[&>h2]:mb-4 [&>h2]:mt-12 [&>h2]:text-3xl [&>h2]:font-bold [&>p]:mb-6 [&>ul]:mb-6 [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:space-y-2 [&>ol]:mb-6 [&>ol]:list-decimal [&>ol]:pl-6 [&>ol]:space-y-2 [&>li]:leading-relaxed [&>li]:list-item [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:list-item [&_strong]:font-bold [&_strong]:text-white"
               />
             </div>

@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { sanitizeHtmlWithStyles } from "@/utils/sanitize";
 
 // Sample contract data for preview
 const SAMPLE_CONTRACT_DATA = {
@@ -237,7 +238,7 @@ export function ContractTemplatePreviewDialog({ open, onOpenChange, template }) 
                   isolation: "isolate",
                   position: "relative",
                 }}
-                dangerouslySetInnerHTML={{ __html: previewHtml }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtmlWithStyles(previewHtml) }}
               />
             ) : (
               <div className="flex items-center justify-center h-full min-h-[400px]">

@@ -7,6 +7,7 @@ import { Table } from "@tiptap/extension-table";
 import { TableRow } from "@tiptap/extension-table-row";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
+import { sanitizeCss } from "../../utils/sanitize";
 import {
   Bold,
   Italic,
@@ -382,7 +383,7 @@ const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange
       {scopedStyles && (
         <style
           dangerouslySetInnerHTML={{
-            __html: scopedStyles,
+            __html: sanitizeCss(scopedStyles),
           }}
         />
       )}

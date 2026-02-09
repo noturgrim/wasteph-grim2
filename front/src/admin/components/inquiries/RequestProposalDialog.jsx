@@ -50,6 +50,7 @@ import { format } from "date-fns";
 import { api } from "../../services/api";
 import { toast } from "../../utils/toast";
 import ProposalHtmlEditor from "@/components/common/ProposalHtmlEditor";
+import { sanitizeHtmlWithStyles } from "@/utils/sanitize";
 
 export function RequestProposalDialog({
   open,
@@ -177,7 +178,7 @@ export function RequestProposalDialog({
                 let editableContent = "";
                 try {
                   const container = document.createElement("div");
-                  container.innerHTML = bodyMatch[1];
+                  container.innerHTML = sanitizeHtmlWithStyles(bodyMatch[1]);
 
                   // Try to extract meaningful content (skip header/footer)
                   // Look for date, recipient, greeting sections
@@ -245,7 +246,7 @@ export function RequestProposalDialog({
                 let editorBodyContent = fullBodyHtml;
                 try {
                   const container = document.createElement("div");
-                  container.innerHTML = fullBodyHtml;
+                  container.innerHTML = sanitizeHtmlWithStyles(fullBodyHtml);
                   const contentNode = container.querySelector(".content");
                   if (contentNode) {
                     editorBodyContent = contentNode.innerHTML || "";
@@ -566,7 +567,7 @@ export function RequestProposalDialog({
         let editorBodyContent = fullBodyHtml;
         try {
           const container = document.createElement("div");
-          container.innerHTML = fullBodyHtml;
+          container.innerHTML = sanitizeHtmlWithStyles(fullBodyHtml);
           const contentNode = container.querySelector(".content");
           if (contentNode) {
             editorBodyContent = contentNode.innerHTML || "";
@@ -632,12 +633,12 @@ export function RequestProposalDialog({
     if (bodyHtml && contentSelector) {
       try {
         const container = document.createElement("div");
-        container.innerHTML = bodyHtml;
+        container.innerHTML = sanitizeHtmlWithStyles(bodyHtml);
         const target = container.querySelector(contentSelector);
 
         if (target) {
           // Success: replace only the editable section
-          target.innerHTML = html;
+          target.innerHTML = sanitizeHtmlWithStyles(html);
           bodyContentForSave = container.innerHTML;
           console.debug(
             "Successfully replaced content in selector:",
@@ -1613,8 +1614,9 @@ ${bodyTag}
                         (() => {
                           try {
                             const container = document.createElement("div");
-                            container.innerHTML =
-                              templateStructureRef.current.bodyHtml;
+                            container.innerHTML = sanitizeHtmlWithStyles(
+                              templateStructureRef.current.bodyHtml,
+                            );
                             const contentNode =
                               container.querySelector(".content");
                             if (contentNode) {

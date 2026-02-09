@@ -3,6 +3,7 @@ import SectionShell from "../common/SectionShell";
 import RevealOnScroll from "../common/RevealOnScroll";
 import FadeInUp from "../common/FadeInUp";
 import { fetchShowcases } from "../../services/showcaseService";
+import { sanitizeHtml } from "../../utils/sanitize";
 import {
   Dialog,
   DialogContent,
@@ -388,7 +389,7 @@ const ServicesSlideshow = () => {
                     <div
                       className="prose max-w-none prose-headings:text-white prose-p:text-white/90 prose-p:leading-relaxed prose-strong:text-white prose-strong:font-bold prose-em:text-[#16a34a] prose-em:italic prose-ul:list-disc prose-ul:pl-6 prose-ul:text-white/90 prose-ol:list-decimal prose-ol:pl-6 prose-ol:text-white/90 prose-li:text-white/90 prose-li:my-1 [&>*]:text-white/90 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1"
                       dangerouslySetInnerHTML={{
-                        __html: selectedEvent.description,
+                        __html: sanitizeHtml(selectedEvent.description),
                       }}
                     />
 

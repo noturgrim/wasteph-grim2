@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 import { Bold, Italic, List, ListOrdered, Undo, Redo } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { sanitizeHtml } from "@/utils/sanitize";
 
 export function RichTextEditor({ value, onChange, placeholder, className }) {
   const editorRef = useRef(null);
@@ -9,8 +10,9 @@ export function RichTextEditor({ value, onChange, placeholder, className }) {
   useEffect(() => {
     if (editorRef.current && !isUpdating.current) {
       // Only update if content is different
-      if (editorRef.current.innerHTML !== value) {
-        editorRef.current.innerHTML = value || "";
+      const sanitized = sanitizeHtml(value || "");
+      if (editorRef.current.innerHTML !== sanitized) {
+        editorRef.current.innerHTML = sanitized;
       }
     }
   }, [value]);
