@@ -136,6 +136,9 @@ export const CreateTicketDialog = ({ open, onOpenChange, clientId: initialClient
     if (!resolvedClientId) {
       errors.push({ field: "clientId", message: showClientSelector ? "Please select a client" : "Client is required. Please try closing and reopening the dialog." });
     }
+    if (hasMultipleContracts && !formData.contractId) {
+      errors.push({ field: "contractId", message: "Please select which contract this ticket relates to" });
+    }
     if (!formData.category || formData.category.trim() === "") {
       errors.push({ field: "category", message: "Category is required" });
     }
@@ -207,7 +210,7 @@ export const CreateTicketDialog = ({ open, onOpenChange, clientId: initialClient
         <form onSubmit={handleSubmit} className="space-y-4">
           {showClientSelector && (
             <div className="space-y-2">
-              <Label htmlFor="client">Client *</Label>
+              <Label htmlFor="client">Client <span className="text-red-500">*</span></Label>
               <Select
                 value={formData.clientId}
                 onValueChange={(value) => handleChange("clientId", value)}
@@ -234,8 +237,7 @@ export const CreateTicketDialog = ({ open, onOpenChange, clientId: initialClient
               <Label htmlFor="contract">
                 <span className="flex items-center gap-1.5">
                   <FileText className="h-3.5 w-3.5" />
-                  Related Contract
-                  <span className="text-xs text-muted-foreground font-normal">(optional)</span>
+                  Related Contract <span className="text-red-500">*</span>
                 </span>
               </Label>
               <Select
@@ -283,7 +285,7 @@ export const CreateTicketDialog = ({ open, onOpenChange, clientId: initialClient
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="category">Category *</Label>
+              <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
               <Select
                 value={formData.category}
                 onValueChange={(value) => handleChange("category", value)}
@@ -303,7 +305,7 @@ export const CreateTicketDialog = ({ open, onOpenChange, clientId: initialClient
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="priority">Priority *</Label>
+              <Label htmlFor="priority">Priority <span className="text-red-500">*</span></Label>
               <Select
                 value={formData.priority}
                 onValueChange={(value) => handleChange("priority", value)}
@@ -324,7 +326,7 @@ export const CreateTicketDialog = ({ open, onOpenChange, clientId: initialClient
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="subject">Subject *</Label>
+            <Label htmlFor="subject">Subject <span className="text-red-500">*</span></Label>
             <Input
               id="subject"
               value={formData.subject}
@@ -335,7 +337,7 @@ export const CreateTicketDialog = ({ open, onOpenChange, clientId: initialClient
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
+            <Label htmlFor="description">Description <span className="text-red-500">*</span></Label>
             <Textarea
               id="description"
               value={formData.description}
