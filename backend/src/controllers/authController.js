@@ -109,25 +109,16 @@ export const login = async (req, res, next) => {
       .where(eq(userTable.email, email))
       .limit(1);
 
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password",
-      });
-    }
+    // Dummy hash for timing-attack prevention when user doesn't exist
+    // This ensures password verification always takes roughly the same time
+    const dummyHash = "$2b$10$dummyhashXXXXXXXXXXXXXOuEhMeqSkIjQk5PzjB4k8bQ8VqJ9UGVK";
+    
+    // Always verify password (even if user doesn't exist) to prevent timing attacks
+    const hashToCheck = user ? user.hashedPassword : dummyHash;
+    const isValidPassword = await verifyPassword(password, hashToCheck);
 
-    // Check if user is active
-    if (!user.isActive) {
-      return res.status(403).json({
-        success: false,
-        message: "Account is inactive",
-      });
-    }
-
-    // Verify password
-    const isValidPassword = await verifyPassword(password, user.hashedPassword);
-
-    if (!isValidPassword) {
+    // Check all failure conditions and return the same generic message
+    if (!user || !isValidPassword || !user.isActive) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password",

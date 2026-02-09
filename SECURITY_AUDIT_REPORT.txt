@@ -37,13 +37,17 @@ Fix: Applied authRateLimiter middleware to both login and register routes.
      Rate limit: 5 attempts per 15 minutes per IP, skips successful requests.
      File: backend/src/routes/authRoutes.js
 
-C3. Account Enumeration via Different Error Messages
+C3. Account Enumeration via Different Error Messages [FIXED]
 ────────────────────────────────────────────────────────────────────────────
 Location: backend/src/controllers/authController.js (lines 108-121)
 Risk: "Invalid email or password" vs "Account is inactive" reveals whether an 
       email is registered.
-Fix: Always return the same generic message regardless of failure reason. Use 
-     a dummy hash comparison when user not found to prevent timing attacks.
+Fix: Implemented timing-safe login with dummy hash comparison. Always verifies
+     password (even when user doesn't exist) and returns the same generic
+     "Invalid email or password" message for all failure cases (user not found,
+     wrong password, or inactive account). Prevents account enumeration and
+     timing attacks.
+     File: backend/src/controllers/authController.js
 
 C4. XSS via dangerouslySetInnerHTML Without Sanitization
 ────────────────────────────────────────────────────────────────────────────
