@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Plus, Eye, Code, X, SlidersHorizontal, MoreHorizontal, Star, Trash2 } from "lucide-react";
 import { api } from "../services/api";
 import { toast } from "../utils/toast";
@@ -53,6 +53,9 @@ export default function ProposalTemplates() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [serviceTypeFilter, setServiceTypeFilter] = useState([]);
+
+  // Server-side facet counts
+  const [facets, setFacets] = useState({ serviceType: {} });
 
   // Pagination
   const [pagination, setPagination] = useState({
@@ -109,6 +112,9 @@ export default function ProposalTemplates() {
         limit: 10,
         totalPages: 1,
       });
+      if (response.facets) {
+        setFacets(response.facets);
+      }
     } catch (error) {
       if (currentFetchId !== fetchIdRef.current) return;
       toast.error("Failed to fetch proposal templates");
@@ -174,9 +180,11 @@ export default function ProposalTemplates() {
     }
   };
 
-  const getServiceTypeCount = (value) => {
-    return templates.filter(t => t.templateType === value).length;
-  };
+  // Facet count getter — reads from server-side counts
+  const getServiceTypeCount = useCallback(
+    (value) => facets.serviceType[value] || 0,
+    [facets.serviceType],
+  );
 
   const allColumns = [
       {

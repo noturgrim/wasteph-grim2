@@ -1,6 +1,6 @@
 import { db } from "../db/index.js";
 import { proposalTemplateTable, activityLogTable, serviceTable } from "../db/schema.js";
-import { eq, desc, and, or, like, count, inArray } from "drizzle-orm";
+import { eq, desc, and, or, like, count, inArray, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 
 /**
@@ -107,8 +107,46 @@ class ProposalTemplateService {
       .limit(limit)
       .offset(offset);
 
+    // Facet counts — count per templateType (unfiltered by templateType, but respects isActive + search)
+    const facetConditions = [];
+    if (isActive !== undefined) {
+      facetConditions.push(eq(proposalTemplateTable.isActive, isActive));
+    }
+    if (search) {
+      const searchTerm = `%${search}%`;
+      facetConditions.push(
+        or(
+          like(proposalTemplateTable.name, searchTerm),
+          like(proposalTemplateTable.description, searchTerm)
+        )
+      );
+    }
+
+    let facetQuery = db
+      .select({
+        templateType: proposalTemplateTable.templateType,
+        count: count(),
+      })
+      .from(proposalTemplateTable)
+      .groupBy(proposalTemplateTable.templateType);
+
+    if (facetConditions.length > 0) {
+      facetQuery = facetQuery.where(and(...facetConditions));
+    }
+
+    const facetRows = await facetQuery;
+    const serviceTypeFacets = {};
+    for (const row of facetRows) {
+      if (row.templateType) {
+        serviceTypeFacets[row.templateType] = row.count;
+      }
+    }
+
     return {
       data: templates,
+      facets: {
+        serviceType: serviceTypeFacets,
+      },
       pagination: {
         total,
         page,
