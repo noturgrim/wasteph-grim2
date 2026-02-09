@@ -2,6 +2,7 @@ import puppeteer from "puppeteer";
 import Handlebars from "handlebars";
 import { AppError } from "../middleware/errorHandler.js";
 import { registerHandlebarsHelpers } from "../utils/handlebarsHelpers.js";
+import { getEnv } from "../utils/envValidator.js";
 
 /**
  * PDFService - Handle PDF generation from HTML templates
@@ -124,7 +125,7 @@ class PDFService {
     const baseData = {
       // Company info
       companyLogoUrl:
-        process.env.COMPANY_LOGO_URL || "https://wasteph.com/logo.png",
+        getEnv("COMPANY_LOGO_URL", "https://wasteph.com/logo.png"),
 
       // Dates
       proposalDate: this.formatDate(proposalDate),

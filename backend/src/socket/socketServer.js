@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import { lucia } from "../auth/lucia.js";
+import { requireEnv } from "../utils/envValidator.js";
 
 /**
  * Socket.IO Server Setup
@@ -18,7 +19,7 @@ class SocketServer {
   initialize(httpServer) {
     this.io = new Server(httpServer, {
       cors: {
-        origin: process.env.FRONTEND_URL || "http://localhost:5173",
+        origin: requireEnv("FRONTEND_URL", "http://localhost:5173"),
         methods: ["GET", "POST"],
         credentials: true,
       },

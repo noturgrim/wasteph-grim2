@@ -120,6 +120,12 @@ export const updateUser = async (req, res, next) => {
           message: "You cannot change your own role",
         });
       }
+      if (isMasterSales !== undefined && isMasterSales !== req.user.isMasterSales) {
+        return res.status(400).json({
+          success: false,
+          message: "You cannot change your own master sales status",
+        });
+      }
       if (isActive === false) {
         return res.status(400).json({
           success: false,

@@ -1,15 +1,12 @@
 import crypto from "crypto";
+import { requireEnv } from "../utils/envValidator.js";
 
 // Secret for HMAC-signing CSRF tokens
-// Set CSRF_SECRET in .env for persistence across restarts
-const CSRF_SECRET =
-  process.env.CSRF_SECRET || crypto.randomBytes(32).toString("hex");
-
-if (!process.env.CSRF_SECRET) {
-  console.warn(
-    "CSRF_SECRET not set in environment. CSRF tokens will be invalidated on server restart.",
-  );
-}
+// MUST be set in .env for production to prevent token invalidation on restart
+const CSRF_SECRET = requireEnv(
+  "CSRF_SECRET",
+  crypto.randomBytes(32).toString("hex")
+);
 
 /**
  * Generate a CSRF token tied to a specific session ID.

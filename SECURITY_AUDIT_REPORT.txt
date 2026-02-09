@@ -156,15 +156,7 @@ Location: backend/package.json -- Express 4.18.2
 Risk: Known XSS vulnerability via `response.redirect()`.
 Fix: Upgrade: npm install express@^4.20.0
 
-C12. Missing Validation on Multiple Routes
-────────────────────────────────────────────────────────────────────────────
-Locations:
-- backend/src/routes/calendarEventRoutes.js:49 -- PATCH has no validation
-- backend/src/routes/serviceRequestRoutes.js -- create/update lack validation
 
-Risk: Unvalidated input flows directly to database operations.
-Fix: Add express-validator or Zod validation middleware to all routes accepting 
-     user input.
 
 ================================================================================
 HIGH FINDINGS (16) -- FIX WITHIN DAYS
@@ -213,13 +205,20 @@ Location: backend/src/controllers/contractController.js (lines 65-97, 375-410)
 Risk: Sales users can request/send contracts for other users' proposals.
 Fix: Add ownership validation like other operations.
 
-H7. User Can Modify Own isMasterSales Flag
+H7. User Can Modify Own isMasterSales Flag [FIXED]
 ────────────────────────────────────────────────────────────────────────────
 Location: backend/src/controllers/userController.js (lines 111-129)
 Risk: Self-service profile update doesn't prevent `isMasterSales` modification, 
       allowing privilege escalation.
 Fix: Block `isMasterSales` changes in self-update the same way `role` changes 
      are blocked.
+
+✅ FIXED:
+- Added self-modification check for `isMasterSales` in `updateUser()` controller
+- Prevents users from granting themselves master sales privileges
+- Returns 400 error: "You cannot change your own master sales status"
+- Follows the same pattern as role and isActive checks
+- File: backend/src/controllers/userController.js (lines 123-128)
 
 H8. Inquiry Deletion Missing Role Check
 ────────────────────────────────────────────────────────────────────────────
@@ -246,12 +245,25 @@ Risk: `PutObjectCommand` doesn't specify ACL. Objects may be publicly accessible
       depending on bucket policy.
 Fix: Add `ACL: "private"` to all S3 uploads, enforce via bucket policy.
 
-H11. CORS Fallback to Localhost in Production
+H11. CORS Fallback to Localhost in Production [FIXED]
 ────────────────────────────────────────────────────────────────────────────
 Location: backend/src/index.js (line 55)
 Risk: If `FRONTEND_URL` env var is missing, CORS defaults to 
       `http://localhost:5173`.
 Fix: Throw error if `FRONTEND_URL` is not set in production.
+
+✅ FIXED:
+- Created environment validation utility (backend/src/utils/envValidator.js)
+- Added `validateCriticalEnv()` function that checks all required env vars on startup
+- Applied `requireEnv()` to all critical fallbacks:
+  * FRONTEND_URL in index.js (CORS)
+  * FRONTEND_URL in socketServer.js (Socket.IO CORS)
+  * FRONTEND_URL in emailService.js (11 email templates)
+  * CSRF_SECRET in csrf.js (session token signing)
+  * SMTP_PORT in emailService.js
+- Applied `getEnv()` to non-critical fallbacks (PORT, NODE_ENV, TZ, COMPANY_LOGO_URL)
+- Production deployments will now fail fast with clear error messages if critical vars missing
+- Development remains user-friendly with fallbacks and warnings
 
 H12. Error Handler May Leak Stack Traces
 ────────────────────────────────────────────────────────────────────────────

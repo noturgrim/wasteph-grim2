@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { AppError } from "../middleware/errorHandler.js";
+import { requireEnv, getEnv } from "../utils/envValidator.js";
 
 /**
  * EmailService - Handle all email sending operations
@@ -16,12 +17,12 @@ class EmailService {
   initializeTransporter() {
     // Log SMTP configuration (without password)
     console.log("📧 Initializing Email Service...");
-    console.log(`   SMTP_HOST: ${process.env.SMTP_HOST || "NOT SET"}`);
-    console.log(`   SMTP_PORT: ${process.env.SMTP_PORT || "587 (default)"}`);
+    console.log(`   SMTP_HOST: ${getEnv("SMTP_HOST", "NOT SET")}`);
+    console.log(`   SMTP_PORT: ${getEnv("SMTP_PORT", "587 (default)")}`);
     console.log(
-      `   SMTP_SECURE: ${process.env.SMTP_SECURE || "false (default)"}`,
+      `   SMTP_SECURE: ${getEnv("SMTP_SECURE", "false (default)")}`,
     );
-    console.log(`   SMTP_USER: ${process.env.SMTP_USER || "NOT SET"}`);
+    console.log(`   SMTP_USER: ${getEnv("SMTP_USER", "NOT SET")}`);
     console.log(
       `   SMTP_PASSWORD: ${process.env.SMTP_PASSWORD ? "****" : "NOT SET"}`,
     );
@@ -38,7 +39,7 @@ class EmailService {
 
     this.transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || "587"),
+      port: parseInt(getEnv("SMTP_PORT", "587")),
       secure: process.env.SMTP_SECURE === "true",
       auth: {
         user: process.env.SMTP_USER,
@@ -193,7 +194,7 @@ class EmailService {
     responseToken,
     validUntilStr,
   ) {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = requireEnv("FRONTEND_URL", "http://localhost:5173");
     return `
 <!DOCTYPE html>
 <html lang="en">
@@ -491,7 +492,7 @@ class EmailService {
     responseToken,
     validUntilStr,
   ) {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = requireEnv("FRONTEND_URL", "http://localhost:5173");
     return `
 <!DOCTYPE html>
 <html lang="en">
@@ -1231,7 +1232,7 @@ class EmailService {
     responseToken,
     contractNumber = null,
   ) {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = requireEnv("FRONTEND_URL", "http://localhost:5173");
     return `
 <!DOCTYPE html>
 <html lang="en">
@@ -1534,7 +1535,7 @@ class EmailService {
    * @returns {string} HTML content
    */
   generateNewLeadEmailHTML(leadData) {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = requireEnv("FRONTEND_URL", "http://localhost:5173");
     const { name, email, phoneNumber, companyName, serviceInterest, message } =
       leadData;
 
@@ -1850,7 +1851,7 @@ class EmailService {
    * @returns {string} HTML content
    */
   generateProposalResponseEmailHTML(data) {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = requireEnv("FRONTEND_URL", "http://localhost:5173");
     const { clientName, proposalNumber, action, companyName, clientEmail } =
       data;
     const isAccepted = action === "accepted";
@@ -2165,7 +2166,7 @@ class EmailService {
    * @returns {string} HTML content
    */
   generateContractSignedEmailHTML(data) {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = requireEnv("FRONTEND_URL", "http://localhost:5173");
     const {
       clientName,
       contractNumber,
@@ -2443,7 +2444,7 @@ class EmailService {
    * @returns {string} HTML content
    */
   generateNewTicketEmailHTML(data) {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = requireEnv("FRONTEND_URL", "http://localhost:5173");
     const {
       ticketNumber,
       ticketId,
@@ -2764,7 +2765,7 @@ class EmailService {
    * @returns {string} HTML content
    */
   generateTicketUpdateEmailHTML(data) {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = requireEnv("FRONTEND_URL", "http://localhost:5173");
     const {
       ticketNumber,
       ticketId,
@@ -3108,7 +3109,7 @@ class EmailService {
    * @returns {string} HTML content
    */
   generateEventAssignedEmailHTML(data) {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = requireEnv("FRONTEND_URL", "http://localhost:5173");
     const {
       title,
       description,
@@ -3412,7 +3413,7 @@ class EmailService {
    * @returns {string} HTML content
    */
   generateEventReminderEmailHTML(data, timeType) {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = requireEnv("FRONTEND_URL", "http://localhost:5173");
     const {
       title,
       description,
@@ -3650,7 +3651,7 @@ class EmailService {
    * @returns {string} HTML content
    */
   generateAutoScheduleSalesEmailHTML(data) {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = requireEnv("FRONTEND_URL", "http://localhost:5173");
     const { events, contractNumber, companyName, salesPersonName } = data;
 
     const eventListHTML = events
@@ -3910,7 +3911,7 @@ class EmailService {
                 <strong>WastePH - Private Waste Management</strong>
               </p>
               <p style="margin: 0; font-size: 12px; color: #5f6368; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
-                For support, contact us at ${process.env.SMTP_USER || "support@wasteph.com"}
+                For support, contact us at ${getEnv("SMTP_USER", "support@wasteph.com")}
               </p>
             </td>
           </tr>
