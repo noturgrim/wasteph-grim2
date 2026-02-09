@@ -18,8 +18,37 @@ const COLLECTION_SCHEDULE_LABELS = {
   other: "Other",
 };
 
+const INDUSTRY_LABELS = {
+  food_and_beverage: "Food & Beverage",
+  retail: "Retail",
+  manufacturing: "Manufacturing",
+  healthcare: "Healthcare",
+  hospitality: "Hospitality",
+  education: "Education",
+  construction: "Construction",
+  real_estate: "Real Estate",
+  logistics: "Logistics",
+  agriculture: "Agriculture",
+  technology: "Technology",
+  government: "Government",
+  residential: "Residential",
+  other: "Other",
+};
+
 export function ContractDetailsSection({ contract }) {
   const contractData = contract?.contract || {};
+
+  // Resolve clientIndustry: column first, fallback to contractData JSON
+  let clientIndustry = contractData.clientIndustry || "";
+  if (!clientIndustry && contractData.contractData) {
+    try {
+      const parsed =
+        typeof contractData.contractData === "string"
+          ? JSON.parse(contractData.contractData)
+          : contractData.contractData;
+      clientIndustry = parsed.clientIndustry || "";
+    } catch { /* ignore */ }
+  }
 
   // Parse signatories if it's a JSON string
   let signatories = [];
@@ -84,6 +113,10 @@ export function ContractDetailsSection({ contract }) {
           />
           <DetailRow label="Company Name" value={contractData.companyName} />
           <DetailRow
+            label="Industry"
+            value={clientIndustry ? (INDUSTRY_LABELS[clientIndustry] || clientIndustry) : null}
+          />
+          <DetailRow
             label="Email"
             value={contractData.clientEmailContract}
             required
@@ -103,12 +136,23 @@ export function ContractDetailsSection({ contract }) {
         <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 space-y-1">
           <DetailRow
             label="Contract Start"
-            value={contractData.contractStartDate ? format(new Date(contractData.contractStartDate), "MMM dd, yyyy") : null}
+            value={
+              contractData.contractStartDate
+                ? format(
+                    new Date(contractData.contractStartDate),
+                    "MMM dd, yyyy",
+                  )
+                : null
+            }
             required
           />
           <DetailRow
             label="Contract End"
-            value={contractData.contractEndDate ? format(new Date(contractData.contractEndDate), "MMM dd, yyyy") : null}
+            value={
+              contractData.contractEndDate
+                ? format(new Date(contractData.contractEndDate), "MMM dd, yyyy")
+                : null
+            }
             required
           />
           <DetailRow

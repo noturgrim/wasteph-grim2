@@ -168,6 +168,7 @@ class ContractService {
               clientName: contractsTable.clientName,
               companyName: contractsTable.companyName,
               clientEmailContract: contractsTable.clientEmailContract,
+              clientIndustry: contractsTable.clientIndustry,
               clientAddress: contractsTable.clientAddress,
               contractDuration: contractsTable.contractDuration,
               contractStartDate: contractsTable.contractStartDate,
@@ -436,6 +437,7 @@ class ContractService {
         contractType,
         clientName,
         companyName,
+        clientIndustry: clientIndustry || null,
         clientEmailContract,
         clientAddress,
         contractStartDate: new Date(contractStartDate),
@@ -693,6 +695,7 @@ class ContractService {
         contractType: editedData.contractType,
         clientName: editedData.clientName,
         companyName: editedData.companyName,
+        clientIndustry: editedData.clientIndustry || null,
         clientEmailContract: editedData.clientEmailContract,
         clientAddress: editedData.clientAddress,
         contractStartDate: editedData.contractStartDate
@@ -1030,34 +1033,6 @@ class ContractService {
       console.log(`Found existing client: ${client.id} (${client.email})`);
     } else {
       // Parse proposal data and contract data for industry
-      // contractData (admin-edited) takes priority over proposalData (original)
-      let clientIndustry = "";
-      try {
-        if (contract.contractData) {
-          const parsed =
-            typeof contract.contractData === "string"
-              ? JSON.parse(contract.contractData)
-              : contract.contractData;
-          clientIndustry = parsed.clientIndustry || "";
-        }
-      } catch {
-        /* ignore parse errors */
-      }
-      if (!clientIndustry) {
-        try {
-          const proposal = contractData.proposal;
-          if (proposal?.proposalData) {
-            const parsed =
-              typeof proposal.proposalData === "string"
-                ? JSON.parse(proposal.proposalData)
-                : proposal.proposalData;
-            clientIndustry = parsed.clientIndustry || "";
-          }
-        } catch {
-          /* ignore parse errors */
-        }
-      }
-
       // Only store fields directly available from the contract
       const clientData = {
         companyName: contract.companyName || inquiry?.company || "Unknown",
@@ -1067,7 +1042,7 @@ class ContractService {
         address: contract.clientAddress || "",
         city: "",
         province: "",
-        industry: clientIndustry,
+        industry: contract.clientIndustry || "",
         contractStartDate: contract.contractStartDate || null,
         contractEndDate: contract.contractEndDate || null,
       };

@@ -613,6 +613,7 @@ export const contractsTable = pgTable(
     clientName: text("client_name"), // Contact person name
     companyName: text("company_name"), // Full corporate name (optional)
     clientEmailContract: text("client_email_contract"), // Client email for contract form
+    clientIndustry: text("client_industry"), // Client's company industry
     clientAddress: text("client_address"), // Client address
     contractDuration: text("contract_duration"), // Derived display string kept for PDF templates
     contractStartDate: timestamp("contract_start_date", { withTimezone: true }),

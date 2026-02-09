@@ -99,22 +99,11 @@ export function GenerateContractDialog({
         }
       }
 
-      // Parse clientIndustry from contractData JSON
-      let clientIndustry = "";
-      if (contractData.contractData) {
-        try {
-          const parsed = typeof contractData.contractData === "string"
-            ? JSON.parse(contractData.contractData)
-            : contractData.contractData;
-          clientIndustry = parsed.clientIndustry || "";
-        } catch { /* ignore */ }
-      }
-
       const data = {
         contractType: contractData.contractType || "",
         clientName: contractData.clientName || "",
         companyName: contractData.companyName || "",
-        clientIndustry,
+        clientIndustry: contractData.clientIndustry || "",
         clientEmailContract: contractData.clientEmailContract || "",
         clientAddress: contractData.clientAddress || "",
         contractStartDate: contractData.contractStartDate ? contractData.contractStartDate.slice(0, 10) : "",
