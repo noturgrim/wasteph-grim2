@@ -1,6 +1,7 @@
 import { db } from "../../db/index.js";
 import { contractsTable, proposalTable, inquiryTable, userTable } from "../../db/schema.js";
 import { eq } from "drizzle-orm";
+import contractService from "../../services/contractService.js";
 
 /**
  * Contract Socket Events
@@ -175,16 +176,25 @@ class ContractEventEmitter {
    * Register socket listeners for contracts
    */
   registerListeners(socket) {
-    // Subscribe to all contracts updates
+    // Subscribe to all contracts updates (admin/super_admin only)
     socket.on("contracts:subscribe", () => {
-      socket.join("contracts");
-      console.log(`Socket ${socket.id} subscribed to contracts`);
+      const userRole = socket.user?.role;
+
+      // Only admins and super_admins can subscribe to all contracts
+      if (userRole === "admin" || userRole === "super_admin") {
+        socket.join("contracts");
+        console.log(`User ${socket.user.id} subscribed to all contracts`);
+      } else {
+        console.warn(
+          `User ${socket.user?.id} (${userRole}) denied access to all contracts`
+        );
+      }
     });
 
     // Unsubscribe from contracts
     socket.on("contracts:unsubscribe", () => {
       socket.leave("contracts");
-      console.log(`Socket ${socket.id} unsubscribed from contracts`);
+      console.log(`User ${socket.user?.id} unsubscribed from contracts`);
     });
   }
 }

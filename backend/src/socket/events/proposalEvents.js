@@ -3,6 +3,8 @@
  * Defines all real-time events for the proposal system
  */
 
+import proposalService from "../../services/proposalService.js";
+
 export const PROPOSAL_EVENTS = {
   // Proposal lifecycle events
   PROPOSAL_REQUESTED: "proposal:requested",
@@ -470,29 +472,65 @@ class ProposalEventEmitter {
    * @param {Object} socket - Socket.IO socket instance
    */
   registerListeners(socket) {
-    // Subscribe to all proposals
+    // Subscribe to all proposals (admin/super_admin only)
     socket.on(PROPOSAL_EVENTS.SUBSCRIBE_ALL_PROPOSALS, () => {
-      socket.join("proposals");
-      console.log(`User ${socket.userId} subscribed to all proposals`);
+      const userRole = socket.user?.role;
+
+      // Only admins and super_admins can subscribe to all proposals
+      if (userRole === "admin" || userRole === "super_admin") {
+        socket.join("proposals");
+        console.log(`User ${socket.user.id} subscribed to all proposals`);
+      } else {
+        console.warn(
+          `User ${socket.user?.id} (${userRole}) denied access to all proposals`
+        );
+      }
     });
 
     // Unsubscribe from all proposals
     socket.on(PROPOSAL_EVENTS.UNSUBSCRIBE_ALL_PROPOSALS, () => {
       socket.leave("proposals");
-      console.log(`User ${socket.userId} unsubscribed from all proposals`);
+      console.log(`User ${socket.user?.id} unsubscribed from all proposals`);
     });
 
-    // Subscribe to specific proposal
-    socket.on(PROPOSAL_EVENTS.SUBSCRIBE_PROPOSAL, ({ proposalId }) => {
-      socket.join(`proposal:${proposalId}`);
-      console.log(`User ${socket.userId} subscribed to proposal ${proposalId}`);
+    // Subscribe to specific proposal (with authorization)
+    socket.on(PROPOSAL_EVENTS.SUBSCRIBE_PROPOSAL, async ({ proposalId }) => {
+      try {
+        if (!proposalId) {
+          console.warn("Proposal subscription attempted without proposalId");
+          return;
+        }
+
+        const userId = socket.user?.id;
+        const userRole = socket.user?.role;
+        const isMasterSales = socket.user?.isMasterSales;
+
+        // Fetch proposal to verify access
+        const proposal = await proposalService.getProposalById(proposalId);
+
+        // Authorization: admins, super_admins, or the user who created it
+        const isAdmin = userRole === "admin" || userRole === "super_admin";
+        const isOwner = proposal.requestedBy === userId;
+        const canAccess = isAdmin || isOwner || (userRole === "sales" && isMasterSales);
+
+        if (canAccess) {
+          socket.join(`proposal:${proposalId}`);
+          console.log(`User ${userId} subscribed to proposal ${proposalId}`);
+        } else {
+          console.warn(
+            `User ${userId} (${userRole}) denied access to proposal ${proposalId}`
+          );
+        }
+      } catch (error) {
+        console.error(`Error subscribing to proposal ${proposalId}:`, error.message);
+      }
     });
 
     // Unsubscribe from specific proposal
     socket.on(PROPOSAL_EVENTS.UNSUBSCRIBE_PROPOSAL, ({ proposalId }) => {
       socket.leave(`proposal:${proposalId}`);
       console.log(
-        `User ${socket.userId} unsubscribed from proposal ${proposalId}`
+        `User ${socket.user?.id} unsubscribed from proposal ${proposalId}`
       );
     });
   }

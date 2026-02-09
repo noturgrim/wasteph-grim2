@@ -124,7 +124,7 @@ Fix: Added magic bytes validation to backend/src/utils/fileUtils.js with
      Files: backend/src/utils/fileUtils.js, ticketRoutes.js, blogRoutes.js,
             showcaseRoutes.js, clientsShowcaseRoutes.js, contractRoutes.js
 
-C9. Socket Room Subscriptions Lack Authorization
+C9. Socket Room Subscriptions Lack Authorization [FIXED]
 ────────────────────────────────────────────────────────────────────────────
 Locations:
 - backend/src/socket/events/proposalEvents.js (lines 474-497)
@@ -132,7 +132,13 @@ Locations:
 
 Risk: Any authenticated user can subscribe to any proposal/contract room without 
       permission checks.
-Fix: Verify user has access to the specific resource before allowing room join.
+Fix: Added authorization checks to all socket subscriptions:
+     - "All proposals" room: restricted to admin/super_admin only
+     - Specific proposal room: verifies user is admin, super_admin, master_sales,
+       or the proposal owner (requestedBy)
+     - "All contracts" room: restricted to admin/super_admin only
+     Also fixed socket.userId bug (should be socket.user.id - see H15).
+     Files: backend/src/socket/events/proposalEvents.js, contractEvents.js
 
 C10. No Body Parser Size Limits (DoS)
 ────────────────────────────────────────────────────────────────────────────
@@ -285,11 +291,12 @@ Risk: Users locked out of accounts have no recovery path. Increases support
 Fix: Implement password reset with cryptographically secure tokens, expiry, and 
      rate limiting.
 
-H15. Socket Bug: socket.userId vs socket.user.id
+H15. Socket Bug: socket.userId vs socket.user.id [FIXED]
 ────────────────────────────────────────────────────────────────────────────
 Location: backend/src/socket/events/proposalEvents.js (lines 476, 482, 488, 495)
 Risk: Authorization checks reference wrong property, effectively bypassing them.
-Fix: Replace `socket.userId` with `socket.user.id`.
+Fix: Fixed as part of C9. All references now use `socket.user?.id` correctly.
+     File: backend/src/socket/events/proposalEvents.js
 
 H16. Outdated Puppeteer (21.6.1)
 ────────────────────────────────────────────────────────────────────────────
