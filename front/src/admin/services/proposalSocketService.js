@@ -17,7 +17,7 @@ class ProposalSocketService {
    */
   initialize() {
     if (this.isInitialized) {
-      console.log("⚠️ Proposal socket service already initialized");
+      console.log("Proposal socket service already initialized");
       return;
     }
 
@@ -28,7 +28,7 @@ class ProposalSocketService {
     this._registerEventListeners();
 
     this.isInitialized = true;
-    console.log("✅ Proposal socket listeners initialized");
+    console.log("Proposal socket listeners initialized");
   }
 
   /**
@@ -38,32 +38,30 @@ class ProposalSocketService {
   _registerEventListeners() {
     // Proposal requested (Sales → Admin)
     socketService.on("proposal:requested", (data) =>
-      this._handleProposalRequested(data)
+      this._handleProposalRequested(data),
     );
 
     // Proposal approved (Admin → Sales)
     socketService.on("proposal:approved", (data) =>
-      this._handleProposalApproved(data)
+      this._handleProposalApproved(data),
     );
 
     // Proposal rejected (Admin → Sales)
     socketService.on("proposal:rejected", (data) =>
-      this._handleProposalRejected(data)
+      this._handleProposalRejected(data),
     );
 
     // Proposal sent to client (Sales → Admin)
-    socketService.on("proposal:sent", (data) =>
-      this._handleProposalSent(data)
-    );
+    socketService.on("proposal:sent", (data) => this._handleProposalSent(data));
 
     // Proposal accepted by client
     socketService.on("proposal:accepted", (data) =>
-      this._handleProposalAccepted(data)
+      this._handleProposalAccepted(data),
     );
 
     // Proposal declined by client
     socketService.on("proposal:declined", (data) =>
-      this._handleProposalDeclined(data)
+      this._handleProposalDeclined(data),
     );
   }
 
@@ -75,7 +73,7 @@ class ProposalSocketService {
     const { proposal, user } = data;
     const userName = `${user.firstName} ${user.lastName}`;
 
-    console.log("📨 Proposal requested:", proposal.proposalNumber);
+    // console.log("📨 Proposal requested:", proposal.proposalNumber);
 
     // Show toast notification
     toast.success(`New Proposal Request`, {
@@ -94,7 +92,7 @@ class ProposalSocketService {
     const { proposal, user } = data;
     const userName = `${user.firstName} ${user.lastName}`;
 
-    console.log("✅ Proposal approved:", proposal.proposalNumber);
+    // console.log("✅ Proposal approved:", proposal.proposalNumber);
 
     // Show toast notification
     toast.success(`Proposal Approved`, {
@@ -113,7 +111,7 @@ class ProposalSocketService {
     const { proposal, user } = data;
     const userName = `${user.firstName} ${user.lastName}`;
 
-    console.log("❌ Proposal rejected:", proposal.proposalNumber);
+    // console.log("❌ Proposal rejected:", proposal.proposalNumber);
 
     // Show toast notification
     toast.error(`Proposal Rejected`, {
@@ -132,7 +130,7 @@ class ProposalSocketService {
     const { proposal, user } = data;
     const userName = `${user.firstName} ${user.lastName}`;
 
-    console.log("📤 Proposal sent:", proposal.proposalNumber);
+    // console.log("📤 Proposal sent:", proposal.proposalNumber);
 
     // Show toast notification
     toast.info(`Proposal Sent to Client`, {
@@ -150,7 +148,7 @@ class ProposalSocketService {
   _handleProposalAccepted(data) {
     const { proposal } = data;
 
-    console.log("🎉 Client accepted proposal:", proposal.proposalNumber);
+    // console.log("🎉 Client accepted proposal:", proposal.proposalNumber);
 
     // Show toast notification
     toast.success(`Client Accepted Proposal`, {
@@ -168,7 +166,7 @@ class ProposalSocketService {
   _handleProposalDeclined(data) {
     const { proposal } = data;
 
-    console.log("❌ Client declined proposal:", proposal.proposalNumber);
+    // console.log("❌ Client declined proposal:", proposal.proposalNumber);
 
     // Show toast notification
     toast.warning(`Client Declined Proposal`, {
@@ -185,7 +183,7 @@ class ProposalSocketService {
    */
   subscribeToProposal(proposalId) {
     socketService.emit("proposal:subscribe", { proposalId });
-    console.log(`📋 Subscribed to proposal ${proposalId}`);
+    console.log(`Subscribed to proposal ${proposalId}`);
   }
 
   /**
@@ -194,7 +192,7 @@ class ProposalSocketService {
    */
   unsubscribeFromProposal(proposalId) {
     socketService.emit("proposal:unsubscribe", { proposalId });
-    console.log(`📋 Unsubscribed from proposal ${proposalId}`);
+    console.log(`Unsubscribed from proposal ${proposalId}`);
   }
 
   /**
@@ -264,7 +262,7 @@ class ProposalSocketService {
     this.eventHandlers.clear();
 
     this.isInitialized = false;
-    console.log("✅ Proposal socket listeners cleaned up");
+    console.log("Proposal socket listeners cleaned up");
   }
 }
 

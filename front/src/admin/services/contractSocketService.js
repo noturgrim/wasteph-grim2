@@ -16,33 +16,33 @@ class ContractSocketService {
 
     this._registerEventListeners();
     this.initialized = true;
-    console.log("✅ Contract socket listeners initialized");
+    console.log("Contract socket listeners initialized");
   }
 
   _registerEventListeners() {
     // Contract requested by sales
     socketService.on("contract:requested", (data) =>
-      this._handleContractRequested(data)
+      this._handleContractRequested(data),
     );
 
     // Contract sent to sales by admin
     socketService.on("contract:sentToSales", (data) =>
-      this._handleContractSentToSales(data)
+      this._handleContractSentToSales(data),
     );
 
     // Contract sent to client
     socketService.on("contract:sentToClient", (data) =>
-      this._handleContractSentToClient(data)
+      this._handleContractSentToClient(data),
     );
 
     // Contract signed by client
     socketService.on("contract:signed", (data) =>
-      this._handleContractSigned(data)
+      this._handleContractSigned(data),
     );
   }
 
   _handleContractRequested(data) {
-    console.log("📝 Contract requested:", data);
+    // console.log("📝 Contract requested:", data);
 
     // Show toast notification
     toast.success("New Contract Request", {
@@ -56,7 +56,7 @@ class ContractSocketService {
   }
 
   _handleContractSentToSales(data) {
-    console.log("📄 Contract sent to sales:", data);
+    // console.log("📄 Contract sent to sales:", data);
 
     // Show toast notification
     toast.success("Contract Ready", {
@@ -70,7 +70,7 @@ class ContractSocketService {
   }
 
   _handleContractSentToClient(data) {
-    console.log("📧 Contract sent to client:", data);
+    // console.log("📧 Contract sent to client:", data);
 
     // Show toast notification
     toast.info("Contract Sent", {
@@ -82,7 +82,7 @@ class ContractSocketService {
   }
 
   _handleContractSigned(data) {
-    console.log("✅ Contract signed:", data);
+    // console.log("✅ Contract signed:", data);
 
     // Show toast notification
     toast.success("Contract Signed", {
@@ -155,7 +155,7 @@ class ContractSocketService {
     this.unsubscribe();
     this.listeners.clear();
     this.initialized = false;
-    console.log("🧹 Contract socket listeners cleaned up");
+    console.log("Contract socket listeners cleaned up");
   }
 }
 

@@ -62,7 +62,7 @@ class LeadSocketService {
       this.listeners.set(LEAD_EVENTS.LEAD_DELETED, onLeadDeleted);
     }
 
-    console.log("✅ Subscribed to lead events");
+    console.log("Subscribed to lead events");
   }
 
   /**
@@ -81,7 +81,7 @@ class LeadSocketService {
     });
 
     this.listeners.clear();
-    console.log("✅ Unsubscribed from lead events");
+    console.log("Unsubscribed from lead events");
   }
 
   /**

@@ -17,17 +17,29 @@ class TicketSocketService {
     // Ticket lifecycle events
     socketService.on("ticket:created", this.handleTicketCreated.bind(this));
     socketService.on("ticket:updated", this.handleTicketUpdated.bind(this));
-    socketService.on("ticket:statusChanged", this.handleTicketStatusChanged.bind(this));
-    socketService.on("ticket:priorityChanged", this.handleTicketPriorityChanged.bind(this));
+    socketService.on(
+      "ticket:statusChanged",
+      this.handleTicketStatusChanged.bind(this),
+    );
+    socketService.on(
+      "ticket:priorityChanged",
+      this.handleTicketPriorityChanged.bind(this),
+    );
 
     // Comment events
     socketService.on("ticket:commentAdded", this.handleCommentAdded.bind(this));
 
     // Attachment events
-    socketService.on("ticket:attachmentAdded", this.handleAttachmentAdded.bind(this));
-    socketService.on("ticket:attachmentDeleted", this.handleAttachmentDeleted.bind(this));
+    socketService.on(
+      "ticket:attachmentAdded",
+      this.handleAttachmentAdded.bind(this),
+    );
+    socketService.on(
+      "ticket:attachmentDeleted",
+      this.handleAttachmentDeleted.bind(this),
+    );
 
-    console.log("✅ Ticket socket listeners initialized");
+    console.log("Ticket socket listeners initialized");
   }
 
   /**
@@ -36,11 +48,26 @@ class TicketSocketService {
   cleanup() {
     socketService.off("ticket:created", this.handleTicketCreated.bind(this));
     socketService.off("ticket:updated", this.handleTicketUpdated.bind(this));
-    socketService.off("ticket:statusChanged", this.handleTicketStatusChanged.bind(this));
-    socketService.off("ticket:priorityChanged", this.handleTicketPriorityChanged.bind(this));
-    socketService.off("ticket:commentAdded", this.handleCommentAdded.bind(this));
-    socketService.off("ticket:attachmentAdded", this.handleAttachmentAdded.bind(this));
-    socketService.off("ticket:attachmentDeleted", this.handleAttachmentDeleted.bind(this));
+    socketService.off(
+      "ticket:statusChanged",
+      this.handleTicketStatusChanged.bind(this),
+    );
+    socketService.off(
+      "ticket:priorityChanged",
+      this.handleTicketPriorityChanged.bind(this),
+    );
+    socketService.off(
+      "ticket:commentAdded",
+      this.handleCommentAdded.bind(this),
+    );
+    socketService.off(
+      "ticket:attachmentAdded",
+      this.handleAttachmentAdded.bind(this),
+    );
+    socketService.off(
+      "ticket:attachmentDeleted",
+      this.handleAttachmentDeleted.bind(this),
+    );
 
     this.ticketHandlers.clear();
   }
@@ -91,12 +118,12 @@ class TicketSocketService {
    * @param {Object} data - Event data
    */
   handleTicketCreated(data) {
-    console.log("📨 New ticket created:", data.ticket.ticketNumber);
+    // console.log("📨 New ticket created:", data.ticket.ticketNumber);
 
-    const creatorName = data.createdBy 
+    const creatorName = data.createdBy
       ? `${data.createdBy.firstName} ${data.createdBy.lastName}`
       : "Someone";
-    
+
     toast.success("New Ticket Created", {
       description: `${creatorName} created ticket ${data.ticket.ticketNumber}`,
     });
@@ -109,7 +136,7 @@ class TicketSocketService {
    * @param {Object} data - Event data
    */
   handleTicketUpdated(data) {
-    console.log("📨 Ticket updated:", data.ticketNumber);
+    // console.log("📨 Ticket updated:", data.ticketNumber);
 
     toast.info(`Ticket ${data.ticketNumber} was updated`);
 
@@ -121,9 +148,9 @@ class TicketSocketService {
    * @param {Object} data - Event data
    */
   handleTicketStatusChanged(data) {
-    console.log(
-      `📨 Ticket status changed: ${data.ticketNumber} (${data.oldStatus} → ${data.newStatus})`
-    );
+    // console.log(
+    //   `📨 Ticket status changed: ${data.ticketNumber} (${data.oldStatus} → ${data.newStatus})`,
+    // );
 
     const statusLabels = {
       open: "Open",
@@ -133,7 +160,7 @@ class TicketSocketService {
     };
 
     toast.info(
-      `Ticket ${data.ticketNumber} status changed to ${statusLabels[data.newStatus] || data.newStatus}`
+      `Ticket ${data.ticketNumber} status changed to ${statusLabels[data.newStatus] || data.newStatus}`,
     );
 
     this.notifyHandlers("statusChanged", data);
@@ -144,9 +171,9 @@ class TicketSocketService {
    * @param {Object} data - Event data
    */
   handleTicketPriorityChanged(data) {
-    console.log(
-      `📨 Ticket priority changed: ${data.ticketNumber} (${data.oldPriority} → ${data.newPriority})`
-    );
+    // console.log(
+    //   `📨 Ticket priority changed: ${data.ticketNumber} (${data.oldPriority} → ${data.newPriority})`,
+    // );
 
     if (data.urgent) {
       toast.warning(`URGENT: Ticket ${data.ticketNumber} marked as urgent!`, {
@@ -154,7 +181,7 @@ class TicketSocketService {
       });
     } else {
       toast.info(
-        `Ticket ${data.ticketNumber} priority changed to ${data.newPriority}`
+        `Ticket ${data.ticketNumber} priority changed to ${data.newPriority}`,
       );
     }
 
@@ -166,12 +193,12 @@ class TicketSocketService {
    * @param {Object} data - Event data
    */
   handleCommentAdded(data) {
-    console.log(`📨 New comment on ticket: ${data.ticketNumber}`);
+    // console.log(`📨 New comment on ticket: ${data.ticketNumber}`);
 
-    const commenterName = data.comment 
+    const commenterName = data.comment
       ? `${data.comment.firstName} ${data.comment.lastName}`
       : "Someone";
-    
+
     toast.info("New Comment on Ticket", {
       description: `${commenterName} commented on ${data.ticketNumber}`,
     });
@@ -184,7 +211,7 @@ class TicketSocketService {
    * @param {Object} data - Event data
    */
   handleAttachmentAdded(data) {
-    console.log(`📨 Attachment added to ticket: ${data.ticketNumber}`);
+    // console.log(`📨 Attachment added to ticket: ${data.ticketNumber}`);
 
     toast.info(`New attachment on ticket ${data.ticketNumber}`, {
       description: data.attachment.fileName,
@@ -198,7 +225,7 @@ class TicketSocketService {
    * @param {Object} data - Event data
    */
   handleAttachmentDeleted(data) {
-    console.log(`📨 Attachment deleted from ticket: ${data.ticketNumber}`);
+    // console.log(`📨 Attachment deleted from ticket: ${data.ticketNumber}`);
 
     this.notifyHandlers("attachmentDeleted", data);
   }

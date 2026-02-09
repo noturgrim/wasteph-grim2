@@ -24,25 +24,31 @@ export const NotificationProvider = ({ children }) => {
     if (!isSocketConnected) return;
 
     const handleNewNotification = (notification) => {
-      console.log("📬 New notification received:", notification);
+      // console.log("📬 New notification received:", notification);
       setNotifications((prev) => [notification, ...prev]);
       setUnreadCount((prev) => prev + 1);
     };
 
     const handleNotificationRead = ({ notificationId }) => {
-      console.log("📖 Notification marked as read:", notificationId);
+      // console.log("📖 Notification marked as read:", notificationId);
       setNotifications((prev) =>
         prev.map((n) =>
-          n.id === notificationId ? { ...n, isRead: true, readAt: new Date().toISOString() } : n
-        )
+          n.id === notificationId
+            ? { ...n, isRead: true, readAt: new Date().toISOString() }
+            : n,
+        ),
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
     };
 
     const handleAllRead = ({ count }) => {
-      console.log("📖 All notifications marked as read:", count);
+      // console.log("📖 All notifications marked as read:", count);
       setNotifications((prev) =>
-        prev.map((n) => ({ ...n, isRead: true, readAt: new Date().toISOString() }))
+        prev.map((n) => ({
+          ...n,
+          isRead: true,
+          readAt: new Date().toISOString(),
+        })),
       );
       setUnreadCount(0);
     };
@@ -118,7 +124,9 @@ export const NotificationProvider = ({ children }) => {
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error("useNotifications must be used within NotificationProvider");
+    throw new Error(
+      "useNotifications must be used within NotificationProvider",
+    );
   }
   return context;
 };

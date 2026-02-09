@@ -49,7 +49,7 @@ class SocketService {
     this.socket.on("connect", () => {
       this.isConnected = true;
       this.reconnectAttempts = 0;
-      console.log("✅ WebSocket connected:", this.socket.id);
+      console.log("WebSocket connected:", this.socket.id);
 
       // Register any handlers that were queued before the socket was ready
       this.eventHandlers.forEach((handlers, event) => {
@@ -63,7 +63,7 @@ class SocketService {
     });
 
     this.socket.on("connection:success", (data) => {
-      console.log("✅ WebSocket authenticated:", data.user.email);
+      console.log("WebSocket authenticated:", data.user.email);
 
       // Store handlers for this event
       if (this.eventHandlers.has("connection:success")) {
@@ -79,7 +79,7 @@ class SocketService {
 
     this.socket.on("disconnect", (reason) => {
       this.isConnected = false;
-      console.log("❌ WebSocket disconnected:", reason);
+      console.log("WebSocket disconnected:", reason);
 
       if (reason === "io server disconnect") {
         // Server forcefully disconnected, attempt manual reconnect
@@ -93,7 +93,7 @@ class SocketService {
 
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
         console.error(
-          "Max reconnection attempts reached. Please refresh the page."
+          "Max reconnection attempts reached. Please refresh the page.",
         );
         this.emit("connection:failed", { error: error.message });
       }
@@ -104,17 +104,17 @@ class SocketService {
     });
 
     this.socket.on("reconnect", (attemptNumber) => {
-      console.log(`✅ WebSocket reconnected after ${attemptNumber} attempts`);
+      console.log(`WebSocket reconnected after ${attemptNumber} attempts`);
       this.reconnectAttempts = 0;
     });
 
     this.socket.on("reconnect_attempt", (attemptNumber) => {
-      console.log(`🔄 WebSocket reconnection attempt ${attemptNumber}...`);
+      console.log(`WebSocket reconnection attempt ${attemptNumber}...`);
     });
 
     this.socket.on("reconnect_failed", () => {
       console.error(
-        "❌ WebSocket reconnection failed. Please refresh the page."
+        "❌ WebSocket reconnection failed. Please refresh the page.",
       );
       this.emit("connection:failed", { error: "Reconnection failed" });
     });
@@ -217,7 +217,7 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
-      console.log("🔌 WebSocket disconnected manually");
+      console.log("WebSocket disconnected manually");
     }
   }
 

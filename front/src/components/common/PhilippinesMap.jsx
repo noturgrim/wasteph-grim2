@@ -83,7 +83,7 @@ const PhilippinesMap = ({
             selectColor="rgba(21, 128, 61, 0.9)"
             hints={false}
             onSelect={(provinceCode) => {
-              console.log("✅ Province selected:", provinceCode);
+              // console.log("✅ Province selected:", provinceCode);
             }}
             aria-label="Map of the Philippines with Cebu highlighted"
           />

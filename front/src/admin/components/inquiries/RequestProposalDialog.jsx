@@ -161,14 +161,18 @@ export function RequestProposalDialog({
 
             // Check if saved HTML uses old flexbox structure (needs re-rendering)
             const usesFlexbox = savedHtml.includes("display: flex");
-            const hasContentWrapper = savedHtml.includes('<div class="content">');
+            const hasContentWrapper = savedHtml.includes(
+              '<div class="content">',
+            );
             const hasTableHeader = savedHtml.includes("header-table");
 
             if (usesFlexbox || !hasContentWrapper || !hasTableHeader) {
               // Old template structure - re-render from current template instead
 
               // Extract just the editable content from saved HTML
-              const bodyMatch = savedHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+              const bodyMatch = savedHtml.match(
+                /<body[^>]*>([\s\S]*?)<\/body>/i,
+              );
               if (bodyMatch) {
                 let editableContent = "";
                 try {
@@ -204,29 +208,35 @@ export function RequestProposalDialog({
 
                 // Now render the CURRENT template with this content
                 // We need to re-fetch the template and merge the saved content
-                console.log("Re-rendering with current template structure...");
+                // console.log("Re-rendering with current template structure...");
 
                 // For now, just proceed to step 2 to re-render
                 // (User can click "Generate Proposal" to get fresh template)
                 toast.info(
                   "This proposal uses an older template format. Please click 'Generate Proposal' to update it.",
-                  { duration: 5000 }
+                  { duration: 5000 },
                 );
                 setCurrentStep(2);
               }
             } else {
               // Current template structure - use saved HTML as-is
               // Extract head, body, and styles (same pattern as prepareEditorContent)
-              const headMatch = savedHtml.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+              const headMatch = savedHtml.match(
+                /<head[^>]*>([\s\S]*?)<\/head>/i,
+              );
               const bodyTagMatch = savedHtml.match(/<body[^>]*>/i);
-              const bodyMatch = savedHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+              const bodyMatch = savedHtml.match(
+                /<body[^>]*>([\s\S]*)<\/body>/i,
+              );
 
               if (headMatch && bodyMatch) {
                 const styleMatch = headMatch[0].match(
-                  /<style[^>]*>([\s\S]*?)<\/style>/gi
+                  /<style[^>]*>([\s\S]*?)<\/style>/gi,
                 );
                 const inlineStyles = styleMatch
-                  ? styleMatch.map((s) => s.replace(/<\/?style[^>]*>/gi, "")).join("\n")
+                  ? styleMatch
+                      .map((s) => s.replace(/<\/?style[^>]*>/gi, ""))
+                      .join("\n")
                   : "";
 
                 const fullBodyHtml = bodyMatch[1] || "";
@@ -266,9 +276,15 @@ export function RequestProposalDialog({
                 setCurrentStep(3);
               } else {
                 // No structure found, load as-is (may be legacy or corrupted)
-                console.warn("No template structure found in editedHtmlContent, loading as-is");
+                console.warn(
+                  "No template structure found in editedHtmlContent, loading as-is",
+                );
                 setEditorInitialContent(savedHtml);
-                templateStructureRef.current = { head: "", bodyTag: "", styles: "" };
+                templateStructureRef.current = {
+                  head: "",
+                  bodyTag: "",
+                  styles: "",
+                };
 
                 setSavedEditorContent({
                   html: savedHtml,
@@ -477,7 +493,7 @@ export function RequestProposalDialog({
           year: "numeric",
           month: "long",
           day: "numeric",
-        }
+        },
       );
 
       // Build data payload matching template placeholders.
@@ -492,7 +508,7 @@ export function RequestProposalDialog({
         clientAddress: formData.clientAddress || "",
         proposalDate: formattedDate,
         validUntilDate: new Date(
-          Date.now() + (formData.validityDays || 30) * 24 * 60 * 60 * 1000
+          Date.now() + (formData.validityDays || 30) * 24 * 60 * 60 * 1000,
         ).toLocaleDateString("en-PH", {
           year: "numeric",
           month: "long",
@@ -519,7 +535,10 @@ export function RequestProposalDialog({
       };
 
       // Server-side Handlebars compilation — handles {{#each}}, {{#if}}, helpers like {{currency}}
-      const response = await api.renderProposalTemplate(template.htmlTemplate, templateData);
+      const response = await api.renderProposalTemplate(
+        template.htmlTemplate,
+        templateData,
+      );
       if (!response.success) {
         throw new Error("Template rendering failed");
       }
@@ -532,7 +551,7 @@ export function RequestProposalDialog({
 
       if (headMatch && bodyMatch) {
         const styleMatch = headMatch[0].match(
-          /<style[^>]*>([\s\S]*?)<\/style>/gi
+          /<style[^>]*>([\s\S]*?)<\/style>/gi,
         );
         const inlineStyles = styleMatch
           ? styleMatch.map((s) => s.replace(/<\/?style[^>]*>/gi, "")).join("\n")
@@ -567,9 +586,9 @@ export function RequestProposalDialog({
           contentSelector: ".content",
         };
 
-        console.log("✅ Template structure updated from fresh render");
-        console.log("Has flexbox?", inlineStyles.includes("display: flex"));
-        console.log("Has table-header?", fullBodyHtml.includes("header-table"));
+        // console.log("✅ Template structure updated from fresh render");
+        // console.log("Has flexbox?", inlineStyles.includes("display: flex"));
+        // console.log("Has table-header?", fullBodyHtml.includes("header-table"));
 
         setEditorInitialContent(editorBodyContent);
         setSavedEditorContent({ html: rendered, json: null });
@@ -592,17 +611,17 @@ export function RequestProposalDialog({
 
   // Handle editor save callback
   const handleEditorSave = ({ html, json }) => {
-    console.log("=== handleEditorSave called ===");
-    console.log("Editor HTML length:", html?.length);
-    console.log("templateStructureRef.current:", templateStructureRef.current);
+    // console.log("=== handleEditorSave called ===");
+    // console.log("Editor HTML length:", html?.length);
+    // console.log("templateStructureRef.current:", templateStructureRef.current);
 
     // Reconstruct full HTML with template structure (head + styles)
     const { head, bodyTag, bodyHtml, contentSelector } =
       templateStructureRef.current;
 
-    console.log("Has head?", !!head);
-    console.log("Has bodyHtml?", !!bodyHtml);
-    console.log("Content selector:", contentSelector);
+    // console.log("Has head?", !!head);
+    // console.log("Has bodyHtml?", !!bodyHtml);
+    // console.log("Content selector:", contentSelector);
 
     // By default, use the editor's HTML as the body content.
     // If we have the original body HTML and a known editable container
@@ -620,12 +639,15 @@ export function RequestProposalDialog({
           // Success: replace only the editable section
           target.innerHTML = html;
           bodyContentForSave = container.innerHTML;
-          console.debug("Successfully replaced content in selector:", contentSelector);
+          console.debug(
+            "Successfully replaced content in selector:",
+            contentSelector,
+          );
         } else {
           // Selector not found, use full body replacement
           console.warn(
             `Content selector "${contentSelector}" not found in template body. ` +
-            `Using full body replacement instead. Template may not have standard structure.`
+              `Using full body replacement instead. Template may not have standard structure.`,
           );
           bodyContentForSave = html;
         }
@@ -649,7 +671,7 @@ ${bodyTag}
   ${bodyContentForSave}
 </body>
 </html>`;
-      console.log("Full HTML reconstructed with template structure");
+      // console.log("Full HTML reconstructed with template structure");
     } else {
       console.warn("No template structure available - saving raw HTML");
     }
@@ -689,10 +711,10 @@ ${bodyTag}
       }
     }
 
-    console.log("Final saved HTML length:", fullHtml?.length);
-    console.log("Has DOCTYPE?", fullHtml?.includes("<!DOCTYPE"));
-    console.log("Has <head>?", fullHtml?.includes("<head"));
-    console.log("Has <body>?", fullHtml?.includes("<body"));
+    // console.log("Final saved HTML length:", fullHtml?.length);
+    // console.log("Has DOCTYPE?", fullHtml?.includes("<!DOCTYPE"));
+    // console.log("Has <head>?", fullHtml?.includes("<head"));
+    // console.log("Has <body>?", fullHtml?.includes("<body"));
 
     setSavedEditorContent({ html: fullHtml, json });
     setHasUnsavedEditorChanges(false);
@@ -899,8 +921,8 @@ ${bodyTag}
                     currentStep === 1
                       ? "bg-[#15803d] text-white shadow-md"
                       : currentStep > 1
-                      ? "bg-white/60 dark:bg-gray-800/60 text-green-700 dark:text-green-400"
-                      : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                        ? "bg-white/60 dark:bg-gray-800/60 text-green-700 dark:text-green-400"
+                        : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400"
                   }`}
                 >
                   <div
@@ -908,8 +930,8 @@ ${bodyTag}
                       currentStep === 1
                         ? "bg-white/20 text-white"
                         : currentStep > 1
-                        ? "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300"
-                        : "bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                          ? "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300"
+                          : "bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                     }`}
                   >
                     {currentStep > 1 ? "✓" : "1"}
@@ -946,8 +968,8 @@ ${bodyTag}
                     currentStep === 2
                       ? "bg-[#15803d] text-white shadow-md"
                       : currentStep > 2
-                      ? "bg-white/60 dark:bg-gray-800/60 text-green-700 dark:text-green-400"
-                      : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400"
+                        ? "bg-white/60 dark:bg-gray-800/60 text-green-700 dark:text-green-400"
+                        : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400"
                   }`}
                 >
                   <div
@@ -955,8 +977,8 @@ ${bodyTag}
                       currentStep === 2
                         ? "bg-white/20 text-white"
                         : currentStep > 2
-                        ? "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300"
-                        : "bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                          ? "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300"
+                          : "bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
                     }`}
                   >
                     {currentStep > 2 ? "✓" : "2"}
@@ -1162,56 +1184,61 @@ ${bodyTag}
                   </div>
 
                   {/* Sub-type selector (shown when service has sub-types) */}
-                  {selectedServiceId && subTypes.length > 0 && !isLoadingSubTypes && (
-                    <div className="max-w-3xl space-y-3">
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                          Select {selectedServiceName} Type
-                        </h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                          Choose the specific hauling method
-                        </p>
-                      </div>
-                      <div className="flex gap-3">
-                        {subTypes.map((subType) => {
-                          const isSelected = selectedSubTypeId === subType.id;
-                          return (
-                            <button
-                              key={subType.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedSubTypeId(subType.id);
-                                setSelectedSubTypeName(subType.name);
-                              }}
-                              className={`relative flex-1 flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all text-center ${
-                                isSelected
-                                  ? "border-[#15803d] bg-green-50 dark:bg-green-900/20"
-                                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800"
-                              } cursor-pointer`}
-                            >
-                              <div className="absolute top-2.5 right-2.5">
-                                {isSelected ? (
-                                  <div className="w-4 h-4 bg-[#15803d] rounded-full flex items-center justify-center">
-                                    <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
-                                  </div>
-                                ) : (
-                                  <div className="w-4 h-4 border-2 border-gray-300 dark:border-gray-600 rounded-full" />
+                  {selectedServiceId &&
+                    subTypes.length > 0 &&
+                    !isLoadingSubTypes && (
+                      <div className="max-w-3xl space-y-3">
+                        <div>
+                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                            Select {selectedServiceName} Type
+                          </h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            Choose the specific hauling method
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          {subTypes.map((subType) => {
+                            const isSelected = selectedSubTypeId === subType.id;
+                            return (
+                              <button
+                                key={subType.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedSubTypeId(subType.id);
+                                  setSelectedSubTypeName(subType.name);
+                                }}
+                                className={`relative flex-1 flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all text-center ${
+                                  isSelected
+                                    ? "border-[#15803d] bg-green-50 dark:bg-green-900/20"
+                                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800"
+                                } cursor-pointer`}
+                              >
+                                <div className="absolute top-2.5 right-2.5">
+                                  {isSelected ? (
+                                    <div className="w-4 h-4 bg-[#15803d] rounded-full flex items-center justify-center">
+                                      <Check
+                                        className="w-2.5 h-2.5 text-white"
+                                        strokeWidth={3}
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="w-4 h-4 border-2 border-gray-300 dark:border-gray-600 rounded-full" />
+                                  )}
+                                </div>
+                                <h4 className="font-semibold text-sm text-gray-900 dark:text-white">
+                                  {subType.name}
+                                </h4>
+                                {subType.description && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {subType.description}
+                                  </p>
                                 )}
-                              </div>
-                              <h4 className="font-semibold text-sm text-gray-900 dark:text-white">
-                                {subType.name}
-                              </h4>
-                              {subType.description && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  {subType.description}
-                                </p>
-                              )}
-                            </button>
-                          );
-                        })}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
                   {(isLoadingTemplate || isLoadingSubTypes) && (
                     <div className="flex items-center justify-center py-12">
@@ -1269,7 +1296,7 @@ ${bodyTag}
                             onChange={(e) =>
                               handleInputChange(
                                 "clientPosition",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             placeholder="Operations Manager"
@@ -1353,7 +1380,7 @@ ${bodyTag}
                             onDateChange={(date) =>
                               handleInputChange(
                                 "proposalDate",
-                                date ? format(date, "yyyy-MM-dd") : ""
+                                date ? format(date, "yyyy-MM-dd") : "",
                               )
                             }
                             placeholder="Select proposal date"
@@ -1384,19 +1411,43 @@ ${bodyTag}
                               <SelectValue placeholder="Select industry" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="food_and_beverage">Food & Beverage</SelectItem>
+                              <SelectItem value="food_and_beverage">
+                                Food & Beverage
+                              </SelectItem>
                               <SelectItem value="retail">Retail</SelectItem>
-                              <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                              <SelectItem value="healthcare">Healthcare</SelectItem>
-                              <SelectItem value="hospitality">Hospitality</SelectItem>
-                              <SelectItem value="education">Education</SelectItem>
-                              <SelectItem value="construction">Construction</SelectItem>
-                              <SelectItem value="real_estate">Real Estate</SelectItem>
-                              <SelectItem value="logistics">Logistics</SelectItem>
-                              <SelectItem value="agriculture">Agriculture</SelectItem>
-                              <SelectItem value="technology">Technology</SelectItem>
-                              <SelectItem value="government">Government</SelectItem>
-                              <SelectItem value="residential">Residential</SelectItem>
+                              <SelectItem value="manufacturing">
+                                Manufacturing
+                              </SelectItem>
+                              <SelectItem value="healthcare">
+                                Healthcare
+                              </SelectItem>
+                              <SelectItem value="hospitality">
+                                Hospitality
+                              </SelectItem>
+                              <SelectItem value="education">
+                                Education
+                              </SelectItem>
+                              <SelectItem value="construction">
+                                Construction
+                              </SelectItem>
+                              <SelectItem value="real_estate">
+                                Real Estate
+                              </SelectItem>
+                              <SelectItem value="logistics">
+                                Logistics
+                              </SelectItem>
+                              <SelectItem value="agriculture">
+                                Agriculture
+                              </SelectItem>
+                              <SelectItem value="technology">
+                                Technology
+                              </SelectItem>
+                              <SelectItem value="government">
+                                Government
+                              </SelectItem>
+                              <SelectItem value="residential">
+                                Residential
+                              </SelectItem>
                               <SelectItem value="other">Other</SelectItem>
                             </SelectContent>
                           </Select>
@@ -1420,7 +1471,7 @@ ${bodyTag}
                               const raw = e.target.value;
                               handleInputChange(
                                 "validityDays",
-                                raw === "" ? "" : parseInt(raw, 10) || ""
+                                raw === "" ? "" : parseInt(raw, 10) || "",
                               );
                             }}
                           />
@@ -1477,7 +1528,8 @@ ${bodyTag}
                             </span>
                             <span className="font-medium text-gray-900 dark:text-white">
                               {selectedServiceName}
-                              {selectedSubTypeName && ` - ${selectedSubTypeName}`}
+                              {selectedSubTypeName &&
+                                ` - ${selectedSubTypeName}`}
                             </span>
                           </div>
                         )}
@@ -1556,16 +1608,20 @@ ${bodyTag}
                   ) : (
                     <div className="flex-1 min-h-0 flex flex-col">
                       {/* Non-editable header preview using iframe for style isolation */}
-                      {templateStructureRef.current.bodyHtml && templateStructureRef.current.styles && (() => {
-                        try {
-                          const container = document.createElement("div");
-                          container.innerHTML = templateStructureRef.current.bodyHtml;
-                          const contentNode = container.querySelector(".content");
-                          if (contentNode) {
-                            contentNode.remove();
-                            const headerHtml = container.innerHTML.trim();
-                            if (headerHtml) {
-                              const iframeContent = `<!DOCTYPE html>
+                      {templateStructureRef.current.bodyHtml &&
+                        templateStructureRef.current.styles &&
+                        (() => {
+                          try {
+                            const container = document.createElement("div");
+                            container.innerHTML =
+                              templateStructureRef.current.bodyHtml;
+                            const contentNode =
+                              container.querySelector(".content");
+                            if (contentNode) {
+                              contentNode.remove();
+                              const headerHtml = container.innerHTML.trim();
+                              if (headerHtml) {
+                                const iframeContent = `<!DOCTYPE html>
 <html>
 <head>
 <style>
@@ -1575,24 +1631,30 @@ ${templateStructureRef.current.styles}
 </head>
 <body>${headerHtml}</body>
 </html>`;
-                              return (
-                                <iframe
-                                  srcDoc={iframeContent}
-                                  title="Header Preview"
-                                  className="w-full border-0 border-b border-gray-200 bg-white"
-                                  style={{ height: "120px", pointerEvents: "none" }}
-                                />
-                              );
+                                return (
+                                  <iframe
+                                    srcDoc={iframeContent}
+                                    title="Header Preview"
+                                    className="w-full border-0 border-b border-gray-200 bg-white"
+                                    style={{
+                                      height: "120px",
+                                      pointerEvents: "none",
+                                    }}
+                                  />
+                                );
+                              }
                             }
+                          } catch (e) {
+                            console.error("Failed to extract header:", e);
                           }
-                        } catch (e) {
-                          console.error("Failed to extract header:", e);
-                        }
-                        return null;
-                      })()}
+                          return null;
+                        })()}
 
                       {/* Editable content area */}
-                      <div className="flex-1 overflow-auto" style={{ minHeight: 0 }}>
+                      <div
+                        className="flex-1 overflow-auto"
+                        style={{ minHeight: 0 }}
+                      >
                         <ProposalHtmlEditor
                           content={editorInitialContent}
                           templateStyles={templateStructureRef.current.styles}
@@ -1697,17 +1759,39 @@ ${templateStructureRef.current.styles}
             <AlertDialogDescription asChild>
               <div className="space-y-3">
                 <p>
-                  Please verify that all client information is accurate before submitting. Once submitted, the following details will be locked into the proposal:
+                  Please verify that all client information is accurate before
+                  submitting. Once submitted, the following details will be
+                  locked into the proposal:
                 </p>
                 <div className="rounded-md border p-3 bg-muted/50 text-sm space-y-1">
-                  <p><span className="font-medium text-foreground">Name:</span> {formData.clientName}</p>
-                  <p><span className="font-medium text-foreground">Email:</span> {formData.clientEmail}</p>
-                  <p><span className="font-medium text-foreground">Company:</span> {formData.clientCompany}</p>
-                  <p><span className="font-medium text-foreground">Phone:</span> {formData.clientPhone || "Not provided"}</p>
-                  <p><span className="font-medium text-foreground">Address:</span> {formData.clientAddress || "Not provided"}</p>
+                  <p>
+                    <span className="font-medium text-foreground">Name:</span>{" "}
+                    {formData.clientName}
+                  </p>
+                  <p>
+                    <span className="font-medium text-foreground">Email:</span>{" "}
+                    {formData.clientEmail}
+                  </p>
+                  <p>
+                    <span className="font-medium text-foreground">
+                      Company:
+                    </span>{" "}
+                    {formData.clientCompany}
+                  </p>
+                  <p>
+                    <span className="font-medium text-foreground">Phone:</span>{" "}
+                    {formData.clientPhone || "Not provided"}
+                  </p>
+                  <p>
+                    <span className="font-medium text-foreground">
+                      Address:
+                    </span>{" "}
+                    {formData.clientAddress || "Not provided"}
+                  </p>
                 </div>
                 <p className="text-amber-600 dark:text-amber-500 text-sm font-medium">
-                  This data cannot be changed after submission. If any detail is incorrect, go back and update the inquiry first.
+                  This data cannot be changed after submission. If any detail is
+                  incorrect, go back and update the inquiry first.
                 </p>
               </div>
             </AlertDialogDescription>

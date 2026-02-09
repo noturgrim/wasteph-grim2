@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
       // Register event handlers BEFORE connecting
       // Handle connection success
       socketService.on("connection:success", (data) => {
-        console.log("✅ Real-time connection established");
+        console.log("Connection established");
         setIsSocketConnected(true);
 
         // Initialize feature-specific socket services
@@ -121,15 +121,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      login, 
-      logout, 
-      isLoading,
-      isLoggingOut,
-      checkAuth,
-      isSocketConnected 
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        isLoading,
+        isLoggingOut,
+        checkAuth,
+        isSocketConnected,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
