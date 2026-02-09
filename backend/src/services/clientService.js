@@ -248,8 +248,30 @@ class ClientService {
         : null;
     }
 
+    // Whitelist allowed fields to prevent mass assignment attacks
+    const allowedFields = [
+      "companyName",
+      "contactPerson",
+      "email",
+      "phone",
+      "address",
+      "city",
+      "province",
+      "industry",
+      "wasteTypes",
+      "notes",
+    ];
+
+    // Filter updateData to only include whitelisted fields
+    const safeUpdate = {};
+    for (const key of allowedFields) {
+      if (key in updateData) {
+        safeUpdate[key] = updateData[key];
+      }
+    }
+
     // If email or companyName is being changed, check for conflicts
-    if (updateData.email || updateData.companyName) {
+    if (safeUpdate.email || safeUpdate.companyName) {
       const [current] = await db
         .select({
           email: clientTable.email,
@@ -261,8 +283,8 @@ class ClientService {
 
       if (!current) throw new AppError("Client not found", 404);
 
-      const newEmail = updateData.email || current.email;
-      const newCompanyName = updateData.companyName || current.companyName;
+      const newEmail = safeUpdate.email || current.email;
+      const newCompanyName = safeUpdate.companyName || current.companyName;
 
       const [conflict] = await db
         .select({ id: clientTable.id })
@@ -287,7 +309,7 @@ class ClientService {
     const [client] = await db
       .update(clientTable)
       .set({
-        ...updateData,
+        ...safeUpdate,
         updatedAt: new Date(),
       })
       .where(eq(clientTable.id, clientId))
@@ -303,7 +325,7 @@ class ClientService {
       action: "client_updated",
       entityType: "client",
       entityId: client.id,
-      details: updateData,
+      details: safeUpdate,
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent,
     });

@@ -65,7 +65,7 @@ Fix: Created shared sanitization utility (front/src/utils/sanitize.js) with
      Applied DOMPurify sanitization to all dangerouslySetInnerHTML instances
      and all innerHTML assignments across 7 files.
 
-C5. Mass Assignment Vulnerabilities
+C5. Mass Assignment Vulnerabilities [FIXED]
 ────────────────────────────────────────────────────────────────────────────
 Locations:
 - backend/src/services/leadService.js (lines 217-220)
@@ -73,12 +73,13 @@ Locations:
 
 Risk: `...updateData` spread directly into `.set()` allows attackers to modify 
       protected fields (`isClaimed`, `claimedBy`, `status`, `accountManager`).
-Fix: Whitelist allowed fields before updating:
-    const allowedFields = ["clientName", "company", "email", "phone", "location", "notes"];
-    const safeUpdate = {};
-    for (const key of allowedFields) {
-      if (key in updateData) safeUpdate[key] = updateData[key];
-    }
+Fix: Implemented field whitelisting in both services. 
+     leadService: 6 allowed fields (clientName, company, email, phone, 
+                  location, notes). Protected: isClaimed, claimedBy, claimedAt.
+     clientService: 10 allowed fields (companyName, contactPerson, email, 
+                    phone, address, city, province, industry, wasteTypes, 
+                    notes). Protected: status, accountManager, contract dates.
+     Files: backend/src/services/leadService.js, clientService.js
 
 C6. Blog Admin Routes Missing Role Checks
 ────────────────────────────────────────────────────────────────────────────

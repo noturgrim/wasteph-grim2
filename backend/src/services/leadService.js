@@ -212,10 +212,28 @@ class LeadService {
    * @throws {AppError} If lead not found
    */
   async updateLead(leadId, updateData, userId, metadata = {}) {
+    // Whitelist allowed fields to prevent mass assignment attacks
+    const allowedFields = [
+      "clientName",
+      "company",
+      "email",
+      "phone",
+      "location",
+      "notes",
+    ];
+
+    // Filter updateData to only include whitelisted fields
+    const safeUpdate = {};
+    for (const key of allowedFields) {
+      if (key in updateData) {
+        safeUpdate[key] = updateData[key];
+      }
+    }
+
     const [lead] = await db
       .update(leadTable)
       .set({
-        ...updateData,
+        ...safeUpdate,
         updatedAt: new Date(),
       })
       .where(eq(leadTable.id, leadId))
@@ -231,7 +249,7 @@ class LeadService {
       action: "lead_updated",
       entityType: "lead",
       entityId: lead.id,
-      details: updateData,
+      details: safeUpdate,
       ipAddress: metadata.ipAddress,
       userAgent: metadata.userAgent,
     });
