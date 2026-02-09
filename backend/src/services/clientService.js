@@ -145,26 +145,37 @@ class ClientService {
     const total = rows.length > 0 ? rows[0].totalCount : 0;
     const clientIds = rows.map((c) => c.id);
 
-    // Batch fetch latest contract status per client (only if we have clients)
+    // Batch fetch ALL contracts per client (only if we have clients)
     const contractMap = new Map();
     if (clientIds.length > 0) {
-      // Use DISTINCT ON to get only the latest contract per client in one query
-      const latestContracts = await db
-        .selectDistinctOn([contractsTable.clientId], {
+      const allContracts = await db
+        .select({
           clientId: contractsTable.clientId,
+          contractNumber: contractsTable.contractNumber,
           status: contractsTable.status,
+          contractStartDate: contractsTable.contractStartDate,
+          contractEndDate: contractsTable.contractEndDate,
+          createdAt: contractsTable.createdAt,
         })
         .from(contractsTable)
         .where(inArray(contractsTable.clientId, clientIds))
-        .orderBy(contractsTable.clientId, desc(contractsTable.createdAt));
+        .orderBy(desc(contractsTable.createdAt));
 
-      latestContracts.forEach((c) => contractMap.set(c.clientId, c.status));
+      allContracts.forEach((c) => {
+        if (!contractMap.has(c.clientId)) contractMap.set(c.clientId, []);
+        contractMap.get(c.clientId).push({
+          contractNumber: c.contractNumber,
+          status: c.status,
+          contractStartDate: c.contractStartDate,
+          contractEndDate: c.contractEndDate,
+        });
+      });
     }
 
-    // Strip totalCount and attach contract status
+    // Strip totalCount and attach contracts array
     const data = rows.map(({ totalCount, ...client }) => ({
       ...client,
-      contractStatus: contractMap.get(client.id) || null,
+      contracts: contractMap.get(client.id) || [],
     }));
 
     // Status facet counts (no permission filter, NOT status-filtered)
@@ -225,16 +236,23 @@ class ClientService {
   async updateClient(clientId, updateData, userId, metadata = {}) {
     // Convert date strings to Date objects, or null if empty
     if ("contractStartDate" in updateData) {
-      updateData.contractStartDate = updateData.contractStartDate ? new Date(updateData.contractStartDate) : null;
+      updateData.contractStartDate = updateData.contractStartDate
+        ? new Date(updateData.contractStartDate)
+        : null;
     }
     if ("contractEndDate" in updateData) {
-      updateData.contractEndDate = updateData.contractEndDate ? new Date(updateData.contractEndDate) : null;
+      updateData.contractEndDate = updateData.contractEndDate
+        ? new Date(updateData.contractEndDate)
+        : null;
     }
 
     // If email or companyName is being changed, check for conflicts
     if (updateData.email || updateData.companyName) {
       const [current] = await db
-        .select({ email: clientTable.email, companyName: clientTable.companyName })
+        .select({
+          email: clientTable.email,
+          companyName: clientTable.companyName,
+        })
         .from(clientTable)
         .where(eq(clientTable.id, clientId))
         .limit(1);
@@ -328,8 +346,15 @@ class ClientService {
    * @returns {Promise<void>}
    */
   async logActivity(activityData) {
-    const { userId, action, entityType, entityId, details, ipAddress, userAgent } =
-      activityData;
+    const {
+      userId,
+      action,
+      entityType,
+      entityId,
+      details,
+      ipAddress,
+      userAgent,
+    } = activityData;
 
     await db.insert(activityLogTable).values({
       userId,

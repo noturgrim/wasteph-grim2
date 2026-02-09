@@ -6,7 +6,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { MoreHorizontal, Eye, Pencil, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 
@@ -24,6 +29,32 @@ const getStatusBadge = (status) => {
       {config.label}
     </Badge>
   );
+};
+
+const CONTRACT_STATUS_CONFIG = {
+  hardbound_received: { label: "Hardbound", className: "bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900 dark:text-indigo-300 dark:border-indigo-700" },
+  signed: { label: "Signed", className: "bg-green-100 text-green-700 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-700" },
+  sent_to_client: { label: "Sent to Client", className: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700" },
+  sent_to_sales: { label: "Sent to Sales", className: "bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-900 dark:text-cyan-300 dark:border-cyan-700" },
+  requested: { label: "Requested", className: "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-700" },
+  pending_request: { label: "Pending", className: "bg-gray-100 text-gray-500 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600" },
+};
+
+const getContractStatusBadge = (status) => {
+  const config = CONTRACT_STATUS_CONFIG[status] || { label: status, className: "" };
+  return (
+    <Badge variant="outline" className={`${config.className} text-xs`}>
+      {config.label}
+    </Badge>
+  );
+};
+
+const formatPeriod = (startDate, endDate) => {
+  const start = startDate ? format(new Date(startDate), "MMM dd, yyyy") : null;
+  const end = endDate ? format(new Date(endDate), "MMM dd, yyyy") : null;
+  if (start && end) return `${start} – ${end}`;
+  if (start) return `From ${start}`;
+  return null;
 };
 
 export const createClientColumns = ({ userRole, onView, onEdit, onDelete }) => [
@@ -109,29 +140,86 @@ export const createClientColumns = ({ userRole, onView, onEdit, onDelete }) => [
     cell: ({ row }) => getStatusBadge(row.original.status),
   },
   {
-    accessorKey: "contractStatus",
+    accessorKey: "contracts",
     header: "Contract",
     cell: ({ row }) => {
-      const cs = row.original.contractStatus;
-      if (cs === "hardbound_received") {
-        return <Badge variant="outline" className="bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900 dark:text-indigo-300 dark:border-indigo-700 text-xs">Hardbound Received</Badge>;
+      const contracts = row.original.contracts || [];
+      if (contracts.length === 0) {
+        return <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 text-xs">N/A</Badge>;
       }
-      if (cs === "signed") {
-        return <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-700 text-xs">Signed</Badge>;
-      }
-      return <Badge variant="outline" className="bg-gray-100 text-gray-500 border-gray-300 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 text-xs">N/A</Badge>;
+      const latest = contracts[0];
+      if (contracts.length === 1) return getContractStatusBadge(latest.status);
+
+      return (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className="inline-flex items-center gap-1 cursor-pointer"
+              aria-label={`View ${contracts.length} contracts`}
+            >
+              {getContractStatusBadge(latest.status)}
+              <span className="text-xs text-muted-foreground">+{contracts.length - 1}</span>
+              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-2 space-y-1.5" align="start">
+            <p className="text-xs font-medium text-muted-foreground px-1 pb-1">
+              {contracts.length} Contracts
+            </p>
+            {contracts.map((c) => (
+              <div key={c.contractNumber} className="flex items-center justify-between gap-3 px-1">
+                <span className="text-xs font-mono text-muted-foreground">{c.contractNumber}</span>
+                {getContractStatusBadge(c.status)}
+              </div>
+            ))}
+          </PopoverContent>
+        </Popover>
+      );
     },
   },
   {
     accessorKey: "contractDates",
     header: "Contract Period",
     cell: ({ row }) => {
-      const { contractStartDate, contractEndDate } = row.original;
-      const start = contractStartDate ? format(new Date(contractStartDate), "MMM dd, yyyy") : null;
-      const end = contractEndDate ? format(new Date(contractEndDate), "MMM dd, yyyy") : null;
-      if (start && end) return `${start} – ${end}`;
-      if (start) return `From ${start}`;
-      return <span className="text-muted-foreground text-xs">N/A</span>;
+      const contracts = row.original.contracts || [];
+      if (contracts.length === 0) {
+        return <span className="text-muted-foreground text-xs">N/A</span>;
+      }
+      const latest = contracts[0];
+      const latestPeriod = formatPeriod(latest.contractStartDate, latest.contractEndDate);
+      if (!latestPeriod) return <span className="text-muted-foreground text-xs">N/A</span>;
+
+      if (contracts.length === 1) {
+        return <span className="text-sm">{latestPeriod}</span>;
+      }
+
+      return (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              className="inline-flex items-center gap-1 cursor-pointer text-sm"
+              aria-label={`View ${contracts.length} contract periods`}
+            >
+              {latestPeriod}
+              <span className="text-xs text-muted-foreground">+{contracts.length - 1}</span>
+              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-2 space-y-1.5" align="start">
+            <p className="text-xs font-medium text-muted-foreground px-1 pb-1">
+              {contracts.length} Contracts
+            </p>
+            {contracts.map((c) => (
+              <div key={c.contractNumber} className="flex items-center justify-between gap-3 px-1">
+                <span className="text-xs font-mono text-muted-foreground">{c.contractNumber}</span>
+                <span className="text-xs">
+                  {formatPeriod(c.contractStartDate, c.contractEndDate) || "N/A"}
+                </span>
+              </div>
+            ))}
+          </PopoverContent>
+        </Popover>
+      );
     },
   },
   {

@@ -58,7 +58,7 @@ export default function Clients() {
     phone: true,
     industry: true,
     status: true,
-    contractStatus: true,
+    contracts: true,
     contractDates: true,
     createdAt: true,
   });
@@ -251,7 +251,7 @@ export default function Clients() {
                     phone: "Phone",
                     industry: "Industry",
                     status: "Status",
-                    contractStatus: "Contract",
+                    contracts: "Contract",
                     contractDates: "Contract Period",
                     createdAt: "Created",
                   };

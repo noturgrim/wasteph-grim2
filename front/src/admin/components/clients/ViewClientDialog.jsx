@@ -51,18 +51,26 @@ export function ViewClientDialog({ open, onOpenChange, client, users }) {
               {getStatusBadge(client.status)}
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Contract</p>
-              <div className="flex gap-1 mt-0.5">
-                {client.contractStatus === "signed" && (
-                  <Badge className="bg-green-600 text-white text-xs">Signed</Badge>
-                )}
-                {client.contractStatus === "hardbound_received" && (
-                  <>
-                    <Badge className="bg-green-600 text-white text-xs">Signed</Badge>
-                    <Badge className="bg-emerald-700 text-white text-xs">Hardbound Received</Badge>
-                  </>
-                )}
-                {client.contractStatus !== "signed" && client.contractStatus !== "hardbound_received" && (
+              <p className="text-sm text-muted-foreground">Contracts</p>
+              <div className="flex flex-wrap gap-1 mt-0.5">
+                {(client.contracts || []).length > 0 ? (
+                  client.contracts.map((c) => {
+                    const statusMap = {
+                      hardbound_received: { label: "Hardbound", className: "bg-emerald-700 text-white" },
+                      signed: { label: "Signed", className: "bg-green-600 text-white" },
+                      sent_to_client: { label: "Sent to Client", className: "bg-blue-600 text-white" },
+                      sent_to_sales: { label: "Sent to Sales", className: "bg-cyan-600 text-white" },
+                      requested: { label: "Requested", className: "bg-yellow-600 text-white" },
+                      pending_request: { label: "Pending", className: "bg-gray-500 text-white" },
+                    };
+                    const cfg = statusMap[c.status] || { label: c.status, className: "bg-gray-500 text-white" };
+                    return (
+                      <Badge key={c.contractNumber} className={`${cfg.className} text-xs`}>
+                        {c.contractNumber?.replace("CONT-", "") || cfg.label}
+                      </Badge>
+                    );
+                  })
+                ) : (
                   <span className="text-sm text-muted-foreground">—</span>
                 )}
               </div>
