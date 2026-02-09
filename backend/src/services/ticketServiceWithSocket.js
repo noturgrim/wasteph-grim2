@@ -93,7 +93,7 @@ class TicketService {
         description: clientTicketsTable.description,
         contractId: clientTicketsTable.contractId,
         contractNumber: contractsTable.contractNumber,
-        clientName: clientTable.name,
+        clientName: clientTable.contactPerson,
         companyName: clientTable.companyName,
         creatorFirstName: userTable.firstName,
         creatorLastName: userTable.lastName,
