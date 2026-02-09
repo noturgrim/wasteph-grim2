@@ -2,7 +2,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LogOut,
   Loader2,
-  Trash2,
   ChevronsUpDown,
   User,
 } from "lucide-react";
@@ -54,8 +53,10 @@ export function AppSidebar() {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#15803d] to-[#16a34a] shadow-lg">
-                <Trash2 className="h-6 w-6 text-white" />
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#15803d] to-[#16a34a] shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="size-5" aria-hidden="true">
+                  <text x="50" y="75" fontFamily="Arial, sans-serif" fontSize="70" fontWeight="bold" fill="white" textAnchor="middle">W</text>
+                </svg>
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span

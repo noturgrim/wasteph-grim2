@@ -7,7 +7,6 @@ import {
   FileText,
   TrendingUp,
   LogOut,
-  Trash2,
   Sun,
   Moon,
   BookOpen,
@@ -61,7 +60,9 @@ const DashboardLayout = () => {
         <SidebarHeader className="border-b border-slate-200 dark:border-white/10">
           <div className="flex items-center gap-3 px-4 py-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-[#15803d] to-[#16a34a] shadow-lg">
-              <Trash2 className="h-6 w-6 text-white" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className="h-6 w-6" aria-hidden="true">
+                <text x="50" y="75" fontFamily="Arial, sans-serif" fontSize="70" fontWeight="bold" fill="white" textAnchor="middle">W</text>
+              </svg>
             </div>
             <div>
               <h1 className="text-lg font-black uppercase tracking-tight text-slate-900 dark:text-white">
