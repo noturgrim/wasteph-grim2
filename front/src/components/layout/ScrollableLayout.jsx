@@ -3,7 +3,7 @@ import React from "react";
 const ScrollableLayout = ({ children, disableSnap = false }) => {
   return (
     <div
-      className={`h-screen w-full overflow-y-scroll overflow-x-hidden text-white scroll-smooth ${
+      className={`min-h-screen w-full overflow-y-scroll overflow-x-hidden text-white scroll-smooth ${
         disableSnap ? "" : "snap-y snap-mandatory"
       }`}
     >
