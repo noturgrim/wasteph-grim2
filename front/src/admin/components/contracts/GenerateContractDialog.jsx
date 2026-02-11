@@ -32,7 +32,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
 import { api } from "../../services/api";
 import { toast } from "../../utils/toast";
-import ProposalHtmlEditor from "@/components/common/ProposalHtmlEditor";
+import ContractHtmlEditor from "@/components/common/ContractHtmlEditor";
 import { PDFViewer } from "../PDFViewer";
 
 const CONTRACT_TYPES = [
@@ -307,21 +307,67 @@ export function GenerateContractDialog({
         const bodyMatch = fullHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i);
 
         if (headMatch && bodyMatch) {
+          // Extract ALL style tags from head
           const styleMatch = headMatch[0].match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
           const inlineStyles = styleMatch
             ? styleMatch.map((s) => s.replace(/<\/?style[^>]*>/gi, "")).join("\n")
             : "";
 
+          const fullBodyHtml = bodyMatch[1] || "";
+
+          // Try to extract just the editable content (exclude non-editable header)
+          let editorBodyContent = fullBodyHtml;
+          let contentSelector = null;
+
+          try {
+            const container = document.createElement("div");
+            container.innerHTML = fullBodyHtml;
+
+            // Try to find .content wrapper (editable section)
+            const contentNode = container.querySelector(".content");
+            if (contentNode) {
+              editorBodyContent = contentNode.innerHTML || "";
+              contentSelector = ".content";
+            } else {
+              // No .content wrapper - check if there's a header we should exclude
+              const headerNode = container.querySelector(".header");
+              if (headerNode) {
+                // Remove the header from the editable content
+                headerNode.remove();
+                editorBodyContent = container.innerHTML;
+                contentSelector = null; // We'll reconstruct without a specific selector
+              } else {
+                // No header, use full body
+                editorBodyContent = fullBodyHtml;
+                contentSelector = null;
+              }
+            }
+          } catch {
+            // Fallback: use full body HTML
+            editorBodyContent = fullBodyHtml;
+            contentSelector = null;
+          }
+
           templateStructureRef.current = {
             head: headMatch[0],
             bodyTag: bodyTagMatch ? bodyTagMatch[0] : "<body>",
             styles: inlineStyles,
+            bodyHtml: fullBodyHtml, // Keep full body for reconstruction
+            contentSelector: contentSelector, // Where to insert edited content back (null if no wrapper)
           };
 
-          setRenderedHtml(bodyMatch[1]);
+          console.log("Extracted styles length:", inlineStyles.length);
+          console.log("Styles preview:", inlineStyles.substring(0, 200));
+          console.log("Body content preview:", editorBodyContent.substring(0, 800));
+          console.log("Content has .content wrapper:", fullBodyHtml.includes('class="content"'));
+          console.log("Content has .section class:", editorBodyContent.includes('class="section"'));
+          console.log("Content has .info-grid class:", editorBodyContent.includes('class="info-grid"'));
+
+          setRenderedHtml(editorBodyContent);
           setSavedHtml(fullHtml);
         } else {
           // Fallback: no head/body structure, use as-is
+          console.warn("No head/body structure found in contract HTML");
           templateStructureRef.current = { head: "", bodyTag: "", styles: "" };
           setRenderedHtml(fullHtml);
           setSavedHtml(fullHtml);
@@ -337,11 +383,84 @@ export function GenerateContractDialog({
   };
 
   const handleEditorSave = ({ html }) => {
-    const { head, bodyTag } = templateStructureRef.current;
+    const { head, bodyTag, bodyHtml, contentSelector } = templateStructureRef.current;
 
     let fullHtml = html;
+
     if (head && bodyTag) {
-      fullHtml = `<!DOCTYPE html>\n<html>\n${head}\n${bodyTag}\n  ${html}\n</body>\n</html>`;
+      // Try to surgically replace only the editable content section
+      let bodyContentForSave = html;
+
+      if (bodyHtml) {
+        if (contentSelector) {
+          // There's a specific content wrapper (like .content)
+          try {
+            const container = document.createElement("div");
+            container.innerHTML = bodyHtml;
+            const target = container.querySelector(contentSelector);
+
+            if (target) {
+              // Success: replace only the editable section
+              target.innerHTML = html;
+              bodyContentForSave = container.innerHTML;
+              console.debug("Successfully replaced content in selector:", contentSelector);
+            } else {
+              // Selector not found, use full body replacement
+              console.warn(
+                `Content selector "${contentSelector}" not found in template body. ` +
+                `Using full body replacement instead.`
+              );
+              bodyContentForSave = html;
+            }
+          } catch (error) {
+            console.error("DOM parsing failed during surgical replacement:", error);
+            bodyContentForSave = html;
+          }
+        } else {
+          // No content selector - we removed header, so reconstruct with header + new content
+          try {
+            const container = document.createElement("div");
+            container.innerHTML = bodyHtml;
+            const headerNode = container.querySelector(".header");
+
+            if (headerNode) {
+              // Re-add the header before the edited content
+              const headerHtml = headerNode.outerHTML;
+              bodyContentForSave = `${headerHtml}\n${html}`;
+              console.debug("Reconstructed body with header + edited content");
+            } else {
+              // No header found, use edited content as-is
+              bodyContentForSave = html;
+            }
+          } catch (error) {
+            console.error("Failed to reconstruct with header:", error);
+            bodyContentForSave = html;
+          }
+        }
+      } else {
+        // No template structure available, use raw editor content
+        console.debug("No template structure, using raw editor HTML");
+        bodyContentForSave = html;
+      }
+
+      // Reconstruct full HTML document
+      fullHtml = `<!DOCTYPE html>\n<html>\n${head}\n${bodyTag}\n${bodyContentForSave}\n</body>\n</html>`;
+
+      // Validate completeness
+      const isCompleteHtml =
+        fullHtml.includes("<!DOCTYPE") &&
+        fullHtml.includes("<html") &&
+        fullHtml.includes("<head") &&
+        fullHtml.includes("<body");
+
+      if (!isCompleteHtml) {
+        console.error("Saved HTML is incomplete, missing document structure:", {
+          hasDoctype: fullHtml.includes("<!DOCTYPE"),
+          hasHtml: fullHtml.includes("<html"),
+          hasHead: fullHtml.includes("<head"),
+          hasBody: fullHtml.includes("<body"),
+        });
+      }
     }
 
     setSavedHtml(fullHtml);
@@ -835,7 +954,7 @@ export function GenerateContractDialog({
         </DialogHeader>
 
         <div className="flex-1 min-h-0 overflow-y-auto">
-          <ProposalHtmlEditor
+          <ContractHtmlEditor
             content={renderedHtml}
             templateStyles={templateStructureRef.current.styles}
             onChange={handleEditorSave}

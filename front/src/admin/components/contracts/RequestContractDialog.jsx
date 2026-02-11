@@ -47,14 +47,14 @@ const INITIAL_FORM_STATE = {
 };
 
 const CONTRACT_TYPES = [
-  { value: "long_term_variable", label: "LONG TERM GARBAGE VARIABLE CHARGE" },
+  { value: "long_term_variable", label: "Long Term Variable Charge" },
   {
     value: "long_term_fixed",
-    label: "LONG TERM GARBAGE FIXED CHARGE (MORE THAN 50,000 PHP / MONTH)",
+    label: "Long Term Fixed Charge (>50K PHP/month)",
   },
-  { value: "fixed_rate_term", label: "FIXED RATE TERM" },
-  { value: "garbage_bins", label: "GARBAGE BINS" },
-  { value: "garbage_bins_disposal", label: "GARBAGE BINS WITH DISPOSAL" },
+  { value: "fixed_rate_term", label: "Fixed Rate Term" },
+  { value: "garbage_bins", label: "Garbage Bins Rental" },
+  { value: "garbage_bins_disposal", label: "Garbage Bins with Disposal" },
 ];
 
 const COLLECTION_SCHEDULES = [
@@ -262,7 +262,7 @@ export function RequestContractDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-blue-600" />
@@ -275,7 +275,7 @@ export function RequestContractDialog({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Contract Type - Required */}
+          {/* Contract Type - Full Width */}
           <div>
             <Label htmlFor="contractType">
               Contract Type <span className="text-red-500">*</span>
@@ -297,90 +297,92 @@ export function RequestContractDialog({
             </Select>
           </div>
 
-          {/* Client Name - Required */}
-          <div>
-            <Label htmlFor="clientName">
-              Client Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="clientName"
-              value={formData.clientName}
-              onChange={(e) => handleChange("clientName", e.target.value)}
-              placeholder="Contact person name"
-              className="mt-1"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Contact person or representative name
-            </p>
+          {/* Client Name & Company Name - Two Columns */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="clientName">
+                Client Name <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="clientName"
+                value={formData.clientName}
+                onChange={(e) => handleChange("clientName", e.target.value)}
+                placeholder="Contact person or representative name"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Contact person or representative name
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="companyName">
+                Company Name <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="companyName"
+                value={formData.companyName}
+                onChange={(e) => handleChange("companyName", e.target.value)}
+                placeholder="Full corporate or company name"
+                className="mt-1"
+                required
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Full corporate or company name
+              </p>
+            </div>
           </div>
 
-          {/* Company Name - Required */}
-          <div>
-            <Label htmlFor="companyName">
-              Company Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="companyName"
-              value={formData.companyName}
-              onChange={(e) => handleChange("companyName", e.target.value)}
-              placeholder="Full CORPORATE NAME"
-              className="mt-1"
-              required
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Full corporate or company name
-            </p>
-          </div>
+          {/* Industry & Email - Two Columns */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="clientIndustry">
+                Industry <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={formData.clientIndustry || undefined}
+                onValueChange={(value) => handleChange("clientIndustry", value)}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select industry" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="food_and_beverage">Food & Beverage</SelectItem>
+                  <SelectItem value="retail">Retail</SelectItem>
+                  <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                  <SelectItem value="healthcare">Healthcare</SelectItem>
+                  <SelectItem value="hospitality">Hospitality</SelectItem>
+                  <SelectItem value="education">Education</SelectItem>
+                  <SelectItem value="construction">Construction</SelectItem>
+                  <SelectItem value="real_estate">Real Estate</SelectItem>
+                  <SelectItem value="logistics">Logistics</SelectItem>
+                  <SelectItem value="agriculture">Agriculture</SelectItem>
+                  <SelectItem value="technology">Technology</SelectItem>
+                  <SelectItem value="government">Government</SelectItem>
+                  <SelectItem value="residential">Residential</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Auto-filled from proposal if available
+              </p>
+            </div>
 
-          {/* Industry - Required */}
-          <div>
-            <Label htmlFor="clientIndustry">
-              Industry <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formData.clientIndustry || undefined}
-              onValueChange={(value) => handleChange("clientIndustry", value)}
-            >
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Select industry" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="food_and_beverage">Food & Beverage</SelectItem>
-                <SelectItem value="retail">Retail</SelectItem>
-                <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                <SelectItem value="healthcare">Healthcare</SelectItem>
-                <SelectItem value="hospitality">Hospitality</SelectItem>
-                <SelectItem value="education">Education</SelectItem>
-                <SelectItem value="construction">Construction</SelectItem>
-                <SelectItem value="real_estate">Real Estate</SelectItem>
-                <SelectItem value="logistics">Logistics</SelectItem>
-                <SelectItem value="agriculture">Agriculture</SelectItem>
-                <SelectItem value="technology">Technology</SelectItem>
-                <SelectItem value="government">Government</SelectItem>
-                <SelectItem value="residential">Residential</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground mt-1">
-              Auto-filled from proposal if available
-            </p>
-          </div>
-
-          {/* Client Email - Required */}
-          <div>
-            <Label htmlFor="clientEmailContract">
-              Client E-Mail <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="clientEmailContract"
-              type="email"
-              value={formData.clientEmailContract}
-              onChange={(e) =>
-                handleChange("clientEmailContract", e.target.value)
-              }
-              placeholder="client@company.com"
-              className="mt-1"
-            />
+            <div>
+              <Label htmlFor="clientEmailContract">
+                Client E-Mail <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="clientEmailContract"
+                type="email"
+                value={formData.clientEmailContract}
+                onChange={(e) =>
+                  handleChange("clientEmailContract", e.target.value)
+                }
+                placeholder="client@company.com"
+                className="mt-1"
+              />
+            </div>
           </div>
 
           {/* Client Address - Required */}
