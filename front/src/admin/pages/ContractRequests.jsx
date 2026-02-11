@@ -63,6 +63,7 @@ export default function ContractRequests() {
   // Column visibility
   const [columnVisibility, setColumnVisibility] = useState({
     contractNumber: true,
+    proposalNumber: true,
     clientName: true,
     clientEmail: true,
     salesPerson: true,
