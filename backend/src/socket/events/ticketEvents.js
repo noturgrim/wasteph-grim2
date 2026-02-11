@@ -131,7 +131,6 @@ class TicketEventEmitter {
             priority: ticket.priority,
             category: ticket.category,
             creatorName: `${user.firstName} ${user.lastName}`,
-            creatorProfilePicture: user.profilePictureUrl,
           },
         });
       }
@@ -322,7 +321,7 @@ class TicketEventEmitter {
             metadata: {
               ticketNumber: ticket.ticketNumber,
               commenterName: `${user.firstName} ${user.lastName}`,
-              creatorProfilePicture: user.profilePictureUrl,
+              creatorName: `${user.firstName} ${user.lastName}`,
             },
           }
         );

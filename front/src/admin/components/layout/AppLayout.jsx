@@ -257,28 +257,9 @@ export default function AppLayout() {
                               : ""
                           }`}
                         >
-                          <div className="relative shrink-0">
-                            <Avatar className="h-10 w-10">
-                              {notif.metadata?.creatorProfilePicture && (
-                                <AvatarImage
-                                  src={notif.metadata.creatorProfilePicture}
-                                  alt={notif.metadata.creatorName || "User"}
-                                />
-                              )}
-                              <AvatarFallback
-                                className={`text-sm font-medium ${
-                                  !notif.isRead
-                                    ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
-                                    : "bg-gray-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
-                                }`}
-                              >
-                                {getNotificationIcon(notif.type)}
-                              </AvatarFallback>
-                            </Avatar>
-                            {!notif.isRead && (
-                              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-gray-50 dark:border-slate-900 bg-blue-500" />
-                            )}
-                          </div>
+                          {!notif.isRead && (
+                            <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+                          )}
                           <div className="flex-1 min-w-0">
                             <p
                               className={`text-sm ${
@@ -292,6 +273,11 @@ export default function AppLayout() {
                             <p className="text-xs mt-0.5 text-slate-600 dark:text-slate-400">
                               {notif.message}
                             </p>
+                            {notif.metadata?.creatorName && (
+                              <p className="text-xs mt-0.5 text-slate-500 dark:text-slate-400">
+                                From: <span className="font-medium">{notif.metadata.creatorName}</span>
+                              </p>
+                            )}
                             <p className="text-xs mt-1 text-slate-500">
                               {getTimeAgo(notif.createdAt)}
                             </p>

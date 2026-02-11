@@ -104,7 +104,7 @@ class ProposalEventEmitter {
               id: user.id,
               name: requesterName,
             },
-            creatorProfilePicture: user.profilePictureUrl,
+            creatorName: requesterName,
           },
         });
       }

@@ -2,7 +2,6 @@ import { db } from "../db/index.js";
 import { notificationsTable, userTable } from "../db/schema.js";
 import { eq, desc, and, count, sql } from "drizzle-orm";
 import socketServer from "../socket/socketServer.js";
-import { getPresignedUrl } from "./s3Service.js";
 
 /**
  * NotificationService - Manages in-app notifications
@@ -113,30 +112,11 @@ class NotificationService {
       .limit(limit)
       .offset(offset);
 
-    // Parse metadata and generate presigned URLs for profile pictures
-    const parsedNotifications = await Promise.all(
-      notifications.map(async (notif) => {
-        const metadata = notif.metadata ? JSON.parse(notif.metadata) : null;
-
-        // If metadata contains a profile picture S3 key, generate presigned URL
-        if (metadata && metadata.creatorProfilePicture) {
-          try {
-            metadata.creatorProfilePicture = await getPresignedUrl(
-              metadata.creatorProfilePicture,
-              900 // 15 minutes
-            );
-          } catch (error) {
-            console.error("Error generating presigned URL for notification profile picture:", error);
-            // Keep the S3 key if presigned URL generation fails
-          }
-        }
-
-        return {
-          ...notif,
-          metadata,
-        };
-      })
-    );
+    // Parse metadata JSON
+    const parsedNotifications = notifications.map((notif) => ({
+      ...notif,
+      metadata: notif.metadata ? JSON.parse(notif.metadata) : null,
+    }));
 
     return {
       data: parsedNotifications,
