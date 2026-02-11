@@ -62,6 +62,21 @@ export const createColumns = ({
     },
   },
   {
+    accessorKey: "proposalNumber",
+    header: "Proposal No.",
+    cell: ({ row }) => {
+      const contract = row.original;
+      const proposalNum = contract.proposal?.proposalNumber;
+      return proposalNum ? (
+        <span className="font-mono text-sm italic font-normal text-black dark:text-white">
+          {proposalNum}
+        </span>
+      ) : (
+        <span className="text-muted-foreground text-sm">—</span>
+      );
+    },
+  },
+  {
     accessorKey: "clientName",
     accessorFn: (row) => row.inquiry?.name || "",
     header: ({ column }) => {

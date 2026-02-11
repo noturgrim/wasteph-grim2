@@ -33,9 +33,17 @@ export function ViewContractDetailsDialog({ open, onOpenChange, contract, users 
         <div className="space-y-4">
           {/* Basic Info */}
           <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 space-y-2">
-            <div>
-              <p className="text-sm text-muted-foreground">Client</p>
-              <p className="font-semibold">{clientName}</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Client</p>
+                <p className="font-semibold">{clientName}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Proposal Number</p>
+                <p className="font-mono text-sm italic">
+                  {contract.proposal?.proposalNumber || "N/A"}
+                </p>
+              </div>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Sales Person</p>
