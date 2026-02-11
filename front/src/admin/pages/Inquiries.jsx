@@ -347,8 +347,10 @@ export default function Inquiries() {
         onRequestProposal: handleRequestProposal,
         onDelete: handleDeleteInquiry,
         userRole: user?.role,
+        currentUserId: user?.id,
+        isMasterSales,
       }),
-    [users, handleViewInquiry, handleEditInquiry, handleRequestProposal, handleDeleteInquiry, user?.role],
+    [users, handleViewInquiry, handleEditInquiry, handleRequestProposal, handleDeleteInquiry, user?.role, user?.id, isMasterSales],
   );
 
   const columns = useMemo(

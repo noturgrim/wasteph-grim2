@@ -11,7 +11,7 @@ import { format } from "date-fns";
 import { StatusBadge } from "../StatusBadge";
 import { Badge } from "@/components/ui/badge";
 
-export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestProposal, userRole }) => [
+export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestProposal, userRole, currentUserId, isMasterSales }) => [
   {
     accessorKey: "inquiryNumber",
     header: ({ column }) => {
@@ -192,11 +192,17 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestP
       const inquiry = row.original;
       const canRequestProposal = inquiry.isInformationComplete !== false;
 
+      // Master sales can only edit/request proposal for inquiries assigned to them
+      const isAssignedToCurrentUser = inquiry.assignedTo === currentUserId;
+      const canEdit = !isMasterSales || isAssignedToCurrentUser;
+      const canCreateProposal = !isMasterSales || isAssignedToCurrentUser;
+
       return (
         <div className="flex items-center gap-2">
           {/* Request Proposal Button - only show if NO proposal exists OR proposal was rejected */}
-          {/* Also check if information is complete (for inquiries from claimed leads) */}
-          {!inquiry.proposalStatus &&
+          {/* Master sales can only see this for inquiries assigned to them */}
+          {canCreateProposal &&
+           !inquiry.proposalStatus &&
            inquiry.status !== "submitted_proposal" &&
            inquiry.status !== "declined" &&
            inquiry.status !== "on_boarded" && (
@@ -226,7 +232,12 @@ export const createColumns = ({ users = [], onView, onEdit, onDelete, onRequestP
                 <Eye className="h-4 w-4" />
               </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={() => onEdit(inquiry)} className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => canEdit && onEdit(inquiry)}
+                disabled={!canEdit}
+                className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                title={!canEdit ? "You can only edit inquiries assigned to you" : "Edit inquiry"}
+              >
                 <span className="flex-1">Edit</span>
                 <Pencil className="h-4 w-4" />
               </DropdownMenuItem>
