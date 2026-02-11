@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { format } from "date-fns";
 import { User, Mail, Shield, Calendar, Star, Camera } from "lucide-react";
@@ -48,15 +48,24 @@ export default function Account() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [imageKey, setImageKey] = useState(Date.now());
 
+  // Update imageKey when user profile picture changes
+  useEffect(() => {
+    if (user?.profilePictureUrl) {
+      setImageKey(Date.now());
+    }
+  }, [user?.profilePictureUrl]);
+
   if (!user) return null;
 
   const initials =
     (user.firstName?.charAt(0) || "") + (user.lastName?.charAt(0) || "");
 
   const handleUploadSuccess = async () => {
+    // Force image re-render by updating key BEFORE refresh
+    const newKey = Date.now();
+    setImageKey(newKey);
+    // Refresh user data to get new presigned URL
     await refreshUser();
-    // Force image re-render by updating key
-    setImageKey(Date.now());
   };
 
   return (

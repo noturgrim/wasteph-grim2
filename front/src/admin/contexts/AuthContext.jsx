@@ -125,7 +125,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.getCurrentUser();
       if (response.success) {
-        setUser(response.user);
+        setUser({ ...response.user });
       }
     } catch (error) {
       console.error("Error refreshing user:", error);

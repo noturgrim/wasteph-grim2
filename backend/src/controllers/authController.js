@@ -239,6 +239,11 @@ export const getCurrentUser = async (req, res, next) => {
       }
     }
 
+    // Prevent caching of user data to ensure fresh presigned URLs
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     res.json({
       success: true,
       user: {

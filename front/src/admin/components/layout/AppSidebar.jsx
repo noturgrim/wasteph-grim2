@@ -128,12 +128,11 @@ export function AppSidebar() {
                   size="lg"
                   className="hover:bg-slate-100 dark:hover:bg-white/5"
                 >
-                  <Avatar className="h-8 w-8 border-2 border-[#15803d]">
+                  <Avatar className="h-8 w-8 border-2 border-[#15803d]" key={user?.profilePictureUrl || 'no-avatar'}>
                     {user?.profilePictureUrl && (
                       <AvatarImage
                         src={user.profilePictureUrl}
                         alt={user.firstName}
-                        key={user.profilePictureUrl}
                       />
                     )}
                     <AvatarFallback className="bg-gradient-to-br from-[#15803d] to-[#16a34a] text-xs font-bold text-white">
