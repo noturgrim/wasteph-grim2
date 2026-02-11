@@ -390,17 +390,34 @@ const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange
 
       {/* Ensure tables render correctly inside ProseMirror regardless of template styles */}
       <style>{`
-        /* Page break indicators */
+        /* Page break indicators - matched to actual PDF output with header (140px top + 20px bottom margins) */
         .proposal-editor-scope {
           background-image: repeating-linear-gradient(
             transparent,
-            transparent 1050px,  /* ~A4 page height after margins */
-            #94a3b8 1050px,     /* Page break line color */
-            #94a3b8 1052px      /* Line thickness: 2px */
+            transparent 930px,  /* Content area per page in PDF (A4 height ~1123px - 140px top - 20px bottom - padding = ~930px usable) */
+            #94a3b8 930px,     /* Page break line color */
+            #94a3b8 932px      /* Line thickness: 2px */
           );
-          background-position: 0 -120px; /* Offset for header margin */
+          background-position: 0 0; /* Start from top since we're showing content area only */
           /* Force text to stay dark in both light and dark mode */
           color: #000000 !important;
+          /* Add top margin to account for sticky header indicator */
+          margin-top: 0;
+        }
+
+        /* ProseMirror contenteditable - show full pages like Google Docs */
+        .proposal-editor-scope .ProseMirror {
+          /* Always show at least 1 full page of content area */
+          min-height: 930px !important;
+          /* Add slight top padding for breathing room after header indicator */
+          padding-top: 8px;
+        }
+
+        /* Add spacer after content to allow scrolling through the full current page */
+        .proposal-editor-scope .ProseMirror::after {
+          content: '';
+          display: block;
+          height: 930px; /* Full page of extra space below content */
         }
 
         /* Ensure all text elements inside editor stay dark */
@@ -455,10 +472,21 @@ const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange
       />
 
       <div className="flex-1 overflow-y-auto min-h-0 relative">
+        {/* Header space indicator - shows where the PDF header will appear */}
+        <div className="sticky top-0 z-20 bg-gradient-to-b from-blue-50 to-blue-100 border-b-2 border-blue-300 px-4 py-3 shadow-sm">
+          <div className="flex items-center justify-between text-xs text-blue-700">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">📋 Header Area</span>
+              <span className="text-blue-600">(Company header will appear here in PDF - not editable)</span>
+            </div>
+            <span className="text-blue-600 font-mono">~140px reserved</span>
+          </div>
+        </div>
+
         <EditorContent editor={editor} />
 
         {/* Page break legend */}
-        <div className="sticky top-4 left-4 inline-block bg-blue-50 border border-blue-200 rounded px-3 py-1.5 text-xs text-blue-700 shadow-sm z-10 ml-4 mt-2">
+        <div className="sticky top-16 left-4 inline-block bg-blue-50 border border-blue-200 rounded px-3 py-1.5 text-xs text-blue-700 shadow-sm z-10 ml-4 mt-2">
           <span className="font-medium">📄 Horizontal lines</span> = PDF page breaks (approx. A4 size)
         </div>
       </div>
