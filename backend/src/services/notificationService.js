@@ -112,7 +112,7 @@ class NotificationService {
       .limit(limit)
       .offset(offset);
 
-    // Parse metadata
+    // Parse metadata JSON
     const parsedNotifications = notifications.map((notif) => ({
       ...notif,
       metadata: notif.metadata ? JSON.parse(notif.metadata) : null,

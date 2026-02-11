@@ -3,6 +3,8 @@ import { hashPassword, validatePasswordStrength } from "../auth/password.js";
 import { db } from "../db/index.js";
 import { userTable } from "../db/schema.js";
 import { eq } from "drizzle-orm";
+import { getPresignedUrl } from "../services/s3Service.js";
+import { AppError } from "../middleware/errorHandler.js";
 
 export const getAllUsers = async (req, res, next) => {
   try {
@@ -194,6 +196,80 @@ export const deleteUser = async (req, res, next) => {
     res.json({
       success: true,
       message: "User deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateUserProfilePicture = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { fileUrl } = req.body;
+    const userId = req.user.id;
+
+    // Authorization: users can only update their own profile picture, super_admin can update any
+    if (id !== userId && req.user.role !== "super_admin") {
+      throw new AppError("You can only update your own profile picture", 403);
+    }
+
+    if (!fileUrl) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded",
+      });
+    }
+
+    const metadata = {
+      ipAddress: req.ip,
+      userAgent: req.get("user-agent"),
+    };
+
+    const user = await userService.updateProfilePicture(id, fileUrl, userId, metadata);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      data: user,
+      message: "Profile picture updated successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getUserProfilePicture = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const user = await userService.getUserById(id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (!user.profilePictureUrl) {
+      return res.status(404).json({
+        success: false,
+        message: "User has no profile picture",
+      });
+    }
+
+    // Generate presigned URL (15 minutes expiry)
+    const presignedUrl = await getPresignedUrl(user.profilePictureUrl, 900);
+
+    res.json({
+      success: true,
+      data: { url: presignedUrl },
     });
   } catch (error) {
     next(error);

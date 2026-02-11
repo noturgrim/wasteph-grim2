@@ -30,6 +30,7 @@ export const lucia = new Lucia(adapter, {
       role: attributes.role,
       isActive: attributes.is_active,
       isMasterSales: attributes.is_master_sales,
+      profilePictureUrl: attributes.profile_picture_url,
       createdAt: attributes.created_at,
     };
   },

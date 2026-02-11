@@ -139,7 +139,8 @@ class ApiClient {
   }
 
   async getCurrentUser() {
-    return this.request("/auth/me");
+    // Add cache-busting parameter to force fresh profile picture URLs
+    return this.request(`/auth/me?_=${Date.now()}`);
   }
 
   async register(userData) {
@@ -367,6 +368,22 @@ class ApiClient {
     return this.request(`/users/${id}`, {
       method: "DELETE",
     });
+  }
+
+  async updateProfilePicture(userId, file) {
+    const formData = new FormData();
+    formData.append("profilePicture", file);
+
+    return this.request(`/users/${userId}/profile-picture`, {
+      method: "PATCH",
+      body: formData,
+      // Don't set Content-Type header - browser sets it with boundary for multipart/form-data
+      headers: {}, // Override default headers to let browser set Content-Type
+    });
+  }
+
+  async getUserProfilePictureUrl(userId) {
+    return this.request(`/users/${userId}/profile-picture`);
   }
 
   // Service endpoints

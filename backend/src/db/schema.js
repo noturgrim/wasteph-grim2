@@ -151,6 +151,7 @@ export const userTable = pgTable("user", {
   role: userRoleEnum("role").notNull().default("sales"),
   isMasterSales: boolean("is_master_sales").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
+  profilePictureUrl: text("profile_picture_url"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

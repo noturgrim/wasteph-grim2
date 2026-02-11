@@ -19,7 +19,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -128,7 +128,13 @@ export function AppSidebar() {
                   size="lg"
                   className="hover:bg-slate-100 dark:hover:bg-white/5"
                 >
-                  <Avatar className="h-8 w-8 border-2 border-[#15803d]">
+                  <Avatar className="h-8 w-8 border-2 border-[#15803d]" key={user?.profilePictureUrl || 'no-avatar'}>
+                    {user?.profilePictureUrl && (
+                      <AvatarImage
+                        src={user.profilePictureUrl}
+                        alt={user.firstName}
+                      />
+                    )}
                     <AvatarFallback className="bg-gradient-to-br from-[#15803d] to-[#16a34a] text-xs font-bold text-white">
                       {user?.firstName?.charAt(0) || user?.email?.charAt(0) || "U"}
                     </AvatarFallback>

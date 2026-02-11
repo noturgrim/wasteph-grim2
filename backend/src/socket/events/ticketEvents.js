@@ -109,6 +109,7 @@ class TicketEventEmitter {
           lastName: user.lastName,
           email: user.email,
           role: user.role,
+          profilePictureUrl: user.profilePictureUrl,
         },
       }
     );
@@ -117,7 +118,7 @@ class TicketEventEmitter {
     if (this.notificationService) {
       const adminIds = await this._getUserIdsByRoles(["admin", "super_admin"]);
       const recipients = adminIds.filter((id) => id !== user.id);
-      
+
       if (recipients.length > 0) {
         await this.notificationService.createBulkNotifications(recipients, {
           type: "ticket_created",
@@ -280,6 +281,7 @@ class TicketEventEmitter {
         lastName: user.lastName,
         email: user.email,
         role: user.role,
+        profilePictureUrl: user.profilePictureUrl,
       },
     };
 
@@ -319,6 +321,7 @@ class TicketEventEmitter {
             metadata: {
               ticketNumber: ticket.ticketNumber,
               commenterName: `${user.firstName} ${user.lastName}`,
+              creatorName: `${user.firstName} ${user.lastName}`,
             },
           }
         );

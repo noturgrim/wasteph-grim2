@@ -67,6 +67,7 @@ class ProposalEventEmitter {
           lastName: user.lastName,
           email: user.email,
           role: user.role,
+          profilePictureUrl: user.profilePictureUrl,
         },
       };
 
@@ -103,6 +104,7 @@ class ProposalEventEmitter {
               id: user.id,
               name: requesterName,
             },
+            creatorName: requesterName,
           },
         });
       }

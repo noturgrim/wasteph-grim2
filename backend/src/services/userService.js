@@ -1,7 +1,8 @@
 import { db } from "../db/index.js";
-import { userTable } from "../db/schema.js";
+import { userTable, activityLogTable } from "../db/schema.js";
 import { eq, and, or, like, inArray, count, sql } from "drizzle-orm";
 import { generateIdFromEntropySize } from "lucia";
+import { deleteObject } from "./s3Service.js";
 
 const userSelect = {
   id: userTable.id,
@@ -11,6 +12,7 @@ const userSelect = {
   role: userTable.role,
   isMasterSales: userTable.isMasterSales,
   isActive: userTable.isActive,
+  profilePictureUrl: userTable.profilePictureUrl,
   createdAt: userTable.createdAt,
   updatedAt: userTable.updatedAt,
 };
@@ -129,6 +131,67 @@ class UserService {
       .returning(userSelect);
 
     return deleted || null;
+  }
+
+  async updateProfilePicture(userId, profilePictureUrl, updatedBy, metadata) {
+    // Get current user to check for existing profile picture
+    const [currentUser] = await db
+      .select({ profilePictureUrl: userTable.profilePictureUrl })
+      .from(userTable)
+      .where(eq(userTable.id, userId))
+      .limit(1);
+
+    if (!currentUser) {
+      return null;
+    }
+
+    // Delete old profile picture from S3 if it exists
+    if (currentUser.profilePictureUrl) {
+      try {
+        await deleteObject(currentUser.profilePictureUrl);
+      } catch (error) {
+        console.error("Error deleting old profile picture from S3:", error);
+        // Continue with update even if deletion fails
+      }
+    }
+
+    // Update user with new profile picture
+    const [user] = await db
+      .update(userTable)
+      .set({
+        profilePictureUrl,
+        updatedAt: sql`NOW()`,
+      })
+      .where(eq(userTable.id, userId))
+      .returning(userSelect);
+
+    // Log activity
+    await this._logActivity(
+      updatedBy,
+      "user_profile_picture_updated",
+      "user",
+      userId,
+      { profilePictureUrl },
+      metadata
+    );
+
+    return user || null;
+  }
+
+  async _logActivity(userId, action, entityType, entityId, details, metadata = {}) {
+    try {
+      await db.insert(activityLogTable).values({
+        userId,
+        action,
+        entityType,
+        entityId,
+        details: JSON.stringify(details),
+        ipAddress: metadata.ipAddress,
+        userAgent: metadata.userAgent,
+      });
+    } catch (error) {
+      console.error("Activity log error:", error);
+    }
   }
 }
 
