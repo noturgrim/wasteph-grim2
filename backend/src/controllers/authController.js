@@ -10,6 +10,7 @@ import { eq } from "drizzle-orm";
 import { generateIdFromEntropySize } from "lucia";
 import { AppError } from "../middleware/errorHandler.js";
 import { generateCsrfToken } from "../middleware/csrf.js";
+import { getPresignedUrl } from "../services/s3Service.js";
 
 export const register = async (req, res, next) => {
   try {
@@ -91,6 +92,7 @@ export const register = async (req, res, next) => {
         lastName: newUser.lastName,
         role: newUser.role,
         isMasterSales: newUser.isMasterSales || false,
+        profilePictureUrl: null,
       },
     });
   } catch (error) {
@@ -148,6 +150,16 @@ export const login = async (req, res, next) => {
     // Provide CSRF token so the frontend can send it on subsequent requests
     res.setHeader("X-CSRF-Token", generateCsrfToken(session.id));
 
+    // Generate presigned URL for profile picture if it exists
+    let profilePictureUrl = null;
+    if (user.profilePictureUrl) {
+      try {
+        profilePictureUrl = await getPresignedUrl(user.profilePictureUrl, 900);
+      } catch (error) {
+        console.error("Error generating presigned URL for profile picture:", error);
+      }
+    }
+
     res.json({
       success: true,
       message: "Login successful",
@@ -158,6 +170,7 @@ export const login = async (req, res, next) => {
         lastName: user.lastName,
         role: user.role,
         isMasterSales: user.isMasterSales || false,
+        profilePictureUrl,
       },
     });
   } catch (error) {
@@ -215,6 +228,17 @@ export const getCurrentUser = async (req, res, next) => {
       });
     }
 
+    // Generate presigned URL for profile picture if it exists
+    let profilePictureUrl = null;
+    if (req.user.profilePictureUrl) {
+      try {
+        profilePictureUrl = await getPresignedUrl(req.user.profilePictureUrl, 900); // 15 minutes
+      } catch (error) {
+        console.error("Error generating presigned URL for profile picture:", error);
+        // Don't fail the request if presigned URL generation fails
+      }
+    }
+
     res.json({
       success: true,
       user: {
@@ -224,6 +248,7 @@ export const getCurrentUser = async (req, res, next) => {
         lastName: req.user.lastName,
         role: req.user.role,
         isMasterSales: req.user.isMasterSales || false,
+        profilePictureUrl,
         createdAt: req.user.createdAt,
       },
     });

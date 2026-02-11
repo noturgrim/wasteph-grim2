@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { format } from "date-fns";
-import { User, Mail, Shield, Calendar, Star } from "lucide-react";
+import { User, Mail, Shield, Calendar, Star, Camera } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -8,9 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import ProfilePictureUpload from "@admin/components/profile/ProfilePictureUpload";
 
 const ROLE_LABELS = {
   super_admin: "Super Admin",
@@ -41,12 +44,20 @@ function DetailRow({ icon: Icon, label, children }) {
 }
 
 export default function Account() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [imageKey, setImageKey] = useState(Date.now());
 
   if (!user) return null;
 
   const initials =
     (user.firstName?.charAt(0) || "") + (user.lastName?.charAt(0) || "");
+
+  const handleUploadSuccess = async () => {
+    await refreshUser();
+    // Force image re-render by updating key
+    setImageKey(Date.now());
+  };
 
   return (
     <div className="space-y-6">
@@ -59,11 +70,27 @@ export default function Account() {
         {/* Profile Card */}
         <Card className="md:col-span-1">
           <CardContent className="flex flex-col items-center pt-6 pb-6">
-            <Avatar className="h-24 w-24 border-4 border-primary/20">
-              <AvatarFallback className="bg-gradient-to-br from-[#15803d] to-[#16a34a] text-2xl font-bold text-white">
-                {initials || "U"}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-24 w-24 border-4 border-primary/20" key={imageKey}>
+                {user.profilePictureUrl && (
+                  <AvatarImage
+                    src={`${user.profilePictureUrl}#${imageKey}`}
+                    alt={user.firstName}
+                  />
+                )}
+                <AvatarFallback className="bg-gradient-to-br from-[#15803d] to-[#16a34a] text-2xl font-bold text-white">
+                  {initials || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <Button
+                size="icon"
+                variant="secondary"
+                className="absolute bottom-0 right-0 h-8 w-8 rounded-full shadow-md"
+                onClick={() => setUploadDialogOpen(true)}
+              >
+                <Camera className="h-4 w-4" />
+              </Button>
+            </div>
             <h2 className="mt-4 text-xl font-bold">
               {user.firstName} {user.lastName}
             </h2>
@@ -128,6 +155,14 @@ export default function Account() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Profile Picture Upload Dialog */}
+      <ProfilePictureUpload
+        open={uploadDialogOpen}
+        onOpenChange={setUploadDialogOpen}
+        currentUser={user}
+        onUploadSuccess={handleUploadSuccess}
+      />
     </div>
   );
 }

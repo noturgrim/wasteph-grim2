@@ -27,7 +27,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import PageTransition from "../common/PageTransition";
 import { AppSidebar } from "./AppSidebar";
 
@@ -259,6 +259,12 @@ export default function AppLayout() {
                         >
                           <div className="relative shrink-0">
                             <Avatar className="h-10 w-10">
+                              {notif.metadata?.creatorProfilePicture && (
+                                <AvatarImage
+                                  src={notif.metadata.creatorProfilePicture}
+                                  alt={notif.metadata.creatorName || "User"}
+                                />
+                              )}
                               <AvatarFallback
                                 className={`text-sm font-medium ${
                                   !notif.isRead

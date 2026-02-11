@@ -121,6 +121,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const response = await api.getCurrentUser();
+      if (response.success) {
+        setUser(response.user);
+      }
+    } catch (error) {
+      console.error("Error refreshing user:", error);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -130,6 +141,7 @@ export const AuthProvider = ({ children }) => {
         isLoading,
         isLoggingOut,
         checkAuth,
+        refreshUser,
         isSocketConnected,
       }}
     >
