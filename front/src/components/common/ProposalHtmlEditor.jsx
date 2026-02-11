@@ -399,6 +399,18 @@ const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange
             #94a3b8 1052px      /* Line thickness: 2px */
           );
           background-position: 0 -120px; /* Offset for header margin */
+          /* Force text to stay dark in both light and dark mode */
+          color: #000000 !important;
+        }
+
+        /* Ensure all text elements inside editor stay dark */
+        .proposal-editor-scope *:not(th):not(.header *) {
+          color: inherit !important;
+        }
+
+        /* Keep header text visible (it has its own styling) */
+        .proposal-editor-scope .header * {
+          color: inherit;
         }
 
         .proposal-editor-scope table {
@@ -416,6 +428,7 @@ const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange
         .proposal-editor-scope table th {
           font-weight: 600;
           background-color: #f3f4f6;
+          color: #000000 !important;
         }
         /* Selected cell highlight (Tiptap default) */
         .proposal-editor-scope .selectedCell {
