@@ -63,17 +63,49 @@ class PDFService {
       browser = await this._getBrowser();
       page = await browser.newPage();
 
+      // Extract header if present (for repeating on every page)
+      const headerMatch = html.match(/<div class="header"[^>]*>([\s\S]*?)<\/div>/);
+      let headerHtml = '';
+      let bodyHtml = html;
+
+      if (headerMatch) {
+        // Extract styles from the HTML for the header
+        const styleMatch = html.match(/<style[^>]*>([\s\S]*?)<\/style>/);
+        const styles = styleMatch ? styleMatch[1] : '';
+
+        // Build header HTML with inline styles
+        headerHtml = `
+          <div style="width: 100%; padding: 10px 20px; font-size: 10px; border-bottom: 2px solid #104806;">
+            <style>${styles}</style>
+            ${headerMatch[1]}
+          </div>
+        `;
+
+        // Remove header from body content (it will be in the page margin)
+        bodyHtml = html.replace(/<div class="header"[^>]*>[\s\S]*?<\/div>/, '');
+      }
+
       await Promise.race([
-        page.setContent(html, { waitUntil: "networkidle0" }),
+        page.setContent(bodyHtml, { waitUntil: "networkidle0" }),
         this.timeout(15000, "Page load timeout"),
       ]);
 
+      const pdfOptions = {
+        format: "A4",
+        printBackground: true,
+        displayHeaderFooter: !!headerMatch,
+        headerTemplate: headerMatch ? headerHtml : '',
+        footerTemplate: '<div></div>', // Empty footer to avoid default page numbers
+        margin: {
+          top: headerMatch ? "140px" : "20px",  // More space if header present
+          bottom: "20px",
+          left: "20px",
+          right: "20px"
+        },
+      };
+
       const pdfBuffer = await Promise.race([
-        page.pdf({
-          format: "A4",
-          printBackground: true,
-          margin: { top: "20px", bottom: "20px", left: "20px", right: "20px" },
-        }),
+        page.pdf(pdfOptions),
         this.timeout(30000, "PDF generation timeout"),
       ]);
 

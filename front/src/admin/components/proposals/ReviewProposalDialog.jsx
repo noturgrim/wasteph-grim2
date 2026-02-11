@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Eye } from "lucide-react";
 import { PDFViewer } from "../PDFViewer";
 import { StatusBadge } from "../StatusBadge";
+import { api } from "@admin/services/api";
 
 export function ReviewProposalDialog({
   open,
@@ -63,19 +64,11 @@ export function ReviewProposalDialog({
       setIsLoadingPdf(true);
 
       try {
-        const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-
         // If PDF already exists on disk, fetch it as blob and convert to base64
         if (proposal.pdfUrl) {
-          const response = await fetch(
-            `${API_BASE_URL}/proposals/${proposal.id}/pdf`,
-            {
-              method: "GET",
-              credentials: "include",
-            }
-          );
-          if (!response.ok) throw new Error("Failed to fetch PDF");
-          const blob = await response.blob();
+          const blob = await api.requestBlob(`/proposals/${proposal.id}/pdf`, {
+            method: "GET",
+          });
           const reader = new FileReader();
           reader.onloadend = () => {
             setPdfPreviewUrl(reader.result);
@@ -85,16 +78,12 @@ export function ReviewProposalDialog({
           return; // Early return since we're using async reader
         } else {
           // Generate preview PDF (for proposals without saved PDF)
-          const response = await fetch(
-            `${API_BASE_URL}/proposals/${proposal.id}/preview-pdf`,
-            {
-              method: "POST",
-              credentials: "include",
-            }
-          );
-          const data = await response.json();
-          if (data.success) {
-            setPdfPreviewUrl(`data:application/pdf;base64,${data.data.pdfBase64}`);
+          // This endpoint returns JSON with base64 PDF, not a blob
+          const response = await api.request(`/proposals/${proposal.id}/preview-pdf`, {
+            method: "POST",
+          });
+          if (response.success && response.data.pdfBase64) {
+            setPdfPreviewUrl(`data:application/pdf;base64,${response.data.pdfBase64}`);
           }
         }
       } catch (error) {

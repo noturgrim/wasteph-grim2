@@ -79,6 +79,27 @@ router.all("/public/*", (req, res) => {
  * All routes require authentication
  */
 
+// Generate PDF preview from raw HTML (for editing preview)
+// MUST be before /:id routes to avoid "preview-pdf" being matched as an ID
+router.post("/preview-pdf", requireAuth, async (req, res, next) => {
+  try {
+    const { html } = req.body;
+
+    if (!html) {
+      return res.status(400).json({ success: false, message: "HTML content is required" });
+    }
+
+    const { default: pdfService } = await import("../services/pdfService.js");
+    const pdfBuffer = await pdfService.generatePDFFromHTML(html);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "inline; filename=preview.pdf");
+    res.send(pdfBuffer);
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Create proposal (Sales)
 router.post("/", requireAuth, validateCreateProposal, createProposal);
 
