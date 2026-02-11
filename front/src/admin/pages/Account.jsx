@@ -46,14 +46,6 @@ function DetailRow({ icon: Icon, label, children }) {
 export default function Account() {
   const { user, refreshUser } = useAuth();
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
-  const [imageKey, setImageKey] = useState(Date.now());
-
-  // Update imageKey when user profile picture changes
-  useEffect(() => {
-    if (user?.profilePictureUrl) {
-      setImageKey(Date.now());
-    }
-  }, [user?.profilePictureUrl]);
 
   if (!user) return null;
 
@@ -61,10 +53,8 @@ export default function Account() {
     (user.firstName?.charAt(0) || "") + (user.lastName?.charAt(0) || "");
 
   const handleUploadSuccess = async () => {
-    // Force image re-render by updating key BEFORE refresh
-    const newKey = Date.now();
-    setImageKey(newKey);
     // Refresh user data to get new presigned URL
+    // The new presigned URL will be different, triggering a re-render
     await refreshUser();
   };
 
@@ -80,10 +70,10 @@ export default function Account() {
         <Card className="md:col-span-1">
           <CardContent className="flex flex-col items-center pt-6 pb-6">
             <div className="relative">
-              <Avatar className="h-24 w-24 border-4 border-primary/20" key={imageKey}>
+              <Avatar className="h-24 w-24 border-4 border-primary/20">
                 {user.profilePictureUrl && (
                   <AvatarImage
-                    src={`${user.profilePictureUrl}#${imageKey}`}
+                    src={user.profilePictureUrl}
                     alt={user.firstName}
                   />
                 )}

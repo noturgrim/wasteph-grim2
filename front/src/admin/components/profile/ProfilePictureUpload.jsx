@@ -137,7 +137,7 @@ const ProfilePictureUpload = ({ open, onOpenChange, currentUser, onUploadSuccess
         <div className="space-y-4 py-4">
           {/* Preview Area */}
           <div className="flex justify-center">
-            <Avatar className="h-32 w-32 border-4 border-gray-200">
+            <Avatar className="h-32 w-32 border-4 border-gray-200 dark:border-gray-700">
               {previewUrl ? (
                 <AvatarImage src={previewUrl} alt="Preview" />
               ) : currentUser?.profilePictureUrl ? (
@@ -154,8 +154,8 @@ const ProfilePictureUpload = ({ open, onOpenChange, currentUser, onUploadSuccess
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
               dragActive
-                ? "border-green-500 bg-green-50"
-                : "border-gray-300 hover:border-gray-400"
+                ? "border-green-500 bg-green-50 dark:bg-green-950 dark:border-green-400"
+                : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
             }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -173,9 +173,9 @@ const ProfilePictureUpload = ({ open, onOpenChange, currentUser, onUploadSuccess
 
             {selectedFile ? (
               <div className="space-y-2">
-                <Camera className="h-8 w-8 mx-auto text-green-600" />
-                <p className="text-sm font-medium text-gray-900">{selectedFile.name}</p>
-                <p className="text-xs text-gray-500">
+                <Camera className="h-8 w-8 mx-auto text-green-600 dark:text-green-400" />
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{selectedFile.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
                 <Button
@@ -192,7 +192,7 @@ const ProfilePictureUpload = ({ open, onOpenChange, currentUser, onUploadSuccess
               </div>
             ) : (
               <div className="space-y-2">
-                <Upload className="h-8 w-8 mx-auto text-gray-400" />
+                <Upload className="h-8 w-8 mx-auto text-gray-400 dark:text-gray-500" />
                 <div>
                   <Button
                     type="button"
@@ -202,9 +202,9 @@ const ProfilePictureUpload = ({ open, onOpenChange, currentUser, onUploadSuccess
                   >
                     Click to upload
                   </Button>
-                  <span className="text-sm text-gray-600"> or drag and drop</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300"> or drag and drop</span>
                 </div>
-                <p className="text-xs text-gray-500">PNG, JPG, WEBP, GIF up to 5MB</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">PNG, JPG, WEBP, GIF up to 5MB</p>
               </div>
             )}
           </div>

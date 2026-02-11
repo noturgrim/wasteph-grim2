@@ -128,7 +128,7 @@ export function AppSidebar() {
                   size="lg"
                   className="hover:bg-slate-100 dark:hover:bg-white/5"
                 >
-                  <Avatar className="h-8 w-8 border-2 border-[#15803d]" key={user?.profilePictureUrl || 'no-avatar'}>
+                  <Avatar className="h-8 w-8 border-2 border-[#15803d]">
                     {user?.profilePictureUrl && (
                       <AvatarImage
                         src={user.profilePictureUrl}
