@@ -1058,5 +1058,7 @@ export const notificationsTable = pgTable(
     userIdIdx: index("notifications_user_id_idx").on(table.userId),
     createdAtIdx: index("notifications_created_at_idx").on(table.createdAt),
     isReadIdx: index("notifications_is_read_idx").on(table.isRead),
+    // Composite index for mark-all-read and unread queries
+    userIsReadIdx: index("notifications_user_is_read_idx").on(table.userId, table.isRead),
   })
 );

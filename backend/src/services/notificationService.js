@@ -181,10 +181,12 @@ class NotificationService {
 
   /**
    * Mark all notifications as read for a user
+   * OPTIMIZED: Returns only count, not full row data
    * @param {string} userId - User ID
    * @returns {Promise<number>} Number of notifications marked as read
    */
   async markAllAsRead(userId) {
+    // Use returning() with only id to minimize data transfer
     const result = await db
       .update(notificationsTable)
       .set({
@@ -197,7 +199,7 @@ class NotificationService {
           eq(notificationsTable.isRead, false)
         )
       )
-      .returning();
+      .returning({ id: notificationsTable.id });
 
     // Emit socket event
     if (result.length > 0 && socketServer.isUserConnected(userId)) {
