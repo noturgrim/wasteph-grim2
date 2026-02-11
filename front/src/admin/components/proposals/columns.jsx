@@ -201,12 +201,27 @@ export const createColumns = ({ users = [], onReview, onDelete, onRevise, onSend
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              {/* View Detail — always available; for admin it's redundant on pending (they have Review inline) */}
-              <DropdownMenuItem onClick={() => onReview(proposal)} className="cursor-pointer">
-                <span className="flex-1">View Detail</span>
-                <Eye className="h-4 w-4" />
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              {/* View Proposal — for sales with pending proposals (requested approval) */}
+              {userRole === "sales" && proposal.status === "pending" && (
+                <>
+                  <DropdownMenuItem onClick={() => onReview(proposal)} className="cursor-pointer">
+                    <span className="flex-1">View Proposal</span>
+                    <Eye className="h-4 w-4" />
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+
+              {/* View Detail — for other statuses or admin users */}
+              {!(userRole === "sales" && proposal.status === "pending") && (
+                <>
+                  <DropdownMenuItem onClick={() => onReview(proposal)} className="cursor-pointer">
+                    <span className="flex-1">View Detail</span>
+                    <Eye className="h-4 w-4" />
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
 
               {/* Delete option */}
               {onDelete && (
