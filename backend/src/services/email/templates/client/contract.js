@@ -46,7 +46,7 @@ export const generateContractEmailHTML = (
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
     .logo-section {
-      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      background: #0a1f0f;
       padding: 32px 32px 28px 32px;
       text-align: center;
       border-bottom: 2px solid #16a34a;
@@ -61,7 +61,7 @@ export const generateContractEmailHTML = (
       line-height: 1;
     }
     .logo-waste {
-      color: #166534;
+      color: #ffffff;
     }
     .logo-bullet {
       display: inline-block;
@@ -73,13 +73,10 @@ export const generateContractEmailHTML = (
       vertical-align: middle;
     }
     .logo-ph {
-      background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #16a34a;
     }
     .logo-tagline {
-      color: #15803d;
+      color: #16a34a;
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.3em;

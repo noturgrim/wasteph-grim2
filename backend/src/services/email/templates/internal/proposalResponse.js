@@ -26,29 +26,28 @@ export const generateProposalResponseEmailHTML = (data) => {
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       line-height: 1.6;
-      color: #ffffff;
-      background-color: #0a0a0a;
+      color: #1f2937;
+      background-color: #f9fafb;
       margin: 0;
       padding: 0;
     }
     .wrapper {
       width: 100%;
-      background-color: #0a0a0a;
+      background-color: #f9fafb;
       padding: 32px 16px;
     }
     .container {
       max-width: 600px;
       margin: 0 auto;
-      background: #111111;
+      background: #ffffff;
       border-radius: 12px;
       overflow: hidden;
-      border: 1px solid #1f1f1f;
     }
     .logo-section {
-      background: linear-gradient(135deg, #0f2618 0%, #0a1f0f 100%);
+      background: #0a1f0f;
       padding: 32px 32px 28px 32px;
       text-align: center;
-      border-bottom: 1px solid #15803d;
+      border-bottom: 2px solid #16a34a;
     }
     .logo-text {
       font-size: 42px;
@@ -72,13 +71,10 @@ export const generateProposalResponseEmailHTML = (data) => {
       vertical-align: middle;
     }
     .logo-ph {
-      background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #16a34a;
     }
     .logo-tagline {
-      color: #15803d;
+      color: #16a34a;
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.3em;
@@ -86,8 +82,9 @@ export const generateProposalResponseEmailHTML = (data) => {
       margin: 0;
     }
     .header {
+      background: #ffffff;
       padding: 28px 32px 24px 32px;
-      border-bottom: 1px solid #1f1f1f;
+      border-bottom: 1px solid #e5e7eb;
     }
     .status-badge {
       display: inline-block;
@@ -114,26 +111,27 @@ export const generateProposalResponseEmailHTML = (data) => {
       font-weight: 400;
     }
     .content {
+      background: #ffffff;
       padding: 24px 32px 32px 32px;
     }
     .data-grid {
       width: 100%;
       margin: 20px 0;
-      background: #1a1a1a;
+      background: #f9fafb;
       border-radius: 8px;
       overflow: hidden;
-      border: 1px solid #262626;
+      border: 1px solid #e5e7eb;
     }
     .data-row td {
       padding: 14px 20px;
-      border-bottom: 1px solid #262626;
+      border-bottom: 1px solid #e5e7eb;
       font-size: 14px;
     }
     .data-row:last-child td {
       border-bottom: none;
     }
     .label {
-      color: #737373;
+      color: #6b7280;
       width: 110px;
       font-weight: 600;
       font-size: 12px;
@@ -141,11 +139,11 @@ export const generateProposalResponseEmailHTML = (data) => {
       letter-spacing: 0.05em;
     }
     .value {
-      color: #f5f5f5;
+      color: #1f2937;
       font-weight: 500;
     }
     .highlight-box {
-      background: ${isAccepted ? "#0f2618" : "#2d1212"};
+      background: ${isAccepted ? "#f0fdf4" : "#fef2f2"};
       border: 1px solid ${isAccepted ? "#15803d" : "#991b1b"};
       border-radius: 8px;
       padding: 18px 20px;
@@ -165,7 +163,7 @@ export const generateProposalResponseEmailHTML = (data) => {
       transition: background 0.2s ease;
     }
     .next-steps {
-      background: #1a1a1a;
+      background: #f9fafb;
       border-left: 3px solid ${isAccepted ? "#16a34a" : "#dc2626"};
       border-radius: 8px;
       padding: 16px 20px;
@@ -174,11 +172,11 @@ export const generateProposalResponseEmailHTML = (data) => {
     .footer {
       text-align: center;
       padding: 24px 32px;
-      background: #0a0a0a;
-      border-top: 1px solid #1f1f1f;
+      background: #f9fafb;
+      border-top: 1px solid #e5e7eb;
     }
     .footer p {
-      color: #737373;
+      color: #6b7280;
       font-size: 12px;
       line-height: 1.5;
     }
@@ -240,11 +238,11 @@ export const generateProposalResponseEmailHTML = (data) => {
             </table>
 
             <div class="highlight-box">
-              <p style="font-size: 14px; color: #e5e5e5; margin: 0; line-height: 1.6;">
+              <p style="font-size: 14px; color: #374151; margin: 0; line-height: 1.6;">
                 ${
                   isAccepted
-                    ? `<strong style="color: #22c55e;">Great news!</strong> The client has accepted your proposal.`
-                    : `<strong style="color: #ef4444;">The client has declined this proposal.</strong> Consider reaching out to understand their concerns and see if you can provide an alternative solution.`
+                    ? `<strong style="color: #16a34a;">Great news!</strong> The client has accepted your proposal.`
+                    : `<strong style="color: #dc2626;">The client has declined this proposal.</strong> Consider reaching out to understand their concerns and see if you can provide an alternative solution.`
                 }
               </p>
             </div>
@@ -254,8 +252,8 @@ export const generateProposalResponseEmailHTML = (data) => {
             </div>
 
             <div class="next-steps">
-              <p style="font-size: 13px; color: #e5e5e5; margin: 0; line-height: 1.5;">
-                <strong style="color: ${isAccepted ? "#22c55e" : "#ef4444"};">${isAccepted ? "Next Steps:" : "Suggested Actions:"}</strong><br>
+              <p style="font-size: 13px; color: #374151; margin: 0; line-height: 1.5;">
+                <strong style="color: ${isAccepted ? "#16a34a" : "#dc2626"};">${isAccepted ? "Next Steps:" : "Suggested Actions:"}</strong><br>
                 ${
                   isAccepted
                     ? `• Contract has been auto-created (status: pending_request)<br>• Request contract generation from admin<br>• Once approved, send contract to client`

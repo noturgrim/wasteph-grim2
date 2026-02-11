@@ -100,6 +100,12 @@ export const generateEventReminderEmailHTML = (data, timeType) => {
       .mobile-hide { display: none !important; }
       .mobile-full-width { width: 100% !important; }
     }
+    /* Logo mobile styles */
+    @media only screen and (max-width: 600px) {
+      h1[style*="font-size: 42px"] { font-size: 32px !important; }
+      span[style*="width: 6px"] { width: 5px !important; height: 5px !important; margin: 0 4px !important; }
+      p[style*="font-size: 10px"][style*="letter-spacing: 0.3em"] { font-size: 8px !important; letter-spacing: 0.25em !important; margin-top: 4px !important; }
+    }
   </style>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f8f9fa; font-family: Arial, sans-serif;">
@@ -113,15 +119,22 @@ export const generateEventReminderEmailHTML = (data, timeType) => {
         <tr>
         <td>
         <![endif]-->
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" class="mobile-full-width">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; overflow: hidden; mso-table-lspace: 0pt; mso-table-rspace: 0pt;" class="mobile-full-width">
+          
+          <!-- Logo -->
+          <tr>
+            <td style="background: #0a1f0f; padding: 32px 32px 28px 32px; text-align: center; border-bottom: 2px solid #16a34a;">
+              <h1 style="margin: 0 0 6px 0; font-size: 42px; font-weight: 900; letter-spacing: -0.05em; text-transform: uppercase; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1;">
+                <span style="color: #ffffff;">WASTE</span><span style="display: inline-block; width: 6px; height: 6px; background: #16a34a; border-radius: 50%; margin: 0 5px; vertical-align: middle;"></span><span style="color: #16a34a;">PH</span>
+              </h1>
+              <p style="margin: 0; color: #16a34a; font-size: 10px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase;">Private Waste Management</p>
+            </td>
+          </tr>
           
           <!-- Header -->
           <tr>
-            <td style="padding: 32px 40px; border-bottom: 1px solid #e8eaed;" class="mobile-padding">
-              <h1 style="margin: 0 0 6px 0; font-size: 26px; font-weight: 700; color: #1f1f1f; letter-spacing: -0.5px; line-height: 1.2; mso-line-height-rule: exactly; font-family: Arial, Helvetica, sans-serif;">
-                WASTE <span style="color: #16a34a;">• PH</span>
-              </h1>
-              <p style="margin: 0; font-size: 12px; color: #5f6368; letter-spacing: 0.3px; line-height: 1.4; font-family: Arial, Helvetica, sans-serif;">Private Waste Management</p>
+            <td style="padding: 28px 32px 24px 32px; background: #ffffff; border-bottom: 1px solid #e5e7eb;">
+              <span style="display: inline-block; background: ${is24h ? '#dcfce7' : '#fff7ed'}; color: ${is24h ? '#166534' : '#c2410c'}; padding: 6px 14px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 14px; text-transform: uppercase;">${is24h ? 'REMINDER: TOMORROW' : 'REMINDER: SOON'}</span>
             </td>
           </tr>
           

@@ -50,29 +50,29 @@ export const generateEventAssignedEmailHTML = (data) => {
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       line-height: 1.6;
-      color: #ffffff;
-      background-color: #0a0a0a;
+      color: #1f2937;
+      background-color: #f9fafb;
       margin: 0;
       padding: 0;
     }
     .wrapper {
       width: 100%;
-      background-color: #0a0a0a;
+      background-color: #f9fafb;
       padding: 32px 16px;
     }
     .container {
       max-width: 600px;
       margin: 0 auto;
-      background: #111111;
+      background: #ffffff;
       border-radius: 12px;
       overflow: hidden;
-      border: 1px solid #1f1f1f;
+      border: none;
     }
     .logo-section {
-      background: linear-gradient(135deg, #0f2618 0%, #0a1f0f 100%);
+      background: #0a1f0f;
       padding: 32px 32px 28px 32px;
       text-align: center;
-      border-bottom: 1px solid #15803d;
+      border-bottom: 2px solid #16a34a;
     }
     .logo-text {
       font-size: 42px;
@@ -96,13 +96,10 @@ export const generateEventAssignedEmailHTML = (data) => {
       vertical-align: middle;
     }
     .logo-ph {
-      background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #16a34a;
     }
     .logo-tagline {
-      color: #15803d;
+      color: #16a34a;
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.3em;
@@ -110,11 +107,13 @@ export const generateEventAssignedEmailHTML = (data) => {
       margin: 0;
     }
     .header {
+      background: #ffffff;
       padding: 28px 32px 24px 32px;
-      border-bottom: 1px solid #1f1f1f;
+      border-bottom: 1px solid #e5e7eb;
     }
     .event-card {
-      background: #1a1a1a;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
       border-left: 4px solid #16a34a;
       border-radius: 8px;
       padding: 20px 24px;
@@ -123,7 +122,7 @@ export const generateEventAssignedEmailHTML = (data) => {
     .event-title {
       font-size: 20px;
       font-weight: 700;
-      color: #ffffff;
+      color: #1f2937;
       margin: 0 0 12px 0;
       letter-spacing: -0.025em;
     }
@@ -145,16 +144,16 @@ export const generateEventAssignedEmailHTML = (data) => {
       color: #16a34a;
     }
     .meta-label {
-      color: #9ca3af;
+      color: #6b7280;
       font-weight: 500;
     }
     .meta-value {
-      color: #f5f5f5;
+      color: #374151;
       font-weight: 500;
     }
     .description-box {
-      background: #111111;
-      border: 1px solid #262626;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
       border-radius: 8px;
       padding: 18px 20px;
       margin: 20px 32px;
@@ -163,12 +162,13 @@ export const generateEventAssignedEmailHTML = (data) => {
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: #9ca3af;
+      color: #6b7280;
       margin-bottom: 10px;
       display: block;
       font-weight: 700;
     }
     .content {
+      background: #ffffff;
       padding: 24px 32px 32px 32px;
     }
     .btn {
@@ -187,11 +187,11 @@ export const generateEventAssignedEmailHTML = (data) => {
     .footer {
       text-align: center;
       padding: 24px 32px;
-      background: #0a0a0a;
-      border-top: 1px solid #1f1f1f;
+      background: #f9fafb;
+      border-top: 1px solid #e5e7eb;
     }
     .footer p {
-      color: #737373;
+      color: #6b7280;
       font-size: 12px;
       line-height: 1.5;
     }
@@ -224,8 +224,8 @@ export const generateEventAssignedEmailHTML = (data) => {
 
           <!-- Header -->
           <div class="header">
-            <p style="font-size: 12px; color: #9ca3af; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;">New Event Assigned</p>
-            <h1 style="font-size: 16px; font-weight: 500; color: #9ca3af; margin: 0;">${creatorName} invited you to</h1>
+            <p style="font-size: 12px; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;">New Event Assigned</p>
+            <h1 style="font-size: 16px; font-weight: 500; color: #6b7280; margin: 0;">${creatorName} invited you to</h1>
           </div>
 
           <!-- Event Card (Google Calendar style) -->
@@ -278,7 +278,7 @@ export const generateEventAssignedEmailHTML = (data) => {
           ${description ? `
           <div class="description-box">
             <span class="description-label">Description</span>
-            <p style="margin: 0; color: #e5e5e5; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${description}</p>
+            <p style="margin: 0; color: #374151; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${description}</p>
           </div>
           ` : ""}
 
@@ -292,7 +292,7 @@ export const generateEventAssignedEmailHTML = (data) => {
           <!-- Footer -->
           <div class="footer">
             <p style="margin: 0 0 6px 0; font-weight: 600;">WastePH CRM</p>
-            <p style="margin: 0; font-size: 12px; color: #525252;">Calendar Notification System</p>
+            <p style="margin: 0; font-size: 12px; color: #6b7280;">Calendar Notification System</p>
           </div>
         </div>
       </td>

@@ -21,10 +21,10 @@ export const generateNewTicketEmailHTML = (data) => {
   } = data;
 
   const priorityColors = {
-    low: { bg: "#1a1a1a", border: "#404040", text: "#9ca3af" },
-    medium: { bg: "#1a2e1a", border: "#16a34a", text: "#22c55e" },
-    high: { bg: "#2d1f1a", border: "#ea580c", text: "#fb923c" },
-    urgent: { bg: "#2d1212", border: "#dc2626", text: "#ef4444" },
+    low: { bg: "#f9fafb", border: "#d1d5db", text: "#6b7280" },
+    medium: { bg: "#f0fdf4", border: "#16a34a", text: "#16a34a" },
+    high: { bg: "#fff7ed", border: "#ea580c", text: "#ea580c" },
+    urgent: { bg: "#fef2f2", border: "#dc2626", text: "#dc2626" },
   };
 
   const categoryLabels = {
@@ -52,29 +52,28 @@ export const generateNewTicketEmailHTML = (data) => {
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       line-height: 1.6;
-      color: #ffffff;
-      background-color: #0a0a0a;
+      color: #1f2937;
+      background-color: #f9fafb;
       margin: 0;
       padding: 0;
     }
     .wrapper {
       width: 100%;
-      background-color: #0a0a0a;
+      background-color: #f9fafb;
       padding: 32px 16px;
     }
     .container {
       max-width: 600px;
       margin: 0 auto;
-      background: #111111;
+      background: #ffffff;
       border-radius: 12px;
       overflow: hidden;
-      border: 1px solid #1f1f1f;
     }
     .logo-section {
-      background: linear-gradient(135deg, #0f2618 0%, #0a1f0f 100%);
+      background: #0a1f0f;
       padding: 32px 32px 28px 32px;
       text-align: center;
-      border-bottom: 1px solid #15803d;
+      border-bottom: 2px solid #16a34a;
     }
     .logo-text {
       font-size: 42px;
@@ -98,13 +97,10 @@ export const generateNewTicketEmailHTML = (data) => {
       vertical-align: middle;
     }
     .logo-ph {
-      background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #16a34a;
     }
     .logo-tagline {
-      color: #15803d;
+      color: #16a34a;
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.3em;
@@ -112,8 +108,9 @@ export const generateNewTicketEmailHTML = (data) => {
       margin: 0;
     }
     .header {
+      background: #ffffff;
       padding: 28px 32px 24px 32px;
-      border-bottom: 1px solid #1f1f1f;
+      border-bottom: 1px solid #e5e7eb;
     }
     .status-badge {
       display: inline-block;
@@ -130,7 +127,7 @@ export const generateNewTicketEmailHTML = (data) => {
     h1 {
       font-size: 26px;
       font-weight: 700;
-      color: #ffffff;
+      color: #1f2937;
       margin: 0 0 8px 0;
       letter-spacing: -0.025em;
     }
@@ -140,6 +137,7 @@ export const generateNewTicketEmailHTML = (data) => {
       font-weight: 400;
     }
     .content {
+      background: #ffffff;
       padding: 24px 32px 32px 32px;
     }
     .priority-banner {
@@ -162,21 +160,21 @@ export const generateNewTicketEmailHTML = (data) => {
     .data-grid {
       width: 100%;
       margin: 20px 0;
-      background: #1a1a1a;
+      background: #f9fafb;
       border-radius: 8px;
       overflow: hidden;
-      border: 1px solid #262626;
+      border: 1px solid #e5e7eb;
     }
     .data-row td {
       padding: 14px 20px;
-      border-bottom: 1px solid #262626;
+      border-bottom: 1px solid #e5e7eb;
       font-size: 14px;
     }
     .data-row:last-child td {
       border-bottom: none;
     }
     .label {
-      color: #737373;
+      color: #6b7280;
       width: 110px;
       font-weight: 600;
       font-size: 12px;
@@ -184,12 +182,12 @@ export const generateNewTicketEmailHTML = (data) => {
       letter-spacing: 0.05em;
     }
     .value {
-      color: #f5f5f5;
+      color: #1f2937;
       font-weight: 500;
     }
     .description-box {
-      background: #1a1a1a;
-      border: 1px solid #262626;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
       border-radius: 8px;
       padding: 18px 20px;
       margin-top: 20px;
@@ -219,11 +217,11 @@ export const generateNewTicketEmailHTML = (data) => {
     .footer {
       text-align: center;
       padding: 24px 32px;
-      background: #0a0a0a;
-      border-top: 1px solid #1f1f1f;
+      background: #f9fafb;
+      border-top: 1px solid #e5e7eb;
     }
     .footer p {
-      color: #737373;
+      color: #6b7280;
       font-size: 12px;
       line-height: 1.5;
     }
@@ -296,7 +294,7 @@ export const generateNewTicketEmailHTML = (data) => {
                 ? `
             <div class="description-box">
               <span class="description-label">Description</span>
-              <p style="margin: 0; color: #e5e5e5; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${description}</p>
+              <p style="margin: 0; color: #374151; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${description}</p>
             </div>
             `
                 : ""
