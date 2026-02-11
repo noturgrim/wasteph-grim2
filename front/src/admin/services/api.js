@@ -91,6 +91,39 @@ class ApiClient {
     }
   }
 
+  /**
+   * Request method for blob responses (like PDFs)
+   * Returns the blob directly instead of parsing JSON
+   */
+  async requestBlob(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+
+    try {
+      const response = await this._fetch(url, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...options.headers,
+        },
+      });
+
+      if (!response.ok) {
+        // Try to read error message from response
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || `Request failed with status ${response.status}`);
+        }
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      return await response.blob();
+    } catch (error) {
+      console.error("API Blob Error:", error);
+      throw error;
+    }
+  }
+
   // Auth endpoints
   async login(email, password) {
     return this.request("/auth/login", {

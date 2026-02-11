@@ -45,6 +45,7 @@ import {
   Scale,
   Recycle,
   Check,
+  Eye,
 } from "lucide-react";
 import { format } from "date-fns";
 import { api } from "../../services/api";
@@ -61,6 +62,7 @@ export function RequestProposalDialog({
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [isLoadingEditor, setIsLoadingEditor] = useState(false);
   const [template, setTemplate] = useState(null);
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(false);
@@ -203,14 +205,11 @@ export function RequestProposalDialog({
                     editableContent = bodyMatch[1];
                   }
                 } catch (e) {
-                  console.error("Failed to extract content:", e);
                   editableContent = bodyMatch[1];
                 }
 
                 // Now render the CURRENT template with this content
                 // We need to re-fetch the template and merge the saved content
-                // console.log("Re-rendering with current template structure...");
-
                 // For now, just proceed to step 2 to re-render
                 // (User can click "Generate Proposal" to get fresh template)
                 toast.info(
@@ -587,10 +586,6 @@ export function RequestProposalDialog({
           contentSelector: ".content",
         };
 
-        // console.log("✅ Template structure updated from fresh render");
-        // console.log("Has flexbox?", inlineStyles.includes("display: flex"));
-        // console.log("Has table-header?", fullBodyHtml.includes("header-table"));
-
         setEditorInitialContent(editorBodyContent);
         setSavedEditorContent({ html: rendered, json: null });
       } else {
@@ -612,17 +607,9 @@ export function RequestProposalDialog({
 
   // Handle editor save callback
   const handleEditorSave = ({ html, json }) => {
-    // console.log("=== handleEditorSave called ===");
-    // console.log("Editor HTML length:", html?.length);
-    // console.log("templateStructureRef.current:", templateStructureRef.current);
-
     // Reconstruct full HTML with template structure (head + styles)
     const { head, bodyTag, bodyHtml, contentSelector } =
       templateStructureRef.current;
-
-    // console.log("Has head?", !!head);
-    // console.log("Has bodyHtml?", !!bodyHtml);
-    // console.log("Content selector:", contentSelector);
 
     // By default, use the editor's HTML as the body content.
     // If we have the original body HTML and a known editable container
@@ -640,16 +627,8 @@ export function RequestProposalDialog({
           // Success: replace only the editable section
           target.innerHTML = sanitizeHtmlWithStyles(html);
           bodyContentForSave = container.innerHTML;
-          console.debug(
-            "Successfully replaced content in selector:",
-            contentSelector,
-          );
         } else {
           // Selector not found, use full body replacement
-          console.warn(
-            `Content selector "${contentSelector}" not found in template body. ` +
-              `Using full body replacement instead. Template may not have standard structure.`,
-          );
           bodyContentForSave = html;
         }
       } catch (error) {
@@ -658,7 +637,6 @@ export function RequestProposalDialog({
       }
     } else {
       // No template structure available, use raw editor content
-      console.debug("No template structure, using raw editor HTML");
       bodyContentForSave = html;
     }
 
@@ -672,7 +650,6 @@ ${bodyTag}
   ${bodyContentForSave}
 </body>
 </html>`;
-      // console.log("Full HTML reconstructed with template structure");
     } else {
       console.warn("No template structure available - saving raw HTML");
     }
@@ -712,11 +689,6 @@ ${bodyTag}
       }
     }
 
-    // console.log("Final saved HTML length:", fullHtml?.length);
-    // console.log("Has DOCTYPE?", fullHtml?.includes("<!DOCTYPE"));
-    // console.log("Has <head>?", fullHtml?.includes("<head"));
-    // console.log("Has <body>?", fullHtml?.includes("<body"));
-
     setSavedEditorContent({ html: fullHtml, json });
     setHasUnsavedEditorChanges(false);
     toast.success("Changes saved");
@@ -726,6 +698,55 @@ ${bodyTag}
   const handleUnsavedChange = (hasChanges) => {
     setHasUnsavedEditorChanges(hasChanges);
   };
+
+  // Generate PDF blob URL for preview
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+
+  const generatePdfPreview = async () => {
+    if (!savedEditorContent.html) {
+      toast.error("No content to preview. Please generate the proposal first.");
+      return;
+    }
+
+    setIsLoadingPreview(true);
+    try {
+      // Call backend to generate PDF from HTML using api service (handles CSRF)
+      const blob = await api.requestBlob("/proposals/preview-pdf", {
+        method: "POST",
+        body: JSON.stringify({ html: savedEditorContent.html }),
+      });
+
+      const url = URL.createObjectURL(blob);
+      setPdfPreviewUrl(url);
+    } catch (error) {
+      console.error("PDF preview error:", error);
+      toast.error("Failed to generate PDF preview");
+    } finally {
+      setIsLoadingPreview(false);
+    }
+  };
+
+  // Cleanup PDF blob URL when component unmounts or preview closes
+  useEffect(() => {
+    return () => {
+      if (pdfPreviewUrl) {
+        URL.revokeObjectURL(pdfPreviewUrl);
+      }
+    };
+  }, [pdfPreviewUrl]);
+
+  // Generate preview when dialog opens and cleanup on close
+  useEffect(() => {
+    if (showPreview && !pdfPreviewUrl && savedEditorContent.html) {
+      generatePdfPreview();
+    } else if (!showPreview && pdfPreviewUrl) {
+      // Cleanup when closing
+      URL.revokeObjectURL(pdfPreviewUrl);
+      setPdfPreviewUrl(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showPreview]);
 
   // Show confirmation before submitting
   const handleSubmitClick = () => {
@@ -1558,25 +1579,39 @@ ${bodyTag}
                 <div className="flex flex-col h-full min-h-0">
                   {/* Step Title */}
                   <div className="pb-4 border-b border-gray-200 dark:border-gray-700 shrink-0 mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                      Edit & Submit Proposal
-                    </h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Customize the proposal content and submit for approval
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                          Edit & Submit Proposal
+                        </h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          Customize the proposal content and submit for approval
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowPreview(true)}
+                        className="gap-2"
+                      >
+                        <Eye className="h-4 w-4" />
+                        Full Preview
+                      </Button>
+                    </div>
                   </div>
 
                   {/* Instructions */}
                   <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-sm shrink-0 mb-3">
                     <div className="flex items-start gap-2">
-                      <Edit3 className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                      <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
                       <div>
                         <p className="text-blue-800 dark:text-blue-100 font-medium">
-                          Edit your proposal content below
+                          The proposal below is shown in unstyled format for easy editing
                         </p>
                         <p className="text-blue-600 dark:text-blue-300 mt-1">
-                          Use the toolbar to format text. Click "Save Changes"
-                          before submitting.
+                          Use the toolbar to format text. Click "Save Changes" before submitting.
+                          To see how it will actually look in the final PDF with proper styling and formatting,
+                          click the <strong>"Full Preview"</strong> button above.
                         </p>
                       </div>
                     </div>
@@ -1607,64 +1642,14 @@ ${bodyTag}
                       </span>
                     </div>
                   ) : (
-                    <div className="flex-1 min-h-0 flex flex-col">
-                      {/* Non-editable header preview using iframe for style isolation */}
-                      {templateStructureRef.current.bodyHtml &&
-                        templateStructureRef.current.styles &&
-                        (() => {
-                          try {
-                            const container = document.createElement("div");
-                            container.innerHTML = sanitizeHtmlWithStyles(
-                              templateStructureRef.current.bodyHtml,
-                            );
-                            const contentNode =
-                              container.querySelector(".content");
-                            if (contentNode) {
-                              contentNode.remove();
-                              const headerHtml = container.innerHTML.trim();
-                              if (headerHtml) {
-                                const iframeContent = `<!DOCTYPE html>
-<html>
-<head>
-<style>
-body { margin: 0; padding: 10px 20px; font-family: Arial, sans-serif; }
-${templateStructureRef.current.styles}
-</style>
-</head>
-<body>${headerHtml}</body>
-</html>`;
-                                return (
-                                  <iframe
-                                    srcDoc={iframeContent}
-                                    title="Header Preview"
-                                    className="w-full border-0 border-b border-gray-200 bg-white"
-                                    style={{
-                                      height: "120px",
-                                      pointerEvents: "none",
-                                    }}
-                                  />
-                                );
-                              }
-                            }
-                          } catch (e) {
-                            console.error("Failed to extract header:", e);
-                          }
-                          return null;
-                        })()}
-
-                      {/* Editable content area */}
-                      <div
-                        className="flex-1 overflow-auto"
-                        style={{ minHeight: 0 }}
-                      >
-                        <ProposalHtmlEditor
-                          content={editorInitialContent}
-                          templateStyles={templateStructureRef.current.styles}
-                          onChange={handleEditorSave}
-                          onUnsavedChange={handleUnsavedChange}
-                          className="h-full"
-                        />
-                      </div>
+                    <div className="flex-1 overflow-auto" style={{ minHeight: 0 }}>
+                      <ProposalHtmlEditor
+                        content={editorInitialContent}
+                        templateStyles={templateStructureRef.current.styles}
+                        onChange={handleEditorSave}
+                        onUnsavedChange={handleUnsavedChange}
+                        className="h-full"
+                      />
                     </div>
                   )}
                 </div>
@@ -1806,6 +1791,46 @@ ${templateStructureRef.current.styles}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Full Preview Dialog */}
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-[98vw] w-[2200px] h-[95vh] flex flex-col p-0">
+          <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <DialogTitle>Full Proposal Preview</DialogTitle>
+            <DialogDescription>
+              This is how your proposal will look when generated as PDF
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-hidden p-6">
+            {isLoadingPreview ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin text-[#15803d]" />
+                <span className="ml-3 text-gray-600 dark:text-gray-400">
+                  Generating PDF preview...
+                </span>
+              </div>
+            ) : pdfPreviewUrl ? (
+              <iframe
+                src={pdfPreviewUrl}
+                title="PDF Preview"
+                className="w-full h-full border border-gray-200 dark:border-gray-700 rounded-lg"
+                style={{ minHeight: "600px" }}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                <p>No preview available</p>
+                <Button
+                  onClick={generatePdfPreview}
+                  className="mt-4"
+                  size="sm"
+                >
+                  Generate Preview
+                </Button>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

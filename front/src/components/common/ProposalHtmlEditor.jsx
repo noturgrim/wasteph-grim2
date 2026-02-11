@@ -390,6 +390,17 @@ const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange
 
       {/* Ensure tables render correctly inside ProseMirror regardless of template styles */}
       <style>{`
+        /* Page break indicators */
+        .proposal-editor-scope {
+          background-image: repeating-linear-gradient(
+            transparent,
+            transparent 1050px,  /* ~A4 page height after margins */
+            #94a3b8 1050px,     /* Page break line color */
+            #94a3b8 1052px      /* Line thickness: 2px */
+          );
+          background-position: 0 -120px; /* Offset for header margin */
+        }
+
         .proposal-editor-scope table {
           width: 100%;
           border-collapse: collapse;
@@ -430,8 +441,13 @@ const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange
         key={selectionUpdate}
       />
 
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="flex-1 overflow-y-auto min-h-0 relative">
         <EditorContent editor={editor} />
+
+        {/* Page break legend */}
+        <div className="sticky top-4 left-4 inline-block bg-blue-50 border border-blue-200 rounded px-3 py-1.5 text-xs text-blue-700 shadow-sm z-10 ml-4 mt-2">
+          <span className="font-medium">📄 Horizontal lines</span> = PDF page breaks (approx. A4 size)
+        </div>
       </div>
     </div>
   );
