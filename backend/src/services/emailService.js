@@ -229,7 +229,7 @@ class EmailService {
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
     .logo-section {
-      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      background: #0a1f0f;
       padding: 32px 32px 28px 32px;
       text-align: center;
       border-bottom: 2px solid #16a34a;
@@ -244,7 +244,7 @@ class EmailService {
       line-height: 1;
     }
     .logo-waste {
-      color: #166534;
+      color: #ffffff;
     }
     .logo-bullet {
       display: inline-block;
@@ -256,13 +256,10 @@ class EmailService {
       vertical-align: middle;
     }
     .logo-ph {
-      background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #16a34a;
     }
     .logo-tagline {
-      color: #15803d;
+      color: #16a34a;
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.3em;
@@ -527,7 +524,7 @@ class EmailService {
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
     .logo-section {
-      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      background: #0a1f0f;
       padding: 32px 32px 28px 32px;
       text-align: center;
       border-bottom: 2px solid #16a34a;
@@ -542,7 +539,7 @@ class EmailService {
       line-height: 1;
     }
     .logo-waste {
-      color: #166534;
+      color: #ffffff;
     }
     .logo-bullet {
       display: inline-block;
@@ -554,13 +551,10 @@ class EmailService {
       vertical-align: middle;
     }
     .logo-ph {
-      background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #16a34a;
     }
     .logo-tagline {
-      color: #15803d;
+      color: #16a34a;
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.3em;
@@ -839,55 +833,159 @@ class EmailService {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
+    * {
       margin: 0;
       padding: 0;
-      background-color: #f4f4f4;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #1f2937;
+      background-color: #f9fafb;
+      margin: 0;
+      padding: 0;
+    }
+    .wrapper {
+      width: 100%;
+      background-color: #f9fafb;
+      padding: 32px 16px;
     }
     .container {
       max-width: 600px;
-      margin: 20px auto;
+      margin: 0 auto;
       background: #ffffff;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
-    .header {
-      border-bottom: 3px solid #2c5282;
-      padding-bottom: 15px;
-      margin-bottom: 25px;
+    .logo-section {
+      background: #0a1f0f;
+      padding: 32px 32px 28px 32px;
+      text-align: center;
+      border-bottom: 2px solid #16a34a;
     }
-    .header h2 {
-      color: #2c5282;
+    .logo-text {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      text-transform: uppercase;
+      margin: 0 0 6px 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1;
+    }
+    .logo-waste {
+      color: #ffffff;
+    }
+    .logo-bullet {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: #16a34a;
+      border-radius: 50%;
+      margin: 0 5px;
+      vertical-align: middle;
+    }
+    .logo-ph {
+      color: #16a34a;
+    }
+    .logo-tagline {
+      color: #16a34a;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
       margin: 0;
     }
+    .header {
+      padding: 28px 32px 24px 32px;
+      background: #ffffff;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .badge {
+      display: inline-block;
+      background: #dcfce7;
+      color: #166534;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #166534;
+      margin: 0 0 8px 0;
+      letter-spacing: -0.025em;
+    }
+    .subtitle {
+      color: #6b7280;
+      font-size: 14px;
+      font-weight: 400;
+    }
     .content {
-      margin-bottom: 25px;
+      padding: 24px 32px;
+      background: #ffffff;
+    }
+    .content p {
+      margin: 14px 0;
+      color: #374151;
+      font-size: 14px;
+      line-height: 1.6;
     }
     .footer {
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 2px solid #ddd;
+      background: #f9fafb;
+      padding: 20px 32px;
       text-align: center;
+      border-top: 1px solid #e5e7eb;
+    }
+    .footer-text {
+      color: #6b7280;
       font-size: 12px;
-      color: #666;
+      margin: 4px 0;
+    }
+    .footer-link {
+      color: #16a34a;
+      text-decoration: none;
+    }
+    .footer-link:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h2>${subject}</h2>
-    </div>
-    <div class="content">
-      <p>${body}</p>
-    </div>
-    <div class="footer">
-      <p><strong>WastePH</strong></p>
-      <p>Email: info@wasteph.com | Phone: +639562461503</p>
+  <div class="wrapper">
+    <div class="container">
+      <!-- Logo -->
+      <div class="logo-section">
+        <h1 class="logo-text">
+          <span class="logo-waste">WASTE</span><span class="logo-bullet"></span><span class="logo-ph">PH</span>
+        </h1>
+        <p class="logo-tagline">Private Waste Management</p>
+      </div>
+
+      <!-- Content Header -->
+      <div class="header">
+        <span class="badge">Notification</span>
+        <h1>${subject}</h1>
+      </div>
+
+      <!-- Main Content -->
+      <div class="content">
+        <p>${body}</p>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <p class="footer-text"><strong>WastePH</strong> - Private Waste Management Solutions</p>
+        <p class="footer-text">
+          Email: <a href="mailto:info@wasteph.com" class="footer-link">info@wasteph.com</a> |
+          Phone: <a href="tel:+639562461503" class="footer-link">+639562461503</a>
+        </p>
+      </div>
     </div>
   </div>
 </body>
@@ -3714,30 +3812,33 @@ class EmailService {
         <tr>
         <td>
         <![endif]-->
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px;">
-          
-          <!-- Header -->
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+
+          <!-- Logo -->
           <tr>
-            <td style="padding: 32px 40px; border-bottom: 1px solid #e8eaed;">
-              <h1 style="margin: 0 0 6px 0; font-size: 26px; font-weight: 700; color: #1f1f1f; letter-spacing: -0.5px; font-family: Arial, Helvetica, sans-serif;">
-                WASTE <span style="color: #16a34a;">• PH</span>
+            <td style="background: #0a1f0f; padding: 32px 32px 28px 32px; text-align: center; border-bottom: 2px solid #16a34a;">
+              <h1 style="margin: 0 0 6px 0; font-size: 42px; font-weight: 900; letter-spacing: -0.05em; text-transform: uppercase; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1;">
+                <span style="color: #ffffff;">WASTE</span><span style="display: inline-block; width: 6px; height: 6px; background: #16a34a; border-radius: 50%; margin: 0 5px; vertical-align: middle;"></span><span style="color: #16a34a;">PH</span>
               </h1>
-              <p style="margin: 0; font-size: 12px; color: #5f6368; letter-spacing: 0.3px; font-family: Arial, Helvetica, sans-serif;">Private Waste Management</p>
+              <p style="margin: 0; color: #16a34a; font-size: 10px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase;">Private Waste Management</p>
             </td>
           </tr>
-          
+
+          <!-- Header -->
+          <tr>
+            <td style="padding: 28px 32px 24px 32px; background: #ffffff; border-bottom: 1px solid #e5e7eb;">
+              <span style="display: inline-block; background: #dcfce7; color: #166534; padding: 6px 14px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 14px; text-transform: uppercase;">AUTO-SCHEDULE CREATED</span>
+              <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #166534; letter-spacing: -0.025em;">
+                ${events.length} Monthly Check-in${events.length > 1 ? "s" : ""} Scheduled
+              </h1>
+              <p style="margin: 8px 0 0 0; color: #6b7280; font-size: 14px; font-weight: 400;">For ${companyName}</p>
+            </td>
+          </tr>
+
           <!-- Content -->
           <tr>
-            <td style="padding: 36px 40px;">
-              <p style="margin: 0 0 20px 0; font-size: 13px; font-weight: 600; color: #16a34a; text-transform: uppercase; letter-spacing: 1px; font-family: Arial, Helvetica, sans-serif;">
-                AUTO-SCHEDULE CREATED
-              </p>
-              
-              <h2 style="margin: 0 0 24px 0; font-size: 24px; font-weight: 500; color: #202124; line-height: 1.3; font-family: Arial, Helvetica, sans-serif;">
-                ${events.length} Monthly Check-in${events.length > 1 ? "s" : ""} Scheduled
-              </h2>
-              
-              <p style="margin: 0 0 24px 0; font-size: 15px; color: #3c4043; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
+            <td style="padding: 24px 40px;">
+              <p style="margin: 0 0 24px 0; font-size: 14px; color: #374151; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
                 Automatic monthly check-in events have been created for <strong>${companyName}</strong> (${contractNumber}).
               </p>
               
@@ -3848,30 +3949,33 @@ class EmailService {
         <tr>
         <td>
         <![endif]-->
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px;">
-          
-          <!-- Header -->
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; overflow: hidden;">
+
+          <!-- Logo -->
           <tr>
-            <td style="padding: 32px 40px; border-bottom: 1px solid #e8eaed;">
-              <h1 style="margin: 0 0 6px 0; font-size: 26px; font-weight: 700; color: #1f1f1f; letter-spacing: -0.5px; font-family: Arial, Helvetica, sans-serif;">
-                WASTE <span style="color: #16a34a;">• PH</span>
+            <td style="background: #0a1f0f; padding: 32px 32px 28px 32px; text-align: center; border-bottom: 2px solid #16a34a;">
+              <h1 style="margin: 0 0 6px 0; font-size: 42px; font-weight: 900; letter-spacing: -0.05em; text-transform: uppercase; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1;">
+                <span style="color: #ffffff;">WASTE</span><span style="display: inline-block; width: 6px; height: 6px; background: #16a34a; border-radius: 50%; margin: 0 5px; vertical-align: middle;"></span><span style="color: #16a34a;">PH</span>
               </h1>
-              <p style="margin: 0; font-size: 12px; color: #5f6368; letter-spacing: 0.3px; font-family: Arial, Helvetica, sans-serif;">Private Waste Management</p>
+              <p style="margin: 0; color: #16a34a; font-size: 10px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase;">Private Waste Management</p>
             </td>
           </tr>
-          
+
+          <!-- Header -->
+          <tr>
+            <td style="padding: 28px 32px 24px 32px; background: #ffffff; border-bottom: 1px solid #e5e7eb;">
+              <span style="display: inline-block; background: #dcfce7; color: #166534; padding: 6px 14px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; margin-bottom: 14px; text-transform: uppercase;">SCHEDULED APPOINTMENTS</span>
+              <h1 style="margin: 0; font-size: 26px; font-weight: 700; color: #166534; letter-spacing: -0.025em;">
+                Your Monthly Check-ins Have Been Scheduled
+              </h1>
+              <p style="margin: 8px 0 0 0; color: #6b7280; font-size: 14px; font-weight: 400;">Dear ${contactPerson || "Valued Client"}</p>
+            </td>
+          </tr>
+
           <!-- Content -->
           <tr>
-            <td style="padding: 36px 40px;">
-              <h2 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 500; color: #202124; line-height: 1.3; font-family: Arial, Helvetica, sans-serif;">
-                Your Monthly Check-ins Have Been Scheduled
-              </h2>
-              
-              <p style="margin: 0 0 24px 0; font-size: 15px; color: #3c4043; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
-                Dear ${contactPerson || "Valued Client"},
-              </p>
-              
-              <p style="margin: 0 0 28px 0; font-size: 15px; color: #3c4043; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
+            <td style="padding: 24px 32px;">
+              <p style="margin: 0 0 28px 0; font-size: 14px; color: #374151; line-height: 1.6; font-family: Arial, Helvetica, sans-serif;">
                 We've scheduled <strong>${events.length} monthly check-in${events.length > 1 ? "s" : ""}</strong> for your account with us. These sessions are designed to ensure your service runs smoothly and address any concerns you may have.
               </p>
               
