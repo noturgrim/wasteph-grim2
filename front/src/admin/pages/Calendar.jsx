@@ -55,19 +55,19 @@ const EventChip = ({
         e.stopPropagation();
         onClick(event);
       }}
-      className={`w-full text-left p-1.5 rounded text-xs ${getStatusColor(
+      className={`w-full text-left p-1 sm:p-1.5 rounded text-[10px] sm:text-xs ${getStatusColor(
         event.status,
       )} hover:opacity-80 transition-opacity`}
     >
-      <div className="flex items-center gap-1">
-        {getStatusIcon(event.status)}
+      <div className="flex items-center gap-0.5 sm:gap-1">
+        <span className="hidden sm:inline">{getStatusIcon(event.status)}</span>
         <span className="truncate font-medium">{event.title}</span>
       </div>
       {event.startTime && (
-        <div className="text-xs opacity-75 mt-0.5">{event.startTime}</div>
+        <div className="text-[10px] sm:text-xs opacity-75 mt-0.5 hidden sm:block">{event.startTime}</div>
       )}
       {canViewAll && !isOwnEvent && event.user?.name && (
-        <div className="text-xs opacity-60 mt-0.5 truncate">
+        <div className="text-[10px] sm:text-xs opacity-60 mt-0.5 truncate hidden sm:block">
           {event.user.name}
         </div>
       )}
@@ -246,38 +246,42 @@ export default function Calendar() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 pb-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Calendar</h1>
+          <p className="text-sm md:text-base text-muted-foreground">
             Manage your schedule and events
           </p>
         </div>
-        <Button onClick={() => setIsScheduleDialogOpen(true)}>
+        <Button onClick={() => setIsScheduleDialogOpen(true)} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Schedule Event
         </Button>
       </div>
 
       {/* Calendar Controls */}
-      <div className="flex items-center justify-between bg-card border rounded-lg p-4">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handlePreviousMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleNextMonth}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleToday}>
-            Today
-          </Button>
+      <div className="bg-card border rounded-lg p-3 md:p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:relative">
+          <div className="flex items-center justify-between sm:justify-start gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Button variant="outline" size="sm" onClick={handlePreviousMonth} className="h-8 w-8 p-0 sm:h-9 sm:w-9">
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleNextMonth} className="h-8 w-8 p-0 sm:h-9 sm:w-9">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button variant="outline" size="sm" onClick={handleToday} className="h-8 px-3 sm:h-9">
+              Today
+            </Button>
+          </div>
+          <h2 className="text-lg sm:text-xl font-semibold text-center sm:absolute sm:left-1/2 sm:-translate-x-1/2">
+            {format(currentDate, "MMMM yyyy")}
+          </h2>
+          <div className="hidden sm:block sm:w-32" />
         </div>
-        <h2 className="text-xl font-semibold">
-          {format(currentDate, "MMMM yyyy")}
-        </h2>
-        <div className="w-[200px]" />
       </div>
 
       {/* Calendar Grid */}
@@ -289,12 +293,21 @@ export default function Calendar() {
         <div className="bg-card border rounded-lg overflow-hidden">
           {/* Day Headers */}
           <div className="grid grid-cols-7 bg-muted">
-            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+            {[
+              { full: "Sun", short: "S" },
+              { full: "Mon", short: "M" },
+              { full: "Tue", short: "T" },
+              { full: "Wed", short: "W" },
+              { full: "Thu", short: "T" },
+              { full: "Fri", short: "F" },
+              { full: "Sat", short: "S" }
+            ].map((day) => (
               <div
-                key={day}
-                className="p-3 text-center text-sm font-semibold text-foreground border-b border-r last:border-r-0"
+                key={day.full}
+                className="p-2 md:p-3 text-center text-xs md:text-sm font-semibold text-foreground border-b border-r last:border-r-0"
               >
-                {day}
+                <span className="hidden sm:inline">{day.full}</span>
+                <span className="sm:hidden">{day.short}</span>
               </div>
             ))}
           </div>
@@ -320,13 +333,13 @@ export default function Calendar() {
                       handleDateClick(day);
                     }
                   }}
-                  className={`min-h-[120px] p-2 border-b border-r last:border-r-0 cursor-pointer hover:bg-accent/50 transition-colors ${
+                  className={`min-h-[80px] sm:min-h-[100px] md:min-h-[120px] p-1 sm:p-2 border-b border-r last:border-r-0 cursor-pointer hover:bg-accent/50 transition-colors ${
                     !isCurrentMonth ? "bg-muted/30" : ""
                   }`}
                   aria-label={`Create event on ${format(day, "MMMM d, yyyy")}`}
                 >
                   <div
-                    className={`text-sm font-medium mb-2 w-7 h-7 rounded-full flex items-center justify-center ${
+                    className={`text-xs sm:text-sm font-medium mb-1 sm:mb-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center ${
                       isDayToday
                         ? "bg-primary text-primary-foreground"
                         : isCurrentMonth
@@ -338,8 +351,8 @@ export default function Calendar() {
                   </div>
 
                   {/* Events for this day */}
-                  <div className="space-y-1">
-                    {dayEvents.slice(0, 3).map((event) => (
+                  <div className="space-y-0.5 sm:space-y-1">
+                    {dayEvents.slice(0, 2).map((event) => (
                       <EventChip
                         key={event.id}
                         event={event}
@@ -350,16 +363,16 @@ export default function Calendar() {
                         onClick={handleEventClick}
                       />
                     ))}
-                    {overflowCount > 0 && (
+                    {dayEvents.length > 2 && (
                       <Popover>
                         <PopoverTrigger asChild>
                           <button
                             type="button"
                             onClick={(e) => e.stopPropagation()}
-                            className="w-full text-left text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded px-1.5 py-0.5 transition-colors"
-                            aria-label={`Show ${overflowCount} more event${overflowCount !== 1 ? "s" : ""}`}
+                            className="w-full text-left text-[10px] sm:text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded px-1 sm:px-1.5 py-0.5 transition-colors"
+                            aria-label={`Show ${dayEvents.length - 2} more event${dayEvents.length - 2 !== 1 ? "s" : ""}`}
                           >
-                            +{overflowCount} more
+                            +{dayEvents.length - 2} more
                           </button>
                         </PopoverTrigger>
                         <PopoverContent
@@ -417,17 +430,17 @@ export default function Calendar() {
       )}
 
       {/* Legend */}
-      <div className="flex items-center gap-6 text-sm">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-xs sm:text-sm">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-blue-100 dark:bg-blue-950 border border-blue-300 dark:border-blue-700" />
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-blue-100 dark:bg-blue-950 border border-blue-300 dark:border-blue-700" />
           <span className="text-muted-foreground">Scheduled</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-green-100 dark:bg-green-950 border border-green-300 dark:border-green-700" />
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-green-100 dark:bg-green-950 border border-green-300 dark:border-green-700" />
           <span className="text-muted-foreground">Completed</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-red-100 dark:bg-red-950 border border-red-300 dark:border-red-700" />
+          <div className="w-3 h-3 sm:w-4 sm:h-4 rounded bg-red-100 dark:bg-red-950 border border-red-300 dark:border-red-700" />
           <span className="text-muted-foreground">Cancelled</span>
         </div>
       </div>

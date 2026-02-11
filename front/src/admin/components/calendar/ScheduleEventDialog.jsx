@@ -249,7 +249,7 @@ export function ScheduleEventDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
         <DialogHeader>
           <DialogTitle>Schedule Event</DialogTitle>
           <DialogDescription>
@@ -346,7 +346,7 @@ export function ScheduleEventDialog({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="startTime">Start Time</Label>
                 <TimePicker
@@ -372,7 +372,7 @@ export function ScheduleEventDialog({
           </div>
 
           {/* Link to Inquiry or Client */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="inquiryId">Link to Inquiry (Optional)</Label>
               <Select

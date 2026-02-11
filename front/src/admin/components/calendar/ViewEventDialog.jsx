@@ -134,11 +134,11 @@ export function ViewEventDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl w-[95vw] sm:w-full">
           <DialogHeader>
-            <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-1">
-                <DialogTitle className="text-2xl">{event.title}</DialogTitle>
+                <DialogTitle className="text-xl sm:text-2xl">{event.title}</DialogTitle>
                 {event.eventType && (
                   <DialogDescription className="text-sm">
                     {formatEventType(event.eventType)}
@@ -266,7 +266,7 @@ export function ViewEventDialog({
 
             {/* Created/Updated */}
             <div className="pt-4 border-t">
-              <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs text-muted-foreground">
                 <div>
                   <span className="font-medium">Created:</span>{" "}
                   {format(parseISO(event.createdAt), "MMM dd, yyyy")}
@@ -279,7 +279,7 @@ export function ViewEventDialog({
             </div>
           </div>
 
-          <DialogFooter className="flex items-center justify-between sm:justify-between">
+          <DialogFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
             {!isReadOnly ? (
               <>
                 <Button
@@ -289,6 +289,7 @@ export function ViewEventDialog({
                   disabled={
                     isDeleting || isCompleting || event.status === "cancelled"
                   }
+                  className="w-full sm:w-auto"
                 >
                   {isDeleting ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -302,11 +303,12 @@ export function ViewEventDialog({
                       : "Cancel Event"}
                 </Button>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <Button
                     variant="outline"
                     onClick={() => onOpenChange(false)}
                     disabled={isDeleting || isCompleting}
+                    className="w-full sm:w-auto"
                   >
                     Close
                   </Button>
@@ -314,6 +316,7 @@ export function ViewEventDialog({
                     <Button
                       onClick={handleCompleteClick}
                       disabled={isDeleting || isCompleting}
+                      className="w-full sm:w-auto"
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Mark Complete
@@ -322,12 +325,12 @@ export function ViewEventDialog({
                 </div>
               </>
             ) : (
-              <div className="flex items-center justify-between w-full">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 w-full">
                 <Badge variant="outline" className="text-xs">
                   View Only - This is {event.user?.name || "another user"}'s
                   event
                 </Badge>
-                <Button variant="outline" onClick={() => onOpenChange(false)}>
+                <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
                   Close
                 </Button>
               </div>
