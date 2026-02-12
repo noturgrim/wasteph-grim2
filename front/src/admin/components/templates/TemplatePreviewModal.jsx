@@ -108,7 +108,7 @@ export function TemplatePreviewModal({ open, onClose, template, htmlContent }) {
                   </Badge>
                 )}
               </div>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 Template Preview with Sample Data
               </p>
             </div>
@@ -118,34 +118,34 @@ export function TemplatePreviewModal({ open, onClose, template, htmlContent }) {
         {/* Template Info */}
         {template && (
           <>
-            <div className="shrink-0 grid grid-cols-1 sm:grid-cols-3 gap-4 py-4 border-y border-gray-200 bg-gray-50/50 px-1 -mx-1">
+            <div className="shrink-0 grid grid-cols-1 sm:grid-cols-3 gap-4 py-4 border-y bg-muted/50 px-1 -mx-1">
               <div className="flex items-center gap-2 text-sm">
-                <Tag className="h-4 w-4 text-gray-400" />
-                <span className="text-gray-600">Key:</span>
-                <code className="text-xs bg-gray-100 px-2 py-0.5 rounded font-mono">
+                <Tag className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">Key:</span>
+                <code className="text-xs bg-muted px-2 py-0.5 rounded font-mono">
                   {templateKey}
                 </code>
               </div>
               {createdAt && (
                 <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600">Created:</span>
-                  <span className="text-gray-900">{createdAt}</span>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Created:</span>
+                  <span className="font-medium">{createdAt}</span>
                 </div>
               )}
               {linkedServices.length > 0 && (
                 <div className="flex items-center gap-2 text-sm">
-                  <FileText className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600">Services:</span>
-                  <span className="text-gray-900">{linkedServices.length} linked</span>
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Services:</span>
+                  <span className="font-medium">{linkedServices.length} linked</span>
                 </div>
               )}
             </div>
 
             {/* Description */}
             {templateDescription && (
-              <div className="shrink-0 text-sm text-gray-600 py-2">
-                <span className="font-medium text-gray-700">Description: </span>
+              <div className="shrink-0 text-sm text-muted-foreground py-2">
+                <span className="font-medium">Description: </span>
                 {templateDescription}
               </div>
             )}
@@ -154,19 +154,19 @@ export function TemplatePreviewModal({ open, onClose, template, htmlContent }) {
 
         {/* Preview Content */}
         <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-          <div className="flex items-center justify-between px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-t-lg">
+          <div className="flex items-center justify-between px-4 py-2.5 bg-muted border rounded-t-lg">
             <div className="flex items-center gap-2">
               <Eye className="h-4 w-4 text-[#106934]" />
-              <span className="text-sm font-medium text-gray-700">Template Preview</span>
-              <span className="text-xs text-gray-400">(with sample data)</span>
+              <span className="text-sm font-medium">Template Preview</span>
+              <span className="text-xs text-muted-foreground">(with sample data)</span>
             </div>
           </div>
-          <div className="flex-1 overflow-hidden border border-t-0 border-gray-200 rounded-b-lg bg-white">
+          <div className="flex-1 overflow-hidden border border-t-0 rounded-b-lg bg-white">
             {isLoading ? (
               <div className="flex items-center justify-center h-full min-h-[400px]">
                 <div className="flex flex-col items-center gap-3">
                   <Loader2 className="h-8 w-8 animate-spin text-[#106934]" />
-                  <span className="text-sm text-gray-500">Generating preview...</span>
+                  <span className="text-sm text-muted-foreground">Generating preview...</span>
                 </div>
               </div>
             ) : previewHtml ? (
@@ -179,10 +179,10 @@ export function TemplatePreviewModal({ open, onClose, template, htmlContent }) {
               />
             ) : (
               <div className="flex items-center justify-center h-full min-h-[400px]">
-                <div className="text-center text-gray-400">
+                <div className="text-center text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
                   <p className="text-sm font-medium">No preview available</p>
-                  <p className="text-xs mt-1">This template has no content</p>
+                  <p className="text-xs mt-1 opacity-70">This template has no content</p>
                 </div>
               </div>
             )}
