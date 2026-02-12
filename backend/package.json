@@ -34,7 +34,8 @@
     "seed:files": "node src/scripts/seedFiles.js",
     "seed:loadtest-users": "node src/scripts/seedLoadTestUsers.js",
     "seed:loadtest-data": "node src/scripts/createLoadTestData.js",
-    "seed:loadtest": "npm run seed:loadtest-users && npm run seed:loadtest-data"
+    "seed:loadtest": "npm run seed:loadtest-users && npm run seed:loadtest-data",
+    "cleanup:loadtest": "node src/scripts/cleanupLoadTestData.js"
   },
   "keywords": [],
   "author": "",
