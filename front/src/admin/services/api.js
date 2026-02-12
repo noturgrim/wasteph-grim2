@@ -1017,6 +1017,14 @@ class ApiClient {
     return this.request("/dashboard/admin");
   }
 
+  async getAdminAnalyticsDashboard() {
+    return this.request("/dashboard/admin/analytics");
+  }
+
+  async getAnalyticsDashboard() {
+    return this.request("/dashboard/analytics");
+  }
+
   // Notifications
   async getNotifications(params = {}) {
     return this.request("/notifications", { params });

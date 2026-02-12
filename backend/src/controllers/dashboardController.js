@@ -36,3 +36,39 @@ export const getSuperAdminDashboard = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Controller: Get analytics dashboard data
+ * Route: GET /api/dashboard/analytics
+ * Access: Protected (master sales only)
+ */
+export const getAnalyticsDashboard = async (req, res, next) => {
+  try {
+    const data = await dashboardService.getAnalyticsDashboard();
+
+    res.json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Controller: Get admin analytics dashboard data
+ * Route: GET /api/dashboard/admin/analytics
+ * Access: Protected (admin, super_admin)
+ */
+export const getAdminAnalyticsDashboard = async (req, res, next) => {
+  try {
+    const data = await dashboardService.getAdminAnalyticsDashboard();
+
+    res.json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
