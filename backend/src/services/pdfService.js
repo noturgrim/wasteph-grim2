@@ -308,17 +308,25 @@ class PDFService {
       }
     }
 
-    // Format contract date
-    const contractDate = new Date().toLocaleDateString("en-PH", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    // Format contract date (use start date if available, else today)
+    const startDate = contractData.contractStartDate;
+    const contractDate = startDate
+      ? new Date(startDate).toLocaleDateString("en-PH", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      : new Date().toLocaleDateString("en-PH", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
 
     return {
       // Contract identification
       contractNumber: contractData.contractNumber || "PENDING",
       contractDate,
+      contractStartDate: contractData.contractStartDate || null,
 
       // Client information
       clientName: contractData.clientName || "",
@@ -339,6 +347,8 @@ class PDFService {
 
       // Pricing
       ratePerKg: contractData.ratePerKg || "",
+      monthlyRate: contractData.monthlyRate ?? (contractData.ratePerKg || ""),
+      excessRate: contractData.excessRate || "4.00",
 
       // Terms
       specialClauses: contractData.specialClauses || "",

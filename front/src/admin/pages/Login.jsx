@@ -113,7 +113,7 @@ const Login = () => {
                     Email
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-white/30" />
+                    <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500 dark:text-white/50" />
                     <Input
                       type="email"
                       placeholder="sales@wasteph.com"
@@ -130,7 +130,7 @@ const Login = () => {
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-white/30" />
+                    <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500 dark:text-white/50" />
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"

@@ -740,7 +740,6 @@ export default function Inquiries() {
             </Button>
           </div>
         </div>
-      </div>
 
       <AddInquiryDialog
         open={isCreateDialogOpen}
