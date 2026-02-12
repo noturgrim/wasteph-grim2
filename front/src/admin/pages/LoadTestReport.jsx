@@ -48,16 +48,18 @@ const LoadTestReport = () => {
       </div>
 
       {/* Test Status Card */}
-      <Card className="border-green-200 dark:border-green-900 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+      <Card className="backdrop-blur-xl border-slate-200 bg-white dark:border-white/10 dark:bg-black/40">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border-2 bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-700 border-emerald-200 dark:from-[#15803d]/20 dark:to-[#16a34a]/10 dark:text-[#15803d] dark:border-[#15803d]/30">
+                <CheckCircle className="h-6 w-6" />
+              </div>
               <div>
-                <CardTitle className="text-2xl text-green-900 dark:text-green-100">
+                <CardTitle className="text-2xl text-slate-900 dark:text-white">
                   {passStatus}
                 </CardTitle>
-                <CardDescription className="text-green-700 dark:text-green-300">
+                <CardDescription className="text-slate-600 dark:text-slate-400">
                   Infrastructure supports 6 concurrent users with optimal performance
                 </CardDescription>
               </div>
@@ -69,54 +71,60 @@ const LoadTestReport = () => {
       {/* Test Details Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Test Date */}
-        <Card className="border-slate-200 dark:border-slate-800">
+        <Card className="backdrop-blur-xl border-slate-200 bg-white dark:border-white/10 dark:bg-black/40 hover:border-emerald-300 dark:hover:border-[#15803d]/40">
           <CardHeader className="pb-3">
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-              <Calendar className="h-4 w-4" />
-              <CardTitle className="text-sm font-medium">Test Date</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg border-2 bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 border-blue-200 dark:from-blue-500/20 dark:to-blue-600/10 dark:text-blue-400 dark:border-blue-500/30">
+                <Calendar className="h-4 w-4" />
+              </div>
+              <CardTitle className="text-sm font-semibold text-slate-900 dark:text-white">Test Date</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            <div className="text-2xl font-black text-slate-900 dark:text-white">
               {testDate}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 dark:text-white/50 mt-1">
               {testTime}
             </p>
           </CardContent>
         </Card>
 
         {/* Duration */}
-        <Card className="border-slate-200 dark:border-slate-800">
+        <Card className="backdrop-blur-xl border-slate-200 bg-white dark:border-white/10 dark:bg-black/40 hover:border-emerald-300 dark:hover:border-[#15803d]/40">
           <CardHeader className="pb-3">
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-              <Activity className="h-4 w-4" />
-              <CardTitle className="text-sm font-medium">Test Duration</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg border-2 bg-gradient-to-br from-violet-50 to-violet-100 text-violet-700 border-violet-200 dark:from-violet-500/20 dark:to-violet-600/10 dark:text-violet-400 dark:border-violet-500/30">
+                <Activity className="h-4 w-4" />
+              </div>
+              <CardTitle className="text-sm font-semibold text-slate-900 dark:text-white">Test Duration</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            <div className="text-2xl font-black text-slate-900 dark:text-white">
               {testDuration}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 dark:text-white/50 mt-1">
               Continuous load testing
             </p>
           </CardContent>
         </Card>
 
         {/* Virtual Users */}
-        <Card className="border-slate-200 dark:border-slate-800">
+        <Card className="backdrop-blur-xl border-slate-200 bg-white dark:border-white/10 dark:bg-black/40 hover:border-emerald-300 dark:hover:border-[#15803d]/40">
           <CardHeader className="pb-3">
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-              <Activity className="h-4 w-4" />
-              <CardTitle className="text-sm font-medium">Virtual Users</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg border-2 bg-gradient-to-br from-amber-50 to-amber-100 text-amber-700 border-amber-200 dark:from-amber-500/20 dark:to-amber-600/10 dark:text-amber-400 dark:border-amber-500/30">
+                <Activity className="h-4 w-4" />
+              </div>
+              <CardTitle className="text-sm font-semibold text-slate-900 dark:text-white">Virtual Users</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-slate-900 dark:text-white">
+            <div className="text-2xl font-black text-slate-900 dark:text-white">
               {virtualUsers}
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs text-slate-500 dark:text-white/50 mt-1">
               {totalRequests}
             </p>
           </CardContent>
@@ -124,10 +132,10 @@ const LoadTestReport = () => {
       </div>
 
       {/* Key Metrics Summary */}
-      <Card className="border-slate-200 dark:border-slate-800">
+      <Card className="backdrop-blur-xl border-slate-200 bg-white dark:border-white/10 dark:bg-black/40">
         <CardHeader>
           <CardTitle className="text-slate-900 dark:text-white">Performance Highlights</CardTitle>
-          <CardDescription>Key metrics from the load test</CardDescription>
+          <CardDescription className="text-slate-600 dark:text-slate-400">Key metrics from the load test</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -138,17 +146,17 @@ const LoadTestReport = () => {
                 </span>
                 <Tooltip>
                   <TooltipTrigger>
-                    <HelpCircle className="h-3 w-3 text-slate-400" />
+                    <HelpCircle className="h-3 w-3 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300" />
                   </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
+                  <TooltipContent className="max-w-xs bg-slate-900 dark:bg-slate-800 text-white border-slate-700">
                     <p className="text-xs">95% of all requests completed faster than this time. Lower is better.</p>
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <span className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
+              <span className="text-2xl font-black text-[#15803d] dark:text-[#16a34a] mt-1">
                 578ms
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <span className="text-xs text-slate-500 dark:text-white/50 mt-1">
                 Threshold: &lt; 2000ms
               </span>
             </div>
@@ -167,10 +175,10 @@ const LoadTestReport = () => {
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <span className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
+              <span className="text-2xl font-black text-[#15803d] dark:text-[#16a34a] mt-1">
                 0.00%
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <span className="text-xs text-slate-500 dark:text-white/50 mt-1">
                 Threshold: &lt; 5%
               </span>
             </div>
@@ -189,10 +197,10 @@ const LoadTestReport = () => {
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <span className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+              <span className="text-2xl font-black text-slate-900 dark:text-white mt-1">
                 1.46/s
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <span className="text-xs text-slate-500 dark:text-white/50 mt-1">
                 Requests per second
               </span>
             </div>
@@ -211,10 +219,10 @@ const LoadTestReport = () => {
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <span className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
+              <span className="text-2xl font-black text-[#15803d] dark:text-[#16a34a] mt-1">
                 462ms
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <span className="text-xs text-slate-500 dark:text-white/50 mt-1">
                 Threshold: &lt; 1000ms
               </span>
             </div>
@@ -223,10 +231,10 @@ const LoadTestReport = () => {
       </Card>
 
       {/* Actions */}
-      <Card className="border-slate-200 dark:border-slate-800">
+      <Card className="backdrop-blur-xl border-slate-200 bg-white dark:border-white/10 dark:bg-black/40">
         <CardHeader>
           <CardTitle className="text-slate-900 dark:text-white">View Full Report</CardTitle>
-          <CardDescription>
+          <CardDescription className="text-slate-600 dark:text-slate-400">
             Access the complete detailed performance report with all metrics and analysis
           </CardDescription>
         </CardHeader>
@@ -252,13 +260,13 @@ const LoadTestReport = () => {
       </Card>
 
       {/* Terms Glossary */}
-      <Card className="border-slate-200 dark:border-slate-800">
+      <Card className="backdrop-blur-xl border-slate-200 bg-white dark:border-white/10 dark:bg-black/40">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
             <HelpCircle className="h-5 w-5" />
             Understanding the Metrics
           </CardTitle>
-          <CardDescription>What these performance terms mean</CardDescription>
+          <CardDescription className="text-slate-600 dark:text-slate-400">What these performance terms mean</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
@@ -267,9 +275,9 @@ const LoadTestReport = () => {
               <dt className="text-sm font-semibold text-slate-900 dark:text-white">
                 Response Time (p95)
               </dt>
-              <dd className="text-sm text-slate-600 dark:text-slate-400">
+              <dd className="text-sm text-slate-600 dark:text-slate-300">
                 The time it takes for 95% of requests to complete. This means that 95 out of 100 requests were faster than this time.
-                <span className="block mt-1 text-xs text-slate-500 dark:text-slate-500">
+                <span className="block mt-1 text-xs text-slate-500 dark:text-white/40">
                   Example: 578ms means most pages load in under 0.6 seconds.
                 </span>
               </dd>
@@ -344,7 +352,7 @@ const LoadTestReport = () => {
       </Card>
 
       {/* Info Note */}
-      <div className="rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20 p-4">
+      <div className="rounded-lg border border-blue-200 dark:border-blue-500/30 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-500/10 dark:to-blue-600/5 p-4 backdrop-blur-xl">
         <div className="flex gap-3">
           <div className="flex-shrink-0">
             <svg className="h-5 w-5 text-blue-600 dark:text-blue-400" viewBox="0 0 20 20" fill="currentColor">
@@ -352,10 +360,10 @@ const LoadTestReport = () => {
             </svg>
           </div>
           <div className="flex-1">
-            <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               Report Information
             </h3>
-            <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+            <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
               <p>
                 This report was generated using k6 Performance Testing Framework against the Railway.app production environment.
                 All metrics represent measured production infrastructure performance.
