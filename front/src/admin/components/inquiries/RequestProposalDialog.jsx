@@ -1633,28 +1633,7 @@ ${bodyTag}
                             : "Customize the proposal content and submit for approval"}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {creationMode === "template" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowPreview(true)}
-                            className="gap-2"
-                          >
-                            <Eye className="h-4 w-4" />
-                            Full Preview
-                          </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setShowUploadModal(true)}
-                          className="gap-2"
-                        >
-                          <Upload className="h-4 w-4" />
-                          Upload PDF Instead
-                        </Button>
-                      </div>
+                      <div className="flex items-center gap-2" />
                     </div>
                   </div>
 
@@ -1747,6 +1726,7 @@ ${bodyTag}
                             onChange={handleEditorSave}
                             onUnsavedChange={handleUnsavedChange}
                             className="h-full"
+                            onFullPreview={creationMode === "template" ? () => setShowPreview(true) : undefined}
                           />
                         </div>
                       )}
@@ -1822,20 +1802,31 @@ ${bodyTag}
                       <ArrowLeft className="h-4 w-4 mr-2" />
                       Back
                     </Button>
-                    <Button
-                      onClick={handleSubmitClick}
-                      disabled={!canSubmit}
-                      className={`min-w-[140px] ${
-                        !canSubmit ? "opacity-50" : ""
-                      }`}
-                    >
-                      {isSubmitting ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4 mr-2" />
-                      )}
-                      Submit Request
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowUploadModal(true)}
+                        className="gap-2"
+                      >
+                        <Upload className="h-4 w-4" />
+                        Upload PDF Instead
+                      </Button>
+                      <Button
+                        onClick={handleSubmitClick}
+                        disabled={!canSubmit}
+                        className={`min-w-[140px] ${
+                          !canSubmit ? "opacity-50" : ""
+                        }`}
+                      >
+                        {isSubmitting ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4 mr-2" />
+                        )}
+                        Submit Request
+                      </Button>
+                    </div>
                   </>
                 )}
               </div>

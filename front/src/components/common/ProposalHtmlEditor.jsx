@@ -23,6 +23,7 @@ import {
   Plus,
   Trash2,
   Table as TableIcon,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -62,7 +63,14 @@ const scopeStyles = (css, scopeSelector) => {
   });
 };
 
-const MenuBar = ({ editor, onSave, onReset, hasUnsavedChanges, canReset }) => {
+const MenuBar = ({
+  editor,
+  onSave,
+  onReset,
+  hasUnsavedChanges,
+  canReset,
+  onFullPreview,
+}) => {
   if (!editor) return null;
 
   const btnClass = (isActive) =>
@@ -178,8 +186,20 @@ const MenuBar = ({ editor, onSave, onReset, hasUnsavedChanges, canReset }) => {
         )}
       </div>
 
-      {/* Save / Reset */}
+      {/* Save / Reset / Full Preview */}
       <div className="flex gap-2">
+        {onFullPreview && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={onFullPreview}
+            className="gap-1"
+          >
+            <Eye className="w-4 h-4 mr-1" />
+            Full Preview
+          </Button>
+        )}
         <Button
           type="button"
           size="sm"
@@ -221,7 +241,14 @@ const MenuBar = ({ editor, onSave, onReset, hasUnsavedChanges, canReset }) => {
  * @param {function} onUnsavedChange  – Called with boolean whenever unsaved state changes
  * @param {string}   className        – Extra Tailwind classes for the outer wrapper
  */
-const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange, className = "" }) => {
+const ProposalHtmlEditor = ({
+  content,
+  templateStyles,
+  onChange,
+  onUnsavedChange,
+  className = "",
+  onFullPreview,
+}) => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   // Track selection changes to force MenuBar re-render when cursor moves
   const [selectionUpdate, setSelectionUpdate] = useState(0);
@@ -468,12 +495,13 @@ const ProposalHtmlEditor = ({ content, templateStyles, onChange, onUnsavedChange
         onReset={handleReset}
         hasUnsavedChanges={hasUnsavedChanges}
         canReset={canReset}
+        onFullPreview={onFullPreview}
         key={selectionUpdate}
       />
 
       <div className="flex-1 overflow-y-auto min-h-0 relative">
         {/* Header space indicator - shows where the PDF header will appear */}
-        <div className="sticky top-0 z-20 bg-gradient-to-b from-blue-50 to-blue-100 border-b-2 border-blue-300 px-4 py-3 shadow-sm">
+        <div className="sticky top-0 z-20 bg-linear-to-b from-blue-50 to-blue-100 border-b-2 border-blue-300 px-4 py-3 shadow-sm">
           <div className="flex items-center justify-between text-xs text-blue-700">
             <div className="flex items-center gap-2">
               <span className="font-semibold">📋 Header Area</span>
