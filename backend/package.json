@@ -34,8 +34,13 @@
     "seed:files": "node src/scripts/seedFiles.js",
     "seed:loadtest-users": "node src/scripts/seedLoadTestUsers.js",
     "seed:loadtest-data": "node src/scripts/createLoadTestData.js",
+    "seed:loadtest-data-100": "node src/scripts/createLoadTestData100.js",
+    "seed:loadtest-data-500": "node src/scripts/createLoadTestData500.js",
     "seed:loadtest": "npm run seed:loadtest-users && npm run seed:loadtest-data",
-    "cleanup:loadtest": "node src/scripts/cleanupLoadTestData.js"
+    "seed:loadtest-100": "npm run seed:loadtest-users && npm run seed:loadtest-data-100",
+    "seed:loadtest-500": "npm run seed:loadtest-users && npm run seed:loadtest-data-500",
+    "cleanup:loadtest": "node src/scripts/cleanupLoadTestData.js",
+    "cleanup:loadtest-preview": "node src/scripts/cleanupLoadTestData.js --dry-run"
   },
   "keywords": [],
   "author": "",

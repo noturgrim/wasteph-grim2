@@ -1,6 +1,16 @@
 # WastePH Load Testing
 
-Simple but accurate load testing to verify if 6 concurrent staff members can use the WastePH system on Render.com infrastructure.
+Simple but accurate load testing to verify if 6 concurrent staff members can use the WastePH system on Railway.app infrastructure.
+
+## Test Scenarios
+
+This setup includes **three test configurations** with different dataset sizes:
+
+| Scenario | Records per Entity | Total Records | Use Case |
+|----------|-------------------|---------------|----------|
+| **Standard** | 10-20 | ~40 | Basic functionality test |
+| **Medium Load** | 100 | 300 | Realistic business load |
+| **Stress Test** | 500 | 1,500 | High-load stress testing |
 
 ## Quick Start
 
@@ -19,45 +29,60 @@ brew install k6
 **Linux**:
 Visit [k6.io/docs/getting-started/installation](https://k6.io/docs/getting-started/installation/)
 
-### 2. Set Your Render.com Backend URL
+### 2. Set Your Railway.app Backend URL
 
 **Option A: Set environment variable**
 ```bash
 # Windows PowerShell
-$env:BASE_URL = "https://your-backend.onrender.com/api"
+$env:BASE_URL = "https://your-backend.up.railway.app/api"
 
 # Windows CMD
-set BASE_URL=https://your-backend.onrender.com/api
+set BASE_URL=https://your-backend.up.railway.app/api
 
 # Mac/Linux
-export BASE_URL=https://your-backend.onrender.com/api
+export BASE_URL=https://your-backend.up.railway.app/api
 ```
 
 **Option B: Edit config.js**
 ```javascript
-export const BASE_URL = 'https://your-backend.onrender.com/api';
+export const BASE_URL = 'https://your-backend.up.railway.app/api';
 ```
 
-### 3. Seed Test Data (One-time Setup)
+### 3. Seed Test Data (Choose Your Scenario)
 
-From the `backend` directory:
+From the `backend` directory, choose one of the following:
 
+#### Option A: Standard Test (~40 records)
 ```bash
-# Create 6 test user accounts
-npm run seed:loadtest-users
-
-# Create sample data (leads, clients, inquiries)
-npm run seed:loadtest-data
-
-# OR run both at once
 npm run seed:loadtest
 ```
-
-This creates:
+Creates:
 - 6 test staff accounts (`loadtest1-6@wasteph.com`, password: `LoadTest@123`)
 - 10 inquiries
 - 20 leads (10 claimed, 10 unclaimed)
 - 10 clients
+
+#### Option B: Medium Load Test (300 records) ⭐ Recommended
+```bash
+npm run seed:loadtest-100
+```
+Creates:
+- 6 test staff accounts
+- **100 inquiries**
+- **100 leads** (50 claimed, 50 unclaimed)
+- **100 clients**
+
+#### Option C: Stress Test (1,500 records) ⚠️
+```bash
+npm run seed:loadtest-500
+```
+Creates:
+- 6 test staff accounts
+- **500 inquiries**
+- **500 leads** (250 claimed, 250 unclaimed)
+- **500 clients**
+
+**Note**: The 500-record test will take several minutes to seed and may push your infrastructure to its limits.
 
 ### 4. Run the Load Test
 
@@ -79,7 +104,15 @@ chmod +x run-test.sh
 **Option B: Run k6 directly**
 ```bash
 cd loadtest
+
+# Standard test (default)
 k6 run staff-workflow.js
+
+# Or with 100 records
+k6 run -e REPORT_TYPE=100 staff-workflow.js
+
+# Or with 500 records
+k6 run -e REPORT_TYPE=500 staff-workflow.js
 ```
 
 ### 5. Review Results
@@ -166,11 +199,30 @@ Infrastructure cannot handle 6 concurrent users. Upgrade needed.
 
 ## Infrastructure Context
 
-This tests your **actual Render.com production environment**:
+This tests your **actual Railway.app production environment**:
 
-- **Backend**: $7/month plan (512MB RAM, shared CPU)
+- **Backend**: $7/month plan
 - **Database**: PostgreSQL $6/month plan
 - **Frontend**: Static site
+
+## Choosing the Right Test Scenario
+
+### When to use Standard Test (~40 records)
+- Initial setup verification
+- Quick smoke tests
+- Development environment testing
+
+### When to use Medium Load Test (300 records) ⭐
+- **Recommended for production readiness**
+- Simulates realistic business data volume
+- Balances thoroughness with execution time
+- Best for regular performance validation
+
+### When to use Stress Test (1,500 records) ⚠️
+- Capacity planning
+- Identifying system breaking points
+- Testing database performance under heavy load
+- **Warning**: May cause temporary performance degradation
 
 ## Common Issues & Solutions
 
@@ -261,27 +313,38 @@ k6 run --out json=results/my-test.json staff-workflow.js
 BASE_URL=http://localhost:5000/api k6 run staff-workflow.js
 ```
 
-**⚠️ Warning**: Localhost results will be much better than Render.com. Always test against your actual hosted environment for accurate results.
+**⚠️ Warning**: Localhost results will be much better than Railway.app. Always test against your actual hosted environment for accurate results.
+
+## Viewing Reports
+
+After running tests, HTML reports are generated and accessible through the admin panel:
+
+1. Log into your WastePH admin account
+2. Navigate to **Administration > Load Test Report** (super_admin) or **Tools > Load Test Report** (admin)
+3. View summary and download full report
+
+Report files:
+- `load-test-report.html` - Standard test results
+- `load-test-report-100.html` - 100 records test results
+- `load-test-report-500.html` - 500 records stress test results
 
 ## Cleanup
 
-After testing, remove test data from production:
+**IMPORTANT**: Always clean up test data after testing!
 
-```sql
--- Delete load test users
-DELETE FROM "user" WHERE email LIKE 'loadtest%@wasteph.com';
+From the `backend` directory:
 
--- Delete test leads
-DELETE FROM lead WHERE email LIKE 'lead%@loadtest.com';
-
--- Delete test clients
-DELETE FROM client WHERE email LIKE 'client%@loadtest.com';
-
--- Delete test inquiries
-DELETE FROM inquiry WHERE email LIKE 'inquiry%@loadtest.com';
+```bash
+npm run cleanup:loadtest
 ```
 
-Or use a cleanup script (to be created if needed).
+This safely removes:
+- All load test users (`loadtest*@wasteph.com`)
+- All test inquiries (`inquiry*@loadtest.com`)
+- All test leads (`lead*@loadtest.com`)
+- All test clients (`client*@loadtest.com`)
+
+Works for all test scenarios (standard, 100 records, or 500 records).
 
 ## Next Steps
 
