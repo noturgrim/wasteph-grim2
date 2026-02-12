@@ -70,87 +70,94 @@ export function EditClientDialog({ open, onOpenChange, client, onConfirm }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>Edit Client</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">Edit Client</DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm">
             Update details for {client.companyName}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4 min-w-0">
           {/* Company & Contact */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label>Company Name</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="space-y-1 min-w-0">
+              <Label className="text-sm">Company Name</Label>
               <Input
                 value={formData.companyName}
                 onChange={(e) => handleChange("companyName", e.target.value)}
+                className="text-sm w-full min-w-0"
               />
             </div>
-            <div className="space-y-1">
-              <Label>Contact Person</Label>
+            <div className="space-y-1 min-w-0">
+              <Label className="text-sm">Contact Person</Label>
               <Input
                 value={formData.contactPerson}
                 onChange={(e) => handleChange("contactPerson", e.target.value)}
+                className="text-sm w-full min-w-0"
               />
             </div>
           </div>
 
           {/* Contact details */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label>Email</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="space-y-1 min-w-0">
+              <Label className="text-sm">Email</Label>
               <Input
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleChange("email", e.target.value)}
+                className="text-sm w-full min-w-0"
               />
             </div>
-            <div className="space-y-1">
-              <Label>Phone</Label>
+            <div className="space-y-1 min-w-0">
+              <Label className="text-sm">Phone</Label>
               <Input
                 value={formData.phone}
                 onChange={(e) => handleChange("phone", e.target.value)}
+                className="text-sm w-full min-w-0"
               />
             </div>
           </div>
 
           {/* Address */}
-          <div className="space-y-1">
-            <Label>Address</Label>
+          <div className="space-y-1 min-w-0">
+            <Label className="text-sm">Address</Label>
             <Input
               value={formData.address}
               onChange={(e) => handleChange("address", e.target.value)}
+              className="text-sm w-full min-w-0"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label>City</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="space-y-1 min-w-0">
+              <Label className="text-sm">City</Label>
               <Input
                 value={formData.city}
                 onChange={(e) => handleChange("city", e.target.value)}
+                className="text-sm w-full min-w-0"
               />
             </div>
-            <div className="space-y-1">
-              <Label>Province</Label>
+            <div className="space-y-1 min-w-0">
+              <Label className="text-sm">Province</Label>
               <Input
                 value={formData.province}
                 onChange={(e) => handleChange("province", e.target.value)}
+                className="text-sm w-full min-w-0"
               />
             </div>
           </div>
 
           {/* Business */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label>Industry</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="space-y-1 min-w-0">
+              <Label className="text-sm">Industry</Label>
               <Select
                 value={formData.industry || ""}
                 onValueChange={(value) => handleChange("industry", value)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="text-sm w-full min-w-0">
                   <SelectValue placeholder="Select industry" />
                 </SelectTrigger>
                 <SelectContent>
@@ -171,19 +178,20 @@ export function EditClientDialog({ open, onOpenChange, client, onConfirm }) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
-              <Label>Waste Types</Label>
+            <div className="space-y-1 min-w-0">
+              <Label className="text-sm">Waste Types</Label>
               <Input
                 value={formData.wasteTypes}
                 onChange={(e) => handleChange("wasteTypes", e.target.value)}
+                className="text-sm w-full min-w-0"
               />
             </div>
           </div>
 
           {/* Contract dates */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label>Contract Start Date</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="space-y-1 min-w-0">
+              <Label className="text-sm">Contract Start Date</Label>
               <DatePicker
                 date={formData.contractStartDate ? new Date(formData.contractStartDate) : undefined}
                 onDateChange={(date) =>
@@ -192,8 +200,8 @@ export function EditClientDialog({ open, onOpenChange, client, onConfirm }) {
                 placeholder="dd/mm/yyyy"
               />
             </div>
-            <div className="space-y-1">
-              <Label>Contract End Date</Label>
+            <div className="space-y-1 min-w-0">
+              <Label className="text-sm">Contract End Date</Label>
               <DatePicker
                 date={formData.contractEndDate ? new Date(formData.contractEndDate) : undefined}
                 onDateChange={(date) =>
@@ -205,13 +213,13 @@ export function EditClientDialog({ open, onOpenChange, client, onConfirm }) {
           </div>
 
           {/* Status */}
-          <div className="space-y-1">
-            <Label>Status</Label>
+          <div className="space-y-1 min-w-0">
+            <Label className="text-sm">Status</Label>
             <Select
               value={formData.status}
               onValueChange={(value) => handleChange("status", value)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="text-sm w-full min-w-0">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -223,21 +231,31 @@ export function EditClientDialog({ open, onOpenChange, client, onConfirm }) {
           </div>
 
           {/* Notes */}
-          <div className="space-y-1">
-            <Label>Notes</Label>
+          <div className="space-y-1 min-w-0">
+            <Label className="text-sm">Notes</Label>
             <Textarea
               value={formData.notes}
               onChange={(e) => handleChange("notes", e.target.value)}
               rows={3}
+              className="text-sm w-full min-w-0 resize-none"
             />
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)} 
+            disabled={isSubmitting}
+            className="w-full sm:w-auto"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isSubmitting}
+            className="w-full sm:w-auto"
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
