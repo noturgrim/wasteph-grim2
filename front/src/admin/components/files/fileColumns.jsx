@@ -56,6 +56,13 @@ const actionLabels = {
   signed: "Signed by Client",
 };
 
+const roleLabels = {
+  super_admin: "Super Admin",
+  admin: "Admin",
+  sales: "Sales",
+  social_media: "Social Media",
+};
+
 const formatFileSize = (bytes) => {
   if (!bytes) return null;
   if (bytes < 1024) return `${bytes} B`;
@@ -155,11 +162,17 @@ export const createFileColumns = ({ onView, onViewDetails }) => [
     header: "By",
     cell: ({ row }) => {
       const file = row.original;
+      const hasStaffUploader = !!file.uploaderFirstName;
+      const displayName = hasStaffUploader
+        ? `${file.uploaderFirstName} ${file.uploaderLastName || ""}`.trim()
+        : file.clientName || "Client";
+      const role = hasStaffUploader
+        ? roleLabels[file.uploaderRole] || "Staff"
+        : "Client";
       return (
         <div className="text-sm">
-          {file.uploaderFirstName
-            ? `${file.uploaderFirstName} ${file.uploaderLastName}`
-            : "Client"}
+          <div className="font-medium">{displayName}</div>
+          <div className="text-xs text-muted-foreground">{role}</div>
         </div>
       );
     },

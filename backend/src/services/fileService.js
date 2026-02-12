@@ -156,6 +156,7 @@ class FileService {
           createdAt: userFilesTable.createdAt,
           uploaderFirstName: userTable.firstName,
           uploaderLastName: userTable.lastName,
+          uploaderRole: userTable.role,
         })
         .from(userFilesTable)
         .leftJoin(userTable, eq(userFilesTable.uploadedBy, userTable.id))
