@@ -38,18 +38,18 @@ const ADMIN_STAT_CARDS = [
 
 const StatsSkeleton = ({ count = 4 }) => (
   <div
-    className={`grid gap-4 sm:grid-cols-2 ${count > 4 ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}
+    className={`grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 ${count > 4 ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}
   >
     {Array.from({ length: count }).map((_, i) => (
-      <Skeleton key={i} className="h-[110px] rounded-xl" />
+      <Skeleton key={i} className="h-[100px] sm:h-[110px] rounded-xl" />
     ))}
   </div>
 );
 
 const ContentSkeleton = () => (
-  <div className="grid gap-4 lg:grid-cols-2">
-    <Skeleton className="h-[420px] rounded-xl" />
-    <Skeleton className="h-[420px] rounded-xl" />
+  <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
+    <Skeleton className="h-[320px] sm:h-[420px] rounded-xl" />
+    <Skeleton className="h-[320px] sm:h-[420px] rounded-xl" />
   </div>
 );
 
@@ -132,13 +132,13 @@ export default function Dashboard() {
   const gridCols = isAdmin ? "lg:grid-cols-3" : "lg:grid-cols-4";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
           Dashboard
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm sm:text-base text-muted-foreground mt-1">
           {isAdmin
             ? `Welcome back, ${user?.firstName}. Here is your system overview.`
             : `Welcome back, ${user?.firstName}. Here is your pipeline overview.`}
@@ -149,7 +149,7 @@ export default function Dashboard() {
       {isLoading ? (
         <StatsSkeleton count={statCards.length} />
       ) : (
-        <div className={`grid gap-4 sm:grid-cols-2 ${gridCols}`}>
+        <div className={`grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 ${gridCols}`}>
           {statCards.map((card) => (
             <DashboardCard
               key={card.key}
@@ -166,7 +166,7 @@ export default function Dashboard() {
       {isLoading ? (
         <ContentSkeleton />
       ) : isAdmin ? (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
           <PendingActions data={data?.pendingActions} />
           <RecentActivity
             activities={data?.recentActivity ?? []}
@@ -174,7 +174,7 @@ export default function Dashboard() {
           />
         </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
           <UpcomingEvents events={data?.upcomingEvents ?? []} />
           <RecentActivity activities={data?.recentActivity ?? []} />
         </div>

@@ -150,15 +150,15 @@ const RecentActivity = ({ activities = [], showActor = false }) => {
   if (activities.length === 0) {
     return (
       <Card className="border-slate-200 bg-white dark:border-white/10 dark:bg-black/40">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base font-bold text-slate-900 dark:text-white">
+        <CardHeader className="pb-3 sm:pb-4">
+          <CardTitle className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
             Recent Activity
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Activity className="h-10 w-10 text-muted-foreground/40 mb-2" />
-            <p className="text-sm text-muted-foreground">No recent activity</p>
+          <div className="flex flex-col items-center justify-center py-6 sm:py-8 text-center">
+            <Activity className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/40 mb-2" />
+            <p className="text-xs sm:text-sm text-muted-foreground">No recent activity</p>
           </div>
         </CardContent>
       </Card>
@@ -167,13 +167,13 @@ const RecentActivity = ({ activities = [], showActor = false }) => {
 
   return (
     <Card className="border-slate-200 bg-white dark:border-white/10 dark:bg-black/40">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-base font-bold text-slate-900 dark:text-white">
+      <CardHeader className="pb-3 sm:pb-4">
+        <CardTitle className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
           Recent Activity
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <ScrollArea className="h-[360px] px-6 pb-6">
+        <ScrollArea className="h-[280px] sm:h-[360px] px-3 sm:px-6 pb-4 sm:pb-6">
           <div className="space-y-1">
             {activities.map((activity) => {
               const mapped = ACTION_MAP[activity.action];
@@ -187,39 +187,39 @@ const RecentActivity = ({ activities = [], showActor = false }) => {
               return (
                 <div
                   key={activity.id}
-                  className="flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-accent/50"
+                  className="flex items-start gap-2 sm:gap-3 rounded-lg p-2 sm:p-3 transition-colors hover:bg-accent/50"
                 >
                   <div
-                    className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconBg}`}
+                    className={`mt-0.5 flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg ${iconBg}`}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </div>
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-900 dark:text-white">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs sm:text-sm font-medium text-slate-900 dark:text-white break-words">
                           {label}
                         </p>
                         {showActor && activity.context?.actorName && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground truncate">
                             by {activity.context.actorName}
                           </p>
                         )}
                       </div>
-                      <span className="shrink-0 text-xs text-muted-foreground whitespace-nowrap">
+                      <span className="shrink-0 text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
                         {formatDistanceToNow(new Date(activity.createdAt), {
                           addSuffix: true,
                         })}
                       </span>
                     </div>
                     {summary && (
-                      <p className="text-xs text-muted-foreground truncate">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-2 break-words">
                         {summary}
                       </p>
                     )}
                     <Badge
                       variant="outline"
-                      className={`text-[10px] capitalize ${entityColor}`}
+                      className={`text-[9px] sm:text-[10px] capitalize ${entityColor}`}
                     >
                       {activity.entityType}
                     </Badge>
