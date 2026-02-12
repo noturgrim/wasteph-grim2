@@ -527,7 +527,8 @@ class ContractService {
     // Save PDF file
     const pdfUrl = await this.saveContractPdf(pdfBuffer, contractId);
 
-    // Log file to user_files (fire-and-forget) for the admin uploader
+    // Log file to user_files (fire-and-forget)
+    // Attribute to requesting sales user when available so it appears in their Files view.
     fileService.logFile({
       fileName: `${contract.contractNumber}-contract.pdf`,
       fileUrl: pdfUrl,
@@ -538,24 +539,8 @@ class ContractService {
       relatedEntityNumber: contract.contractNumber,
       clientName: contract.clientName || null,
       action: "uploaded",
-      uploadedBy: userId,
+      uploadedBy: contract.requestedBy || userId,
     });
-
-    // Also log a visible entry for the sales user who requested the contract
-    if (contract.requestedBy) {
-      fileService.logFile({
-        fileName: `${contract.contractNumber}-contract.pdf`,
-        fileUrl: pdfUrl,
-        fileType: "application/pdf",
-        fileSize: pdfBuffer.length,
-        entityType: "contract",
-        entityId: contractId,
-        relatedEntityNumber: contract.contractNumber,
-        clientName: contract.clientName || null,
-        action: "uploaded",
-        uploadedBy: contract.requestedBy,
-      });
-    }
 
     // Prepare update object
     const updateData = {
@@ -708,7 +693,8 @@ class ContractService {
     // Save PDF
     const pdfUrl = await this.saveContractPdf(pdfBuffer, contractId);
 
-    // Log file to user_files (fire-and-forget) for the admin generator
+    // Log file to user_files (fire-and-forget)
+    // Attribute to requesting sales user when available so it appears in their Files view.
     fileService.logFile({
       fileName: `${contract.contractNumber}-contract.pdf`,
       fileUrl: pdfUrl,
@@ -719,24 +705,8 @@ class ContractService {
       relatedEntityNumber: contract.contractNumber,
       clientName: contract.clientName || null,
       action: "generated",
-      uploadedBy: userId,
+      uploadedBy: contract.requestedBy || userId,
     });
-
-    // Also log a visible entry for the sales user who requested the contract
-    if (contract.requestedBy) {
-      fileService.logFile({
-        fileName: `${contract.contractNumber}-contract.pdf`,
-        fileUrl: pdfUrl,
-        fileType: "application/pdf",
-        fileSize: pdfBuffer.length,
-        entityType: "contract",
-        entityId: contractId,
-        relatedEntityNumber: contract.contractNumber,
-        clientName: contract.clientName || null,
-        action: "generated",
-        uploadedBy: contract.requestedBy,
-      });
-    }
 
     // Prepare update object
     const updateData = {
@@ -1131,7 +1101,8 @@ class ContractService {
       .returning();
 
     // Log file to user_files (fire-and-forget)
-    const signedFileLog = {
+    // Attribute signed contract to the sales owner so it appears in their Files view.
+    fileService.logFile({
       fileName: `${contract.contractNumber}-signed.pdf`,
       fileUrl: signedUrl,
       fileType: "application/pdf",
@@ -1141,22 +1112,8 @@ class ContractService {
       relatedEntityNumber: contract.contractNumber,
       clientName: contract.clientName || null,
       action: "signed",
-    };
-
-    // Entry visible to admins / super admins
-    fileService.logFile({
-      ...signedFileLog,
-      uploadedBy: null,
+      uploadedBy: contract.requestedBy || contract.sentToClientBy || null,
     });
-
-    // Also log a copy visible to the sales owner of the contract
-    const salesOwnerId = contract.requestedBy || contract.sentToClientBy;
-    if (salesOwnerId) {
-      fileService.logFile({
-        ...signedFileLog,
-        uploadedBy: salesOwnerId,
-      });
-    }
 
     // Log activity
     await this.logActivity({
