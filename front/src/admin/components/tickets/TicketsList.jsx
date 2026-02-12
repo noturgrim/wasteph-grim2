@@ -52,7 +52,7 @@ export const TicketsList = ({ tickets, onRefresh }) => {
 
   if (!tickets || tickets.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground">
+      <div className="text-center py-8 text-xs sm:text-sm text-muted-foreground">
         <p>No tickets found</p>
       </div>
     );
@@ -60,18 +60,20 @@ export const TicketsList = ({ tickets, onRefresh }) => {
 
   return (
     <>
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {tickets.map((ticket) => (
           <Card key={ticket.id} className="hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1 flex-1">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-base">{ticket.subject}</CardTitle>
-                    {getPriorityBadge(ticket.priority)}
-                    {getStatusBadge(ticket.status)}
+            <CardHeader className="pb-2 sm:pb-3 p-3 sm:p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-2 flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <CardTitle className="text-sm sm:text-base truncate">{ticket.subject}</CardTitle>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {getPriorityBadge(ticket.priority)}
+                      {getStatusBadge(ticket.status)}
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground break-words">
                     {ticket.ticketNumber} • {getCategoryLabel(ticket.category)}
                   </p>
                 </div>
@@ -79,34 +81,35 @@ export const TicketsList = ({ tickets, onRefresh }) => {
                   variant="outline"
                   size="sm"
                   onClick={() => handleViewTicket(ticket)}
+                  className="w-full sm:w-auto shrink-0 text-xs sm:text-sm"
                 >
-                  <Eye className="h-4 w-4 mr-1" />
-                  View
+                  <Eye className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                  <span className="hidden sm:inline ml-1">View</span>
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent className="pt-0 p-3 sm:p-6 sm:pt-0">
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground line-clamp-2">
+                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 break-words">
                   {ticket.description}
                 </p>
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                  <span>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-muted-foreground">
+                  <span className="whitespace-nowrap">
                     Created {format(new Date(ticket.createdAt), "MMM dd, yyyy")}
                   </span>
                   {ticket.creatorFirstName && (
-                    <span>
+                    <span className="truncate">
                       by {ticket.creatorFirstName} {ticket.creatorLastName}
                     </span>
                   )}
                   {ticket.comments && ticket.comments.length > 0 && (
-                    <span className="flex items-center gap-1">
+                    <span className="flex items-center gap-1 shrink-0">
                       <MessageSquare className="h-3 w-3" />
                       {ticket.comments.length}
                     </span>
                   )}
                   {ticket.attachments && ticket.attachments.length > 0 && (
-                    <span className="flex items-center gap-1">
+                    <span className="flex items-center gap-1 shrink-0">
                       <Paperclip className="h-3 w-3" />
                       {ticket.attachments.length}
                     </span>
