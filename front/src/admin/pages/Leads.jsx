@@ -369,60 +369,63 @@ export default function Leads() {
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Lead Pool</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Lead Pool</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             {isMasterSales
               ? "Manage potential clients for your sales team"
               : "Claim leads to start the inquiry process"}
           </p>
         </div>
         {isMasterSales && (
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Button onClick={() => setIsCreateDialogOpen(true)} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Add Lead
           </Button>
         )}
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
           <SearchInput
             value={searchTerm}
             onChange={setSearchTerm}
             placeholder="Search by client name, company, or email..."
+            className="w-full sm:flex-1 sm:min-w-[280px]"
           />
 
-          {searchTerm && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSearchTerm("")}
-              className="h-8 px-2 lg:px-3"
-            >
-              Reset
-              <X className="ml-2 h-4 w-4" />
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchTerm("")}
+                className="h-9 flex-1 sm:flex-none px-3"
+              >
+                Reset
+                <X className="ml-2 h-4 w-4" />
+              </Button>
+            )}
 
-          {isMasterSales && selectedLeads.length > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleBulkDelete}
-              className="h-8 px-2 lg:px-3"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete ({selectedLeads.length})
-            </Button>
-          )}
+            {isMasterSales && selectedLeads.length > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleBulkDelete}
+                className="h-9 flex-1 sm:flex-none px-3"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete ({selectedLeads.length})
+              </Button>
+            )}
+          </div>
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
               <SlidersHorizontal className="mr-2 h-4 w-4" />
               View
             </Button>
@@ -487,9 +490,14 @@ export default function Leads() {
         showViewOptions={false}
       />
 
-      <div className="flex items-center justify-end gap-8 pt-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm whitespace-nowrap">Rows per page</span>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-4 border-t">
+        <div className="flex items-center justify-between sm:justify-start gap-2">
+          <span className="text-sm text-muted-foreground hidden sm:inline whitespace-nowrap">
+            Rows per page
+          </span>
+          <span className="text-sm text-muted-foreground sm:hidden whitespace-nowrap">
+            Per page
+          </span>
           <Select
             value={pagination.limit.toString()}
             onValueChange={(value) => {
@@ -511,103 +519,105 @@ export default function Leads() {
           </Select>
         </div>
 
-        <span className="text-sm">
-          Page {pagination.page} of {pagination.totalPages}
-        </span>
+        <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-8">
+          <span className="text-sm text-muted-foreground whitespace-nowrap">
+            Page {pagination.page} of {pagination.totalPages}
+          </span>
 
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => fetchLeads(1)}
-            disabled={pagination.page === 1 || isLoading}
-          >
-            <span className="sr-only">First page</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 hidden sm:flex"
+              onClick={() => fetchLeads(1)}
+              disabled={pagination.page === 1 || isLoading}
             >
-              <polyline points="11 17 6 12 11 7" />
-              <polyline points="18 17 13 12 18 7" />
-            </svg>
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => fetchLeads(Math.max(pagination.page - 1, 1))}
-            disabled={pagination.page === 1 || isLoading}
-          >
-            <span className="sr-only">Previous page</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              <span className="sr-only">First page</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="11 17 6 12 11 7" />
+                <polyline points="18 17 13 12 18 7" />
+              </svg>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => fetchLeads(Math.max(pagination.page - 1, 1))}
+              disabled={pagination.page === 1 || isLoading}
             >
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() =>
-              fetchLeads(Math.min(pagination.page + 1, pagination.totalPages))
-            }
-            disabled={pagination.page >= pagination.totalPages || isLoading}
-          >
-            <span className="sr-only">Next page</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              <span className="sr-only">Previous page</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() =>
+                fetchLeads(Math.min(pagination.page + 1, pagination.totalPages))
+              }
+              disabled={pagination.page >= pagination.totalPages || isLoading}
             >
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => fetchLeads(pagination.totalPages)}
-            disabled={pagination.page >= pagination.totalPages || isLoading}
-          >
-            <span className="sr-only">Last page</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              <span className="sr-only">Next page</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 hidden sm:flex"
+              onClick={() => fetchLeads(pagination.totalPages)}
+              disabled={pagination.page >= pagination.totalPages || isLoading}
             >
-              <polyline points="13 17 18 12 13 7" />
-              <polyline points="6 17 11 12 6 7" />
-            </svg>
-          </Button>
+              <span className="sr-only">Last page</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="13 17 18 12 13 7" />
+                <polyline points="6 17 11 12 6 7" />
+              </svg>
+            </Button>
+          </div>
         </div>
       </div>
 
