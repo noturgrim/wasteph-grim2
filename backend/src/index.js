@@ -39,6 +39,7 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import emailPreviewRoutes from "./routes/emailPreviewRoutes.js";
 import fileRoutes from "./routes/fileRoutes.js";
+import reportsRoutes from "./routes/reports.js";
 
 dotenv.config();
 
@@ -52,8 +53,17 @@ app.set("trust proxy", 1);
 // Initialize Socket.IO
 socketServer.initialize(httpServer);
 
-// Security middleware
-app.use(helmet());
+// Security middleware - Configure helmet to allow iframe embedding for reports
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "frame-ancestors": ["'self'", requireEnv("FRONTEND_URL", "http://localhost:5173")],
+      },
+    },
+  })
+);
 
 // CORS configuration - Enhanced for in-app browser support
 const corsOptions = {
@@ -126,6 +136,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/email-preview", emailPreviewRoutes);
 app.use("/api/files", fileRoutes);
+app.use("/api/reports", reportsRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

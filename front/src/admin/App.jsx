@@ -23,6 +23,7 @@ import ContractTemplates from "./pages/ContractTemplates";
 import Showcase from "./pages/Showcase";
 import ClientsShowcase from "./pages/ClientsShowcase";
 import Files from "./pages/Files";
+import LoadTestReport from "./pages/LoadTestReport";
 import InAppBrowserBanner from "../components/common/InAppBrowserBanner";
 
 const CRMApp = () => {
@@ -104,6 +105,14 @@ const CRMApp = () => {
               element={
                 <ProtectedRoute allowedRoles={["super_admin"]}>
                   <Users />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="reports/load-test"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                  <LoadTestReport />
                 </ProtectedRoute>
               }
             />

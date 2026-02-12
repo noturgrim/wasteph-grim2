@@ -15,6 +15,7 @@ import {
   Calendar,
   Ticket,
   FolderOpen,
+  BarChart3,
 } from "lucide-react";
 
 /**
@@ -227,6 +228,12 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
             description: "Manage system users",
           },
           {
+            title: "Load Test Report",
+            url: "/admin/reports/load-test",
+            icon: BarChart3,
+            description: "View infrastructure performance report",
+          },
+          {
             title: "Settings",
             url: "/admin/settings",
             icon: Settings,
@@ -346,6 +353,12 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
             url: "/admin/contract-templates",
             icon: FileSignature,
             description: "Manage contract templates",
+          },
+          {
+            title: "Load Test Report",
+            url: "/admin/reports/load-test",
+            icon: BarChart3,
+            description: "View infrastructure performance report",
           },
         ],
       },
