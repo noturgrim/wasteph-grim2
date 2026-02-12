@@ -797,20 +797,61 @@ class ProposalService {
       .where(eq(proposalTable.id, proposalId))
       .returning();
 
-    // Notify sales person
+    // Notify sales person with detailed context
     try {
-      const { userTable } = await import("../db/schema.js");
+      const { userTable, inquiryTable } = await import("../db/schema.js");
+
       const [salesUser] = await db
-        .select()
+        .select({
+          id: userTable.id,
+          email: userTable.email,
+          firstName: userTable.firstName,
+          lastName: userTable.lastName,
+        })
         .from(userTable)
         .where(eq(userTable.id, proposal.requestedBy))
         .limit(1);
 
+      const [adminUser] = await db
+        .select({
+          id: userTable.id,
+          firstName: userTable.firstName,
+          lastName: userTable.lastName,
+          role: userTable.role,
+        })
+        .from(userTable)
+        .where(eq(userTable.id, adminId))
+        .limit(1);
+
+      const [inquiry] = await db
+        .select({
+          name: inquiryTable.name,
+          company: inquiryTable.company,
+          email: inquiryTable.email,
+          inquiryNumber: inquiryTable.inquiryNumber,
+        })
+        .from(inquiryTable)
+        .where(eq(inquiryTable.id, proposal.inquiryId))
+        .limit(1);
+
       if (salesUser) {
-        await emailService.sendNotificationEmail(
+        const adminName = adminUser
+          ? `${adminUser.firstName} ${adminUser.lastName}`.trim()
+          : "Administrator";
+        const adminRole = adminUser?.role || "admin";
+        const rejectedBy = `${adminName} (${adminRole})`;
+
+        await emailService.sendProposalDisapprovedNotification(
           salesUser.email,
-          "Proposal Disapproved",
-          `Your proposal has been disapproved. Reason: ${rejectionReason}`
+          {
+            proposalNumber: proposal.proposalNumber,
+            clientName: inquiry?.name || "—",
+            companyName: inquiry?.company || undefined,
+            clientEmail: inquiry?.email || undefined,
+            rejectedBy,
+            rejectionReason: rejectionReason || undefined,
+            reviewedAt: updatedProposal.reviewedAt,
+          },
         );
       }
     } catch (error) {

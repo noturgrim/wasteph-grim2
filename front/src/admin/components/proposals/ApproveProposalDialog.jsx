@@ -87,15 +87,6 @@ export function ApproveProposalDialog({ open, onOpenChange, proposal, onConfirm 
               <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300">
                 Proposal Details
               </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleViewPDF}
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950"
-              >
-                <ExternalLink className="h-4 w-4 mr-1" />
-                View PDF
-              </Button>
             </div>
 
             {/* Client Information */}

@@ -11,6 +11,7 @@ export {
 export {
   generateNewLeadEmailHTML,
   generateProposalResponseEmailHTML,
+  generateProposalDisapprovedEmailHTML,
   generateContractSignedEmailHTML,
   generateNewTicketEmailHTML,
   generateTicketUpdateEmailHTML,
