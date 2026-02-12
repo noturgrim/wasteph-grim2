@@ -1,6 +1,6 @@
 import { db } from "../db/index.js";
 import { userFilesTable, userTable } from "../db/schema.js";
-import { eq, desc, and, or, ilike, inArray, count } from "drizzle-orm";
+import { eq, desc, and, or, ilike, inArray, count, gte, lte } from "drizzle-orm";
 import { getPresignedUrl } from "./s3Service.js";
 import { AppError } from "../middleware/errorHandler.js";
 
@@ -65,7 +65,7 @@ class FileService {
     const page = Number(options.page) || 1;
     const limit = Number(options.limit) || 10;
     const offset = (page - 1) * limit;
-    const { entityType: entityTypeFilter, search } = options;
+    const { entityType: entityTypeFilter, search, dateFrom, dateTo } = options;
 
     // Build WHERE conditions
     const conditions = [];
@@ -76,6 +76,16 @@ class FileService {
       isMasterSales
     );
     if (roleCondition) conditions.push(roleCondition);
+
+    // Date filter (createdAt) - expect YYYY-MM-DD strings
+    if (dateFrom) {
+      const from = new Date(`${dateFrom}T00:00:00.000Z`);
+      conditions.push(gte(userFilesTable.createdAt, from));
+    }
+    if (dateTo) {
+      const to = new Date(`${dateTo}T23:59:59.999Z`);
+      conditions.push(lte(userFilesTable.createdAt, to));
+    }
 
     // Entity type filter
     if (entityTypeFilter) {
@@ -101,9 +111,17 @@ class FileService {
     const whereClause =
       conditions.length > 0 ? and(...conditions) : undefined;
 
-    // Build facet conditions (role + search only, excluding entityType filter)
+    // Build facet conditions (role + search + date, excluding entityType filter)
     const facetConditions = [];
     if (roleCondition) facetConditions.push(roleCondition);
+    if (dateFrom) {
+      const from = new Date(`${dateFrom}T00:00:00.000Z`);
+      facetConditions.push(gte(userFilesTable.createdAt, from));
+    }
+    if (dateTo) {
+      const to = new Date(`${dateTo}T23:59:59.999Z`);
+      facetConditions.push(lte(userFilesTable.createdAt, to));
+    }
     if (search) {
       facetConditions.push(
         or(

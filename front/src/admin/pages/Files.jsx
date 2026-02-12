@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { format } from "date-fns";
 import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
 import { toast } from "../utils/toast";
@@ -12,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 
 import { DataTable } from "../components/DataTable";
 import { FacetedFilter } from "../components/FacetedFilter";
@@ -54,6 +56,8 @@ export default function Files() {
   // Filters
   const [entityTypeFilter, setEntityTypeFilter] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [dateFrom, setDateFrom] = useState(undefined);
+  const [dateTo, setDateTo] = useState(undefined);
 
   // Server-side facet counts
   const [facets, setFacets] = useState({ entityType: {} });
@@ -65,7 +69,7 @@ export default function Files() {
   useEffect(() => {
     setPagination((prev) => ({ ...prev, page: 1 }));
     fetchFiles(1);
-  }, [entityTypeFilter, searchTerm]);
+  }, [entityTypeFilter, searchTerm, dateFrom, dateTo]);
 
   const fetchFiles = async (
     page = pagination.page,
@@ -81,6 +85,8 @@ export default function Files() {
           entityType: entityTypeFilter.join(","),
         }),
         ...(searchTerm && { search: searchTerm }),
+        ...(dateFrom && { dateFrom: format(dateFrom, "yyyy-MM-dd") }),
+        ...(dateTo && { dateTo: format(dateTo, "yyyy-MM-dd") }),
       };
 
       const response = await api.getFiles(filters);
@@ -130,7 +136,11 @@ export default function Files() {
     onViewDetails: handleViewDetails,
   });
 
-  const hasActiveFilters = entityTypeFilter.length > 0 || searchTerm;
+  const hasActiveFilters =
+    entityTypeFilter.length > 0 ||
+    searchTerm ||
+    dateFrom !== undefined ||
+    dateTo !== undefined;
 
   return (
     <div className="space-y-6">
@@ -166,6 +176,20 @@ export default function Files() {
           className="w-full sm:w-auto"
         />
         <div className="flex items-center gap-2 flex-wrap">
+          <DatePicker
+            date={dateFrom}
+            onDateChange={setDateFrom}
+            placeholder="From date"
+            toDate={dateTo || undefined}
+            className="w-full sm:w-[160px] h-9"
+          />
+          <DatePicker
+            date={dateTo}
+            onDateChange={setDateTo}
+            placeholder="To date"
+            fromDate={dateFrom || undefined}
+            className="w-full sm:w-[160px] h-9"
+          />
           <FacetedFilter
             title="Type"
             options={entityTypeOptions}
@@ -180,6 +204,8 @@ export default function Files() {
               onClick={() => {
                 setEntityTypeFilter([]);
                 setSearchTerm("");
+                setDateFrom(undefined);
+                setDateTo(undefined);
               }}
               className="h-8 px-2 lg:px-3"
             >

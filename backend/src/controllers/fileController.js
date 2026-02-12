@@ -7,6 +7,8 @@ export const getFiles = async (req, res, next) => {
       search: req.query.search,
       page: req.query.page,
       limit: req.query.limit,
+      dateFrom: req.query.dateFrom,
+      dateTo: req.query.dateTo,
     };
 
     const result = await fileService.getFiles(

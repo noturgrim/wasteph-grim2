@@ -1031,6 +1031,8 @@ class ApiClient {
     if (filters.search) params.append("search", filters.search);
     if (filters.page) params.append("page", filters.page);
     if (filters.limit) params.append("limit", filters.limit);
+    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
+    if (filters.dateTo) params.append("dateTo", filters.dateTo);
     const queryString = params.toString();
     return this.request(`/files${queryString ? `?${queryString}` : ""}`);
   }

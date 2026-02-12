@@ -12,6 +12,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Download,
 } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -186,11 +187,11 @@ export const createFileColumns = ({ onView, onViewDetails }) => [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => onView(file)}>
-              <Eye className="mr-2 h-4 w-4" />
-              View
+              <Download className="mr-2 h-4 w-4" />
+              Download
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => onViewDetails(file)}>
-              <Info className="mr-2 h-4 w-4" />
+              <Eye className="mr-2 h-4 w-4" />
               View Details
             </DropdownMenuItem>
           </DropdownMenuContent>
