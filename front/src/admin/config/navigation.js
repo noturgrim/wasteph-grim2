@@ -14,6 +14,7 @@ import {
   FileSignature,
   Calendar,
   Ticket,
+  FolderOpen,
 } from "lucide-react";
 
 /**
@@ -94,6 +95,12 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
           icon: Calendar,
           description: "Manage your schedule",
         },
+        {
+          title: "Files",
+          url: "/admin/files",
+          icon: FolderOpen,
+          description: "View and download your files",
+        },
       ],
     },
     {
@@ -138,6 +145,12 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
             url: "/admin/calendar",
             icon: Calendar,
             description: "Manage your schedule",
+          },
+          {
+            title: "Files",
+            url: "/admin/files",
+            icon: FolderOpen,
+            description: "View and download all files",
           },
         ],
       },
@@ -236,6 +249,12 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
             icon: LayoutDashboard,
             description: "Overview and statistics",
           },
+          {
+            title: "Files",
+            url: "/admin/files",
+            icon: FolderOpen,
+            description: "View and download your files",
+          },
         ],
       },
       {
@@ -281,6 +300,12 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
             url: "/admin/calendar",
             icon: Calendar,
             description: "Manage your schedule",
+          },
+          {
+            title: "Files",
+            url: "/admin/files",
+            icon: FolderOpen,
+            description: "View and download files",
           },
         ],
       },

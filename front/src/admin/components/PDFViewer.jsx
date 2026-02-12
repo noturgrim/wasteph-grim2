@@ -20,13 +20,18 @@ export function PDFViewer({
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
-  // ESC key to close
+  // ESC key to close JUST the viewer (not underlying dialogs)
   useEffect(() => {
     const handleEsc = (e) => {
-      if (e.key === "Escape" && isOpen) onClose();
+      if (e.key === "Escape" && isOpen) {
+        e.stopPropagation();
+        e.preventDefault();
+        onClose();
+      }
     };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
+    // Use capture phase so we intercept before other listeners (e.g. dialogs)
+    window.addEventListener("keydown", handleEsc, true);
+    return () => window.removeEventListener("keydown", handleEsc, true);
   }, [onClose, isOpen]);
 
   // Reset states when fileUrl changes
@@ -51,7 +56,7 @@ export function PDFViewer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-100 bg-black/90 flex items-center justify-center p-4 sm:p-6">
       <div className="relative w-full h-full max-w-7xl flex flex-col bg-white dark:bg-[#111111] rounded-xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111111] shrink-0">
@@ -70,7 +75,11 @@ export function PDFViewer({
           <Button
             variant="outline"
             size="sm"
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onClose();
+            }}
             className="flex items-center gap-2"
           >
             <X className="h-4 w-4" />
@@ -157,7 +166,11 @@ export function PDFViewer({
       {/* Click outside to close */}
       <div
         className="absolute inset-0 -z-10"
-        onClick={onClose}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onClose();
+        }}
         aria-hidden="true"
       />
     </div>

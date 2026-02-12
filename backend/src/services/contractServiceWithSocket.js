@@ -341,12 +341,13 @@ class ContractServiceWithSocket {
     return this.contractService.validateSubmissionToken(contractId, token);
   }
 
-  async recordClientSigning(contractId, signedUrl, ip) {
+  async recordClientSigning(contractId, signedUrl, ip, fileSize = null) {
     // Call core service
     const contract = await this.contractService.recordClientSigning(
       contractId,
       signedUrl,
-      ip
+      ip,
+      fileSize
     );
 
     // Emit socket event
@@ -495,11 +496,12 @@ class ContractServiceWithSocket {
     return contract;
   }
 
-  async uploadHardboundContract(contractId, hardboundUrl, userId) {
+  async uploadHardboundContract(contractId, hardboundUrl, userId, fileSize = null) {
     return this.contractService.uploadHardboundContract(
       contractId,
       hardboundUrl,
-      userId
+      userId,
+      fileSize
     );
   }
 

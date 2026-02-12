@@ -258,6 +258,14 @@ export function GenerateContractDialog({
 
       // Load the saved PDF
       await loadGeneratedPdf();
+
+      // Notify parent and close dialog so list can refresh
+      if (typeof onConfirm === "function") {
+        await onConfirm();
+      }
+      if (typeof onOpenChange === "function") {
+        onOpenChange(false);
+      }
     } catch (error) {
       toast.error(error.message || "Failed to submit contract");
     } finally {
@@ -879,7 +887,7 @@ export function GenerateContractDialog({
               </div>
             </div>
 
-            <div className="flex-1 min-h-[500px] border rounded-lg overflow-hidden bg-gray-50 mt-2">
+            <div className="flex-1 min-h-[500px] border rounded-lg overflow-hidden bg-gray-50 dark:bg-black mt-2">
               {isLoadingPdf ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="flex flex-col items-center gap-4">
@@ -899,7 +907,11 @@ export function GenerateContractDialog({
                     <p className="text-sm text-muted-foreground mb-4">
                       Preview the contract before submitting
                     </p>
-                    <Button onClick={handlePreviewInPanel} variant="outline">
+                    <Button
+                      onClick={handlePreviewInPanel}
+                      variant="default"
+                      className="inline-flex items-center"
+                    >
                       <FileCheck className="mr-2 h-4 w-4" />
                       Preview Contract
                     </Button>

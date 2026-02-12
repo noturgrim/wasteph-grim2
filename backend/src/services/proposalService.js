@@ -9,6 +9,7 @@ import pdfService from "./pdfService.js";
 import counterService from "./counterService.js";
 import { uploadObject, getObject } from "./s3Service.js";
 import crypto from "crypto";
+import fileService from "./fileService.js";
 
 /**
  * ProposalService - Business logic for proposal operations
@@ -510,6 +511,20 @@ class ProposalService {
       }
 
       pdfUrl = await this.savePDF(pdfBuffer, proposalId);
+
+      // Log file to user_files (fire-and-forget)
+      fileService.logFile({
+        fileName: `${proposal.proposalNumber}.pdf`,
+        fileUrl: pdfUrl,
+        fileType: "application/pdf",
+        fileSize: pdfBuffer.length,
+        entityType: "proposal",
+        entityId: proposalId,
+        relatedEntityNumber: proposal.proposalNumber,
+        clientName: proposalData.clientName || inquiry.name || null,
+        action: "generated",
+        uploadedBy: salesUserId,
+      });
     } catch (error) {
       throw new AppError("PDF generation failed: " + error.message, 500);
     }
