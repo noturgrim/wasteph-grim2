@@ -51,9 +51,15 @@ export function SendToClientDialog({ open, onOpenChange, contract, onConfirm }) 
   const clientName = contract.inquiry?.name || "N/A";
   const clientEmail = contract.inquiry?.email || "N/A";
 
+  const handleDialogOpenChange = (isOpen) => {
+    // Prevent parent dialog from closing while PDF preview is open
+    if (!isOpen && showPdfViewer) return;
+    onOpenChange(isOpen);
+  };
+
   return (
-    <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
+  <>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
