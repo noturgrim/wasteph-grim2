@@ -365,7 +365,21 @@ class InquiryService {
       isInformationComplete,
     } = updateData;
 
-    // Fetch only the fields needed for change tracking (skip proposal lookup)
+    // Prevent edits once a proposal has been created for this inquiry
+    const [existingProposal] = await db
+      .select({ id: proposalTable.id })
+      .from(proposalTable)
+      .where(eq(proposalTable.inquiryId, inquiryId))
+      .limit(1);
+
+    if (existingProposal) {
+      throw new AppError(
+        "This inquiry is locked because a proposal has already been created.",
+        400,
+      );
+    }
+
+    // Fetch only the fields needed for change tracking
     const [oldInquiry] = await db
       .select({
         name: inquiryTable.name,

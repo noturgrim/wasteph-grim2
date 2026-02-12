@@ -51,6 +51,8 @@ export function EditInquiryDialog({
   const [services, setServices] = useState([]);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
 
+  const isLockedByProposal = Boolean(inquiry?.proposalId);
+
   const handleEventScheduled = () => {
     // Could refresh or show toast
   };
@@ -137,7 +139,9 @@ export function EditInquiryDialog({
         <DialogHeader>
           <DialogTitle>Edit Inquiry</DialogTitle>
           <DialogDescription>
-            Update the inquiry here. Click save changes when you're done.
+            {isLockedByProposal
+              ? "This inquiry is locked because a proposal has already been created. You can no longer edit the original inquiry details."
+              : "Update the inquiry here. Click save changes when you're done."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
@@ -149,6 +153,7 @@ export function EditInquiryDialog({
               <Input
                 id="edit-name"
                 value={formData.name}
+                disabled={isLockedByProposal}
                 onChange={(e) => {
                   setFormData({ ...formData, name: e.target.value });
                   if (formErrors.name) {
@@ -169,6 +174,7 @@ export function EditInquiryDialog({
                 id="edit-email"
                 type="email"
                 value={formData.email}
+                disabled={isLockedByProposal}
                 onChange={(e) => {
                   setFormData({ ...formData, email: e.target.value });
                   if (formErrors.email) {
@@ -190,6 +196,7 @@ export function EditInquiryDialog({
               <Input
                 id="edit-phone"
                 value={formData.phone}
+                disabled={isLockedByProposal}
                 onChange={(e) => {
                   setFormData({ ...formData, phone: e.target.value });
                   if (formErrors.phone) {
@@ -211,6 +218,7 @@ export function EditInquiryDialog({
               <Input
                 id="edit-company"
                 value={formData.company}
+                disabled={isLockedByProposal}
                 onChange={(e) => {
                   setFormData({ ...formData, company: e.target.value });
                   if (formErrors.company) {
@@ -232,6 +240,7 @@ export function EditInquiryDialog({
               <Input
                 id="edit-location"
                 value={formData.location}
+                disabled={isLockedByProposal}
                 onChange={(e) => {
                   setFormData({ ...formData, location: e.target.value });
                   if (formErrors.location) {
@@ -253,6 +262,7 @@ export function EditInquiryDialog({
               </Label>
               <Select
                 value={formData.serviceId}
+                disabled={isLockedByProposal}
                 onValueChange={(val) => {
                   setFormData({ ...formData, serviceId: val });
                   if (formErrors.serviceId) {
@@ -287,6 +297,7 @@ export function EditInquiryDialog({
               <Label htmlFor="edit-source">Source</Label>
               <Select
                 value={formData.source}
+                disabled={isLockedByProposal}
                 onValueChange={(val) =>
                   setFormData({ ...formData, source: val })
                 }
@@ -312,6 +323,7 @@ export function EditInquiryDialog({
               <Label htmlFor="edit-status">Status</Label>
               <Select
                 value={formData.status}
+                disabled={isLockedByProposal}
                 onValueChange={(val) =>
                   setFormData({ ...formData, status: val })
                 }
@@ -345,6 +357,7 @@ export function EditInquiryDialog({
                 <Label htmlFor="edit-assigned">Assigned To</Label>
                 <Select
                   value={formData.assignedTo}
+                  disabled={isLockedByProposal}
                   onValueChange={(val) =>
                     setFormData({ ...formData, assignedTo: val })
                   }
@@ -377,6 +390,7 @@ export function EditInquiryDialog({
               id="edit-message"
               rows={3}
               value={formData.message}
+              disabled={isLockedByProposal}
               onChange={(e) => {
                 setFormData({ ...formData, message: e.target.value });
                 if (formErrors.message) {
@@ -395,6 +409,7 @@ export function EditInquiryDialog({
             <Checkbox
               id="edit-info-complete"
               checked={formData.isInformationComplete}
+              disabled={isLockedByProposal}
               onCheckedChange={(checked) =>
                 setFormData({ ...formData, isInformationComplete: checked })
               }
@@ -449,11 +464,15 @@ export function EditInquiryDialog({
           )}
 
           <div className="flex flex-col gap-3 pt-2">
-            <Button type="submit" disabled={isSubmitting} className="w-full">
+            <Button
+              type="submit"
+              disabled={isSubmitting || isLockedByProposal}
+              className="w-full"
+            >
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              Save changes
+              {isLockedByProposal ? "Inquiry locked by proposal" : "Save changes"}
             </Button>
             <Button
               type="button"
