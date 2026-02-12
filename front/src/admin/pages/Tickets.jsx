@@ -331,19 +331,19 @@ export default function Tickets() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Support Tickets</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Support Tickets</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             Manage client tickets and support requests
           </p>
         </div>
         {canCreateTicket && (
           <Button
             onClick={() => setIsCreateDialogOpen(true)}
-            className="shrink-0"
+            className="shrink-0 w-full sm:w-auto"
           >
             <Plus className="mr-2 h-4 w-4" />
             Create Ticket
@@ -352,84 +352,18 @@ export default function Tickets() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap">
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <SearchInput
             placeholder="Search by ticket #, subject, or creator..."
             value={searchTerm}
             onChange={setSearchTerm}
-            className="w-full sm:w-auto"
+            className="w-full sm:flex-1 sm:min-w-[200px]"
           />
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <FacetedFilter
-              title="Status"
-              options={[
-                { value: "open", label: "Open" },
-                { value: "in_progress", label: "In Progress" },
-                { value: "resolved", label: "Resolved" },
-                { value: "closed", label: "Closed" },
-              ]}
-              selectedValues={statusFilter}
-              onSelectionChange={setStatusFilter}
-              getCount={(status) => facets.status[status] || 0}
-            />
-
-            <FacetedFilter
-              title="Category"
-              options={[
-                { value: "technical_issue", label: "Technical Issue" },
-                { value: "billing_payment", label: "Billing/Payment" },
-                { value: "feature_request", label: "Feature Request" },
-                { value: "complaint", label: "Complaint" },
-                { value: "feedback", label: "Feedback" },
-                { value: "contract_legal", label: "Contract/Legal" },
-                { value: "other", label: "Other" },
-              ]}
-              selectedValues={categoryFilter}
-              onSelectionChange={setCategoryFilter}
-              getCount={(category) => facets.category[category] || 0}
-            />
-
-            <FacetedFilter
-              title="Priority"
-              options={[
-                { value: "low", label: "Low" },
-                { value: "medium", label: "Medium" },
-                { value: "high", label: "High" },
-                { value: "urgent", label: "Urgent" },
-              ]}
-              selectedValues={priorityFilter}
-              onSelectionChange={setPriorityFilter}
-              getCount={(priority) => facets.priority[priority] || 0}
-            />
-
-            {(statusFilter.length > 0 ||
-              categoryFilter.length > 0 ||
-              priorityFilter.length > 0 ||
-              searchTerm) && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setStatusFilter([]);
-                  setCategoryFilter([]);
-                  setPriorityFilter([]);
-                  setSearchTerm("");
-                }}
-                className="h-8 px-2 lg:px-3"
-              >
-                Reset
-                <X className="ml-2 h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-
-        <div className="flex gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto h-9">
                 <SlidersHorizontal className="mr-2 h-4 w-4" />
                 Columns
               </Button>
@@ -465,31 +399,95 @@ export default function Tickets() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <FacetedFilter
+            title="Status"
+            options={[
+              { value: "open", label: "Open" },
+              { value: "in_progress", label: "In Progress" },
+              { value: "resolved", label: "Resolved" },
+              { value: "closed", label: "Closed" },
+            ]}
+            selectedValues={statusFilter}
+            onSelectionChange={setStatusFilter}
+            getCount={(status) => facets.status[status] || 0}
+          />
+
+          <FacetedFilter
+            title="Category"
+            options={[
+              { value: "technical_issue", label: "Technical Issue" },
+              { value: "billing_payment", label: "Billing/Payment" },
+              { value: "feature_request", label: "Feature Request" },
+              { value: "complaint", label: "Complaint" },
+              { value: "feedback", label: "Feedback" },
+              { value: "contract_legal", label: "Contract/Legal" },
+              { value: "other", label: "Other" },
+            ]}
+            selectedValues={categoryFilter}
+            onSelectionChange={setCategoryFilter}
+            getCount={(category) => facets.category[category] || 0}
+          />
+
+          <FacetedFilter
+            title="Priority"
+            options={[
+              { value: "low", label: "Low" },
+              { value: "medium", label: "Medium" },
+              { value: "high", label: "High" },
+              { value: "urgent", label: "Urgent" },
+            ]}
+            selectedValues={priorityFilter}
+            onSelectionChange={setPriorityFilter}
+            getCount={(priority) => facets.priority[priority] || 0}
+          />
+
+          {(statusFilter.length > 0 ||
+            categoryFilter.length > 0 ||
+            priorityFilter.length > 0 ||
+            searchTerm) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setStatusFilter([]);
+                setCategoryFilter([]);
+                setPriorityFilter([]);
+                setSearchTerm("");
+              }}
+              className="h-10 px-3"
+            >
+              Reset
+              <X className="ml-2 h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground">Open</p>
-          <p className="text-2xl font-bold">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="rounded-lg border p-3 sm:p-4">
+          <p className="text-xs sm:text-sm text-muted-foreground">Open</p>
+          <p className="text-xl sm:text-2xl font-bold mt-1">
             {facets.status.open || 0}
           </p>
         </div>
-        <div className="rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground">In Progress</p>
-          <p className="text-2xl font-bold">
+        <div className="rounded-lg border p-3 sm:p-4">
+          <p className="text-xs sm:text-sm text-muted-foreground">In Progress</p>
+          <p className="text-xl sm:text-2xl font-bold mt-1">
             {facets.status.in_progress || 0}
           </p>
         </div>
-        <div className="rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground">Resolved</p>
-          <p className="text-2xl font-bold">
+        <div className="rounded-lg border p-3 sm:p-4">
+          <p className="text-xs sm:text-sm text-muted-foreground">Resolved</p>
+          <p className="text-xl sm:text-2xl font-bold mt-1">
             {facets.status.resolved || 0}
           </p>
         </div>
-        <div className="rounded-lg border p-4">
-          <p className="text-sm text-muted-foreground">Closed</p>
-          <p className="text-2xl font-bold">
+        <div className="rounded-lg border p-3 sm:p-4">
+          <p className="text-xs sm:text-sm text-muted-foreground">Closed</p>
+          <p className="text-xl sm:text-2xl font-bold mt-1">
             {facets.status.closed || 0}
           </p>
         </div>
@@ -504,9 +502,12 @@ export default function Tickets() {
       />
 
       {/* Pagination */}
-      <div className="flex items-center justify-end gap-8 pt-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm whitespace-nowrap">Rows per page</span>
+      <div className="flex flex-col sm:flex-row items-center justify-end gap-3 sm:gap-8 pt-4 border-t">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+          <span className="text-xs sm:text-sm whitespace-nowrap">
+            <span className="hidden sm:inline">Rows per page</span>
+            <span className="sm:hidden">Per page</span>
+          </span>
           <Select
             value={pagination.limit.toString()}
             onValueChange={(value) => {
@@ -528,7 +529,7 @@ export default function Tickets() {
           </Select>
         </div>
 
-        <span className="text-sm">
+        <span className="text-xs sm:text-sm">
           Page {pagination.page} of {pagination.totalPages}
         </span>
 
@@ -536,7 +537,7 @@ export default function Tickets() {
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 hidden sm:flex"
             onClick={() => fetchTickets(1)}
             disabled={pagination.page === 1 || isLoading}
           >
@@ -605,7 +606,7 @@ export default function Tickets() {
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 hidden sm:flex"
             onClick={() => fetchTickets(pagination.totalPages)}
             disabled={pagination.page >= pagination.totalPages || isLoading}
           >

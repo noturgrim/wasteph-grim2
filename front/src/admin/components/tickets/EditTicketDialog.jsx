@@ -308,17 +308,17 @@ export const EditTicketDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="w-[95vw] sm:w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6"
         onInteractOutside={(e) => {
           if (viewerOpen) e.preventDefault();
         }}
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Ticket className="h-5 w-5 text-blue-600" />
+          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <Ticket className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
             Edit Ticket
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs sm:text-sm">
             {ticket?.ticketNumber || "—"} — Update ticket details
           </DialogDescription>
         </DialogHeader>
@@ -332,33 +332,34 @@ export const EditTicketDialog = ({
             Failed to load ticket
           </div>
         ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="client">Client *</Label>
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 min-w-0 overflow-x-hidden">
+          <div className="space-y-2 min-w-0">
+            <Label htmlFor="client" className="text-sm">Client *</Label>
             <Select
               value={formData.clientId}
               onValueChange={(value) => handleChange("clientId", value)}
               required
             >
-              <SelectTrigger className="w-full [&>span]:truncate">
-                <SelectValue placeholder="Select client" />
+              <SelectTrigger className="w-full text-sm min-w-0">
+                <SelectValue placeholder="Select client" className="truncate" />
               </SelectTrigger>
-              <SelectContent className="max-w-[calc(100vw-2rem)]">
+              <SelectContent className="max-w-[calc(100vw-3rem)]">
                 {clients.map((client) => (
                   <SelectItem 
                     key={client.id} 
                     value={client.id}
-                    className="cursor-pointer"
+                    className="cursor-pointer max-w-full"
                   >
-                    <span className="block truncate">
-                      {client.companyName}
-                      {client.contactPerson && (
-                        <span className="text-muted-foreground"> ({client.contactPerson})</span>
+                    <div className="flex flex-col min-w-0 max-w-full">
+                      <span className="truncate font-medium">{client.companyName}</span>
+                      {(client.contactPerson || client.email) && (
+                        <span className="text-xs text-muted-foreground truncate">
+                          {client.contactPerson && client.contactPerson}
+                          {client.contactPerson && client.email && " · "}
+                          {client.email && client.email}
+                        </span>
                       )}
-                      {client.email && (
-                        <span className="text-muted-foreground"> · {client.email}</span>
-                      )}
-                    </span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -366,10 +367,10 @@ export const EditTicketDialog = ({
           </div>
 
           {validationErrors.length > 0 && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 sm:p-4 dark:border-red-800 dark:bg-red-950">
               <div className="flex gap-2">
-                <AlertCircle className="h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
-                <ul className="list-disc space-y-1 pl-4 text-sm text-red-800 dark:text-red-200">
+                <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-red-600 dark:text-red-400" />
+                <ul className="list-disc space-y-1 pl-4 text-xs sm:text-sm text-red-800 dark:text-red-200">
                   {validationErrors.map((err, i) => (
                     <li key={i}>{err.message}</li>
                   ))}
@@ -378,15 +379,15 @@ export const EditTicketDialog = ({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="category">Category *</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 min-w-0">
+            <div className="space-y-2 min-w-0">
+              <Label htmlFor="category" className="text-sm">Category *</Label>
               <Select
                 value={formData.category}
                 onValueChange={(value) => handleChange("category", value)}
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger className="text-sm w-full min-w-0">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -399,14 +400,14 @@ export const EditTicketDialog = ({
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority *</Label>
+            <div className="space-y-2 min-w-0">
+              <Label htmlFor="priority" className="text-sm">Priority *</Label>
               <Select
                 value={formData.priority}
                 onValueChange={(value) => handleChange("priority", value)}
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger className="text-sm w-full min-w-0">
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
                 <SelectContent>
@@ -420,19 +421,20 @@ export const EditTicketDialog = ({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="subject">Subject *</Label>
+          <div className="space-y-2 min-w-0">
+            <Label htmlFor="subject" className="text-sm">Subject *</Label>
             <Input
               id="subject"
               value={formData.subject}
               onChange={(e) => handleChange("subject", e.target.value)}
               placeholder="Brief description of the issue"
               required
+              className="text-sm w-full min-w-0"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>
+          <div className="space-y-2 min-w-0">
+            <Label htmlFor="description" className="text-sm">Description *</Label>
             <Textarea
               id="description"
               value={formData.description}
@@ -440,24 +442,25 @@ export const EditTicketDialog = ({
               placeholder="Detailed description of the issue, feedback, or request"
               rows={6}
               required
+              className="text-sm w-full min-w-0 resize-none"
             />
           </div>
 
           {/* Existing attachments */}
           {ticket.attachments && ticket.attachments.length > 0 && (
             <div className="space-y-2">
-              <Label className="flex items-center gap-2">
+              <Label className="flex items-center gap-2 text-sm">
                 <Paperclip className="h-4 w-4" />
                 Existing Attachments ({ticket.attachments.length})
               </Label>
-              <div className="space-y-2 rounded-lg border p-3">
+              <div className="space-y-2 rounded-lg border p-2 sm:p-3">
                 {ticket.attachments.map((attachment, index) => (
                   <div
                     key={`existing-${attachment.id}-${index}`}
-                    className="flex items-center justify-between gap-2 rounded-md border bg-muted/30 px-3 py-2"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-md border bg-muted/30 p-2 sm:px-3 sm:py-2"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">
+                      <p className="text-xs sm:text-sm font-medium truncate">
                         {attachment.fileName}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -473,13 +476,14 @@ export const EditTicketDialog = ({
                         variant="outline"
                         onClick={() => handleViewAttachment(attachment)}
                         disabled={isLoadingViewUrl === attachment.id}
+                        className="flex-1 sm:flex-none text-xs sm:text-sm"
                       >
                         {isLoadingViewUrl === attachment.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                         ) : (
                           <>
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
+                            <Eye className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">View</span>
                           </>
                         )}
                       </Button>
@@ -491,7 +495,7 @@ export const EditTicketDialog = ({
                         className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950/50"
                         aria-label={`Delete ${attachment.fileName}`}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                       </Button>
                     </div>
                   </div>
@@ -502,12 +506,12 @@ export const EditTicketDialog = ({
 
           {/* Add new attachments */}
           <div className="space-y-2">
-            <Label htmlFor="attachment">Add New Attachments (optional)</Label>
+            <Label htmlFor="attachment" className="text-sm">Add New Attachments (optional)</Label>
             <p className="text-xs text-muted-foreground">
               Images, PDF, Word, Excel, or text. Max 10MB each.
             </p>
             <div
-              className="rounded-lg border border-dashed border-gray-200 bg-gray-50/50 p-4 cursor-pointer hover:bg-gray-50 transition-colors dark:border-gray-700 dark:bg-gray-900/50 dark:hover:bg-gray-900"
+              className="rounded-lg border border-dashed border-gray-200 bg-gray-50/50 p-3 sm:p-4 cursor-pointer hover:bg-gray-50 transition-colors dark:border-gray-700 dark:bg-gray-900/50 dark:hover:bg-gray-900"
               onClick={() => fileInputRef.current?.click()}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
@@ -529,8 +533,8 @@ export const EditTicketDialog = ({
                 multiple
               />
               <div className="flex items-center gap-2 text-muted-foreground">
-                <ImagePlus className="h-5 w-5 shrink-0" />
-                <span className="text-sm">Click to add files (or drag and drop)</span>
+                <ImagePlus className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
+                <span className="text-xs sm:text-sm">Click to add files (or drag and drop)</span>
               </div>
             </div>
             {selectedFiles.length > 0 && (
@@ -538,10 +542,10 @@ export const EditTicketDialog = ({
                 {selectedFiles.map((file, index) => (
                   <li
                     key={`${file.name}-${file.size}-${index}`}
-                    className="flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+                    className="flex items-center justify-between gap-2 rounded-md border border-gray-200 bg-white px-2 sm:px-3 py-2 text-xs sm:text-sm dark:border-gray-700 dark:bg-gray-900"
                   >
                     <div className="flex items-center gap-2 min-w-0">
-                      <ImagePlus className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <ImagePlus className="h-3 w-3 sm:h-4 sm:w-4 shrink-0 text-muted-foreground" />
                       <span className="font-medium truncate">{file.name}</span>
                       <span className="text-xs text-muted-foreground shrink-0">
                         ({(file.size / 1024).toFixed(1)} KB)
@@ -551,11 +555,11 @@ export const EditTicketDialog = ({
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 shrink-0"
+                      className="h-7 w-7 sm:h-8 sm:w-8 p-0 shrink-0"
                       onClick={() => handleRemoveFile(index)}
                       aria-label={`Remove ${file.name}`}
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </li>
                 ))}
@@ -563,16 +567,17 @@ export const EditTicketDialog = ({
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
               {isLoading ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
