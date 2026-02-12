@@ -19,19 +19,19 @@ import PendingActions from "../components/dashboard/PendingActions";
 // --- Stat card definitions ---
 
 const SALES_STAT_CARDS = [
-  { key: "activeLeads", title: "My Leads", icon: Users, color: "amber" },
-  { key: "activeProposals", title: "Active Proposals", icon: FileText, color: "blue" },
-  { key: "contractsInProgress", title: "Contracts In Progress", icon: FolderKanban, color: "violet" },
-  { key: "myClients", title: "My Clients", icon: UserCheck, color: "emerald" },
+  { key: "activeLeads", title: "My Leads", icon: Users },
+  { key: "activeProposals", title: "Active Proposals", icon: FileText },
+  { key: "contractsInProgress", title: "Contracts In Progress", icon: FolderKanban },
+  { key: "myClients", title: "My Clients", icon: UserCheck },
 ];
 
 const ADMIN_STAT_CARDS = [
-  { key: "totalInquiries", title: "Total Inquiries", icon: MessageSquare, color: "emerald" },
-  { key: "totalLeads", title: "Total Leads", icon: Users, color: "amber" },
-  { key: "activeProposals", title: "Active Proposals", icon: FileText, color: "blue" },
-  { key: "activeContracts", title: "Active Contracts", icon: FolderKanban, color: "violet" },
-  { key: "totalClients", title: "Total Clients", icon: UserCheck, color: "rose" },
-  { key: "openTickets", title: "Open Tickets", icon: ClipboardList, color: "amber" },
+  { key: "totalInquiries", title: "Total Inquiries", icon: MessageSquare },
+  { key: "totalLeads", title: "Total Leads", icon: Users },
+  { key: "activeProposals", title: "Active Proposals", icon: FileText },
+  { key: "activeContracts", title: "Active Contracts", icon: FolderKanban },
+  { key: "totalClients", title: "Total Clients", icon: UserCheck },
+  { key: "openTickets", title: "Open Tickets", icon: ClipboardList },
 ];
 
 // --- Skeleton loaders ---
@@ -129,7 +129,7 @@ export default function Dashboard() {
   }, [fetchDashboard]);
 
   const statCards = isAdmin ? ADMIN_STAT_CARDS : SALES_STAT_CARDS;
-  const gridCols = isAdmin ? "lg:grid-cols-3" : "lg:grid-cols-4";
+  const gridCols = isAdmin ? "lg:grid-cols-3 xl:grid-cols-6" : "xl:grid-cols-4";
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -149,14 +149,13 @@ export default function Dashboard() {
       {isLoading ? (
         <StatsSkeleton count={statCards.length} />
       ) : (
-        <div className={`grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 ${gridCols}`}>
+        <div className={`grid gap-4 grid-cols-2 md:grid-cols-4 ${gridCols}`}>
           {statCards.map((card) => (
             <DashboardCard
               key={card.key}
               title={card.title}
               value={data?.stats?.[card.key] ?? 0}
               icon={card.icon}
-              color={card.color}
             />
           ))}
         </div>
