@@ -378,22 +378,24 @@ export default function Inquiries() {
 
       {/* Filters */}
       <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          {isMasterSales && (
-            <Tabs value={viewMode} onValueChange={setViewMode} className="w-full sm:w-auto">
-              <TabsList className="h-9 w-full sm:w-auto">
-                <TabsTrigger value="all" className="text-xs px-4 flex-1 sm:flex-none">All</TabsTrigger>
-                <TabsTrigger value="my" className="text-xs px-4 flex-1 sm:flex-none">My</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          )}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+            {isMasterSales && (
+              <Tabs value={viewMode} onValueChange={setViewMode} className="w-full sm:w-auto">
+                <TabsList className="h-9 w-full sm:w-auto">
+                  <TabsTrigger value="all" className="text-xs px-4 flex-1 sm:flex-none">All</TabsTrigger>
+                  <TabsTrigger value="my" className="text-xs px-4 flex-1 sm:flex-none">My</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            )}
 
-          <SearchInput
-            value={searchTerm}
-            onChange={setSearchTerm}
-            placeholder="Search inquiries..."
-            className="w-full sm:flex-1 sm:min-w-[200px]"
-          />
+            <SearchInput
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search inquiries..."
+              className="w-full sm:flex-1 sm:min-w-[200px]"
+            />
+          </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

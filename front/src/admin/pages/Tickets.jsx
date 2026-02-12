@@ -353,13 +353,15 @@ export default function Tickets() {
 
       {/* Filters */}
       <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <SearchInput
-            placeholder="Search by ticket #, subject, or creator..."
-            value={searchTerm}
-            onChange={setSearchTerm}
-            className="w-full sm:flex-1 sm:min-w-[200px]"
-          />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+            <SearchInput
+              placeholder="Search by ticket #, subject, or creator..."
+              value={searchTerm}
+              onChange={setSearchTerm}
+              className="w-full sm:flex-1 sm:min-w-[200px]"
+            />
+          </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

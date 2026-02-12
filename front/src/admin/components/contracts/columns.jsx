@@ -218,7 +218,7 @@ export const createColumns = ({
       const hasPdf = !!contract.contract?.contractPdfUrl;
 
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2">
           {/* Sales: Request Contract button (pending_request) */}
           {userRole === "sales" && status === "pending_request" && (
             <Button

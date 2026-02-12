@@ -171,7 +171,7 @@ export const createColumns = ({ onView, onEdit, onClaim, onDelete, isMasterSales
       const isUnclaimed = !lead.isClaimed;
 
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2">
           {isUnclaimed && (
             <Button
               variant="ghost"

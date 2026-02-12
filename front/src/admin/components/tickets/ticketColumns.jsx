@@ -195,26 +195,28 @@ export const createTicketColumns = ({ userRole, onView, onEdit, clients, user })
       const ticket = row.original;
       const editable = onEdit && canEditTicket(ticket, user);
       return (
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onView(ticket)}>
-              <Eye className="mr-2 h-4 w-4" />
-              View Details
-            </DropdownMenuItem>
-            {editable && (
-              <DropdownMenuItem onClick={() => onEdit(ticket)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
+        <div className="flex items-center justify-end gap-2">
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onView(ticket)}>
+                <Eye className="mr-2 h-4 w-4" />
+                View Details
               </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              {editable && (
+                <DropdownMenuItem onClick={() => onEdit(ticket)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       );
     },
   },
