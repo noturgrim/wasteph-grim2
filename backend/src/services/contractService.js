@@ -13,6 +13,7 @@ import emailService from "./emailService.js";
 import inquiryService from "./inquiryService.js";
 import contractTemplateService from "./contractTemplateService.js";
 import ClientService from "./clientService.js";
+import fileService from "./fileService.js";
 const clientService = new ClientService();
 import pdfService from "./pdfService.js";
 import { uploadObject, getObject } from "./s3Service.js";
@@ -362,6 +363,20 @@ class ContractService {
         customTemplateBuffer,
         contractId,
       );
+
+      // Log file to user_files (fire-and-forget)
+      fileService.logFile({
+        fileName: `${contract.contractNumber}-custom-template`,
+        fileUrl: customTemplateUrl,
+        fileType: "application/pdf",
+        fileSize: customTemplateBuffer.length,
+        entityType: "custom_template",
+        entityId: contractId,
+        relatedEntityNumber: contract.contractNumber,
+        clientName: contractDetails.clientName || null,
+        action: "uploaded",
+        uploadedBy: userId,
+      });
     } else {
       // No custom template - use system template
       const { contractType } = contractDetails;
@@ -511,6 +526,20 @@ class ContractService {
 
     // Save PDF file
     const pdfUrl = await this.saveContractPdf(pdfBuffer, contractId);
+
+    // Log file to user_files (fire-and-forget)
+    fileService.logFile({
+      fileName: `${contract.contractNumber}-contract.pdf`,
+      fileUrl: pdfUrl,
+      fileType: "application/pdf",
+      fileSize: pdfBuffer.length,
+      entityType: "contract",
+      entityId: contractId,
+      relatedEntityNumber: contract.contractNumber,
+      clientName: contract.clientName || null,
+      action: "uploaded",
+      uploadedBy: userId,
+    });
 
     // Prepare update object
     const updateData = {
@@ -662,6 +691,20 @@ class ContractService {
 
     // Save PDF
     const pdfUrl = await this.saveContractPdf(pdfBuffer, contractId);
+
+    // Log file to user_files (fire-and-forget)
+    fileService.logFile({
+      fileName: `${contract.contractNumber}-contract.pdf`,
+      fileUrl: pdfUrl,
+      fileType: "application/pdf",
+      fileSize: pdfBuffer.length,
+      entityType: "contract",
+      entityId: contractId,
+      relatedEntityNumber: contract.contractNumber,
+      clientName: contract.clientName || null,
+      action: "generated",
+      uploadedBy: userId,
+    });
 
     // Prepare update object
     const updateData = {
@@ -979,7 +1022,7 @@ class ContractService {
    * @param {string} ip - Client IP address
    * @returns {Promise<Object>} Updated contract
    */
-  async recordClientSigning(contractId, signedUrl, ip) {
+  async recordClientSigning(contractId, signedUrl, ip, fileSize = null) {
     const contractData = await this.getContractById(contractId);
     const contract = contractData.contract;
     const inquiry = contractData.inquiry;
@@ -1055,6 +1098,20 @@ class ContractService {
       .where(eq(contractsTable.id, contractId))
       .returning();
 
+    // Log file to user_files (fire-and-forget)
+    fileService.logFile({
+      fileName: `${contract.contractNumber}-signed.pdf`,
+      fileUrl: signedUrl,
+      fileType: "application/pdf",
+      fileSize,
+      entityType: "signed_contract",
+      entityId: contractId,
+      relatedEntityNumber: contract.contractNumber,
+      clientName: contract.clientName || null,
+      action: "signed",
+      uploadedBy: null,
+    });
+
     // Log activity
     await this.logActivity({
       userId: contract.requestedBy || contract.sentToClientBy,
@@ -1075,7 +1132,7 @@ class ContractService {
    * @param {string} userId - Admin user ID
    * @returns {Promise<Object>} Updated contract
    */
-  async uploadHardboundContract(contractId, hardboundUrl, userId) {
+  async uploadHardboundContract(contractId, hardboundUrl, userId, fileSize = null) {
     const contractData = await this.getContractById(contractId);
     const contract = contractData.contract;
 
@@ -1097,6 +1154,20 @@ class ContractService {
       })
       .where(eq(contractsTable.id, contractId))
       .returning();
+
+    // Log file to user_files (fire-and-forget)
+    fileService.logFile({
+      fileName: `${contract.contractNumber}-hardbound.pdf`,
+      fileUrl: hardboundUrl,
+      fileType: "application/pdf",
+      fileSize,
+      entityType: "hardbound_contract",
+      entityId: contractId,
+      relatedEntityNumber: contract.contractNumber,
+      clientName: contract.clientName || null,
+      action: "uploaded",
+      uploadedBy: userId,
+    });
 
     await this.logActivity({
       userId,

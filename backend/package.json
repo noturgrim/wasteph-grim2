@@ -30,7 +30,8 @@
     "migrate:admin-to-super-admin": "node src/scripts/migrateAdminToSuperAdmin.js",
     "migrate:activity-log-user-nullable": "node src/scripts/migrateActivityLogUserIdNullable.js",
     "find:duplicate-clients": "node src/scripts/findDuplicateClients.js",
-    "list:clients": "node src/scripts/listAllClients.js"
+    "list:clients": "node src/scripts/listAllClients.js",
+    "seed:files": "node src/scripts/seedFiles.js"
   },
   "keywords": [],
   "author": "",

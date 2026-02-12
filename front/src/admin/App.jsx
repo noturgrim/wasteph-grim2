@@ -22,6 +22,7 @@ import ContractRequests from "./pages/ContractRequests";
 import ContractTemplates from "./pages/ContractTemplates";
 import Showcase from "./pages/Showcase";
 import ClientsShowcase from "./pages/ClientsShowcase";
+import Files from "./pages/Files";
 import InAppBrowserBanner from "../components/common/InAppBrowserBanner";
 
 const CRMApp = () => {
@@ -46,6 +47,7 @@ const CRMApp = () => {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="account" element={<Account />} />
             <Route path="calendar" element={<Calendar />} />
+            <Route path="files" element={<Files />} />
 
             {/* Sales Pipeline - accessible by all roles */}
             <Route path="inquiries" element={<Inquiries />} />
