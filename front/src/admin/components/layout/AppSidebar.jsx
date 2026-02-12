@@ -59,13 +59,13 @@ export function AppSidebar() {
                 </svg>
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span
-                  className="truncate font-black uppercase tracking-tight text-slate-900 dark:text-white"
-                >
-                  WastePH
+                <span className="truncate font-black uppercase tracking-tight">
+                  <span className="text-slate-900 dark:text-white">WASTE</span>
+                  <span className="text-[#15803d] dark:text-[#16a34a]"> • </span>
+                  <span className="text-[#15803d] dark:text-[#16a34a]">PH</span>
                 </span>
                 <span
-                  className="truncate text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-white/40"
+                  className="truncate text-xs font-semibold uppercase tracking-wider text-[#15803d] dark:text-[#16a34a]"
                 >
                   CRM System
                 </span>
