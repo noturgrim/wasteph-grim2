@@ -1,0 +1,7 @@
+# k6 test results
+results/
+*.json
+
+# Temporary files
+*.tmp
+*.log

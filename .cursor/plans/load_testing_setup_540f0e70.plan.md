@@ -4,25 +4,25 @@ overview: Set up simple but accurate load testing to verify if 6 concurrent staf
 todos:
   - id: create-seed-script
     content: Create seedLoadTestUsers.js to generate 6 test staff accounts
-    status: pending
+    status: completed
   - id: create-data-script
     content: Create createLoadTestData.js to generate sample leads, clients, and proposals
-    status: pending
+    status: completed
   - id: create-k6-script
     content: Create k6 load test script (staff-workflow.js) with realistic staff workflows
-    status: pending
+    status: completed
   - id: create-config
     content: Create config.js for test configuration (VUs, duration, thresholds)
-    status: pending
+    status: completed
   - id: create-runner
     content: Create test runner scripts (bash and PowerShell)
-    status: pending
+    status: completed
   - id: update-package-json
     content: Add npm scripts for seed:loadtest and run:loadtest
-    status: pending
+    status: completed
   - id: create-results-template
     content: Create RESULTS.md template for documenting test results
-    status: pending
+    status: completed
 isProject: false
 ---
 

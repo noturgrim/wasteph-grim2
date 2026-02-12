@@ -31,7 +31,10 @@
     "migrate:activity-log-user-nullable": "node src/scripts/migrateActivityLogUserIdNullable.js",
     "find:duplicate-clients": "node src/scripts/findDuplicateClients.js",
     "list:clients": "node src/scripts/listAllClients.js",
-    "seed:files": "node src/scripts/seedFiles.js"
+    "seed:files": "node src/scripts/seedFiles.js",
+    "seed:loadtest-users": "node src/scripts/seedLoadTestUsers.js",
+    "seed:loadtest-data": "node src/scripts/createLoadTestData.js",
+    "seed:loadtest": "npm run seed:loadtest-users && npm run seed:loadtest-data"
   },
   "keywords": [],
   "author": "",
