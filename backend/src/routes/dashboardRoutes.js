@@ -2,8 +2,9 @@ import express from "express";
 import {
   getSalesDashboard,
   getSuperAdminDashboard,
+  getAnalyticsDashboard,
 } from "../controllers/dashboardController.js";
-import { requireAuth, requireRole } from "../middleware/auth.js";
+import { requireAuth, requireRole, requireMasterSales } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -17,5 +18,8 @@ router.get(
   requireRole("admin", "super_admin"),
   getSuperAdminDashboard,
 );
+
+// GET /api/dashboard/analytics — analytics dashboard for master sales
+router.get("/analytics", requireAuth, requireMasterSales, getAnalyticsDashboard);
 
 export default router;

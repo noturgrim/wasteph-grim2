@@ -608,6 +608,272 @@ class DashboardService {
       };
     });
   }
+
+  // ============================================================
+  // ANALYTICS DASHBOARD (MASTER SALES)
+  // ============================================================
+
+  /**
+   * Get analytics dashboard data for master sales users.
+   * Provides aggregate data across ALL sales users.
+   */
+  async getAnalyticsDashboard() {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const [
+      proposalAnalytics,
+      leadAnalytics,
+      contractAnalytics,
+      salesTeamPerformance,
+      timeSeriesData,
+    ] = await Promise.all([
+      this._getProposalAnalytics(sixMonthsAgo),
+      this._getLeadAnalytics(),
+      this._getContractAnalytics(),
+      this._getSalesTeamPerformance(),
+      this._getTimeSeriesData(sixMonthsAgo),
+    ]);
+
+    return {
+      proposalAnalytics,
+      leadAnalytics,
+      contractAnalytics,
+      salesTeamPerformance,
+      timeSeriesData,
+    };
+  }
+
+  /**
+   * Proposal analytics: status breakdown, monthly trends, approval rates
+   */
+  async _getProposalAnalytics(sixMonthsAgo) {
+    const [statusBreakdown, monthlyTrend, totalSent, totalAccepted] = await Promise.all([
+      // Status breakdown
+      db
+        .select({
+          status: proposalTable.status,
+          count: sql`count(*)::int`,
+        })
+        .from(proposalTable)
+        .groupBy(proposalTable.status),
+
+      // Monthly trend
+      db
+        .select({
+          month: sql`to_char(${proposalTable.createdAt}, 'YYYY-MM')`.as("month"),
+          created: sql`count(*)::int`.as("created"),
+          accepted: sql`count(*) filter (where ${proposalTable.status} = 'accepted')::int`.as("accepted"),
+          rejected: sql`count(*) filter (where ${proposalTable.status} = 'rejected')::int`.as("rejected"),
+        })
+        .from(proposalTable)
+        .where(gte(proposalTable.createdAt, sixMonthsAgo))
+        .groupBy(sql`to_char(${proposalTable.createdAt}, 'YYYY-MM')`)
+        .orderBy(sql`to_char(${proposalTable.createdAt}, 'YYYY-MM')`),
+
+      // Total sent proposals
+      db
+        .select({ count: sql`count(*)::int` })
+        .from(proposalTable)
+        .where(inArray(proposalTable.status, ["sent", "accepted", "rejected"]))
+        .then((r) => r[0]?.count ?? 0),
+
+      // Total accepted proposals
+      db
+        .select({ count: sql`count(*)::int` })
+        .from(proposalTable)
+        .where(eq(proposalTable.status, "accepted"))
+        .then((r) => r[0]?.count ?? 0),
+    ]);
+
+    const approvalRate = totalSent > 0 ? (totalAccepted / totalSent) * 100 : 0;
+
+    // Transform status breakdown to object
+    const byStatus = {};
+    for (const row of statusBreakdown) {
+      byStatus[row.status] = row.count;
+    }
+
+    return {
+      byStatus,
+      monthlyTrend,
+      approvalRate: Math.round(approvalRate * 10) / 10, // Round to 1 decimal
+      totalSent,
+      totalAccepted,
+    };
+  }
+
+  /**
+   * Lead analytics: claimed vs unclaimed, top lead generators
+   */
+  async _getLeadAnalytics() {
+    const [totalLeads, claimedLeads, topLeadGenerators] = await Promise.all([
+      // Total leads
+      db
+        .select({ count: sql`count(*)::int` })
+        .from(leadTable)
+        .then((r) => r[0]?.count ?? 0),
+
+      // Claimed leads
+      db
+        .select({ count: sql`count(*)::int` })
+        .from(leadTable)
+        .where(sql`${leadTable.claimedBy} is not null`)
+        .then((r) => r[0]?.count ?? 0),
+
+      // Top lead generators (sales users with most claimed leads)
+      db
+        .select({
+          userId: userTable.id,
+          firstName: userTable.firstName,
+          lastName: userTable.lastName,
+          claimed: sql`count(${leadTable.id})::int`,
+        })
+        .from(userTable)
+        .leftJoin(leadTable, eq(leadTable.claimedBy, userTable.id))
+        .where(eq(userTable.role, "sales"))
+        .groupBy(userTable.id, userTable.firstName, userTable.lastName)
+        .orderBy(desc(sql`count(${leadTable.id})`))
+        .limit(10),
+    ]);
+
+    const unclaimedLeads = totalLeads - claimedLeads;
+
+    // Format top generators
+    const byUser = topLeadGenerators.map((u) => ({
+      userName: `${u.firstName} ${u.lastName}`.trim(),
+      claimed: u.claimed,
+    }));
+
+    return {
+      totalLeads,
+      claimedLeads,
+      unclaimedLeads,
+      byUser,
+    };
+  }
+
+  /**
+   * Contract analytics: status breakdown, conversion metrics
+   */
+  async _getContractAnalytics() {
+    const [statusBreakdown, totalContracts, signedContracts, totalAcceptedProposals] =
+      await Promise.all([
+        // Status breakdown
+        db
+          .select({
+            status: contractsTable.status,
+            count: sql`count(*)::int`,
+          })
+          .from(contractsTable)
+          .groupBy(contractsTable.status),
+
+        // Total contracts
+        db
+          .select({ count: sql`count(*)::int` })
+          .from(contractsTable)
+          .then((r) => r[0]?.count ?? 0),
+
+        // Signed contracts
+        db
+          .select({ count: sql`count(*)::int` })
+          .from(contractsTable)
+          .where(eq(contractsTable.status, "signed"))
+          .then((r) => r[0]?.count ?? 0),
+
+        // Total accepted proposals (for conversion rate calculation)
+        db
+          .select({ count: sql`count(*)::int` })
+          .from(proposalTable)
+          .where(eq(proposalTable.status, "accepted"))
+          .then((r) => r[0]?.count ?? 0),
+      ]);
+
+    const conversionRate =
+      totalAcceptedProposals > 0 ? (signedContracts / totalAcceptedProposals) * 100 : 0;
+
+    // Transform status breakdown to object
+    const byStatus = {};
+    for (const row of statusBreakdown) {
+      byStatus[row.status] = row.count;
+    }
+
+    return {
+      byStatus,
+      conversionRate: Math.round(conversionRate * 10) / 10, // Round to 1 decimal
+      totalContracts,
+      signedContracts,
+    };
+  }
+
+  /**
+   * Sales team performance: stats for each sales user
+   */
+  async _getSalesTeamPerformance() {
+    const rows = await db
+      .select({
+        userId: userTable.id,
+        firstName: userTable.firstName,
+        lastName: userTable.lastName,
+        activeProposals: sql`count(distinct ${proposalTable.id}) filter (where ${proposalTable.status} in ('pending', 'approved', 'sent'))::int`,
+        signedContracts: sql`count(distinct ${contractsTable.id}) filter (where ${contractsTable.status} = 'signed')::int`,
+        claimedLeads: sql`count(distinct ${leadTable.id})::int`,
+        activeClients: sql`count(distinct ${clientTable.id})::int`,
+      })
+      .from(userTable)
+      .leftJoin(proposalTable, eq(proposalTable.requestedBy, userTable.id))
+      .leftJoin(contractsTable, eq(contractsTable.requestedBy, userTable.id))
+      .leftJoin(leadTable, eq(leadTable.claimedBy, userTable.id))
+      .leftJoin(clientTable, eq(clientTable.accountManager, userTable.id))
+      .where(eq(userTable.role, "sales"))
+      .groupBy(userTable.id, userTable.firstName, userTable.lastName)
+      .orderBy(desc(sql`count(distinct ${contractsTable.id}) filter (where ${contractsTable.status} = 'signed')`));
+
+    return rows.map((r) => ({
+      userId: r.userId,
+      userName: `${r.firstName} ${r.lastName}`.trim(),
+      activeProposals: r.activeProposals,
+      signedContracts: r.signedContracts,
+      claimedLeads: r.claimedLeads,
+      activeClients: r.activeClients,
+    }));
+  }
+
+  /**
+   * Time series data: proposals and contracts trends over last 6 months
+   */
+  async _getTimeSeriesData(sixMonthsAgo) {
+    const [proposalTrend, contractTrend] = await Promise.all([
+      // Proposal monthly trend
+      db
+        .select({
+          month: sql`to_char(${proposalTable.createdAt}, 'YYYY-MM')`.as("month"),
+          created: sql`count(*)::int`.as("created"),
+          accepted: sql`count(*) filter (where ${proposalTable.status} = 'accepted')::int`.as("accepted"),
+          rejected: sql`count(*) filter (where ${proposalTable.status} = 'rejected')::int`.as("rejected"),
+        })
+        .from(proposalTable)
+        .where(gte(proposalTable.createdAt, sixMonthsAgo))
+        .groupBy(sql`to_char(${proposalTable.createdAt}, 'YYYY-MM')`)
+        .orderBy(sql`to_char(${proposalTable.createdAt}, 'YYYY-MM')`),
+
+      // Contract monthly trend (by requestedAt date)
+      db
+        .select({
+          month: sql`to_char(${contractsTable.requestedAt}, 'YYYY-MM')`.as("month"),
+          signed: sql`count(*) filter (where ${contractsTable.status} = 'signed')::int`.as("signed"),
+        })
+        .from(contractsTable)
+        .where(gte(contractsTable.requestedAt, sixMonthsAgo))
+        .groupBy(sql`to_char(${contractsTable.requestedAt}, 'YYYY-MM')`)
+        .orderBy(sql`to_char(${contractsTable.requestedAt}, 'YYYY-MM')`),
+    ]);
+
+    return {
+      proposalTrend,
+      contractTrend,
+    };
+  }
 }
 
 export default new DashboardService();

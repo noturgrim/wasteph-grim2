@@ -8,6 +8,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import socketService from "../services/socketService";
@@ -15,6 +16,7 @@ import DashboardCard from "../components/common/DashboardCard";
 import UpcomingEvents from "../components/dashboard/UpcomingEvents";
 import RecentActivity from "../components/dashboard/RecentActivity";
 import PendingActions from "../components/dashboard/PendingActions";
+import AnalyticsDashboard from "../components/dashboard/AnalyticsDashboard";
 
 // --- Stat card definitions ---
 
@@ -130,7 +132,55 @@ export default function Dashboard() {
 
   const statCards = isAdmin ? ADMIN_STAT_CARDS : SALES_STAT_CARDS;
   const gridCols = isAdmin ? "lg:grid-cols-3 xl:grid-cols-6" : "xl:grid-cols-4";
+  const isMasterSales = user?.role === "sales" && user?.isMasterSales;
 
+  // Render for admin users (no tabs)
+  if (isAdmin) {
+    return (
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Dashboard
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
+            Welcome back, {user?.firstName}. Here is your system overview.
+          </p>
+        </div>
+
+        {/* Stat Cards */}
+        {isLoading ? (
+          <StatsSkeleton count={statCards.length} />
+        ) : (
+          <div className={`grid gap-4 grid-cols-2 md:grid-cols-4 ${gridCols}`}>
+            {statCards.map((card) => (
+              <DashboardCard
+                key={card.key}
+                title={card.title}
+                value={data?.stats?.[card.key] ?? 0}
+                icon={card.icon}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Content area */}
+        {isLoading ? (
+          <ContentSkeleton />
+        ) : (
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
+            <PendingActions data={data?.pendingActions} />
+            <RecentActivity
+              activities={data?.recentActivity ?? []}
+              showActor
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Render for sales users (with tabs for master sales)
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header */}
@@ -139,44 +189,77 @@ export default function Dashboard() {
           Dashboard
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground mt-1">
-          {isAdmin
-            ? `Welcome back, ${user?.firstName}. Here is your system overview.`
-            : `Welcome back, ${user?.firstName}. Here is your pipeline overview.`}
+          Welcome back, {user?.firstName}. Here is your pipeline overview.
         </p>
       </div>
 
-      {/* Stat Cards */}
-      {isLoading ? (
-        <StatsSkeleton count={statCards.length} />
-      ) : (
-        <div className={`grid gap-4 grid-cols-2 md:grid-cols-4 ${gridCols}`}>
-          {statCards.map((card) => (
-            <DashboardCard
-              key={card.key}
-              title={card.title}
-              value={data?.stats?.[card.key] ?? 0}
-              icon={card.icon}
-            />
-          ))}
-        </div>
-      )}
+      {isMasterSales ? (
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
 
-      {/* Content area — differs by role */}
-      {isLoading ? (
-        <ContentSkeleton />
-      ) : isAdmin ? (
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
-          <PendingActions data={data?.pendingActions} />
-          <RecentActivity
-            activities={data?.recentActivity ?? []}
-            showActor
-          />
-        </div>
+          <TabsContent value="overview" className="space-y-4">
+            {/* Stat Cards */}
+            {isLoading ? (
+              <StatsSkeleton count={statCards.length} />
+            ) : (
+              <div className={`grid gap-4 grid-cols-2 md:grid-cols-4 ${gridCols}`}>
+                {statCards.map((card) => (
+                  <DashboardCard
+                    key={card.key}
+                    title={card.title}
+                    value={data?.stats?.[card.key] ?? 0}
+                    icon={card.icon}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Content area */}
+            {isLoading ? (
+              <ContentSkeleton />
+            ) : (
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
+                <UpcomingEvents events={data?.upcomingEvents ?? []} />
+                <RecentActivity activities={data?.recentActivity ?? []} />
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <AnalyticsDashboard />
+          </TabsContent>
+        </Tabs>
       ) : (
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
-          <UpcomingEvents events={data?.upcomingEvents ?? []} />
-          <RecentActivity activities={data?.recentActivity ?? []} />
-        </div>
+        <>
+          {/* Stat Cards */}
+          {isLoading ? (
+            <StatsSkeleton count={statCards.length} />
+          ) : (
+            <div className={`grid gap-4 grid-cols-2 md:grid-cols-4 ${gridCols}`}>
+              {statCards.map((card) => (
+                <DashboardCard
+                  key={card.key}
+                  title={card.title}
+                  value={data?.stats?.[card.key] ?? 0}
+                  icon={card.icon}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Content area */}
+          {isLoading ? (
+            <ContentSkeleton />
+          ) : (
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
+              <UpcomingEvents events={data?.upcomingEvents ?? []} />
+              <RecentActivity activities={data?.recentActivity ?? []} />
+            </div>
+          )}
+        </>
       )}
     </div>
   );
