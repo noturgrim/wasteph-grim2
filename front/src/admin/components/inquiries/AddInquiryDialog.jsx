@@ -27,6 +27,7 @@ export function AddInquiryDialog({ open, onOpenChange, onSubmit, isSubmitting })
     email: "",
     phone: "",
     company: "",
+    location: "",
     message: "",
     source: "phone",
     serviceId: "",
@@ -64,7 +65,6 @@ export function AddInquiryDialog({ open, onOpenChange, onSubmit, isSubmitting })
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       errors.email = "Please enter a valid email address.";
     }
-    if (!formData.message?.trim()) errors.message = "Message is required.";
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -81,6 +81,7 @@ export function AddInquiryDialog({ open, onOpenChange, onSubmit, isSubmitting })
       email: "",
       phone: "",
       company: "",
+      location: "",
       message: "",
       source: "phone",
       serviceId: "",
@@ -165,6 +166,18 @@ export function AddInquiryDialog({ open, onOpenChange, onSubmit, isSubmitting })
           </div>
 
           <div>
+            <Label htmlFor="location">Location</Label>
+            <Input
+              id="location"
+              value={formData.location}
+              onChange={(e) =>
+                setFormData({ ...formData, location: e.target.value })
+              }
+              placeholder="e.g., Cebu City, Metro Manila"
+            />
+          </div>
+
+          <div>
             <Label htmlFor="serviceId">Service Type</Label>
             <Select
               value={formData.serviceId}
@@ -210,22 +223,16 @@ export function AddInquiryDialog({ open, onOpenChange, onSubmit, isSubmitting })
           </div>
 
           <div>
-            <Label htmlFor="message">Message *</Label>
+            <Label htmlFor="message">Message</Label>
             <Textarea
               id="message"
               rows={4}
               value={formData.message}
-              onChange={(e) => {
-                setFormData({ ...formData, message: e.target.value });
-                if (formErrors.message) {
-                  setFormErrors({ ...formErrors, message: null });
-                }
-              }}
-              className={formErrors.message ? "border-red-500" : ""}
+              onChange={(e) =>
+                setFormData({ ...formData, message: e.target.value })
+              }
+              placeholder="Additional details about the inquiry..."
             />
-            {formErrors.message && (
-              <p className="text-sm text-red-500 mt-1">{formErrors.message}</p>
-            )}
           </div>
 
           <DialogFooter>

@@ -544,9 +544,10 @@ class InquiryService {
       email,
       phone,
       company,
+      location,
       message,
       source = "phone",
-      serviceType,
+      serviceId,
     } = inquiryData;
 
     // Generate inquiry number (format: INQ-YYYYMMDD-NNNN)
@@ -560,9 +561,10 @@ class InquiryService {
         email,
         phone,
         company,
+        location,
         message,
         source,
-        serviceType,
+        serviceId,
         assignedTo: userId,
         isInformationComplete: false,
       })
