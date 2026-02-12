@@ -123,6 +123,71 @@ class ProposalServiceWithSocket {
   }
 
   /**
+   * Create proposal with uploaded PDF and socket emission
+   * @param {Object} data - Upload data
+   * @param {string} userId - User creating proposal
+   * @param {Object} metadata - Request metadata
+   * @returns {Promise<Object>} Created proposal
+   */
+  async createProposalWithUpload(data, userId, metadata = {}) {
+    const proposal = await this.proposalService.createProposalWithUpload(
+      data,
+      userId,
+      metadata
+    );
+
+    // Emit socket event if initialized (same pattern as createProposal)
+    if (this.proposalEvents && proposal?.id) {
+      try {
+        const { db } = await import("../db/index.js");
+        const schema = await import("../db/schema.js");
+        const { proposalTable, inquiryTable, userTable } = schema;
+        const { eq } = await import("drizzle-orm");
+
+        const fullProposalResult = await db
+          .select({
+            id: proposalTable.id,
+            proposalNumber: proposalTable.proposalNumber,
+            inquiryId: proposalTable.inquiryId,
+            status: proposalTable.status,
+            requestedBy: proposalTable.requestedBy,
+            createdAt: proposalTable.createdAt,
+            inquiryName: inquiryTable.name,
+            inquiryEmail: inquiryTable.email,
+            inquiryCompany: inquiryTable.company,
+            inquiryNumber: inquiryTable.inquiryNumber,
+          })
+          .from(proposalTable)
+          .leftJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id))
+          .where(eq(proposalTable.id, proposal.id))
+          .limit(1);
+
+        const fullProposal = fullProposalResult[0];
+        if (!fullProposal) return proposal;
+
+        const [user] = await db
+          .select({
+            id: userTable.id,
+            firstName: userTable.firstName,
+            lastName: userTable.lastName,
+            email: userTable.email,
+            role: userTable.role,
+          })
+          .from(userTable)
+          .where(eq(userTable.id, userId));
+
+        if (user) {
+          await this.proposalEvents.emitProposalRequested(fullProposal, user);
+        }
+      } catch (error) {
+        console.error("Error emitting proposal requested event (upload):", error);
+      }
+    }
+
+    return proposal;
+  }
+
+  /**
    * Approve proposal with socket emission
    * @param {string} proposalId - Proposal ID
    * @param {string} userId - User approving

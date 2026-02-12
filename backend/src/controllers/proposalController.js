@@ -33,6 +33,53 @@ export const createProposal = async (req, res, next) => {
 };
 
 /**
+ * Create a proposal with an uploaded PDF (fallback for when template editor is problematic)
+ * POST /api/proposals/upload
+ */
+export const createProposalWithUpload = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      throw new AppError("Please upload a PDF file", 400);
+    }
+
+    const proposalData = req.body.proposalData
+      ? JSON.parse(req.body.proposalData)
+      : null;
+
+    if (!proposalData || !proposalData.inquiryId) {
+      throw new AppError("Proposal data with inquiryId is required", 400);
+    }
+
+    const metadata = {
+      ipAddress: req.ip,
+      userAgent: req.get("user-agent"),
+    };
+
+    const proposal = await proposalServiceWithSocket.createProposalWithUpload(
+      {
+        inquiryId: proposalData.inquiryId,
+        serviceSubTypeId: req.body.serviceSubTypeId || null,
+        proposalData,
+        pdfBuffer: req.file.buffer,
+        pdfOriginalName: req.file.originalname,
+      },
+      req.user.id,
+      metadata
+    );
+
+    res.status(201).json({
+      success: true,
+      data: proposal,
+    });
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return next(new AppError("Invalid proposalData JSON", 400));
+    }
+    next(error);
+  }
+};
+
+/**
  * Get all proposals with filtering and pagination
  * GET /api/proposals
  */

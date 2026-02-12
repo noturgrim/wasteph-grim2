@@ -539,9 +539,7 @@ export const proposalTable = pgTable(
     inquiryId: uuid("inquiry_id")
       .notNull()
       .references(() => inquiryTable.id, { onDelete: "cascade" }),
-    templateId: uuid("template_id")
-      .notNull()
-      .references(() => proposalTemplateTable.id),
+    templateId: uuid("template_id").references(() => proposalTemplateTable.id),
     serviceSubTypeId: uuid("service_sub_type_id").references(
       () => serviceSubTypeTable.id
     ),
@@ -556,6 +554,7 @@ export const proposalTable = pgTable(
     // Workflow Status
     status: proposalStatusEnum("status").notNull().default("pending"),
     wasTemplateSuggested: boolean("was_template_suggested").default(false),
+    isUploadedPdf: boolean("is_uploaded_pdf").notNull().default(false),
 
     // Review Details
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),

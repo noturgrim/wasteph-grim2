@@ -64,6 +64,27 @@ export const previewProposalDeclinedEmail = async (req, res, next) => {
   }
 };
 
+export const previewProposalDisapprovedEmail = async (req, res, next) => {
+  try {
+    const sampleData = {
+      clientName: "Jane Smith",
+      proposalNumber: "PROP-20260212-0006",
+      companyName: "WastePh",
+      clientEmail: "jane.smith@example.com",
+      rejectedBy: "Maria Admin (admin)",
+      rejectionReason: "Pricing does not align with approved rate sheet. Please revise and resubmit.",
+      reviewedAt: new Date().toISOString(),
+    };
+
+    const html = emailService.generateProposalDisapprovedEmailHTML(sampleData);
+
+    res.setHeader("Content-Type", "text/html");
+    res.send(html);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const previewContractSignedEmail = async (req, res, next) => {
   try {
     const sampleData = {
@@ -367,6 +388,12 @@ export const previewEmailList = async (req, res, next) => {
         <h2>Proposal Declined</h2>
         <p>Email sent to sales person when a client declines their proposal.</p>
         <a href="${baseUrl}/api/email-preview/proposal-declined" target="_blank">Preview →</a>
+      </div>
+
+      <div class="card">
+        <h2>Proposal Disapproved</h2>
+        <p>Email sent to sales person when an admin rejects their proposal.</p>
+        <a href="${baseUrl}/api/email-preview/proposal-disapproved" target="_blank">Preview →</a>
       </div>
 
       <div class="card">

@@ -10,6 +10,7 @@ import {
   generateAutoScheduleClientEmailHTML,
   generateNewLeadEmailHTML,
   generateProposalResponseEmailHTML,
+  generateProposalDisapprovedEmailHTML,
   generateContractSignedEmailHTML,
   generateNewTicketEmailHTML,
   generateTicketUpdateEmailHTML,
@@ -606,6 +607,42 @@ class EmailService {
   }
 
   /**
+   * Send proposal disapproved notification to sales person (admin rejection)
+   * @param {string} to - Sales person email
+   * @param {Object} data - Notification data
+   * @returns {Promise<Object>} Email result
+   */
+  async sendProposalDisapprovedNotification(to, data) {
+    try {
+      const { clientName, companyName, proposalNumber } = data;
+      const subject = `Proposal Disapproved: ${companyName || clientName}`;
+      const htmlContent = this.generateProposalDisapprovedEmailHTML(data);
+
+      const info = await this.transporter.sendMail({
+        from: process.env.SMTP_USER,
+        to,
+        subject,
+        html: htmlContent,
+      });
+
+      console.log(`✅ Proposal disapproved notification sent to: ${to}`);
+      return {
+        success: true,
+        messageId: info.messageId,
+      };
+    } catch (error) {
+      console.error(
+        `❌ Failed to send proposal disapproved notification to ${to}:`,
+        error.message,
+      );
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
    * Send contract signed notification to sales person
    * @param {string} to - Sales person email
    * @param {Object} data - Notification data
@@ -672,6 +709,10 @@ class EmailService {
 
   generateProposalResponseEmailHTML(...args) {
     return generateProposalResponseEmailHTML(...args);
+  }
+
+  generateProposalDisapprovedEmailHTML(...args) {
+    return generateProposalDisapprovedEmailHTML(...args);
   }
 
   generateContractSignedEmailHTML(...args) {

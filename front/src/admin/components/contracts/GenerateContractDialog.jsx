@@ -27,6 +27,7 @@ import {
   Edit,
   Code2,
   RefreshCw,
+  Upload,
 } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
@@ -79,7 +80,10 @@ export function GenerateContractDialog({
   const [pendingData, setPendingData] = useState({});
   const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [previewPdfUrl, setPreviewPdfUrl] = useState("");
+  const [pendingPdfFile, setPendingPdfFile] = useState(null);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const templateStructureRef = useRef({ head: "", bodyTag: "", styles: "" });
+  const uploadInputRef = useRef(null);
 
   // Initialize data when dialog opens
   useEffect(() => {
@@ -247,17 +251,33 @@ export function GenerateContractDialog({
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true);
-      await api.generateContractFromTemplate(
-        contract.contract.id,
-        editedData,
-        adminNotes || null
-      );
 
-      toast.success("Contract submitted successfully");
+      if (pendingPdfFile) {
+        // If a PDF was selected, upload it instead of generating from template
+        await api.uploadContractPdf(
+          contract.contract.id,
+          pendingPdfFile,
+          adminNotes || null,
+          editedData,
+        );
+
+        toast.success("Contract PDF uploaded successfully");
+      } else {
+        // Default flow: generate contract from template
+        await api.generateContractFromTemplate(
+          contract.contract.id,
+          editedData,
+          adminNotes || null,
+        );
+
+        toast.success("Contract submitted successfully");
+
+        // Load the saved PDF
+        await loadGeneratedPdf();
+      }
+
       setIsGenerated(true);
-
-      // Load the saved PDF
-      await loadGeneratedPdf();
+      setPendingPdfFile(null);
 
       // Notify parent and close dialog so list can refresh
       if (typeof onConfirm === "function") {
@@ -270,6 +290,27 @@ export function GenerateContractDialog({
       toast.error(error.message || "Failed to submit contract");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleUploadPdfInstead = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      toast.error("Only PDF files are allowed");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be less than 10MB");
+      return;
+    }
+
+    setPendingPdfFile(file);
+
+    // Reset file input so the same file can be re-selected if needed
+    if (uploadInputRef.current) {
+      uploadInputRef.current.value = "";
     }
   };
 
@@ -931,6 +972,33 @@ export function GenerateContractDialog({
             Cancel
           </Button>
           <Button
+            variant="outline"
+            onClick={() => setIsUploadModalOpen(true)}
+            disabled={isSubmitting || isGenerated}
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            Upload PDF Instead
+          </Button>
+          {pendingPdfFile && !isGenerated && (
+            <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+              <FileCheck className="h-3 w-3" />
+              <span>Using uploaded PDF: {pendingPdfFile.name}</span>
+              <button
+                type="button"
+                aria-label="Remove uploaded PDF"
+                onClick={() => {
+                  setPendingPdfFile(null);
+                  if (uploadInputRef.current) {
+                    uploadInputRef.current.value = "";
+                  }
+                }}
+                className="inline-flex h-4 w-4 items-center justify-center rounded-full text-emerald-700 hover:bg-emerald-100"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          )}
+          <Button
             onClick={handleSubmit}
             disabled={isSubmitting || isGenerated}
             className={isGenerated ? "bg-green-600 hover:bg-green-600" : "bg-blue-600 hover:bg-blue-700"}
@@ -1015,6 +1083,85 @@ export function GenerateContractDialog({
         isOpen={showPdfViewer}
       />
     )}
+
+    {/* Upload PDF Instead modal */}
+    <Dialog open={isUploadModalOpen} onOpenChange={setIsUploadModalOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Use this PDF for the contract?</DialogTitle>
+          <DialogDescription className="text-sm">
+            Choose a PDF file that will be used instead of the generated
+            contract template.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="py-4 space-y-3">
+          <label
+            htmlFor="contract-pdf-upload"
+            className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:border-emerald-600 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 transition-colors px-6 py-8 text-center"
+          >
+            <Upload className="h-8 w-8 text-gray-400 dark:text-gray-500 mb-3" />
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+              Click to choose a PDF file
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              PDF only, maximum size 10MB
+            </p>
+          </label>
+          <Input
+            id="contract-pdf-upload"
+            ref={uploadInputRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={handleUploadPdfInstead}
+          />
+
+          {pendingPdfFile && (
+            <div className="rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground text-left">
+              <span className="font-medium">Selected file:</span>{" "}
+              <span>{pendingPdfFile.name}</span>
+            </div>
+          )}
+
+          <div className="mt-2 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            This will replace the generated template with your uploaded PDF for
+            this contract submission.
+          </div>
+        </div>
+
+        <DialogFooter className="mt-2 gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setIsUploadModalOpen(false);
+              setPendingPdfFile(null);
+              if (uploadInputRef.current) {
+                uploadInputRef.current.value = "";
+              }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            className="bg-emerald-600 hover:bg-emerald-700"
+            disabled={!pendingPdfFile}
+            onClick={() => {
+              setIsUploadModalOpen(false);
+              if (pendingPdfFile) {
+                toast.success(
+                  "PDF selected. Click \"Submit Contract\" to upload it.",
+                );
+              }
+            }}
+          >
+            Use this PDF
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
     </>
   );
 }

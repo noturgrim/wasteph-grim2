@@ -4,6 +4,7 @@ import {
   previewNewLeadEmail,
   previewProposalAcceptedEmail,
   previewProposalDeclinedEmail,
+  previewProposalDisapprovedEmail,
   previewContractSignedEmail,
   previewSimpleProposalEmail,
   previewFullProposalEmail,
@@ -33,6 +34,7 @@ router.get("/", previewEmailList);
 router.get("/new-lead", previewNewLeadEmail);
 router.get("/proposal-accepted", previewProposalAcceptedEmail);
 router.get("/proposal-declined", previewProposalDeclinedEmail);
+router.get("/proposal-disapproved", previewProposalDisapprovedEmail);
 router.get("/contract-signed", previewContractSignedEmail);
 router.get("/new-ticket", previewNewTicketEmail);
 router.get("/ticket-status-update", previewTicketStatusUpdateEmail);
