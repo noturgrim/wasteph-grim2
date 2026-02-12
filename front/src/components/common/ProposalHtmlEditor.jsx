@@ -82,45 +82,93 @@ const MenuBar = ({
 
   // Check if cursor is inside a table (either in a cell or header)
   // This is more reliable than checking if table node is active
-  const isInTable = editor.isActive("tableCell") || editor.isActive("tableHeader") || editor.isActive("table");
+  const isInTable =
+    editor.isActive("tableCell") ||
+    editor.isActive("tableHeader") ||
+    editor.isActive("table");
 
   return (
     <div className="flex flex-wrap gap-1 p-2 bg-gray-50 border-b border-gray-200 items-center justify-between">
       <div className="flex flex-wrap gap-1 items-center">
         {/* Text Formatting */}
-        <button type="button" onClick={() => editor.chain().focus().toggleBold().run()} className={btnClass(editor.isActive("bold"))} title="Bold">
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className={btnClass(editor.isActive("bold"))}
+          title="Bold"
+        >
           <Bold className="w-4 h-4" />
         </button>
-        <button type="button" onClick={() => editor.chain().focus().toggleItalic().run()} className={btnClass(editor.isActive("italic"))} title="Italic">
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className={btnClass(editor.isActive("italic"))}
+          title="Italic"
+        >
           <Italic className="w-4 h-4" />
         </button>
-        <button type="button" onClick={() => editor.chain().focus().toggleUnderline().run()} className={btnClass(editor.isActive("underline"))} title="Underline">
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          className={btnClass(editor.isActive("underline"))}
+          title="Underline"
+        >
           <UnderlineIcon className="w-4 h-4" />
         </button>
 
         <div className="w-px h-5 bg-gray-300 mx-0.5 self-center" />
 
         {/* Lists */}
-        <button type="button" onClick={() => editor.chain().focus().toggleBulletList().run()} className={btnClass(editor.isActive("bulletList"))} title="Bullet List">
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          className={btnClass(editor.isActive("bulletList"))}
+          title="Bullet List"
+        >
           <List className="w-4 h-4" />
         </button>
-        <button type="button" onClick={() => editor.chain().focus().toggleOrderedList().run()} className={btnClass(editor.isActive("orderedList"))} title="Numbered List">
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          className={btnClass(editor.isActive("orderedList"))}
+          title="Numbered List"
+        >
           <ListOrdered className="w-4 h-4" />
         </button>
 
         <div className="w-px h-5 bg-gray-300 mx-0.5 self-center" />
 
         {/* Alignment */}
-        <button type="button" onClick={() => editor.chain().focus().setTextAlign("left").run()} className={btnClass(editor.isActive({ textAlign: "left" }))} title="Align Left">
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setTextAlign("left").run()}
+          className={btnClass(editor.isActive({ textAlign: "left" }))}
+          title="Align Left"
+        >
           <AlignLeft className="w-4 h-4" />
         </button>
-        <button type="button" onClick={() => editor.chain().focus().setTextAlign("center").run()} className={btnClass(editor.isActive({ textAlign: "center" }))} title="Align Center">
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setTextAlign("center").run()}
+          className={btnClass(editor.isActive({ textAlign: "center" }))}
+          title="Align Center"
+        >
           <AlignCenter className="w-4 h-4" />
         </button>
-        <button type="button" onClick={() => editor.chain().focus().setTextAlign("right").run()} className={btnClass(editor.isActive({ textAlign: "right" }))} title="Align Right">
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setTextAlign("right").run()}
+          className={btnClass(editor.isActive({ textAlign: "right" }))}
+          title="Align Right"
+        >
           <AlignRight className="w-4 h-4" />
         </button>
-        <button type="button" onClick={() => editor.chain().focus().setTextAlign("justify").run()} className={btnClass(editor.isActive({ textAlign: "justify" }))} title="Justify">
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().setTextAlign("justify").run()}
+          className={btnClass(editor.isActive({ textAlign: "justify" }))}
+          title="Justify"
+        >
           <AlignJustify className="w-4 h-4" />
         </button>
 
@@ -131,7 +179,13 @@ const MenuBar = ({
         {!isInTable && (
           <button
             type="button"
-            onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+            onClick={() =>
+              editor
+                .chain()
+                .focus()
+                .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+                .run()
+            }
             className={btnClass(false)}
             title="Insert Table"
           >
@@ -206,7 +260,11 @@ const MenuBar = ({
           variant="outline"
           onClick={onReset}
           disabled={!canReset}
-          className={canReset ? "text-gray-700 hover:bg-gray-100" : "text-gray-400 cursor-not-allowed"}
+          className={
+            canReset
+              ? "text-gray-700 hover:bg-gray-100"
+              : "text-gray-400 cursor-not-allowed"
+          }
           title="Reset to original template"
         >
           <RotateCcw className="w-4 h-4 mr-1" />
@@ -272,7 +330,9 @@ const ProposalHtmlEditor = ({
     }
   }, [content]);
 
-  const scopedStyles = templateStyles ? scopeStyles(templateStyles, ".proposal-editor-scope") : "";
+  const scopedStyles = templateStyles
+    ? scopeStyles(templateStyles, ".proposal-editor-scope")
+    : "";
 
   const editor = useEditor({
     extensions: [
@@ -291,11 +351,13 @@ const ProposalHtmlEditor = ({
         },
       }),
       Underline,
-      TextAlign.configure({ types: ["heading", "paragraph", "tableCell", "tableHeader"] }),
+      TextAlign.configure({
+        types: ["heading", "paragraph", "tableCell", "tableHeader"],
+      }),
       Table.configure({
         resizable: false,
         HTMLAttributes: {
-          class: 'pricing-table',
+          class: "pricing-table",
         },
       }),
       TableRow,
@@ -348,7 +410,8 @@ const ProposalHtmlEditor = ({
     },
     editorProps: {
       attributes: {
-        class: "proposal-editor-scope p-4 focus:outline-none min-h-[300px] bg-white",
+        class:
+          "proposal-editor-scope p-4 focus:outline-none min-h-[300px] bg-white",
       },
       // Preserve HTML attributes when parsing
       transformPastedHTML: (html) => {
@@ -402,10 +465,14 @@ const ProposalHtmlEditor = ({
     if (onChange) onChange({ html: resetHtml, json: null });
   }, [editor, onChange]);
 
-  const canReset = editor ? editor.getHTML() !== savedContentRef.current : false;
+  const canReset = editor
+    ? editor.getHTML() !== savedContentRef.current
+    : false;
 
   return (
-    <div className={`border border-gray-200 rounded-lg overflow-hidden flex flex-col ${className}`}>
+    <div
+      className={`border border-gray-200 rounded-lg overflow-hidden flex flex-col ${className}`}
+    >
       {/* Inject scoped template styles so the template's own CSS applies inside the editor */}
       {scopedStyles && (
         <style
@@ -504,8 +571,10 @@ const ProposalHtmlEditor = ({
         <div className="sticky top-0 z-20 bg-linear-to-b from-blue-50 to-blue-100 border-b-2 border-blue-300 px-4 py-3 shadow-sm">
           <div className="flex items-center justify-between text-xs text-blue-700">
             <div className="flex items-center gap-2">
-              <span className="font-semibold">📋 Header Area</span>
-              <span className="text-blue-600">(Company header will appear here in PDF - not editable)</span>
+              <span className="font-semibold">Header Area</span>
+              <span className="text-blue-600">
+                (Company header will appear here in PDF - not editable)
+              </span>
             </div>
             <span className="text-blue-600 font-mono">~140px reserved</span>
           </div>
@@ -515,7 +584,8 @@ const ProposalHtmlEditor = ({
 
         {/* Page break legend */}
         <div className="sticky top-16 left-4 inline-block bg-blue-50 border border-blue-200 rounded px-3 py-1.5 text-xs text-blue-700 shadow-sm z-10 ml-4 mt-2">
-          <span className="font-medium">📄 Horizontal lines</span> = PDF page breaks (approx. A4 size)
+          <span className="font-medium">Horizontal lines</span> = PDF page
+          breaks (approx. A4 size)
         </div>
       </div>
     </div>
