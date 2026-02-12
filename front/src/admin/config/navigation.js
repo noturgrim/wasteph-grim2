@@ -244,26 +244,9 @@ export const getNavigationByRole = (role, isMasterSales = false) => {
     ];
   }
 
-  // Social Media gets Dashboard + Content only
+  // Social Media gets Content only (no Dashboard, no Files)
   if (role === "social_media") {
     return [
-      {
-        label: "General",
-        items: [
-          {
-            title: "Dashboard",
-            url: "/admin/dashboard",
-            icon: LayoutDashboard,
-            description: "Overview and statistics",
-          },
-          {
-            title: "Files",
-            url: "/admin/files",
-            icon: FolderOpen,
-            description: "View and download your files",
-          },
-        ],
-      },
       {
         label: "Content",
         items: [
@@ -392,5 +375,6 @@ export const hasAccess = (role, path, isMasterSales = false) => {
  * @returns {string} Default route
  */
 export const getDefaultRoute = (role) => {
+  if (role === "social_media") return "/admin/blog";
   return "/admin/dashboard";
 };

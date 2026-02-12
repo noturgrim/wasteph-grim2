@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router";
 import { useAuth } from "../../contexts/AuthContext";
-import { hasAccess } from "../../config/navigation";
+import { hasAccess, getDefaultRoute } from "../../config/navigation";
 
 /**
  * Protected route component that checks authentication and role-based access
@@ -45,13 +45,12 @@ export default function ProtectedRoute({ children, allowedRoles = [] }) {
 
   // Check role-based access if allowedRoles is specified
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-    // Redirect to dashboard if user doesn't have required role
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to={getDefaultRoute(user.role)} replace />;
   }
 
   // Check if user has access to the current path based on navigation config
   if (!hasAccess(user.role, location.pathname, user.isMasterSales || false)) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <Navigate to={getDefaultRoute(user.role)} replace />;
   }
 
   return children;

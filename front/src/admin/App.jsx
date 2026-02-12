@@ -1,10 +1,11 @@
 import { Routes, Route, Navigate } from "react-router";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { Toaster } from "@/components/ui/sonner";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import AppLayout from "./components/layout/AppLayout";
+import { getDefaultRoute } from "./config/navigation";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
@@ -26,6 +27,12 @@ import Files from "./pages/Files";
 import LoadTestReport from "./pages/LoadTestReport";
 import InAppBrowserBanner from "../components/common/InAppBrowserBanner";
 
+const IndexRedirect = () => {
+  const { user } = useAuth();
+  const defaultRoute = getDefaultRoute(user?.role || "sales");
+  return <Navigate to={defaultRoute} replace />;
+};
+
 const CRMApp = () => {
   return (
     <ThemeProvider>
@@ -44,7 +51,7 @@ const CRMApp = () => {
               </ProtectedRoute>
             }
           >
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route index element={<IndexRedirect />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="account" element={<Account />} />
             <Route path="calendar" element={<Calendar />} />
@@ -126,11 +133,8 @@ const CRMApp = () => {
             />
           </Route>
 
-          {/* Catch all - redirect to dashboard */}
-          <Route
-            path="*"
-            element={<Navigate to="/admin/dashboard" replace />}
-          />
+          {/* Catch all - redirect to role default */}
+          <Route path="*" element={<IndexRedirect />} />
         </Routes>
         </NotificationProvider>
       </AuthProvider>
