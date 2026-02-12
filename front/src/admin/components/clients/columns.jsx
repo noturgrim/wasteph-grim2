@@ -269,14 +269,15 @@ export const createClientColumns = ({ userRole, onView, onEdit, onDelete, onAuto
           c.contractEndDate,
       );
       return (
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+        <div className="flex items-center justify-end gap-2">
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => onView(client)}>
               <Eye className="mr-2 h-4 w-4" />
               View Details
@@ -303,8 +304,9 @@ export const createClientColumns = ({ userRole, onView, onEdit, onDelete, onAuto
                 </DropdownMenuItem>
               </>
             )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       );
     },
   },

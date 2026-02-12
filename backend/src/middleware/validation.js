@@ -42,7 +42,8 @@ export const inquiryValidation = [
     .withMessage("Valid email is required"),
   body("phone").optional().trim(),
   body("company").optional().trim(),
-  body("message").trim().notEmpty().withMessage("Message is required"),
+  body("location").optional().trim(),
+  body("message").optional().trim(),
   body("source")
     .optional()
     .isIn(["website", "facebook", "email", "phone", "walk-in", "cold-approach", "referral"])

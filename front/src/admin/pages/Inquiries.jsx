@@ -378,22 +378,24 @@ export default function Inquiries() {
 
       {/* Filters */}
       <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          {isMasterSales && (
-            <Tabs value={viewMode} onValueChange={setViewMode} className="w-full sm:w-auto">
-              <TabsList className="h-9 w-full sm:w-auto">
-                <TabsTrigger value="all" className="text-xs px-4 flex-1 sm:flex-none">All</TabsTrigger>
-                <TabsTrigger value="my" className="text-xs px-4 flex-1 sm:flex-none">My</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          )}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+            {isMasterSales && (
+              <Tabs value={viewMode} onValueChange={setViewMode} className="w-full sm:w-auto">
+                <TabsList className="h-9 w-full sm:w-auto">
+                  <TabsTrigger value="all" className="text-xs px-4 flex-1 sm:flex-none">All</TabsTrigger>
+                  <TabsTrigger value="my" className="text-xs px-4 flex-1 sm:flex-none">My</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            )}
 
-          <SearchInput
-            value={searchTerm}
-            onChange={setSearchTerm}
-            placeholder="Search inquiries..."
-            className="w-full sm:flex-1 sm:min-w-[200px]"
-          />
+            <SearchInput
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search inquiries..."
+              className="w-full sm:flex-1 sm:min-w-[200px]"
+            />
+          </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -614,13 +616,11 @@ export default function Inquiries() {
       />
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-4 border-t">
-        <div className="flex items-center justify-between sm:justify-start gap-2">
-          <span className="text-sm text-muted-foreground hidden sm:inline whitespace-nowrap">
-            Rows per page
-          </span>
-          <span className="text-sm text-muted-foreground sm:hidden whitespace-nowrap">
-            Per page
+      <div className="flex flex-col sm:flex-row items-center justify-end gap-3 sm:gap-8 pt-4 border-t">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+          <span className="text-xs sm:text-sm whitespace-nowrap text-muted-foreground">
+            <span className="hidden sm:inline">Rows per page</span>
+            <span className="sm:hidden">Per page</span>
           </span>
           <Select
             value={pagination.limit.toString()}
@@ -643,12 +643,11 @@ export default function Inquiries() {
           </Select>
         </div>
 
-        <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-8">
-          <span className="text-sm text-muted-foreground whitespace-nowrap">
-            Page {pagination.page} of {pagination.totalPages}
-          </span>
+        <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+          Page {pagination.page} of {pagination.totalPages}
+        </span>
 
-          <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1">
             <Button
               variant="outline"
               size="icon"
@@ -741,7 +740,6 @@ export default function Inquiries() {
             </Button>
           </div>
         </div>
-      </div>
 
       <AddInquiryDialog
         open={isCreateDialogOpen}

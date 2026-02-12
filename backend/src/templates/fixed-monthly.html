@@ -3,19 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
       font-family: Arial, sans-serif;
       line-height: 1.6;
       color: #000;
-      max-width: 800px;
+      max-width: 210mm;
       margin: 0 auto;
-      padding: 20px;
+      padding: 0;
+      font-size: 11pt;
     }
 
     .header {
       width: 100%;
-      margin-bottom: 30px;
-      padding-bottom: 15px;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      border-bottom: 3px solid #104806;
     }
 
     .header-table {
@@ -36,10 +44,10 @@
 
     .logo h1 {
       color: #104806;
-      font-size: 32px;
+      font-size: 28pt;
       font-weight: bold;
       margin: 0;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
     }
 
     .logo h1 .dot {
@@ -47,178 +55,235 @@
     }
 
     .logo p {
-      color: #2a6b1f;
-      font-size: 11px;
+      color: #104806;
+      font-size: 9pt;
       margin: 5px 0 0 0;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
+      font-weight: normal;
     }
 
     .contact-info {
       width: 50%;
       text-align: right;
-      font-size: 9px;
-      color: #2a6b1f;
-      line-height: 1.4;
+      font-size: 8pt;
+      color: #000;
+      line-height: 1.6;
+    }
+
+    .contact-info strong {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .content {
+      padding: 0 40px 40px 40px;
     }
 
     .date {
-      margin: 20px 0;
+      margin: 20px 0 30px 0;
       font-weight: bold;
+      font-size: 11pt;
     }
 
     .recipient {
-      margin: 20px 0;
-      line-height: 1.8;
+      margin: 0 0 25px 0;
+      line-height: 1.4;
     }
 
     .recipient p {
-      margin: 2px 0;
+      margin: 0 0 2px 0;
       font-weight: bold;
+      font-size: 11pt;
     }
 
     .greeting {
-      margin: 20px 0;
+      margin: 25px 0 15px 0;
+    }
+
+    .greeting p {
+      margin: 0;
     }
 
     .intro {
-      margin: 20px 0;
+      margin: 15px 0 20px 0;
       text-align: justify;
+      line-height: 1.5;
+    }
+
+    .intro p {
+      margin: 0;
     }
 
     .section-title {
       font-weight: bold;
-      margin: 25px 0 15px 0;
-      font-size: 16px;
+      margin: 30px 0 20px 0;
+      font-size: 12pt;
     }
 
     .subsection-title {
       font-weight: bold;
-      margin: 20px 0 10px 0;
-      font-size: 14px;
+      margin: 20px 0 15px 0;
+      font-size: 11pt;
     }
 
     .pricing-table {
-      width: 100% !important;
-      border-collapse: collapse !important;
-      margin: 15px 0 !important;
-      display: table !important;
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0 20px 0;
     }
 
     .pricing-table thead {
-      background-color: #104806 !important;
-      color: white !important;
-      display: table-header-group !important;
-    }
-
-    .pricing-table tbody {
-      display: table-row-group !important;
-    }
-
-    .pricing-table tr {
-      display: table-row !important;
-    }
-
-    /* Also target first row as header in case thead is stripped */
-    .pricing-table tr:first-child {
-      background-color: #104806 !important;
-      color: white !important;
-    }
-
-    .pricing-table tr:first-child th,
-    .pricing-table tr:first-child td {
-      background-color: #104806 !important;
-      color: white !important;
-      font-weight: bold !important;
+      background-color: #000;
+      color: white;
     }
 
     .pricing-table th,
     .pricing-table td {
-      border: 1px solid #000 !important;
-      padding: 10px !important;
-      text-align: left !important;
-      display: table-cell !important;
+      border: 1px solid #000;
+      padding: 10px 12px;
+      text-align: left;
+      font-size: 10pt;
     }
 
     .pricing-table th {
-      font-weight: bold !important;
-      background-color: #104806 !important;
-      color: white !important;
+      font-weight: bold;
+      font-style: italic;
+    }
+
+    .pricing-table tbody tr {
+      background-color: white;
     }
 
     .note {
       font-style: italic;
-      margin: 10px 0;
-      padding: 10px;
-      background-color: #f5f5f5;
+      margin: 0 0 25px 0;
+      padding: 0;
+      background-color: transparent;
+      font-size: 10pt;
+      line-height: 1.5;
     }
 
     .terms-section {
-      margin: 20px 0;
+      margin: 25px 0;
     }
 
     .terms-title {
       font-weight: bold;
-      margin: 15px 0 5px 0;
+      margin: 20px 0 10px 0;
+      font-size: 11pt;
     }
 
     ul {
-      margin: 5px 0;
-      padding-left: 30px;
+      margin: 5px 0 15px 0;
+      padding-left: 40px;
     }
 
     ul ul {
       list-style-type: circle;
       margin: 5px 0;
+      padding-left: 30px;
     }
 
     li {
       margin: 5px 0;
+      line-height: 1.5;
+      text-align: justify;
     }
 
     .guarantees {
-      margin: 25px 0;
+      margin: 30px 0;
+    }
+
+    .guarantees-title {
+      font-weight: bold;
+      margin: 30px 0 20px 0;
+      font-size: 11pt;
     }
 
     .guarantee-item {
-      margin: 15px 0;
+      margin: 20px 0;
     }
 
     .guarantee-title {
       font-weight: bold;
-      margin-bottom: 5px;
+      margin-bottom: 8px;
+      font-size: 11pt;
     }
 
     .guarantee-content {
       text-align: justify;
       margin-left: 20px;
+      line-height: 1.5;
     }
 
     .disposal-section {
-      margin: 25px 0;
+      margin: 30px 0;
+    }
+
+    .disposal-title {
+      font-weight: bold;
+      margin: 30px 0 15px 0;
+      font-size: 11pt;
+    }
+
+    .disposal-intro {
+      margin: 15px 0;
       text-align: justify;
+      line-height: 1.5;
+    }
+
+    .processes-title {
+      font-weight: bold;
+      margin: 20px 0 15px 0;
+      font-size: 11pt;
+    }
+
+    .processes-intro {
+      margin: 10px 0 15px 0;
+      text-align: justify;
+      line-height: 1.5;
     }
 
     .process-list {
       margin: 15px 0;
+      padding-left: 0;
+      list-style-type: none;
+      counter-reset: process-counter;
     }
 
-    .process-item {
-      margin: 10px 0;
+    .process-list li {
+      margin: 15px 0 15px 30px;
       text-align: justify;
+      line-height: 1.5;
+      counter-increment: process-counter;
+      position: relative;
+      padding-left: 10px;
     }
 
-    .process-item strong {
-      display: inline-block;
-      margin-right: 5px;
+    .process-list li:before {
+      content: counter(process-counter) ". ";
+      font-weight: bold;
+      position: absolute;
+      left: -20px;
+    }
+
+    .process-list strong {
+      font-weight: bold;
     }
 
     .closing {
       margin: 30px 0 20px 0;
       text-align: justify;
+      line-height: 1.5;
     }
 
     .signature-section {
-      margin: 40px 0;
+      margin: 40px 0 30px 0;
+    }
+
+    .signature-section > p {
+      margin-bottom: 40px;
     }
 
     .signature-block {
@@ -227,22 +292,7 @@
 
     .signature-block p {
       margin: 2px 0;
-    }
-
-    .footer-logo {
-      text-align: center;
-      margin: 40px 0 20px 0;
-    }
-
-    .footer-logo img {
-      width: 40px;
-      height: 40px;
-    }
-
-    hr {
-      border: none;
-      border-top: 2px solid #104806;
-      margin: 20px 0;
+      line-height: 1.4;
     }
 
     strong {
@@ -251,11 +301,12 @@
 
     p {
       margin-bottom: 10px;
+      line-height: 1.5;
     }
   </style>
 </head>
 <body>
-  <!-- HEADER: NOT EDITABLE - stays outside .content wrapper -->
+  <!-- HEADER: Repeats on every page -->
   <div class="header">
     <table class="header-table">
       <tr>
@@ -264,7 +315,7 @@
           <p>PRIVATE WASTE MANAGEMENT</p>
         </td>
         <td class="contact-info">
-          <strong>UNIT 503, THE MERIDIAN CONDOMINIUM, GOCHAN DR., KASAMBAGAN, CEBU CITY, CEBU, 6000</strong><br>
+          <strong>UNIT 503, THE MERIDIAN CONDOMINIUM, GOCHAN DR., KASAMBAGAN, CEBU CITY, CEBU, 6000</strong>
           ADMIN @WASTE.PH&nbsp;&nbsp;&nbsp;&nbsp;SALES @WASTE.PH&nbsp;&nbsp;&nbsp;&nbsp;0956-246-1503&nbsp;&nbsp;&nbsp;&nbsp;0927-796-6751
         </td>
       </tr>
@@ -295,7 +346,7 @@
     </div>
 
     <div class="intro">
-      <p>This is in reference to the work specification for <strong>Fixed Monthly Rate Waste Collection</strong> for your business establishment.</p>
+      <p>This is in reference to the work specification for <strong>Waste Collection</strong> for your business establishment, in compliance with regulations;</p>
     </div>
 
     <div class="section-title">SCOPE OF WORK</div>
@@ -313,23 +364,108 @@
       <tbody>
         <tr>
           <td>Mixed Solid Waste(General Waste) and Food Waste</td>
-          <td>₱ {{pricing.monthlyRate}}</td>
+          <td>₱ {{currency pricing.monthlyRate}}</td>
           <td>{{pricing.wasteAllowance}} kg</td>
         </tr>
       </tbody>
     </table>
 
     <div class="note">
-      <strong>Note:</strong> {{pricing.excessRate}} php per kg shall be billed upon excess of the allocated Waste Allowance of {{pricing.wasteAllowance}} kg.
+      <strong><em>Note:</em></strong> <em>{{pricing.excessRate}} php per kg shall be billed upon excess of the allocated Waste Allowance of {{pricing.wasteAllowance}} kg.</em>
+    </div>
+
+    <div class="terms-section">
+      <div class="terms-title">Terms:</div>
+
+      <div class="terms-title" style="margin-left: 20px;">Collection Terms:</div>
+      <ul>
+        <li>Four (4) times a month pickup (Once a week)</li>
+      </ul>
+
+      <div class="terms-title" style="margin-left: 20px;">Payment Terms:</div>
+      <ul>
+        <li>Garbage Collection shall be upon completion of service:
+          <ul>
+            <li>{{currency pricing.monthlyRate}} Php per month for {{pricing.wasteAllowance}} kg Waste allowance billable</li>
+            <li>If the waste exceeds the {{pricing.wasteAllowance}} kg capacity allocated, an additional charge of ₱{{pricing.excessRate}} per kg will apply.</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="terms-title" style="margin-left: 20px;">Schedule:</div>
+      <ul>
+        <li>The schedule of Pickups is flexible and reliant on client needs.
+          <ul>
+            <li>We may operate scheduled pick-ups of 1 - 7 times per week as necessary or by client requests</li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+    <div class="guarantees">
+      <div class="guarantees-title">Our Guarantees:</div>
+
+      <div class="guarantee-item">
+        <div class="guarantee-title">On Time Scheduled Pickups</div>
+        <div class="guarantee-content">
+          <ul style="list-style-type: disc;">
+            <li>Our garbage collection service operates with precision, ensuring on-time pickups to maintain a clean and efficient environment. We take pride in our commitment to timely waste removal, providing a reliable solution for our community's sanitation needs. With our scheduled garbage collection, you can trust that your waste will be promptly and responsibly managed.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="guarantee-item">
+        <div class="guarantee-title">Cost Effective Waste Solutions</div>
+        <div class="guarantee-content">
+          <ul style="list-style-type: disc;">
+            <li>Our waste solutions are designed to be cost-effective, offering efficient and budget-friendly options for waste management. We prioritize providing sustainable solutions without compromising on quality, making environmentally conscious practices accessible at affordable rates.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="guarantee-item">
+        <div class="guarantee-title">Proper disposal with certification</div>
+        <div class="guarantee-content">
+          <ul style="list-style-type: disc;">
+            <li>Our commitment to the proper disposal of garbage is reinforced by certification, ensuring that waste is handled responsibly and in compliance with environmental standards. We take pride in our rigorous processes, guaranteeing that every disposal action aligns with approved protocols. Choose confidence in waste management with our certified practices for a cleaner and greener future.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="disposal-section">
+      <div class="disposal-title">DISPOSAL PROCESS</div>
+
+      <div class="disposal-intro">
+        <p>Garbage collected from your facility shall be disposed of at Prime Waste Solutions, Inc's Material Recovery Facility, located at Sitio Kainsikan, Brgy. Binaliw, Cebu City. All garbage collected and disposed shall be issued a Certificate of Disposal from Prime Waste Solutions, Inc.</p>
+      </div>
+
+      <div class="processes-title">Processes:</div>
+
+      <div class="processes-intro">
+        <p>Upon arrival of our trucks at the MRF, the solid waste shall undergo the following processes:</p>
+      </div>
+
+      <ol class="process-list">
+        <li><strong>Sorting:</strong> Sorting facility where collected waste is meticulously segregated into categories such as plastics, paper, glass, metals, and organic waste. This step is crucial for effective recycling and further processing.</li>
+
+        <li><strong>Recycling:</strong> Items marked as recyclable such as plastics, paper, glass, and metals, shall be collected by accredited recyclers from the premises of Prime Waste Solutions.</li>
+
+        <li><strong>Waste to Energy:</strong> Organic waste is used to fuel the waste-to-energy technologies to convert non-recyclable waste into energy. This method helps minimize the volume of waste sent to landfills while producing renewable energy, contributing to the reduction of greenhouse gas emissions. Prime Waste Solutions has started the production of municipal waste solid-derived fuel in Cebu. This fuel is a low-carbon refuse derived fuel (RDF) produced from Municipal solid waste derived from its daily 1000 tons of waste from nearby Cities, Municipalities, and Barangays.</li>
+      </ol>
     </div>
 
     <div class="closing">
+      <p>Waste PH provides you with exceptional service and reliable support to meet your waste management needs.</p>
+
+      <p>We look forward to the possibility of working with you and contributing to your organization's environmental sustainability goals.</p>
+
       <p>Thank you for considering our services.</p>
     </div>
 
     <div class="signature-section">
       <p>Sincerely,</p>
-      <br>
+
       <div class="signature-block">
         <p><strong>Adrian Kim S. Balila</strong></p>
         <p>Chief Marketing Officer</p>
@@ -340,8 +476,6 @@
         <p><strong>Accepted By:</strong></p>
       </div>
     </div>
-
-    <hr>
   </div>
   <!-- END EDITABLE CONTENT -->
 </body>

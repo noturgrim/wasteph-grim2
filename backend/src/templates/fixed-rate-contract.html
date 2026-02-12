@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contract of Services - Fixed Rate Collection</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      color: #000;
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 0;
+      font-size: 11pt;
+    }
+
+    .header {
+      width: 100%;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+      border-bottom: 3px solid #104806;
+    }
+
+    .header-table {
+      width: 100%;
+      border: none;
+      border-collapse: collapse;
+    }
+
+    .header-table td {
+      border: none;
+      padding: 0;
+      vertical-align: top;
+    }
+
+    .logo {
+      width: 50%;
+    }
+
+    .logo h1 {
+      color: #104806;
+      font-size: 28pt;
+      font-weight: bold;
+      margin: 0;
+      letter-spacing: 3px;
+    }
+
+    .logo h1 .dot {
+      color: #104806;
+    }
+
+    .logo p {
+      color: #104806;
+      font-size: 9pt;
+      margin: 5px 0 0 0;
+      letter-spacing: 1.5px;
+      font-weight: normal;
+    }
+
+    .contact-info {
+      width: 50%;
+      text-align: right;
+      font-size: 8pt;
+      color: #000;
+      line-height: 1.6;
+    }
+
+    .contact-info strong {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .content {
+      padding: 0 40px 40px 40px;
+    }
+
+    .contract-title {
+      font-size: 18pt;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .intro {
+      margin: 15px 0 20px 0;
+      text-align: justify;
+      line-height: 1.5;
+    }
+
+    .intro p {
+      margin: 0 0 10px 0;
+    }
+
+    .party-block {
+      margin: 20px 0;
+      text-align: justify;
+      line-height: 1.5;
+    }
+
+    .party-block p {
+      margin: 2px 0;
+    }
+
+    .section-title {
+      font-weight: bold;
+      margin: 25px 0 12px 0;
+      font-size: 12pt;
+    }
+
+    .subsection-title {
+      font-weight: bold;
+      margin: 15px 0 8px 0;
+      font-size: 11pt;
+    }
+
+    .clause-list {
+      margin-left: 20px;
+      margin-top: 8px;
+    }
+
+    .clause-list li {
+      margin: 5px 0;
+      line-height: 1.5;
+      text-align: justify;
+    }
+
+    .clause-list .sub-clause {
+      margin-left: 20px;
+      list-style-type: lower-alpha;
+    }
+
+    .signature-section {
+      margin: 40px 0 30px 0;
+    }
+
+    .signatories {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      margin-top: 10px;
+    }
+
+    .signature-block {
+      text-align: center;
+    }
+
+    .signature-line {
+      border-top: 2px solid #2d3748;
+      margin-top: 60px;
+      padding-top: 8px;
+      font-size: 10pt;
+      font-weight: bold;
+    }
+
+    .signature-label {
+      font-size: 11pt;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .signature-position {
+      font-size: 10pt;
+      color: #4a5568;
+    }
+
+    @media print {
+      body {
+        padding: 0;
+      }
+      .content {
+        padding: 0 30px 30px 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- HEADER -->
+  <div class="header">
+    <table class="header-table">
+      <tr>
+        <td class="logo">
+          <h1>WASTE <span class="dot">•</span> PH</h1>
+          <p>PRIVATE WASTE MANAGEMENT</p>
+        </td>
+        <td class="contact-info">
+          <strong>UNIT 503, THE MERIDIAN CONDOMINIUM, GOCHAN DR., KASAMBAGAN, CEBU CITY, CEBU, 6000</strong>
+          ADMIN @WASTE.PH&nbsp;&nbsp;&nbsp;&nbsp;SALES @WASTE.PH&nbsp;&nbsp;&nbsp;&nbsp;0956-246-1503&nbsp;&nbsp;&nbsp;&nbsp;0927-796-6751
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- CONTRACT CONTENT -->
+  <div class="content">
+    <div class="contract-title">Contract of Services</div>
+
+    <div class="intro">
+      <p>This Contract of Services ("Contract") is entered into this <strong>{{contractDate}}</strong> by and between:</p>
+    </div>
+
+    <div class="party-block">
+      <p><strong>PHILIPPINE WASTE SERVICE CORPORATION</strong> operating under the trade name "WASTE PH", duly organized under the laws of the Republic of the Philippines, with principal office located at Unit 503 The Meridian Condominium, Golam Dr., Kasambagan, Cebu City, Cebu represented herein by Its President, Philip Joshua Canete, duly authorized, hereinafter referred to as the "SERVICE PROVIDER,"</p>
+    </div>
+
+    <div class="intro">
+      <p>And</p>
+    </div>
+
+    <div class="party-block">
+      <p><strong>{{companyName}}</strong>, a business duly organized and existing under the laws of the Philippines, with address at <strong>{{clientAddress}}</strong>, represented herein by, <strong>{{clientName}}</strong>, duly authorized hereinafter referred to as the "CLIENT."</p>
+    </div>
+
+    <div class="intro">
+      <p>WHEREAS, the CLIENT desires to avail of the SERVICE PROVIDER's waste collection services under the Fixed Rate Collection Service;</p>
+      <p>WHEREAS, the SERVICE PROVIDER agrees to provide said services subject to terms and conditions herein stipulated;</p>
+      <p>NOW, THEREFORE, in consideration of mutual agreements herein contained, both parties hereby agree as follows:</p>
+    </div>
+
+    <div class="section-title">1. SCOPE OF SERVICE</div>
+    <div class="party-block">
+      <p>The SERVICE PROVIDER shall provide waste collection services under the Fixed Rate Collection Service terms and conditions as stipulated in this Contract.</p>
+    </div>
+
+    <div class="section-title">2. RATE AND PAYMENT TERMS</div>
+    <div class="party-block">
+      <p>The CLIENT shall pay a fixed monthly rate of {{#if monthlyRate}}Php {{currency monthlyRate}}{{else}}{{#if ratePerKg}}Php {{currency ratePerKg}}{{else}}Php 5,000{{/if}}{{/if}}. Payments shall be due monthly, on the First day of each month.</p>
+    </div>
+
+    <div class="section-title">3. CONDITIONS OF SERVICE</div>
+
+    <div class="subsection-title">3.1</div>
+    <div class="party-block">
+      <p>Garbage collection services for the client are to be conducted at a minimum of one instance per week.</p>
+    </div>
+
+    <div class="subsection-title">3.2 Excess Weight Charges</div>
+    <div class="party-block">
+      <p>In the event that the CLIENT exceeds the allocated waste threshold of {{#if wasteAllowance}}{{wasteAllowance}} kg{{else}}one thousand two hundred and fifty kilograms (1,250 kg){{/if}} for the month, an excess charge of {{#if excessRate}}PHP {{excessRate}}{{else}}Four Pesos (PHP 4.00){{/if}} VAT Exclusive per kilogram shall be imposed for each kilogram collected beyond the allocated threshold.</p>
+    </div>
+
+    <div class="subsection-title">3.3</div>
+    <div class="party-block">
+      <p>No hazardous materials shall be included in the waste. Specific hazardous wastes include:</p>
+      <ul class="clause-list">
+        <li>3.3.1 Cyanide-containing waste (Code A101)</li>
+        <li>3.3.2 Acid wastes such as sulfuric, hydrochloric, nitric, phosphoric, hydrofluoric acids (Codes B201-B208)</li>
+        <li>3.3.3 Alkali wastes (caustic soda, potash, alkaline cleaners, ammonium hydroxide, lime slurries) (Codes C301-C305)</li>
+        <li>3.3.4 Inorganic chemical wastes (arsenic, cadmium, chromium, lead, mercury, etc.) (Codes D401-D499)</li>
+        <li>3.3.5 Reactive chemical wastes (oxidizing agents, reducing agents, explosives) (Codes E501-E599)</li>
+        <li>3.3.6 Organic solvents and resins (halogenated/non-halogenated solvents, inks, dyes, paints) (Codes F601-G704)</li>
+        <li>3.3.7 Grease, used oils, contaminated containers (Codes H802, I101-I104, J201)</li>
+        <li>3.3.8 Pathogenic, pharmaceutical, pesticide wastes, asbestos, and electronic waste (Codes M501-M507)</li>
+      </ul>
+    </div>
+
+    <div class="subsection-title">3.4</div>
+    <div class="party-block">
+      <p>No bulky materials (such as bed frames, sofas, large appliances, furniture) shall be included in the waste.</p>
+    </div>
+
+    <div class="subsection-title">3.5</div>
+    <div class="party-block">
+      <p>Garbage compression is strictly prohibited.</p>
+    </div>
+
+    <div class="section-title">4. PENALTIES</div>
+    <div class="party-block">
+      <p>Violations of any conditions specified in Section 3 shall incur a penalty of Php 3,000 per incident.</p>
+    </div>
+
+    <div class="section-title">5. TERM OF CONTRACT</div>
+    <div class="party-block">
+      <p>This Contract shall commence on <strong>{{contractDate}}</strong> and remain effective for a period of {{#if contractDuration}}{{contractDuration}}{{else}}one (1) calendar year{{/if}} unless terminated earlier by mutual agreement or breach of contract terms.</p>
+    </div>
+
+    <div class="section-title">6. GOVERNING LAW</div>
+    <div class="party-block">
+      <p>This Contract shall be governed by and construed in accordance with the laws of the Republic of the Philippines.</p>
+    </div>
+
+    <div class="intro">
+      <p>IN WITNESS WHEREOF, the parties have executed this Contract on the date first above written.</p>
+    </div>
+
+    <div class="signature-section">
+      <div class="signatories">
+        {{#if signatories}}
+        {{#each signatories}}
+        <div class="signature-block">
+          <div class="signature-label">{{this.name}}</div>
+          <div class="signature-position">{{this.position}}</div>
+          <div class="signature-line">Authorized Signature</div>
+        </div>
+        {{/each}}
+        {{else}}
+        <div class="signature-block">
+          <div class="signature-label">SERVICE PROVIDER</div>
+          <div class="signature-position"> Philippine Waste Service Corporation</div>
+          <div class="signature-line">Authorized Signature</div>
+        </div>
+        <div class="signature-block">
+          <div class="signature-label">CLIENT</div>
+          <div class="signature-position">{{companyName}}</div>
+          <div class="signature-line">Authorized Signature</div>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

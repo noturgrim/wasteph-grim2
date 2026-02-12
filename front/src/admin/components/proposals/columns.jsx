@@ -152,7 +152,7 @@ export const createColumns = ({ users = [], onReview, onDelete, onRevise, onSend
       const proposal = row.original;
 
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2">
           {/* Review Button - admin/super_admin only, pending proposals */}
           {userRole !== "sales" && proposal.status === "pending" && (
             <Button

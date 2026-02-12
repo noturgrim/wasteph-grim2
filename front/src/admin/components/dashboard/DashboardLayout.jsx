@@ -65,10 +65,12 @@ const DashboardLayout = () => {
               </svg>
             </div>
             <div>
-              <h1 className="text-lg font-black uppercase tracking-tight text-slate-900 dark:text-white">
-                WastePH
+              <h1 className="text-lg font-black uppercase tracking-tight">
+                <span className="text-slate-900 dark:text-white">WASTE</span>
+                <span className="text-[#15803d] dark:text-[#16a34a]"> • </span>
+                <span className="text-[#15803d] dark:text-[#16a34a]">PH</span>
               </h1>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-white/40">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#15803d] dark:text-[#16a34a]">
                 CRM System
               </p>
             </div>
