@@ -1034,6 +1034,55 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "system",
 ]);
 
+// File entity type enum
+export const fileEntityTypeEnum = pgEnum("file_entity_type", [
+  "proposal",
+  "contract",
+  "signed_contract",
+  "hardbound_contract",
+  "custom_template",
+  "ticket_attachment",
+]);
+
+// File action enum
+export const fileActionEnum = pgEnum("file_action", [
+  "generated",
+  "uploaded",
+  "signed",
+]);
+
+// User Files Table - centralized file history for all users
+export const userFilesTable = pgTable(
+  "user_files",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    fileName: text("file_name").notNull(),
+    fileUrl: text("file_url").notNull(),
+    fileType: text("file_type"),
+    fileSize: integer("file_size"),
+    entityType: fileEntityTypeEnum("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    relatedEntityNumber: text("related_entity_number"),
+    clientName: text("client_name"),
+    action: fileActionEnum("action").notNull(),
+    uploadedBy: text("uploaded_by").references(() => userTable.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    uploadedByIdx: index("user_files_uploaded_by_idx").on(table.uploadedBy),
+    entityTypeIdx: index("user_files_entity_type_idx").on(table.entityType),
+    createdAtIdx: index("user_files_created_at_idx").on(table.createdAt),
+    uploadedByCreatedAtIdx: index("user_files_uploaded_by_created_at_idx").on(
+      table.uploadedBy,
+      table.createdAt
+    ),
+  })
+);
+
 // Notifications Table
 export const notificationsTable = pgTable(
   "notifications",

@@ -1023,6 +1023,23 @@ class ApiClient {
       method: "PATCH",
     });
   }
+
+  // File management
+  async getFiles(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.entityType) params.append("entityType", filters.entityType);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.page) params.append("page", filters.page);
+    if (filters.limit) params.append("limit", filters.limit);
+    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
+    if (filters.dateTo) params.append("dateTo", filters.dateTo);
+    const queryString = params.toString();
+    return this.request(`/files${queryString ? `?${queryString}` : ""}`);
+  }
+
+  async getFileDownloadUrl(fileId) {
+    return this.request(`/files/${fileId}/download`);
+  }
 }
 
 // Export singleton instance

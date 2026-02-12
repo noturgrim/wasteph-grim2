@@ -10,6 +10,7 @@ import { eq, desc, and, or, inArray, like, count, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 import counterService from "./counterService.js";
 import { getPresignedUrl } from "./s3Service.js";
+import fileService from "./fileService.js";
 
 /**
  * TicketService - Business logic for client ticket operations
@@ -498,6 +499,20 @@ class TicketService {
         uploadedBy: userId,
       })
       .returning();
+
+    // Log file to user_files (fire-and-forget)
+    fileService.logFile({
+      fileName,
+      fileUrl,
+      fileType,
+      fileSize,
+      entityType: "ticket_attachment",
+      entityId: ticketId,
+      relatedEntityNumber: ticket.ticketNumber,
+      clientName: null,
+      action: "uploaded",
+      uploadedBy: userId,
+    });
 
     return attachment;
   }

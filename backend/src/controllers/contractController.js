@@ -587,7 +587,7 @@ export const handleClientSubmission = async (req, res, next) => {
     await uploadObject(key, req.file.buffer, "application/pdf");
 
     // Record signing + auto-create client
-    await contractServiceWithSocket.recordClientSigning(id, key, req.ip);
+    await contractServiceWithSocket.recordClientSigning(id, key, req.ip, req.file.buffer.length);
 
     res.json({
       success: true,
@@ -631,7 +631,8 @@ export const uploadHardboundContract = async (req, res, next) => {
     const contract = await contractServiceWithSocket.uploadHardboundContract(
       id,
       key,
-      req.user.id
+      req.user.id,
+      req.file.buffer.length
     );
 
     res.json({

@@ -38,6 +38,7 @@ import clientNotesRoutes from "./routes/clientNotesRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import emailPreviewRoutes from "./routes/emailPreviewRoutes.js";
+import fileRoutes from "./routes/fileRoutes.js";
 
 dotenv.config();
 
@@ -124,6 +125,7 @@ app.use("/api/client-notes", clientNotesRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/email-preview", emailPreviewRoutes);
+app.use("/api/files", fileRoutes);
 
 // 404 handler
 app.use(notFoundHandler);
