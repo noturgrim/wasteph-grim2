@@ -1639,11 +1639,11 @@ ${bodyTag}
                           </p>
                         </div>
                         {selectedServiceName && (
-                          <div className="text-sm mb-1">
+                          <div className="text-xs sm:text-sm mb-1">
                             <span className="text-gray-600 dark:text-gray-400">
                               Service:{" "}
                             </span>
-                            <span className="font-medium text-gray-900 dark:text-white">
+                            <span className="font-medium text-gray-900 dark:text-white break-words">
                               {selectedServiceName}
                               {selectedSubTypeName &&
                                 ` - ${selectedSubTypeName}`}
@@ -1651,17 +1651,17 @@ ${bodyTag}
                           </div>
                         )}
                         {template && (
-                          <div className="text-sm">
+                          <div className="text-xs sm:text-sm">
                             <span className="text-gray-600 dark:text-gray-400">
                               Template:{" "}
                             </span>
-                            <span className="font-medium text-gray-900 dark:text-white">
+                            <span className="font-medium text-gray-900 dark:text-white break-words">
                               {template.name}
                             </span>
                           </div>
                         )}
                         {!template && (
-                          <div className="text-sm text-amber-700 dark:text-amber-400">
+                          <div className="text-xs sm:text-sm text-amber-700 dark:text-amber-400">
                             No template configured for this service
                           </div>
                         )}
@@ -1691,17 +1691,17 @@ ${bodyTag}
 
                   {creationMode === "upload" ? (
                     /* Upload mode - show selected file */
-                    <div className="flex-1 flex flex-col items-center justify-center">
-                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 w-full max-w-md">
+                    <div className="flex-1 flex flex-col items-center justify-center px-4">
+                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6 w-full max-w-md">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-red-50 dark:bg-red-900/30 rounded-lg flex items-center justify-center shrink-0">
-                            <FileText className="h-6 w-6 text-red-600 dark:text-red-400" />
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-50 dark:bg-red-900/30 rounded-lg flex items-center justify-center shrink-0">
+                            <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 dark:text-red-400" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 dark:text-white truncate">
+                            <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white truncate">
                               {uploadedPdf?.name}
                             </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                               {uploadedPdf && (uploadedPdf.size / 1024 / 1024).toFixed(2)} MB
                             </p>
                           </div>
@@ -1715,13 +1715,13 @@ ${bodyTag}
                                 prepareEditorContent();
                               }
                             }}
-                            className="text-gray-400 hover:text-red-600"
+                            className="text-gray-400 hover:text-red-600 shrink-0"
                           >
                             <X className="h-4 w-4" />
                           </Button>
                         </div>
-                        <div className="mt-4 flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
-                          <Check className="h-4 w-4" />
+                        <div className="mt-3 sm:mt-4 flex items-center gap-2 text-xs sm:text-sm text-green-700 dark:text-green-400">
+                          <Check className="h-4 w-4 shrink-0" />
                           <span>Ready to submit for approval</span>
                         </div>
                       </div>
@@ -1729,11 +1729,32 @@ ${bodyTag}
                   ) : (
                     /* Template editor mode (existing) */
                     <>
+                      {/* Mobile Editing Notice */}
+                      <div className="md:hidden bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-xs shrink-0 mb-3">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-amber-800 dark:text-amber-100 font-medium mb-1">
+                              Editing on Mobile
+                            </p>
+                            <p className="text-amber-700 dark:text-amber-300">
+                              For the best editing experience, we recommend using a desktop/laptop or uploading a pre-made PDF instead.
+                            </p>
+                            <button
+                              onClick={() => setShowUploadModal(true)}
+                              className="mt-2 text-amber-900 dark:text-amber-200 font-medium underline"
+                            >
+                              Upload PDF Instead →
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Instructions */}
-                      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-sm shrink-0 mb-3">
+                      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-xs sm:text-sm shrink-0 mb-3">
                         <div className="flex items-start gap-2">
                           <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-                          <div>
+                          <div className="min-w-0">
                             <p className="text-blue-800 dark:text-blue-100 font-medium">
                               The proposal below is shown in unstyled format for easy editing
                             </p>
@@ -1748,7 +1769,7 @@ ${bodyTag}
 
                       {/* Unsaved Changes Warning */}
                       <div
-                        className={`bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm shrink-0 mb-3 transition-all duration-200 ${
+                        className={`bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-xs sm:text-sm shrink-0 mb-3 transition-all duration-200 ${
                           hasUnsavedEditorChanges
                             ? "visible opacity-100"
                             : "invisible opacity-0 h-0 mb-0 p-0 border-0"
@@ -1756,7 +1777,7 @@ ${bodyTag}
                       >
                         <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
                           <AlertCircle className="h-4 w-4 shrink-0" />
-                          <span>
+                          <span className="break-words">
                             You have unsaved changes. Save before submitting.
                           </span>
                         </div>
@@ -1766,7 +1787,7 @@ ${bodyTag}
                       {isLoadingEditor ? (
                         <div className="flex-1 flex items-center justify-center">
                           <Loader2 className="h-8 w-8 animate-spin text-[#15803d]" />
-                          <span className="ml-3 text-gray-600 dark:text-gray-400">
+                          <span className="ml-3 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                             Loading editor...
                           </span>
                         </div>
@@ -1777,7 +1798,7 @@ ${bodyTag}
                             templateStyles={templateStructureRef.current.styles}
                             onChange={handleEditorSave}
                             onUnsavedChange={handleUnsavedChange}
-                            className="h-full"
+                            className="h-full min-h-[400px]"
                             onFullPreview={creationMode === "template" ? () => setShowPreview(true) : undefined}
                           />
                         </div>
