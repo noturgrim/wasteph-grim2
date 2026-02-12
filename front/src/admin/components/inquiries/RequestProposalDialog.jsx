@@ -943,9 +943,9 @@ ${bodyTag}
       <DialogContent
         className={`${
           currentStep === 3
-            ? "w-full sm:w-[1400px]! max-w-[98vw]! h-[98vh] sm:h-[95vh]! max-h-[98vh] sm:max-h-[95vh]!"
-            : "w-full sm:w-[1000px]! max-w-[95vw]! h-[98vh] sm:h-[90vh]! max-h-[98vh] sm:max-h-[90vh]!"
-        } flex flex-col p-0 gap-0 transition-all duration-300`}
+            ? "w-full sm:w-[1400px] sm:max-w-[98vw]"
+            : "w-full sm:w-[1000px] sm:max-w-[95vw]"
+        } max-w-[100vw] max-h-[100dvh] flex flex-col p-0 gap-0 transition-all duration-300 overflow-hidden`}
         onInteractOutside={(e) => e.preventDefault()}
       >
         <VisuallyHidden>
@@ -1120,14 +1120,14 @@ ${bodyTag}
           {/* Right Content Area */}
           <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
             {/* Mobile Header with Stepper */}
-            <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3 shrink-0">
-              <div className="mb-2">
-                <h3 className="text-base font-bold text-gray-900 dark:text-white">
+            <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-3 py-2 shrink-0">
+              <div className="mb-2 min-w-0">
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">
                   {inquiry?.proposalStatus === "disapproved"
                     ? "Revise Proposal"
                     : "Create Proposal"}
                 </h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                <p className="text-[10px] text-gray-600 dark:text-gray-400 truncate">
                   {inquiry?.name} • {inquiry?.email}
                 </p>
               </div>
@@ -1173,7 +1173,7 @@ ${bodyTag}
 
             {/* Content */}
             <div
-              className={`flex-1 px-4 sm:px-6 md:px-8 py-4 sm:py-6 min-h-0 ${
+              className={`flex-1 px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4 md:py-6 min-h-0 ${
                 currentStep === 3
                   ? "flex flex-col overflow-hidden"
                   : "overflow-y-auto overflow-x-hidden"
@@ -1194,10 +1194,10 @@ ${bodyTag}
 
               {currentStep === 1 ? (
                 /* STEP 1: Service Type Selection */
-                <div className="space-y-5">
+                <div className="space-y-4 sm:space-y-5">
                   {/* Step Title */}
-                  <div className="pb-3 sm:pb-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="pb-2 sm:pb-3 md:pb-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 className="text-base sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
                       Select Service Type
                     </h2>
                     <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -1207,14 +1207,14 @@ ${bodyTag}
 
                   {/* Template Auto-Selected Indicator */}
                   {selectedServiceId && template && !isLoadingTemplate && (
-                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 max-w-3xl">
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-2 sm:p-3 max-w-3xl">
                       <div className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
-                        <div className="flex items-baseline gap-2">
-                          <p className="text-xs font-medium text-green-900 dark:text-green-100">
+                        <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-green-600 dark:text-green-400 shrink-0" />
+                        <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2 min-w-0">
+                          <p className="text-[10px] sm:text-xs font-medium text-green-900 dark:text-green-100">
                             Template Auto-Selected:
                           </p>
-                          <p className="text-xs text-green-700 dark:text-green-300">
+                          <p className="text-[10px] sm:text-xs text-green-700 dark:text-green-300 truncate">
                             <span className="font-semibold">
                               {template.name}
                             </span>
@@ -1225,7 +1225,7 @@ ${bodyTag}
                   )}
 
                   {/* Service Cards Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-3xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 md:gap-4 max-w-3xl">
                     {services.map((service) => {
                       const isSelected = selectedServiceId === service.id;
                       // Map service names to icons
@@ -1245,7 +1245,7 @@ ${bodyTag}
                           type="button"
                           onClick={() => handleServiceChange(service.id)}
                           disabled={isLoadingTemplate}
-                          className={`relative flex flex-col items-center justify-center p-4 sm:p-6 rounded-xl border-2 transition-all text-center min-h-[120px] sm:min-h-[140px] bg-white dark:bg-gray-800 ${
+                          className={`relative flex flex-col items-center justify-center p-3 sm:p-4 md:p-6 rounded-lg sm:rounded-xl border-2 transition-all text-center min-h-[100px] sm:min-h-[120px] md:min-h-[140px] bg-white dark:bg-gray-800 ${
                             isSelected
                               ? "border-[#15803d]"
                               : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
@@ -1256,27 +1256,27 @@ ${bodyTag}
                           }`}
                         >
                           {/* Checkbox Circle - Top Right Inside */}
-                          <div className="absolute top-3 right-3">
+                          <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
                             {isSelected ? (
-                              <div className="w-5 h-5 bg-[#15803d] rounded-full flex items-center justify-center">
+                              <div className="w-4 h-4 sm:w-5 sm:h-5 bg-[#15803d] rounded-full flex items-center justify-center">
                                 <Check
-                                  className="w-3 h-3 text-white"
+                                  className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white"
                                   strokeWidth={3}
                                 />
                               </div>
                             ) : (
-                              <div className="w-5 h-5 border-2 border-gray-300 dark:border-gray-600 rounded-full" />
+                              <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-gray-300 dark:border-gray-600 rounded-full" />
                             )}
                           </div>
 
                           {/* Icon */}
-                          <div className="w-12 h-12 bg-white dark:bg-white border border-gray-200 dark:border-gray-600 rounded-lg flex items-center justify-center mb-3 text-gray-700 dark:text-gray-700 shadow-sm">
-                            <Icon className="w-6 h-6" />
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white dark:bg-white border border-gray-200 dark:border-gray-600 rounded-lg flex items-center justify-center mb-2 sm:mb-3 text-gray-700 dark:text-gray-700 shadow-sm">
+                            <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                           </div>
 
                           {/* Label */}
                           <h3
-                            className={`font-semibold text-sm mb-1 ${
+                            className={`font-semibold text-xs sm:text-sm mb-0.5 sm:mb-1 ${
                               isSelected
                                 ? "text-gray-900 dark:text-white"
                                 : "text-gray-900 dark:text-white"
@@ -1287,7 +1287,7 @@ ${bodyTag}
 
                           {/* Subtitle */}
                           <p
-                            className={`text-xs leading-relaxed ${
+                            className={`text-[10px] sm:text-xs leading-relaxed ${
                               isSelected
                                 ? "text-gray-600 dark:text-gray-400"
                                 : "text-gray-500 dark:text-gray-500"
@@ -1304,12 +1304,12 @@ ${bodyTag}
                   {selectedServiceId &&
                     subTypes.length > 0 &&
                     !isLoadingSubTypes && (
-                      <div className="max-w-3xl space-y-3">
+                      <div className="max-w-3xl space-y-2 sm:space-y-3">
                         <div>
-                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                          <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white">
                             Select {selectedServiceName} Type
                           </h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                             Choose the specific hauling method
                           </p>
                         </div>
@@ -1324,29 +1324,29 @@ ${bodyTag}
                                   setSelectedSubTypeId(subType.id);
                                   setSelectedSubTypeName(subType.name);
                                 }}
-                                className={`relative flex-1 flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all text-center ${
+                                className={`relative flex-1 flex flex-col items-center justify-center p-3 sm:p-4 rounded-lg sm:rounded-xl border-2 transition-all text-center ${
                                   isSelected
                                     ? "border-[#15803d] bg-green-50 dark:bg-green-900/20"
                                     : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800"
                                 } cursor-pointer`}
                               >
-                                <div className="absolute top-2.5 right-2.5">
+                                <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5">
                                   {isSelected ? (
-                                    <div className="w-4 h-4 bg-[#15803d] rounded-full flex items-center justify-center">
+                                    <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 bg-[#15803d] rounded-full flex items-center justify-center">
                                       <Check
-                                        className="w-2.5 h-2.5 text-white"
+                                        className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-white"
                                         strokeWidth={3}
                                       />
                                     </div>
                                   ) : (
-                                    <div className="w-4 h-4 border-2 border-gray-300 dark:border-gray-600 rounded-full" />
+                                    <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-gray-300 dark:border-gray-600 rounded-full" />
                                   )}
                                 </div>
-                                <h4 className="font-semibold text-sm text-gray-900 dark:text-white">
+                                <h4 className="font-semibold text-xs sm:text-sm text-gray-900 dark:text-white">
                                   {subType.name}
                                 </h4>
                                 {subType.description && (
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1">
                                     {subType.description}
                                   </p>
                                 )}
@@ -1810,14 +1810,14 @@ ${bodyTag}
             </div>
 
             {/* Footer - Inside Right Content Area */}
-            <div className="px-4 sm:px-6 md:px-8 py-3 sm:py-4 border-t border-gray-200 dark:border-gray-700 shrink-0 bg-gray-50/50 dark:bg-gray-900/50">
+            <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3 md:py-4 border-t border-gray-200 dark:border-gray-700 shrink-0 bg-gray-50/50 dark:bg-gray-900/50">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3">
                 {currentStep === 1 ? (
                   <>
                     <Button
                       variant="outline"
                       onClick={() => onOpenChange(false)}
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto h-9 text-sm"
                     >
                       Cancel
                     </Button>
@@ -1829,20 +1829,20 @@ ${bodyTag}
                         isLoadingSubTypes ||
                         (subTypes.length > 0 && !selectedSubTypeId)
                       }
-                      className="w-full sm:w-auto sm:min-w-[120px]"
+                      className="w-full sm:w-auto sm:min-w-[120px] h-9 text-sm"
                     >
                       {isLoadingTemplate ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-2 animate-spin" />
                       ) : (
-                        <ArrowRight className="h-4 w-4 mr-2" />
+                        <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                       )}
                       Next Step
                     </Button>
                   </>
                 ) : currentStep === 2 ? (
                   <>
-                    <Button variant="outline" onClick={() => setCurrentStep(1)} className="w-full sm:w-auto">
-                      <ArrowLeft className="h-4 w-4 mr-2" />
+                    <Button variant="outline" onClick={() => setCurrentStep(1)} className="w-full sm:w-auto h-9 text-sm">
+                      <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                       Back
                     </Button>
                     <Button
@@ -1856,12 +1856,12 @@ ${bodyTag}
                       disabled={
                         !isFormValid || isLoadingEditor || isLoadingTemplate
                       }
-                      className="w-full sm:w-auto sm:min-w-[140px]"
+                      className="w-full sm:w-auto sm:min-w-[140px] h-9 text-sm"
                     >
                       {isLoadingEditor ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-2 animate-spin" />
                       ) : (
-                        <ArrowRight className="h-4 w-4 mr-2" />
+                        <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                       )}
                       Next Step
                     </Button>
@@ -1872,9 +1872,9 @@ ${bodyTag}
                       variant="outline"
                       onClick={() => setCurrentStep(2)}
                       disabled={isSubmitting}
-                      className="w-full sm:w-auto"
+                      className="w-full sm:w-auto h-9 text-sm"
                     >
-                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                       Back
                     </Button>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
@@ -1882,23 +1882,23 @@ ${bodyTag}
                         variant="outline"
                         size="sm"
                         onClick={() => setShowUploadModal(true)}
-                        className="gap-2 w-full sm:w-auto"
+                        className="gap-2 w-full sm:w-auto h-9 text-sm"
                       >
-                        <Upload className="h-4 w-4" />
+                        <Upload className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span className="hidden sm:inline">Upload PDF Instead</span>
                         <span className="sm:hidden">Upload PDF</span>
                       </Button>
                       <Button
                         onClick={handleSubmitClick}
                         disabled={!canSubmit}
-                        className={`w-full sm:w-auto sm:min-w-[140px] ${
+                        className={`w-full sm:w-auto sm:min-w-[140px] h-9 text-sm ${
                           !canSubmit ? "opacity-50" : ""
                         }`}
                       >
                         {isSubmitting ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-2 animate-spin" />
                         ) : (
-                          <Send className="h-4 w-4 mr-2" />
+                          <Send className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                         )}
                         Submit Request
                       </Button>
