@@ -1040,6 +1040,163 @@ class ApiClient {
   async getFileDownloadUrl(fileId) {
     return this.request(`/files/${fileId}/download`);
   }
+
+  // Clients Showcase endpoints
+  async getActiveClientsShowcase() {
+    return this.request("/clients-showcase");
+  }
+
+  async getAllClientsShowcase() {
+    return this.request("/clients-showcase/all");
+  }
+
+  async getClientsShowcaseById(id) {
+    return this.request(`/clients-showcase/${id}`);
+  }
+
+  async createClientsShowcase(data) {
+    return this.request("/clients-showcase", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateClientsShowcase(id, data) {
+    return this.request(`/clients-showcase/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteClientsShowcase(id) {
+    return this.request(`/clients-showcase/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  async toggleClientsShowcaseStatus(id) {
+    return this.request(`/clients-showcase/${id}/toggle`, {
+      method: "PATCH",
+    });
+  }
+
+  async updateClientsShowcaseDisplayOrder(id, displayOrder) {
+    return this.request(`/clients-showcase/${id}/order`, {
+      method: "PATCH",
+      body: JSON.stringify({ displayOrder }),
+    });
+  }
+
+  // Showcase endpoints
+  async getActiveShowcases(limit = 6) {
+    const params = new URLSearchParams();
+    if (limit) params.append("limit", limit);
+    const queryString = params.toString();
+    return this.request(`/showcases${queryString ? `?${queryString}` : ""}`);
+  }
+
+  async getAllShowcases() {
+    return this.request("/showcases/all");
+  }
+
+  async getShowcaseById(id) {
+    return this.request(`/showcases/${id}`);
+  }
+
+  async createShowcase(data) {
+    return this.request("/showcases", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateShowcase(id, data) {
+    return this.request(`/showcases/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteShowcase(id) {
+    return this.request(`/showcases/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  async toggleShowcaseStatus(id) {
+    return this.request(`/showcases/${id}/toggle`, {
+      method: "PATCH",
+    });
+  }
+
+  async updateShowcaseDisplayOrder(id, displayOrder) {
+    return this.request(`/showcases/${id}/order`, {
+      method: "PATCH",
+      body: JSON.stringify({ displayOrder }),
+    });
+  }
+
+  // Blog endpoints
+  async getPublishedPosts(limit = 50) {
+    const params = new URLSearchParams();
+    if (limit) params.append("limit", limit);
+    const queryString = params.toString();
+    return this.request(`/blog${queryString ? `?${queryString}` : ""}`);
+  }
+
+  async getPostBySlug(slug) {
+    return this.request(`/blog/${slug}`);
+  }
+
+  async getPostsByCategory(category, limit = 10) {
+    const params = new URLSearchParams();
+    if (limit) params.append("limit", limit);
+    const queryString = params.toString();
+    return this.request(
+      `/blog/category/${encodeURIComponent(category)}${queryString ? `?${queryString}` : ""}`
+    );
+  }
+
+  async getAllPosts(filters = {}) {
+    const params = new URLSearchParams();
+    if (filters.status) params.append("status", filters.status);
+    if (filters.category) params.append("category", filters.category);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.page) params.append("page", filters.page);
+    if (filters.limit) params.append("limit", filters.limit);
+    const queryString = params.toString();
+    return this.request(
+      `/blog/admin/all${queryString ? `?${queryString}` : ""}`
+    );
+  }
+
+  async getPostById(id) {
+    return this.request(`/blog/admin/${id}`);
+  }
+
+  async createPost(postData) {
+    return this.request("/blog/admin", {
+      method: "POST",
+      body: JSON.stringify(postData),
+    });
+  }
+
+  async updatePost(id, postData) {
+    return this.request(`/blog/admin/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(postData),
+    });
+  }
+
+  async deletePost(id) {
+    return this.request(`/blog/admin/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  async getBlogStats() {
+    return this.request("/blog/admin/stats");
+  }
 }
 
 // Export singleton instance

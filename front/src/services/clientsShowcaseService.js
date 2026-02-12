@@ -3,7 +3,7 @@
  * Handles fetching client showcase items from backend
  */
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+import { api } from "../admin/services/api";
 
 // Request deduplication cache
 const pendingRequests = new Map();
@@ -14,16 +14,8 @@ const pendingRequests = new Map();
  */
 export const fetchClientsShowcase = async () => {
   try {
-    const response = await fetch(`${API_URL}/clients-showcase`);
-
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch clients showcase: ${response.statusText}`
-      );
-    }
-
-    const data = await response.json();
-    return data.data || [];
+    const response = await api.getActiveClientsShowcase();
+    return response.data || [];
   } catch (error) {
     console.error("Error fetching clients showcase:", error);
     throw error;
@@ -47,18 +39,8 @@ export const fetchAllClientsShowcase = async () => {
   const requestPromise = (async () => {
     try {
       // console.log('🚀 Making API call to /clients-showcase/all');
-      const response = await fetch(`${API_URL}/clients-showcase/all`, {
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch clients showcase: ${response.statusText}`
-        );
-      }
-
-      const data = await response.json();
-      return data.data || [];
+      const response = await api.getAllClientsShowcase();
+      return response.data || [];
     } catch (error) {
       console.error("Error fetching all clients showcase:", error);
       throw error;
@@ -83,31 +65,15 @@ export const fetchAllClientsShowcase = async () => {
  */
 export const createClientShowcase = async (clientData) => {
   try {
-    const response = await fetch(`${API_URL}/clients-showcase`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(clientData),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      // Include detailed validation errors if present
-      if (error.errors && Array.isArray(error.errors)) {
-        const errorList = error.errors.map((e) => e.message).join(" • ");
-        throw new Error(
-          `${error.message || "Validation failed"}: ${errorList}`
-        );
-      }
-      throw new Error(error.message || "Failed to create client showcase");
-    }
-
-    const data = await response.json();
-    return data.data;
+    const response = await api.createClientsShowcase(clientData);
+    return response.data;
   } catch (error) {
     console.error("Error creating client showcase:", error);
+    // Re-format validation errors if present
+    if (error.validationErrors && Array.isArray(error.validationErrors)) {
+      const errorList = error.validationErrors.map((e) => e.message).join(" • ");
+      throw new Error(`${error.message || "Validation failed"}: ${errorList}`);
+    }
     throw error;
   }
 };
@@ -120,31 +86,15 @@ export const createClientShowcase = async (clientData) => {
  */
 export const updateClientShowcase = async (id, clientData) => {
   try {
-    const response = await fetch(`${API_URL}/clients-showcase/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify(clientData),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      // Include detailed validation errors if present
-      if (error.errors && Array.isArray(error.errors)) {
-        const errorList = error.errors.map((e) => e.message).join(" • ");
-        throw new Error(
-          `${error.message || "Validation failed"}: ${errorList}`
-        );
-      }
-      throw new Error(error.message || "Failed to update client showcase");
-    }
-
-    const data = await response.json();
-    return data.data;
+    const response = await api.updateClientsShowcase(id, clientData);
+    return response.data;
   } catch (error) {
     console.error("Error updating client showcase:", error);
+    // Re-format validation errors if present
+    if (error.validationErrors && Array.isArray(error.validationErrors)) {
+      const errorList = error.validationErrors.map((e) => e.message).join(" • ");
+      throw new Error(`${error.message || "Validation failed"}: ${errorList}`);
+    }
     throw error;
   }
 };
@@ -156,18 +106,8 @@ export const updateClientShowcase = async (id, clientData) => {
  */
 export const deleteClientShowcase = async (id) => {
   try {
-    const response = await fetch(`${API_URL}/clients-showcase/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Failed to delete client showcase");
-    }
-
-    const data = await response.json();
-    return data.data;
+    const response = await api.deleteClientsShowcase(id);
+    return response.data;
   } catch (error) {
     console.error("Error deleting client showcase:", error);
     throw error;
@@ -181,20 +121,8 @@ export const deleteClientShowcase = async (id) => {
  */
 export const toggleClientShowcaseStatus = async (id) => {
   try {
-    const response = await fetch(`${API_URL}/clients-showcase/${id}/toggle`, {
-      method: "PATCH",
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(
-        error.message || "Failed to toggle client showcase status"
-      );
-    }
-
-    const data = await response.json();
-    return data.data;
+    const response = await api.toggleClientsShowcaseStatus(id);
+    return response.data;
   } catch (error) {
     console.error("Error toggling client showcase status:", error);
     throw error;
@@ -209,22 +137,8 @@ export const toggleClientShowcaseStatus = async (id) => {
  */
 export const updateDisplayOrder = async (id, displayOrder) => {
   try {
-    const response = await fetch(`${API_URL}/clients-showcase/${id}/order`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({ displayOrder }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Failed to update display order");
-    }
-
-    const data = await response.json();
-    return data.data;
+    const response = await api.updateClientsShowcaseDisplayOrder(id, displayOrder);
+    return response.data;
   } catch (error) {
     console.error("Error updating display order:", error);
     throw error;
