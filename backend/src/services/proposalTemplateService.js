@@ -15,7 +15,28 @@ class ProposalTemplateService {
    * @returns {Promise<Object>} Created template
    */
   async createTemplate(templateData, userId, metadata = {}) {
-    const { name, description, htmlTemplate, isDefault } = templateData;
+    const { name, description, htmlTemplate, templateType, isDefault } = templateData;
+
+    // Enforce one active template per service type
+    if (templateType) {
+      const [existing] = await db
+        .select()
+        .from(proposalTemplateTable)
+        .where(
+          and(
+            eq(proposalTemplateTable.templateType, templateType),
+            eq(proposalTemplateTable.isActive, true)
+          )
+        )
+        .limit(1);
+
+      if (existing) {
+        throw new AppError(
+          `An active template already exists for service type "${templateType}". Delete or deactivate it first.`,
+          409
+        );
+      }
+    }
 
     // If setting as default, unset other defaults first
     if (isDefault) {
@@ -31,6 +52,7 @@ class ProposalTemplateService {
         name,
         description,
         htmlTemplate,
+        templateType: templateType || null,
         isDefault: isDefault || false,
         isActive: true,
       })
@@ -208,6 +230,28 @@ class ProposalTemplateService {
    */
   async updateTemplate(templateId, updateData, userId, metadata = {}) {
     const { name, description, htmlTemplate, isDefault, isActive, templateType } = updateData;
+
+    // Enforce one active template per service type (exclude current template)
+    if (templateType) {
+      const [existing] = await db
+        .select()
+        .from(proposalTemplateTable)
+        .where(
+          and(
+            eq(proposalTemplateTable.templateType, templateType),
+            eq(proposalTemplateTable.isActive, true),
+            sql`${proposalTemplateTable.id} != ${templateId}`
+          )
+        )
+        .limit(1);
+
+      if (existing) {
+        throw new AppError(
+          `An active template already exists for service type "${templateType}". Delete or deactivate it first.`,
+          409
+        );
+      }
+    }
 
     // If setting as default, unset other defaults first
     if (isDefault === true) {
