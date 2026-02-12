@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 import { DataTable } from "../components/DataTable";
 import { FacetedFilter } from "../components/FacetedFilter";
@@ -56,8 +56,9 @@ export default function Files() {
   // Filters
   const [entityTypeFilter, setEntityTypeFilter] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [dateFrom, setDateFrom] = useState(undefined);
-  const [dateTo, setDateTo] = useState(undefined);
+  const [dateRange, setDateRange] = useState(
+    /** @type {import("react-day-picker").DateRange | undefined} */ (undefined)
+  );
 
   // Server-side facet counts
   const [facets, setFacets] = useState({ entityType: {} });
@@ -69,7 +70,7 @@ export default function Files() {
   useEffect(() => {
     setPagination((prev) => ({ ...prev, page: 1 }));
     fetchFiles(1);
-  }, [entityTypeFilter, searchTerm, dateFrom, dateTo]);
+  }, [entityTypeFilter, searchTerm, dateRange]);
 
   const fetchFiles = async (
     page = pagination.page,
@@ -85,8 +86,12 @@ export default function Files() {
           entityType: entityTypeFilter.join(","),
         }),
         ...(searchTerm && { search: searchTerm }),
-        ...(dateFrom && { dateFrom: format(dateFrom, "yyyy-MM-dd") }),
-        ...(dateTo && { dateTo: format(dateTo, "yyyy-MM-dd") }),
+        ...(dateRange?.from && {
+          dateFrom: format(dateRange.from, "yyyy-MM-dd"),
+        }),
+        ...(dateRange?.to && {
+          dateTo: format(dateRange.to, "yyyy-MM-dd"),
+        }),
       };
 
       const response = await api.getFiles(filters);
@@ -139,8 +144,8 @@ export default function Files() {
   const hasActiveFilters =
     entityTypeFilter.length > 0 ||
     searchTerm ||
-    dateFrom !== undefined ||
-    dateTo !== undefined;
+    !!dateRange?.from ||
+    !!dateRange?.to;
 
   return (
     <div className="space-y-6">
@@ -176,19 +181,11 @@ export default function Files() {
           className="w-full sm:w-auto"
         />
         <div className="flex items-center gap-2 flex-wrap">
-          <DatePicker
-            date={dateFrom}
-            onDateChange={setDateFrom}
-            placeholder="From date"
-            toDate={dateTo || undefined}
-            className="w-full sm:w-[160px] h-9"
-          />
-          <DatePicker
-            date={dateTo}
-            onDateChange={setDateTo}
-            placeholder="To date"
-            fromDate={dateFrom || undefined}
-            className="w-full sm:w-[160px] h-9"
+          <DateRangePicker
+            value={dateRange}
+            onChange={setDateRange}
+            placeholder="Filter by date range"
+            className="w-full sm:w-[220px] h-9"
           />
           <FacetedFilter
             title="Type"
@@ -204,8 +201,7 @@ export default function Files() {
               onClick={() => {
                 setEntityTypeFilter([]);
                 setSearchTerm("");
-                setDateFrom(undefined);
-                setDateTo(undefined);
+                setDateRange(undefined);
               }}
               className="h-8 px-2 lg:px-3"
             >
