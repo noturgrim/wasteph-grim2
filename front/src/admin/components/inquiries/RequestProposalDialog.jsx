@@ -943,8 +943,8 @@ ${bodyTag}
       <DialogContent
         className={`${
           currentStep === 3
-            ? "w-[1400px]! max-w-[98vw]! h-[95vh]! max-h-[95vh]!"
-            : "w-[1000px]! max-w-[95vw]! h-[90vh]! max-h-[90vh]!"
+            ? "w-full sm:w-[1400px]! max-w-[98vw]! h-[98vh] sm:h-[95vh]! max-h-[98vh] sm:max-h-[95vh]!"
+            : "w-full sm:w-[1000px]! max-w-[95vw]! h-[98vh] sm:h-[90vh]! max-h-[98vh] sm:max-h-[90vh]!"
         } flex flex-col p-0 gap-0 transition-all duration-300`}
         onInteractOutside={(e) => e.preventDefault()}
       >
@@ -959,9 +959,9 @@ ${bodyTag}
           </DialogDescription>
         </VisuallyHidden>
         {/* Two Column Layout */}
-        <div className="flex flex-1 min-h-0">
-          {/* Left Sidebar - Progress Steps */}
-          <div className="w-[280px] shrink-0 bg-linear-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-r border-gray-200 dark:border-gray-700 p-6 flex flex-col">
+        <div className="flex flex-col md:flex-row flex-1 min-h-0">
+          {/* Left Sidebar - Progress Steps (Hidden on mobile, horizontal stepper shown instead) */}
+          <div className="hidden md:flex w-[280px] shrink-0 bg-linear-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-r border-gray-200 dark:border-gray-700 p-6 flex-col">
             {/* Header in Sidebar */}
             <div className="mb-8">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
@@ -1118,13 +1118,65 @@ ${bodyTag}
           </div>
 
           {/* Right Content Area */}
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+            {/* Mobile Header with Stepper */}
+            <div className="md:hidden bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 py-3 shrink-0">
+              <div className="mb-2">
+                <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                  {inquiry?.proposalStatus === "disapproved"
+                    ? "Revise Proposal"
+                    : "Create Proposal"}
+                </h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                  {inquiry?.name} • {inquiry?.email}
+                </p>
+              </div>
+              {/* Horizontal Stepper */}
+              <div className="flex items-center gap-2">
+                {[1, 2, 3].map((step) => (
+                  <div key={step} className="flex items-center flex-1">
+                    <div className="flex items-center gap-2 flex-1">
+                      <div
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                          currentStep === step
+                            ? "bg-[#15803d] text-white"
+                            : currentStep > step
+                              ? "bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300"
+                              : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
+                        }`}
+                      >
+                        {currentStep > step ? "✓" : step}
+                      </div>
+                      <span
+                        className={`text-xs font-medium truncate ${
+                          currentStep === step
+                            ? "text-gray-900 dark:text-white"
+                            : "text-gray-500 dark:text-gray-400"
+                        }`}
+                      >
+                        {step === 1 ? "Service" : step === 2 ? "Info" : "Create"}
+                      </span>
+                    </div>
+                    {step < 3 && (
+                      <div
+                        className={`h-0.5 flex-1 mx-1 ${
+                          currentStep > step
+                            ? "bg-green-400 dark:bg-green-600"
+                            : "bg-gray-300 dark:bg-gray-600"
+                        }`}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Content */}
             <div
-              className={`flex-1 px-8 py-6 min-h-0 ${
+              className={`flex-1 px-4 sm:px-6 md:px-8 py-4 sm:py-6 min-h-0 ${
                 currentStep === 3
                   ? "flex flex-col overflow-hidden"
-                  : "overflow-y-auto"
+                  : "overflow-y-auto overflow-x-hidden"
               }`}
             >
               {/* Rejection Banner */}
@@ -1144,11 +1196,11 @@ ${bodyTag}
                 /* STEP 1: Service Type Selection */
                 <div className="space-y-5">
                   {/* Step Title */}
-                  <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="pb-3 sm:pb-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                       Select Service Type
                     </h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
                       Choose the service type for this inquiry's proposal
                     </p>
                   </div>
@@ -1173,7 +1225,7 @@ ${bodyTag}
                   )}
 
                   {/* Service Cards Grid */}
-                  <div className="grid grid-cols-2 gap-4 max-w-3xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-3xl">
                     {services.map((service) => {
                       const isSelected = selectedServiceId === service.id;
                       // Map service names to icons
@@ -1193,7 +1245,7 @@ ${bodyTag}
                           type="button"
                           onClick={() => handleServiceChange(service.id)}
                           disabled={isLoadingTemplate}
-                          className={`relative flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all text-center min-h-[140px] bg-white dark:bg-gray-800 ${
+                          className={`relative flex flex-col items-center justify-center p-4 sm:p-6 rounded-xl border-2 transition-all text-center min-h-[120px] sm:min-h-[140px] bg-white dark:bg-gray-800 ${
                             isSelected
                               ? "border-[#15803d]"
                               : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
@@ -1261,7 +1313,7 @@ ${bodyTag}
                             Choose the specific hauling method
                           </p>
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                           {subTypes.map((subType) => {
                             const isSelected = selectedSubTypeId === subType.id;
                             return (
@@ -1316,13 +1368,13 @@ ${bodyTag}
                 </div>
               ) : currentStep === 2 ? (
                 /* STEP 2: Client Information Form */
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                   {/* Step Title */}
-                  <div className="pb-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="pb-3 sm:pb-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                       Client Information
                     </h2>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
                       Enter the client details for this proposal
                     </p>
                   </div>
@@ -1333,7 +1385,7 @@ ${bodyTag}
                     </div>
                   ) : (
                     <div className="space-y-4 max-w-2xl">
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="clientName">
                             Client Name <span className="text-red-500">*</span>
@@ -1369,7 +1421,7 @@ ${bodyTag}
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="clientCompany">
                             Company <span className="text-red-500">*</span>
@@ -1411,7 +1463,7 @@ ${bodyTag}
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="clientPhone">
                             Phone <span className="text-red-500">*</span>
@@ -1458,7 +1510,7 @@ ${bodyTag}
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="clientIndustry">
                             Industry <span className="text-red-500">*</span>
@@ -1621,19 +1673,19 @@ ${bodyTag}
                 /* STEP 3: Edit & Submit */
                 <div className="flex flex-col h-full min-h-0">
                   {/* Step Title */}
-                  <div className="pb-4 border-b border-gray-200 dark:border-gray-700 shrink-0 mb-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="pb-3 sm:pb-4 border-b border-gray-200 dark:border-gray-700 shrink-0 mb-3 sm:mb-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                           {creationMode === "upload" ? "Upload & Submit Proposal" : "Edit & Submit Proposal"}
                         </h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">
                           {creationMode === "upload"
                             ? "Upload a pre-made PDF proposal for approval"
                             : "Customize the proposal content and submit for approval"}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2" />
+                      <div className="flex items-center gap-2 w-full sm:w-auto" />
                     </div>
                   </div>
 
@@ -1737,13 +1789,14 @@ ${bodyTag}
             </div>
 
             {/* Footer - Inside Right Content Area */}
-            <div className="px-8 py-4 border-t border-gray-200 dark:border-gray-700 shrink-0 bg-gray-50/50 dark:bg-gray-900/50">
-              <div className="flex items-center justify-between gap-3">
+            <div className="px-4 sm:px-6 md:px-8 py-3 sm:py-4 border-t border-gray-200 dark:border-gray-700 shrink-0 bg-gray-50/50 dark:bg-gray-900/50">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3">
                 {currentStep === 1 ? (
                   <>
                     <Button
                       variant="outline"
                       onClick={() => onOpenChange(false)}
+                      className="w-full sm:w-auto"
                     >
                       Cancel
                     </Button>
@@ -1755,7 +1808,7 @@ ${bodyTag}
                         isLoadingSubTypes ||
                         (subTypes.length > 0 && !selectedSubTypeId)
                       }
-                      className="min-w-[120px]"
+                      className="w-full sm:w-auto sm:min-w-[120px]"
                     >
                       {isLoadingTemplate ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -1767,7 +1820,7 @@ ${bodyTag}
                   </>
                 ) : currentStep === 2 ? (
                   <>
-                    <Button variant="outline" onClick={() => setCurrentStep(1)}>
+                    <Button variant="outline" onClick={() => setCurrentStep(1)} className="w-full sm:w-auto">
                       <ArrowLeft className="h-4 w-4 mr-2" />
                       Back
                     </Button>
@@ -1782,7 +1835,7 @@ ${bodyTag}
                       disabled={
                         !isFormValid || isLoadingEditor || isLoadingTemplate
                       }
-                      className="min-w-[140px]"
+                      className="w-full sm:w-auto sm:min-w-[140px]"
                     >
                       {isLoadingEditor ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -1798,24 +1851,26 @@ ${bodyTag}
                       variant="outline"
                       onClick={() => setCurrentStep(2)}
                       disabled={isSubmitting}
+                      className="w-full sm:w-auto"
                     >
                       <ArrowLeft className="h-4 w-4 mr-2" />
                       Back
                     </Button>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setShowUploadModal(true)}
-                        className="gap-2"
+                        className="gap-2 w-full sm:w-auto"
                       >
                         <Upload className="h-4 w-4" />
-                        Upload PDF Instead
+                        <span className="hidden sm:inline">Upload PDF Instead</span>
+                        <span className="sm:hidden">Upload PDF</span>
                       </Button>
                       <Button
                         onClick={handleSubmitClick}
                         disabled={!canSubmit}
-                        className={`min-w-[140px] ${
+                        className={`w-full sm:w-auto sm:min-w-[140px] ${
                           !canSubmit ? "opacity-50" : ""
                         }`}
                       >
