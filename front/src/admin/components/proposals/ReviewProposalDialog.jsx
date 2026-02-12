@@ -105,63 +105,64 @@ export function ReviewProposalDialog({
   return (
     <>
     <Dialog open={open} onOpenChange={handleDialogChange}>
-      <DialogContent className="w-[600px]! max-w-[90vw]! max-h-[85vh]! overflow-hidden flex flex-col p-6">
+      <DialogContent className="w-[95vw] sm:w-[600px]! max-w-[90vw]! max-h-[90vh]! overflow-hidden flex flex-col p-4 sm:p-6">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle>{userRole === "sales" ? "View Proposal" : "Review Proposal"}</DialogTitle>
-              <DialogDescription>
+          <div className="flex flex-col items-center text-center sm:flex-row sm:items-center sm:justify-between sm:text-left gap-3">
+            <div className="flex-1 min-w-0">
+              <DialogTitle className="text-lg sm:text-xl">{userRole === "sales" ? "View Proposal" : "Review Proposal"}</DialogTitle>
+              <DialogDescription className="text-xs sm:text-sm">
                 Requested by: {requestedByUser
                   ? `${requestedByUser.firstName} ${requestedByUser.lastName}`
                   : "Unknown User"}
               </DialogDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+              <StatusBadge status={proposal.status} className="shrink-0" />
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleViewPdf}
                 disabled={isLoadingPdf}
+                className="w-full sm:w-auto h-9"
               >
                 <Eye className="h-4 w-4 mr-2" />
                 View PDF
               </Button>
-              <StatusBadge status={proposal.status} />
             </div>
           </div>
         </DialogHeader>
 
         {/* Proposal Details */}
-        <div className="flex-1 overflow-y-auto space-y-3">
+        <div className="flex-1 overflow-y-auto space-y-3 min-h-0">
             {/* Client Information */}
-            <div className="border rounded-lg p-4">
+            <div className="border rounded-lg p-3 sm:p-4">
               <h3 className="text-sm font-semibold mb-3">Client Information</h3>
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-muted-foreground">Name</p>
-                  <p className="font-medium">{proposal.inquiryName || "N/A"}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Name</p>
+                  <p className="font-medium break-words">{proposal.inquiryName || "N/A"}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Email</p>
-                  <p className="font-medium">{proposal.inquiryEmail || "N/A"}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Email</p>
+                  <p className="font-medium break-all">{proposal.inquiryEmail || "N/A"}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Company</p>
-                  <p className="font-medium">{proposal.inquiryCompany || "N/A"}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Company</p>
+                  <p className="font-medium break-words">{proposal.inquiryCompany || "N/A"}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground">Phone</p>
-                  <p className="font-medium">{proposal.inquiryPhone || "N/A"}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Phone</p>
+                  <p className="font-medium break-words">{proposal.inquiryPhone || "N/A"}</p>
                 </div>
               </div>
             </div>
 
             {/* Services */}
-            <div className="border rounded-lg p-4">
+            <div className="border rounded-lg p-3 sm:p-4">
               <h3 className="text-sm font-semibold mb-3">Service Type</h3>
               <div className="space-y-2">
                 {templateMetadata.serviceName ? (
-                  <p className="text-sm">
+                  <p className="text-xs sm:text-sm break-words">
                     {templateMetadata.serviceName}
                     {templateMetadata.serviceSubTypeName && (
                       <span className="text-muted-foreground">
@@ -170,11 +171,11 @@ export function ReviewProposalDialog({
                     )}
                   </p>
                 ) : proposal.inquiryServiceType ? (
-                  <p className="text-sm capitalize">
+                  <p className="text-xs sm:text-sm capitalize break-words">
                     {proposal.inquiryServiceType.replace(/_/g, " ")}
                   </p>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     No service type specified
                   </p>
                 )}
@@ -183,79 +184,83 @@ export function ReviewProposalDialog({
 
             {/* Additional Notes */}
             {terms.notes && (
-              <div className="border rounded-lg p-4">
+              <div className="border rounded-lg p-3 sm:p-4">
                 <h3 className="text-sm font-semibold mb-2">Additional Notes</h3>
-                <p className="text-sm text-muted-foreground">{terms.notes}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground break-words">{terms.notes}</p>
               </div>
             )}
 
             {/* Rejection/Admin Notes (if exists) */}
             {proposal.rejectionReason && (
-              <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-sm font-semibold text-red-900 dark:text-red-100">
+              <div className="p-3 sm:p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-xs sm:text-sm font-semibold text-red-900 dark:text-red-100">
                   Rejection Reason:
                 </p>
-                <p className="text-sm text-red-800 dark:text-red-200 mt-1">
+                <p className="text-xs sm:text-sm text-red-800 dark:text-red-200 mt-1 break-words">
                   {proposal.rejectionReason}
                 </p>
               </div>
             )}
 
             {proposal.adminNotes && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+              <div className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <p className="text-xs sm:text-sm font-semibold text-blue-900 dark:text-blue-100">
                   Admin Notes:
                 </p>
-                <p className="text-sm text-blue-800 dark:text-blue-200 mt-1">
+                <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-200 mt-1 break-words">
                   {proposal.adminNotes}
                 </p>
               </div>
             )}
           </div>
 
-        <DialogFooter className="gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => {
-              // Only close if PDF viewer is not open
-              if (!showPdfViewer) {
-                onOpenChange(false);
-              }
-            }}
-          >
-            Close
-          </Button>
-
+        <DialogFooter className="flex-col gap-3">
           {userRole !== "sales" && proposal.status === "pending" && (
-            <>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  onOpenChange(false);
-                  onReject(proposal);
-                }}
-              >
-                <XCircle className="h-4 w-4 mr-2" />
-                Reject
-              </Button>
-              <Button
-                onClick={() => {
-                  onOpenChange(false);
-                  onApprove(proposal);
-                }}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                Approve
-              </Button>
-            </>
-          )}
-
-          {userRole !== "sales" && proposal.status === "pending" && (
-            <div className="flex-1 text-xs text-muted-foreground text-right">
+            <div className="w-full text-xs text-muted-foreground text-center sm:text-right bg-muted/50 p-2 rounded">
               Note: Approving allows sales to send the proposal
             </div>
           )}
+
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:ml-auto">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                // Only close if PDF viewer is not open
+                if (!showPdfViewer) {
+                  onOpenChange(false);
+                }
+              }}
+              className="w-full sm:w-auto"
+            >
+              Close
+            </Button>
+
+            {userRole !== "sales" && proposal.status === "pending" && (
+              <>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onReject(proposal);
+                  }}
+                  className="w-full sm:w-auto"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Reject
+                </Button>
+                <Button
+                  onClick={() => {
+                    onOpenChange(false);
+                    onApprove(proposal);
+                  }}
+                  className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Approve
+                </Button>
+              </>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
