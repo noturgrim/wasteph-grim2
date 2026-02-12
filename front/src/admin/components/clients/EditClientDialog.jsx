@@ -34,10 +34,7 @@ export function EditClientDialog({ open, onOpenChange, client, onConfirm }) {
         email: client.email || "",
         phone: client.phone || "",
         address: client.address || "",
-        city: client.city || "",
-        province: client.province || "",
         industry: client.industry || "",
-        wasteTypes: client.wasteTypes || "",
         contractStartDate: client.contractStartDate
           ? new Date(client.contractStartDate).toISOString().split("T")[0]
           : "",
@@ -130,62 +127,33 @@ export function EditClientDialog({ open, onOpenChange, client, onConfirm }) {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div className="space-y-1 min-w-0">
-              <Label className="text-sm">City</Label>
-              <Input
-                value={formData.city}
-                onChange={(e) => handleChange("city", e.target.value)}
-                className="text-sm w-full min-w-0"
-              />
-            </div>
-            <div className="space-y-1 min-w-0">
-              <Label className="text-sm">Province</Label>
-              <Input
-                value={formData.province}
-                onChange={(e) => handleChange("province", e.target.value)}
-                className="text-sm w-full min-w-0"
-              />
-            </div>
-          </div>
-
-          {/* Business */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div className="space-y-1 min-w-0">
-              <Label className="text-sm">Industry</Label>
-              <Select
-                value={formData.industry || ""}
-                onValueChange={(value) => handleChange("industry", value)}
-              >
-                <SelectTrigger className="text-sm w-full min-w-0">
-                  <SelectValue placeholder="Select industry" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="food_and_beverage">Food & Beverage</SelectItem>
-                  <SelectItem value="retail">Retail</SelectItem>
-                  <SelectItem value="manufacturing">Manufacturing</SelectItem>
-                  <SelectItem value="healthcare">Healthcare</SelectItem>
-                  <SelectItem value="hospitality">Hospitality</SelectItem>
-                  <SelectItem value="education">Education</SelectItem>
-                  <SelectItem value="construction">Construction</SelectItem>
-                  <SelectItem value="real_estate">Real Estate</SelectItem>
-                  <SelectItem value="logistics">Logistics</SelectItem>
-                  <SelectItem value="agriculture">Agriculture</SelectItem>
-                  <SelectItem value="technology">Technology</SelectItem>
-                  <SelectItem value="government">Government</SelectItem>
-                  <SelectItem value="residential">Residential</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1 min-w-0">
-              <Label className="text-sm">Waste Types</Label>
-              <Input
-                value={formData.wasteTypes}
-                onChange={(e) => handleChange("wasteTypes", e.target.value)}
-                className="text-sm w-full min-w-0"
-              />
-            </div>
+          {/* Industry */}
+          <div className="space-y-1 min-w-0">
+            <Label className="text-sm">Industry</Label>
+            <Select
+              value={formData.industry || ""}
+              onValueChange={(value) => handleChange("industry", value)}
+            >
+              <SelectTrigger className="text-sm w-full min-w-0">
+                <SelectValue placeholder="Select industry" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="food_and_beverage">Food & Beverage</SelectItem>
+                <SelectItem value="retail">Retail</SelectItem>
+                <SelectItem value="manufacturing">Manufacturing</SelectItem>
+                <SelectItem value="healthcare">Healthcare</SelectItem>
+                <SelectItem value="hospitality">Hospitality</SelectItem>
+                <SelectItem value="education">Education</SelectItem>
+                <SelectItem value="construction">Construction</SelectItem>
+                <SelectItem value="real_estate">Real Estate</SelectItem>
+                <SelectItem value="logistics">Logistics</SelectItem>
+                <SelectItem value="agriculture">Agriculture</SelectItem>
+                <SelectItem value="technology">Technology</SelectItem>
+                <SelectItem value="government">Government</SelectItem>
+                <SelectItem value="residential">Residential</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Contract dates */}
