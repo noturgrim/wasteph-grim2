@@ -27,13 +27,13 @@ export function ViewLeadDialog({ open, onOpenChange, lead }) {
           <div>
             <h3 className="text-sm font-semibold mb-3 text-foreground">Contact Information</h3>
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div className="overflow-hidden">
                 <p className="text-sm text-muted-foreground">Client Name</p>
-                <p className="text-sm font-medium">{lead.clientName}</p>
+                <p className="text-sm font-medium break-words">{lead.clientName}</p>
               </div>
-              <div>
+              <div className="overflow-hidden">
                 <p className="text-sm text-muted-foreground">Company</p>
-                <p className="text-sm font-medium">{lead.company || "N/A"}</p>
+                <p className="text-sm font-medium break-words">{lead.company || "N/A"}</p>
               </div>
               <div className="overflow-hidden">
                 <p className="text-sm text-muted-foreground">Email</p>
@@ -43,9 +43,9 @@ export function ViewLeadDialog({ open, onOpenChange, lead }) {
                 <p className="text-sm text-muted-foreground">Phone</p>
                 <p className="text-sm font-medium break-all">{lead.phone || "N/A"}</p>
               </div>
-              <div className="col-span-2">
+              <div className="col-span-2 overflow-hidden">
                 <p className="text-sm text-muted-foreground">Location</p>
-                <p className="text-sm font-medium">{lead.location || "N/A"}</p>
+                <p className="text-sm font-medium break-words">{lead.location || "N/A"}</p>
               </div>
             </div>
           </div>
@@ -54,7 +54,7 @@ export function ViewLeadDialog({ open, onOpenChange, lead }) {
           <div className="border-t pt-4">
             <h3 className="text-sm font-semibold mb-3 text-foreground">Pool Information</h3>
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div className="overflow-hidden">
                 <p className="text-sm text-muted-foreground">Status</p>
                 <p className="text-sm font-medium">
                   {lead.isClaimed ? (
@@ -64,31 +64,31 @@ export function ViewLeadDialog({ open, onOpenChange, lead }) {
                   )}
                 </p>
               </div>
-              <div>
+              <div className="overflow-hidden">
                 <p className="text-sm text-muted-foreground">Added to Pool</p>
-                <p className="text-sm font-medium">
+                <p className="text-sm font-medium break-words">
                   {format(new Date(lead.createdAt), "MMM dd, yyyy 'at' hh:mm a")}
                 </p>
               </div>
               {lead.isClaimed && lead.claimedByUser && (
-                <div>
+                <div className="overflow-hidden">
                   <p className="text-sm text-muted-foreground">Claimed By</p>
-                  <p className="text-sm font-medium">
+                  <p className="text-sm font-medium break-words">
                     {lead.claimedByUser.firstName} {lead.claimedByUser.lastName}
                   </p>
                 </div>
               )}
               {lead.isClaimed && lead.claimedAt && (
-                <div>
+                <div className="overflow-hidden">
                   <p className="text-sm text-muted-foreground">Claimed On</p>
-                  <p className="text-sm font-medium">
+                  <p className="text-sm font-medium break-words">
                     {format(new Date(lead.claimedAt), "MMM dd, yyyy 'at' hh:mm a")}
                   </p>
                 </div>
               )}
-              <div>
+              <div className="overflow-hidden">
                 <p className="text-sm text-muted-foreground">Last Updated</p>
-                <p className="text-sm font-medium">
+                <p className="text-sm font-medium break-words">
                   {format(new Date(lead.updatedAt), "MMM dd, yyyy 'at' hh:mm a")}
                 </p>
               </div>
