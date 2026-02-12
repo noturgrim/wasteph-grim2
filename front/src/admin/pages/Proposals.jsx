@@ -301,11 +301,13 @@ export default function Proposals() {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="w-full sm:w-auto h-9">
                 <SlidersHorizontal className="mr-2 h-4 w-4" />
-                Columns
+                View
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[200px]">
-              <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+              <DropdownMenuLabel className="font-bold">
+                Toggle columns
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {Object.entries(columnVisibility).map(([key, value]) => (
                 <DropdownMenuCheckboxItem
