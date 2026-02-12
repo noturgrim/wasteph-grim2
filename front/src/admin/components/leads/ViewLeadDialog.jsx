@@ -35,13 +35,13 @@ export function ViewLeadDialog({ open, onOpenChange, lead }) {
                 <p className="text-sm text-muted-foreground">Company</p>
                 <p className="text-sm font-medium">{lead.company || "N/A"}</p>
               </div>
-              <div>
+              <div className="overflow-hidden">
                 <p className="text-sm text-muted-foreground">Email</p>
-                <p className="text-sm font-medium">{lead.email || "N/A"}</p>
+                <p className="text-sm font-medium break-all">{lead.email || "N/A"}</p>
               </div>
-              <div>
+              <div className="overflow-hidden">
                 <p className="text-sm text-muted-foreground">Phone</p>
-                <p className="text-sm font-medium">{lead.phone || "N/A"}</p>
+                <p className="text-sm font-medium break-all">{lead.phone || "N/A"}</p>
               </div>
               <div className="col-span-2">
                 <p className="text-sm text-muted-foreground">Location</p>
