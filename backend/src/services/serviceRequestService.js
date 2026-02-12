@@ -48,7 +48,9 @@ class ServiceRequestService {
           estimatedVolume: data.estimatedVolume,
           notes: data.notes,
           priority: data.priority,
-          attachments: data.attachments ? JSON.stringify(data.attachments) : null,
+          attachments: data.attachments
+            ? JSON.stringify(data.attachments)
+            : null,
 
           // Garbage Collection fields
           collectionFrequency: data.collectionFrequency,

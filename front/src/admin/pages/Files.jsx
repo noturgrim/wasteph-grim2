@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
-import { useAuth } from "../contexts/AuthContext";
 import { api } from "../services/api";
 import { toast } from "../utils/toast";
 import { X } from "lucide-react";
@@ -31,17 +30,7 @@ const entityTypeOptions = [
   { value: "ticket_attachment", label: "Ticket Attachment" },
 ];
 
-const statLabels = {
-  proposal: "Proposals",
-  contract: "Contracts",
-  signed_contract: "Signed",
-  hardbound_contract: "Hardbound",
-  custom_template: "Templates",
-  ticket_attachment: "Attachments",
-};
-
 export default function Files() {
-  const { user } = useAuth();
   const [files, setFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -148,68 +137,51 @@ export default function Files() {
     !!dateRange?.to;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Files</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Files</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mt-1">
           View and download all files related to your work
         </p>
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-        {Object.entries(statLabels).map(([type, label]) => (
-          <div
-            key={type}
-            className="rounded-lg border bg-card p-4 text-card-foreground"
-          >
-            <p className="text-sm text-muted-foreground">{label}</p>
-            <p className="text-2xl font-bold">
-              {facets.entityType[type] || 0}
-            </p>
-          </div>
-        ))}
-      </div>
-
       {/* Filters */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-wrap">
         <SearchInput
           placeholder="Search by file name, entity #, or client..."
           value={searchTerm}
           onChange={setSearchTerm}
-          className="w-full sm:w-auto"
+          className="w-full sm:flex-1 sm:min-w-[280px]"
         />
-        <div className="flex items-center gap-2 flex-wrap">
-          <DateRangePicker
-            value={dateRange}
-            onChange={setDateRange}
-            placeholder="Filter by date range"
-            className="w-full sm:w-[220px] h-9"
-          />
-          <FacetedFilter
-            title="Type"
-            options={entityTypeOptions}
-            selectedValues={entityTypeFilter}
-            onSelectionChange={setEntityTypeFilter}
-            getCount={(type) => facets.entityType[type] || 0}
-          />
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setEntityTypeFilter([]);
-                setSearchTerm("");
-                setDateRange(undefined);
-              }}
-              className="h-8 px-2 lg:px-3"
-            >
-              Reset
-              <X className="ml-2 h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        <DateRangePicker
+          value={dateRange}
+          onChange={setDateRange}
+          placeholder="Filter by date range"
+          className="w-full sm:w-auto min-w-[220px] h-9"
+        />
+        <FacetedFilter
+          title="Type"
+          options={entityTypeOptions}
+          selectedValues={entityTypeFilter}
+          onSelectionChange={setEntityTypeFilter}
+          getCount={(type) => facets.entityType[type] || 0}
+        />
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setEntityTypeFilter([]);
+              setSearchTerm("");
+              setDateRange(undefined);
+            }}
+            className="h-9 w-full sm:w-auto px-3"
+          >
+            Reset
+            <X className="ml-2 h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       {/* Table */}
@@ -221,9 +193,14 @@ export default function Files() {
       />
 
       {/* Pagination */}
-      <div className="flex items-center justify-end gap-8 pt-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm whitespace-nowrap">Rows per page</span>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-4 border-t">
+        <div className="flex items-center justify-between sm:justify-start gap-2">
+          <span className="text-sm text-muted-foreground hidden sm:inline whitespace-nowrap">
+            Rows per page
+          </span>
+          <span className="text-sm text-muted-foreground sm:hidden whitespace-nowrap">
+            Per page
+          </span>
           <Select
             value={pagination.limit.toString()}
             onValueChange={(value) => {
@@ -245,107 +222,109 @@ export default function Files() {
           </Select>
         </div>
 
-        <span className="text-sm">
-          Page {pagination.page} of {pagination.totalPages}
-        </span>
+        <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-8">
+          <span className="text-sm text-muted-foreground whitespace-nowrap">
+            Page {pagination.page} of {pagination.totalPages}
+          </span>
 
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => fetchFiles(1)}
-            disabled={pagination.page === 1 || isLoading}
-          >
-            <span className="sr-only">First page</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 hidden sm:flex"
+              onClick={() => fetchFiles(1)}
+              disabled={pagination.page === 1 || isLoading}
             >
-              <polyline points="11 17 6 12 11 7" />
-              <polyline points="18 17 13 12 18 7" />
-            </svg>
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() =>
-              fetchFiles(Math.max(pagination.page - 1, 1))
-            }
-            disabled={pagination.page === 1 || isLoading}
-          >
-            <span className="sr-only">Previous page</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              <span className="sr-only">First page</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="11 17 6 12 11 7" />
+                <polyline points="18 17 13 12 18 7" />
+              </svg>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() =>
+                fetchFiles(Math.max(pagination.page - 1, 1))
+              }
+              disabled={pagination.page === 1 || isLoading}
             >
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() =>
-              fetchFiles(
-                Math.min(pagination.page + 1, pagination.totalPages)
-              )
-            }
-            disabled={pagination.page >= pagination.totalPages || isLoading}
-          >
-            <span className="sr-only">Next page</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              <span className="sr-only">Previous page</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() =>
+                fetchFiles(
+                  Math.min(pagination.page + 1, pagination.totalPages)
+                )
+              }
+              disabled={pagination.page >= pagination.totalPages || isLoading}
             >
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => fetchFiles(pagination.totalPages)}
-            disabled={pagination.page >= pagination.totalPages || isLoading}
-          >
-            <span className="sr-only">Last page</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              <span className="sr-only">Next page</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 hidden sm:flex"
+              onClick={() => fetchFiles(pagination.totalPages)}
+              disabled={pagination.page >= pagination.totalPages || isLoading}
             >
-              <polyline points="13 17 18 12 13 7" />
-              <polyline points="6 17 11 12 6 7" />
-            </svg>
-          </Button>
+              <span className="sr-only">Last page</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="13 17 18 12 13 7" />
+                <polyline points="6 17 11 12 6 7" />
+              </svg>
+            </Button>
+          </div>
         </div>
       </div>
 
