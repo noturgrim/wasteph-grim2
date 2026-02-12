@@ -319,23 +319,23 @@ export default function ContractRequests() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Contract Requests</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Contract Requests</h1>
+        <p className="text-sm sm:text-base text-muted-foreground mt-1">
           Manage contract requests from approved proposals
         </p>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           {isMasterSales && (
-            <Tabs value={viewMode} onValueChange={setViewMode}>
-              <TabsList className="h-8">
-                <TabsTrigger value="all" className="text-xs px-3">All</TabsTrigger>
-                <TabsTrigger value="my" className="text-xs px-3">My</TabsTrigger>
+            <Tabs value={viewMode} onValueChange={setViewMode} className="w-full sm:w-auto">
+              <TabsList className="h-9 w-full sm:w-auto">
+                <TabsTrigger value="all" className="text-xs px-4 flex-1 sm:flex-none">All</TabsTrigger>
+                <TabsTrigger value="my" className="text-xs px-4 flex-1 sm:flex-none">My</TabsTrigger>
               </TabsList>
             </Tabs>
           )}
@@ -345,8 +345,35 @@ export default function ContractRequests() {
             placeholder="Search by contract no., client name, email, or company..."
             value={searchTerm}
             onChange={setSearchTerm}
+            className="w-full sm:flex-1 sm:min-w-[200px]"
           />
 
+          {/* Column Visibility */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full sm:w-auto h-9">
+                <SlidersHorizontal className="mr-2 h-4 w-4" />
+                Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[200px]">
+              <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {Object.entries(columnVisibility).map(([key, value]) => (
+                <DropdownMenuCheckboxItem
+                  key={key}
+                  checked={value}
+                  onCheckedChange={() => handleToggleColumn(key)}
+                  className="capitalize"
+                >
+                  {key.replace(/([A-Z])/g, " $1").trim()}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
           {/* Status Filter */}
           <FacetedFilter
             title="Status"
@@ -372,38 +399,12 @@ export default function ContractRequests() {
                 setStatusFilter([]);
                 setSearchTerm("");
               }}
-              className="h-8 px-2 lg:px-3"
+              className="h-10 px-3"
             >
               Reset
               <X className="ml-2 h-4 w-4" />
             </Button>
           )}
-        </div>
-
-        <div className="flex gap-2">
-          {/* Column Visibility */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <SlidersHorizontal className="mr-2 h-4 w-4" />
-                Columns
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[200px]">
-              <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {Object.entries(columnVisibility).map(([key, value]) => (
-                <DropdownMenuCheckboxItem
-                  key={key}
-                  checked={value}
-                  onCheckedChange={() => handleToggleColumn(key)}
-                  className="capitalize"
-                >
-                  {key.replace(/([A-Z])/g, " $1").trim()}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 
@@ -415,9 +416,12 @@ export default function ContractRequests() {
       />
 
       {/* Pagination */}
-      <div className="flex items-center justify-end gap-8 pt-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm whitespace-nowrap">Rows per page</span>
+      <div className="flex flex-col sm:flex-row items-center justify-end gap-3 sm:gap-8 pt-4 border-t">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+          <span className="text-xs sm:text-sm whitespace-nowrap">
+            <span className="hidden sm:inline">Rows per page</span>
+            <span className="sm:hidden">Per page</span>
+          </span>
           <Select
             value={pagination.limit.toString()}
             onValueChange={(value) => {
@@ -439,7 +443,7 @@ export default function ContractRequests() {
           </Select>
         </div>
 
-        <span className="text-sm">
+        <span className="text-xs sm:text-sm">
           Page {pagination.page} of {pagination.totalPages}
         </span>
 
@@ -447,7 +451,7 @@ export default function ContractRequests() {
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 hidden sm:flex"
             onClick={() => fetchContracts(1)}
             disabled={pagination.page === 1 || isLoading}
           >
@@ -484,7 +488,7 @@ export default function ContractRequests() {
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 hidden sm:flex"
             onClick={() => fetchContracts(pagination.totalPages)}
             disabled={pagination.page >= pagination.totalPages || isLoading}
           >
