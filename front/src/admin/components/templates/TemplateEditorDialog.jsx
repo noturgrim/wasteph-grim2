@@ -193,22 +193,22 @@ export function TemplateEditorDialog({ open, onOpenChange, template, onSave }) {
   return (
     <>
       <Dialog open={open && !showPdfViewer} onOpenChange={onOpenChange}>
-        <DialogContent className="!max-w-7xl !w-[90vw] max-h-[90vh] flex flex-col p-6">
+        <DialogContent className="w-[95vw] sm:w-[90vw] sm:max-w-7xl max-h-[90vh] flex flex-col p-4 sm:p-6 overflow-x-hidden">
           <DialogHeader className="shrink-0">
-            <DialogTitle>
+            <DialogTitle className="text-lg sm:text-xl">
               {isEditMode ? "Edit Template" : "Create New Template"}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs sm:text-sm">
               {isEditMode
                 ? "Update the proposal template details below"
                 : "Create a new proposal template with placeholders for dynamic content"}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto space-y-6 py-4 min-h-0">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-4 sm:space-y-6 py-3 sm:py-4 min-h-0">
             {/* Template Name */}
-            <div className="space-y-2">
-              <Label htmlFor="name">
+            <div className="space-y-2 min-w-0">
+              <Label htmlFor="name" className="text-sm">
                 Template Name <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -216,19 +216,20 @@ export function TemplateEditorDialog({ open, onOpenChange, template, onSave }) {
                 placeholder="e.g., Fixed Monthly Rate Template"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
+                className="text-sm w-full min-w-0"
               />
             </div>
 
             {/* Service Type */}
-            <div className="space-y-2">
-              <Label htmlFor="serviceType">
+            <div className="space-y-2 min-w-0">
+              <Label htmlFor="serviceType" className="text-sm">
                 Service Type <span className="text-red-500">*</span>
               </Label>
               <Select
                 value={formData.serviceType}
                 onValueChange={(value) => handleInputChange("serviceType", value)}
               >
-                <SelectTrigger id="serviceType">
+                <SelectTrigger id="serviceType" className="text-sm w-full min-w-0">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -242,23 +243,24 @@ export function TemplateEditorDialog({ open, onOpenChange, template, onSave }) {
             </div>
 
             {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+            <div className="space-y-2 min-w-0">
+              <Label htmlFor="description" className="text-sm">Description</Label>
               <Textarea
                 id="description"
                 placeholder="Brief description of this template..."
                 value={formData.description}
                 onChange={(e) => handleInputChange("description", e.target.value)}
                 rows={2}
+                className="text-sm w-full min-w-0 resize-none"
               />
             </div>
 
             {/* Template Content */}
-            <div className="space-y-2">
-              <Label>
+            <div className="space-y-2 min-w-0">
+              <Label className="text-sm">
                 Template Content <span className="text-red-500">*</span>
               </Label>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 break-words">
                 Write HTML directly with placeholders. Use the "Insert Placeholder" button to add dynamic fields.
               </p>
               <HTMLTemplateEditor
@@ -270,14 +272,19 @@ export function TemplateEditorDialog({ open, onOpenChange, template, onSave }) {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t shrink-0">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-3 sm:pt-4 border-t shrink-0">
+            <Button 
+              variant="outline" 
+              onClick={() => onOpenChange(false)} 
+              disabled={isSaving}
+              className="w-full sm:w-auto"
+            >
               Cancel
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={isSaving}
-              className="bg-[#106934] hover:bg-[#0d5429] text-white"
+              className="bg-[#106934] hover:bg-[#0d5429] text-white w-full sm:w-auto"
             >
               {isSaving ? (
                 <>

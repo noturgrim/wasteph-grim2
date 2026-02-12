@@ -306,59 +306,34 @@ export default function ProposalTemplates() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-0">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Proposal Templates</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Proposal Templates</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             Manage proposal templates for different service types
           </p>
         </div>
-        <Button onClick={handleCreateNew}>
+        <Button onClick={handleCreateNew} className="w-full sm:w-auto shrink-0">
           <Plus className="mr-2 h-4 w-4" />
           New Template
         </Button>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <SearchInput
             value={searchTerm}
             onChange={setSearchTerm}
             placeholder="Search templates..."
+            className="w-full sm:flex-1 sm:min-w-[200px]"
           />
 
-          <FacetedFilter
-            title="Service Type"
-            options={SERVICE_TYPE_OPTIONS}
-            selectedValues={serviceTypeFilter}
-            onSelectionChange={setServiceTypeFilter}
-            getCount={getServiceTypeCount}
-          />
-
-          {(serviceTypeFilter.length > 0 || searchTerm) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setServiceTypeFilter([]);
-                setSearchTerm("");
-              }}
-              className="h-8 px-2 lg:px-3"
-            >
-              Reset
-              <X className="ml-2 h-4 w-4" />
-            </Button>
-          )}
-        </div>
-
-        {/* Column Visibility */}
-        <div className="flex gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto h-9">
                 <SlidersHorizontal className="mr-2 h-4 w-4" />
                 Columns
               </Button>
@@ -394,6 +369,31 @@ export default function ProposalTemplates() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <FacetedFilter
+            title="Service Type"
+            options={SERVICE_TYPE_OPTIONS}
+            selectedValues={serviceTypeFilter}
+            onSelectionChange={setServiceTypeFilter}
+            getCount={getServiceTypeCount}
+          />
+
+          {(serviceTypeFilter.length > 0 || searchTerm) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setServiceTypeFilter([]);
+                setSearchTerm("");
+              }}
+              className="h-10 px-3"
+            >
+              Reset
+              <X className="ml-2 h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Data Table */}
@@ -405,9 +405,12 @@ export default function ProposalTemplates() {
       />
 
       {/* Pagination */}
-      <div className="flex items-center justify-end gap-8 pt-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm whitespace-nowrap">Rows per page</span>
+      <div className="flex flex-col sm:flex-row items-center justify-end gap-3 sm:gap-8 pt-4 border-t">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
+          <span className="text-xs sm:text-sm whitespace-nowrap">
+            <span className="hidden sm:inline">Rows per page</span>
+            <span className="sm:hidden">Per page</span>
+          </span>
           <Select
             value={pagination.limit.toString()}
             onValueChange={(value) => {
@@ -429,7 +432,7 @@ export default function ProposalTemplates() {
           </Select>
         </div>
 
-        <span className="text-sm">
+        <span className="text-xs sm:text-sm">
           Page {pagination.page} of {pagination.totalPages}
         </span>
 
@@ -437,7 +440,7 @@ export default function ProposalTemplates() {
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 hidden sm:flex"
             onClick={() => fetchTemplates(1)}
             disabled={pagination.page === 1 || loading}
           >
@@ -474,7 +477,7 @@ export default function ProposalTemplates() {
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 hidden sm:flex"
             onClick={() => fetchTemplates(pagination.totalPages)}
             disabled={pagination.page >= pagination.totalPages || loading}
           >
