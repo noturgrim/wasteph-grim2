@@ -1,7 +1,10 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
+import multer from "multer";
+import { validateFileSignature } from "../utils/fileUtils.js";
 import {
   createProposal,
+  createProposalWithUpload,
   getAllProposals,
   getProposalById,
   updateProposal,
@@ -25,6 +28,21 @@ import {
   validatePublicProposalParams,
 } from "../middleware/proposalValidation.js";
 import { publicProposalRateLimiter } from "../middleware/rateLimiter.js";
+
+// Configure multer for PDF uploads (proposal upload fallback)
+const uploadPdf = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === "application/pdf") {
+      cb(null, true);
+    } else {
+      cb(new Error("Only PDF files are allowed"), false);
+    }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+});
 
 const router = Router();
 
@@ -99,6 +117,16 @@ router.post("/preview-pdf", requireAuth, async (req, res, next) => {
     next(error);
   }
 });
+
+// Create proposal with uploaded PDF (Sales - fallback when editor is problematic)
+// MUST be before /:id routes to avoid "upload" being matched as an ID
+router.post(
+  "/upload",
+  requireAuth,
+  uploadPdf.single("proposalPdf"),
+  validateFileSignature,
+  createProposalWithUpload,
+);
 
 // Create proposal (Sales)
 router.post("/", requireAuth, validateCreateProposal, createProposal);

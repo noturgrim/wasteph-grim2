@@ -457,6 +457,20 @@ class ApiClient {
     });
   }
 
+  async createProposalWithUpload(formData) {
+    const response = await this._fetch(
+      `${this.baseURL}/proposals/upload`,
+      { method: "POST", body: formData },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to upload proposal");
+    }
+
+    return response.json();
+  }
+
   async updateProposal(id, data) {
     return this.request(`/proposals/${id}`, {
       method: "PUT",

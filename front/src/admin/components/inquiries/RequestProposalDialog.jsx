@@ -33,7 +33,6 @@ import { DatePicker } from "@/components/ui/date-picker";
 import {
   ArrowLeft,
   ArrowRight,
-  Edit3,
   Loader2,
   Sparkles,
   Send,
@@ -46,6 +45,9 @@ import {
   Recycle,
   Check,
   Eye,
+  Upload,
+  FileText,
+  X,
 } from "lucide-react";
 import { format } from "date-fns";
 import { api } from "../../services/api";
@@ -73,6 +75,11 @@ export function RequestProposalDialog({
   const [selectedSubTypeId, setSelectedSubTypeId] = useState("");
   const [selectedSubTypeName, setSelectedSubTypeName] = useState("");
   const [isLoadingSubTypes, setIsLoadingSubTypes] = useState(false);
+
+  // Upload fallback mode
+  const [creationMode, setCreationMode] = useState("template"); // "template" | "upload"
+  const [uploadedPdf, setUploadedPdf] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   // Editor content state - track saved vs current
   const [editorInitialContent, setEditorInitialContent] = useState("");
@@ -151,6 +158,11 @@ export function RequestProposalDialog({
               new Date().toISOString().split("T")[0],
             notes: existingData.notes || "",
           });
+
+          // If the original was an uploaded PDF, default to upload mode
+          if (existingData.isUploadedPdf) {
+            setCreationMode("upload");
+          }
 
           // Load template from inquiry's service
           if (inquiry.serviceId) {
@@ -341,6 +353,9 @@ export function RequestProposalDialog({
   useEffect(() => {
     if (!open) {
       setCurrentStep(1);
+      setCreationMode("template");
+      setUploadedPdf(null);
+      setShowUploadModal(false);
       setEditorInitialContent("");
       setSavedEditorContent({ html: "", json: null });
       setHasUnsavedEditorChanges(false);
@@ -750,6 +765,14 @@ ${bodyTag}
 
   // Show confirmation before submitting
   const handleSubmitClick = () => {
+    if (creationMode === "upload") {
+      if (!uploadedPdf) {
+        toast.error("Please upload a PDF file");
+        return;
+      }
+      setShowSubmitConfirm(true);
+      return;
+    }
     if (hasUnsavedEditorChanges) {
       toast.error("Please save your changes before submitting");
       return;
@@ -766,61 +789,79 @@ ${bodyTag}
     setShowSubmitConfirm(false);
     setIsSubmitting(true);
     try {
-      // Prepare proposal data with structured format + edited HTML
-      const proposalData = {
-        // Client info
-        clientName: formData.clientName,
-        clientEmail: formData.clientEmail,
-        clientPhone: formData.clientPhone,
-        clientCompany: formData.clientCompany,
-        clientPosition: formData.clientPosition,
-        clientAddress: formData.clientAddress,
-        clientIndustry: formData.clientIndustry,
+      if (creationMode === "upload") {
+        // Upload PDF fallback flow
+        const uploadFormData = new FormData();
+        uploadFormData.append("proposalPdf", uploadedPdf);
+        uploadFormData.append(
+          "proposalData",
+          JSON.stringify({
+            inquiryId: inquiry.id,
+            clientName: formData.clientName,
+            clientEmail: formData.clientEmail,
+            clientPhone: formData.clientPhone,
+            clientCompany: formData.clientCompany,
+            clientPosition: formData.clientPosition,
+            clientAddress: formData.clientAddress,
+            clientIndustry: formData.clientIndustry,
+            proposalDate: formData.proposalDate,
+            validityDays: formData.validityDays,
+            notes: formData.notes || "",
+          })
+        );
+        if (selectedSubTypeId) {
+          uploadFormData.append("serviceSubTypeId", selectedSubTypeId);
+        }
 
-        // Proposal metadata
-        proposalDate: formData.proposalDate,
-        notes: formData.notes || "",
-
-        // Terms
-        terms: {
-          validityDays: formData.validityDays,
-        },
-
-        // The actual proposal content (edited HTML and JSON for re-editing)
-        editedHtmlContent: savedEditorContent.html,
-        editedJsonContent: savedEditorContent.json,
-
-        // Template metadata for debugging/recovery
-        templateMetadata: {
-          templateId: template?.id,
-          templateName: template?.name,
-          serviceId: selectedServiceId,
-          serviceName: selectedServiceName,
-          serviceSubTypeId: selectedSubTypeId || null,
-          serviceSubTypeName: selectedSubTypeName || null,
-          editedAt: new Date().toISOString(),
-          editorVersion: "tiptap-v1", // For future tracking
-        },
-      };
-
-      // Check if revising a disapproved proposal
-      const isRevision =
-        inquiry?.proposalId && inquiry?.proposalStatus === "disapproved";
-
-      if (isRevision) {
-        await api.updateProposal(inquiry.proposalId, {
-          proposalData,
-          templateId: template?.id,
-        });
-        toast.success("Proposal request revised and resubmitted");
+        await api.createProposalWithUpload(uploadFormData);
+        toast.success("Proposal uploaded and submitted for approval");
       } else {
-        await api.createProposal({
-          inquiryId: inquiry.id,
-          templateId: template?.id,
-          serviceSubTypeId: selectedSubTypeId || null,
-          proposalData,
-        });
-        toast.success("Proposal request submitted for approval");
+        // Template editor flow (existing)
+        const proposalData = {
+          clientName: formData.clientName,
+          clientEmail: formData.clientEmail,
+          clientPhone: formData.clientPhone,
+          clientCompany: formData.clientCompany,
+          clientPosition: formData.clientPosition,
+          clientAddress: formData.clientAddress,
+          clientIndustry: formData.clientIndustry,
+          proposalDate: formData.proposalDate,
+          notes: formData.notes || "",
+          terms: {
+            validityDays: formData.validityDays,
+          },
+          editedHtmlContent: savedEditorContent.html,
+          editedJsonContent: savedEditorContent.json,
+          templateMetadata: {
+            templateId: template?.id,
+            templateName: template?.name,
+            serviceId: selectedServiceId,
+            serviceName: selectedServiceName,
+            serviceSubTypeId: selectedSubTypeId || null,
+            serviceSubTypeName: selectedSubTypeName || null,
+            editedAt: new Date().toISOString(),
+            editorVersion: "tiptap-v1",
+          },
+        };
+
+        const isRevision =
+          inquiry?.proposalId && inquiry?.proposalStatus === "disapproved";
+
+        if (isRevision) {
+          await api.updateProposal(inquiry.proposalId, {
+            proposalData,
+            templateId: template?.id,
+          });
+          toast.success("Proposal request revised and resubmitted");
+        } else {
+          await api.createProposal({
+            inquiryId: inquiry.id,
+            templateId: template?.id,
+            serviceSubTypeId: selectedSubTypeId || null,
+            proposalData,
+          });
+          toast.success("Proposal request submitted for approval");
+        }
       }
 
       // Update inquiry with selected service and any additional client info added during proposal creation
@@ -893,7 +934,9 @@ ${bodyTag}
     !validationErrors.clientAddress &&
     !validationErrors.proposalDate;
   const canSubmit =
-    savedEditorContent.html && !hasUnsavedEditorChanges && !isSubmitting;
+    creationMode === "upload"
+      ? uploadedPdf && !isSubmitting
+      : savedEditorContent.html && !hasUnsavedEditorChanges && !isSubmitting;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1050,7 +1093,7 @@ ${bodyTag}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm leading-tight">
-                      Edit & Submit
+                      Create & Submit
                     </p>
                     <p
                       className={`text-xs mt-0.5 leading-tight ${
@@ -1059,7 +1102,7 @@ ${bodyTag}
                           : "text-gray-500 dark:text-gray-400"
                       }`}
                     >
-                      Customize proposal
+                      Edit or upload proposal
                     </p>
                   </div>
                 </div>
@@ -1582,75 +1625,132 @@ ${bodyTag}
                     <div className="flex items-center justify-between">
                       <div>
                         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                          Edit & Submit Proposal
+                          {creationMode === "upload" ? "Upload & Submit Proposal" : "Edit & Submit Proposal"}
                         </h2>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          Customize the proposal content and submit for approval
+                          {creationMode === "upload"
+                            ? "Upload a pre-made PDF proposal for approval"
+                            : "Customize the proposal content and submit for approval"}
                         </p>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowPreview(true)}
-                        className="gap-2"
-                      >
-                        <Eye className="h-4 w-4" />
-                        Full Preview
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Instructions */}
-                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-sm shrink-0 mb-3">
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-blue-800 dark:text-blue-100 font-medium">
-                          The proposal below is shown in unstyled format for easy editing
-                        </p>
-                        <p className="text-blue-600 dark:text-blue-300 mt-1">
-                          Use the toolbar to format text. Click "Save Changes" before submitting.
-                          To see how it will actually look in the final PDF with proper styling and formatting,
-                          click the <strong>"Full Preview"</strong> button above.
-                        </p>
+                      <div className="flex items-center gap-2">
+                        {creationMode === "template" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowPreview(true)}
+                            className="gap-2"
+                          >
+                            <Eye className="h-4 w-4" />
+                            Full Preview
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowUploadModal(true)}
+                          className="gap-2"
+                        >
+                          <Upload className="h-4 w-4" />
+                          Upload PDF Instead
+                        </Button>
                       </div>
                     </div>
                   </div>
 
-                  {/* Unsaved Changes Warning - uses visibility to prevent layout shift */}
-                  <div
-                    className={`bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm shrink-0 mb-3 transition-all duration-200 ${
-                      hasUnsavedEditorChanges
-                        ? "visible opacity-100"
-                        : "invisible opacity-0 h-0 mb-0 p-0 border-0"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
-                      <AlertCircle className="h-4 w-4 shrink-0" />
-                      <span>
-                        You have unsaved changes. Save before submitting.
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Editor */}
-                  {isLoadingEditor ? (
-                    <div className="flex-1 flex items-center justify-center">
-                      <Loader2 className="h-8 w-8 animate-spin text-[#15803d]" />
-                      <span className="ml-3 text-gray-600 dark:text-gray-400">
-                        Loading editor...
-                      </span>
+                  {creationMode === "upload" ? (
+                    /* Upload mode - show selected file */
+                    <div className="flex-1 flex flex-col items-center justify-center">
+                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 w-full max-w-md">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-red-50 dark:bg-red-900/30 rounded-lg flex items-center justify-center shrink-0">
+                            <FileText className="h-6 w-6 text-red-600 dark:text-red-400" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 dark:text-white truncate">
+                              {uploadedPdf?.name}
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {uploadedPdf && (uploadedPdf.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setUploadedPdf(null);
+                              setCreationMode("template");
+                              if (!editorInitialContent) {
+                                prepareEditorContent();
+                              }
+                            }}
+                            className="text-gray-400 hover:text-red-600"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="mt-4 flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
+                          <Check className="h-4 w-4" />
+                          <span>Ready to submit for approval</span>
+                        </div>
+                      </div>
                     </div>
                   ) : (
-                    <div className="flex-1 overflow-auto" style={{ minHeight: 0 }}>
-                      <ProposalHtmlEditor
-                        content={editorInitialContent}
-                        templateStyles={templateStructureRef.current.styles}
-                        onChange={handleEditorSave}
-                        onUnsavedChange={handleUnsavedChange}
-                        className="h-full"
-                      />
-                    </div>
+                    /* Template editor mode (existing) */
+                    <>
+                      {/* Instructions */}
+                      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-sm shrink-0 mb-3">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                          <div>
+                            <p className="text-blue-800 dark:text-blue-100 font-medium">
+                              The proposal below is shown in unstyled format for easy editing
+                            </p>
+                            <p className="text-blue-600 dark:text-blue-300 mt-1">
+                              Use the toolbar to format text. Click "Save Changes" before submitting.
+                              To see how it will actually look in the final PDF with proper styling and formatting,
+                              click the <strong>"Full Preview"</strong> button above.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Unsaved Changes Warning */}
+                      <div
+                        className={`bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm shrink-0 mb-3 transition-all duration-200 ${
+                          hasUnsavedEditorChanges
+                            ? "visible opacity-100"
+                            : "invisible opacity-0 h-0 mb-0 p-0 border-0"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                          <AlertCircle className="h-4 w-4 shrink-0" />
+                          <span>
+                            You have unsaved changes. Save before submitting.
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Editor */}
+                      {isLoadingEditor ? (
+                        <div className="flex-1 flex items-center justify-center">
+                          <Loader2 className="h-8 w-8 animate-spin text-[#15803d]" />
+                          <span className="ml-3 text-gray-600 dark:text-gray-400">
+                            Loading editor...
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex-1 overflow-auto" style={{ minHeight: 0 }}>
+                          <ProposalHtmlEditor
+                            content={editorInitialContent}
+                            templateStyles={templateStructureRef.current.styles}
+                            onChange={handleEditorSave}
+                            onUnsavedChange={handleUnsavedChange}
+                            className="h-full"
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -1692,7 +1792,13 @@ ${bodyTag}
                       Back
                     </Button>
                     <Button
-                      onClick={prepareEditorContent}
+                      onClick={() => {
+                        if (creationMode === "upload") {
+                          setCurrentStep(3);
+                        } else {
+                          prepareEditorContent();
+                        }
+                      }}
                       disabled={
                         !isFormValid || isLoadingEditor || isLoadingTemplate
                       }
@@ -1701,9 +1807,9 @@ ${bodyTag}
                       {isLoadingEditor ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       ) : (
-                        <Edit3 className="h-4 w-4 mr-2" />
+                        <ArrowRight className="h-4 w-4 mr-2" />
                       )}
-                      Edit Proposal
+                      Next Step
                     </Button>
                   </>
                 ) : (
@@ -1737,6 +1843,99 @@ ${bodyTag}
           </div>
         </div>
       </DialogContent>
+
+      {/* Upload PDF Modal */}
+      <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Upload Proposal PDF</DialogTitle>
+            <DialogDescription>
+              Upload a pre-made PDF proposal instead of using the template editor.
+              It will still go through admin approval.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {!uploadedPdf ? (
+              <label
+                htmlFor="proposal-pdf-upload"
+                className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-[#15803d] hover:bg-green-50/50 dark:hover:bg-green-950/20 transition-colors p-8"
+              >
+                <Upload className="h-10 w-10 text-gray-400 dark:text-gray-500 mb-3" />
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Click to select a PDF file
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  PDF only, max 10MB
+                </p>
+                <input
+                  id="proposal-pdf-upload"
+                  type="file"
+                  accept="application/pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.type !== "application/pdf") {
+                      toast.error("Only PDF files are allowed");
+                      return;
+                    }
+                    if (file.size > 10 * 1024 * 1024) {
+                      toast.error("File size must be less than 10MB");
+                      return;
+                    }
+                    setUploadedPdf(file);
+                    setCreationMode("upload");
+                    setShowUploadModal(false);
+                  }}
+                />
+              </label>
+            ) : (
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-50 dark:bg-red-900/30 rounded-lg flex items-center justify-center shrink-0">
+                    <FileText className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 dark:text-white truncate text-sm">
+                      {uploadedPdf.name}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {(uploadedPdf.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setUploadedPdf(null)}
+                    className="text-gray-400 hover:text-red-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowUploadModal(false)}
+            >
+              Cancel
+            </Button>
+            {uploadedPdf && (
+              <Button
+                onClick={() => {
+                  setCreationMode("upload");
+                  setShowUploadModal(false);
+                }}
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Use This PDF
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirmation Dialog */}
       <AlertDialog open={showSubmitConfirm} onOpenChange={setShowSubmitConfirm}>

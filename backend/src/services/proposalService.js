@@ -113,6 +113,82 @@ class ProposalService {
   }
 
   /**
+   * Create a proposal with a directly uploaded PDF (fallback for when template editor is problematic)
+   * @param {Object} data - { inquiryId, serviceSubTypeId, proposalData, pdfBuffer, pdfOriginalName }
+   * @param {string} userId - User creating the proposal
+   * @param {Object} metadata - Request metadata
+   * @returns {Promise<Object>} Created proposal
+   */
+  async createProposalWithUpload(data, userId, metadata = {}) {
+    const { inquiryId, serviceSubTypeId, proposalData, pdfBuffer, pdfOriginalName } = data;
+
+    const proposalNumber = await counterService.getNextProposalNumber();
+
+    // Upload PDF to S3 immediately
+    const dateFolder = new Date().toISOString().split("T")[0];
+    const key = `proposals/${dateFolder}/${proposalNumber}-uploaded.pdf`;
+    await uploadObject(key, pdfBuffer, "application/pdf");
+
+    // Build proposalData JSON (client info + metadata, no HTML content)
+    const proposalDataJson = {
+      ...proposalData,
+      isUploadedPdf: true,
+      uploadedFileName: pdfOriginalName,
+      terms: {
+        validityDays: proposalData.validityDays || 30,
+      },
+    };
+
+    const [proposal] = await db
+      .insert(proposalTable)
+      .values({
+        proposalNumber,
+        inquiryId,
+        templateId: null,
+        serviceSubTypeId: serviceSubTypeId || null,
+        requestedBy: userId,
+        proposalData: JSON.stringify(proposalDataJson),
+        status: "pending",
+        isUploadedPdf: true,
+        pdfUrl: key,
+        wasTemplateSuggested: false,
+      })
+      .returning();
+
+    // Log file to user_files (fire-and-forget)
+    fileService.logFile({
+      fileName: pdfOriginalName || `${proposalNumber}.pdf`,
+      fileUrl: key,
+      fileType: "application/pdf",
+      fileSize: pdfBuffer.length,
+      entityType: "proposal",
+      entityId: proposal.id,
+      relatedEntityNumber: proposalNumber,
+      clientName: proposalData.clientName || null,
+      action: "uploaded",
+      uploadedBy: userId,
+    });
+
+    // Fire-and-forget: update inquiry status + log activity
+    this._updateInquiryStatus(inquiryId, userId, metadata);
+    this._logInBackground({
+      userId,
+      action: "proposal_created",
+      entityType: "proposal",
+      entityId: proposal.id,
+      details: {
+        inquiryId,
+        isUploadedPdf: true,
+        uploadedFileName: pdfOriginalName,
+      },
+      ipAddress: metadata.ipAddress,
+      userAgent: metadata.userAgent,
+    });
+
+    return proposal;
+  }
+
+  /**
    * Fire-and-forget: update inquiry status to proposal_created
    */
   _updateInquiryStatus(inquiryId, userId, metadata) {
@@ -478,53 +554,59 @@ class ProposalService {
 
     const proposalData = JSON.parse(proposal.proposalData);
 
-    // Step 3: Generate PDF
+    // Step 3: Generate PDF (or use pre-uploaded PDF)
     let pdfBuffer, pdfUrl;
     try {
-      let htmlForPdf = null;
-
-      if (proposalData.editedHtmlContent) {
-        // Check if saved HTML is complete
-        if (this._isCompleteHtml(proposalData.editedHtmlContent)) {
-          // Use saved HTML (preferred path - preserves all user edits)
-          htmlForPdf = proposalData.editedHtmlContent;
-          console.log(`Using editedHtmlContent for PDF generation (proposal ${proposalId})`);
-        } else {
-          console.warn(
-            `editedHtmlContent is incomplete for proposal ${proposalId}, ` +
-            `falling back to template re-rendering. This indicates a data quality issue.`
-          );
-        }
-      }
-
-      // Fallback: re-render from template if no valid HTML
-      if (!htmlForPdf) {
-        const template = await proposalTemplateService.getTemplateById(proposal.templateId);
-        pdfBuffer = await pdfService.generateProposalPDF(
-          proposalData,
-          inquiry,
-          template.htmlTemplate
-        );
+      if (proposal.isUploadedPdf && proposal.pdfUrl) {
+        // Uploaded PDF — use existing file from S3 directly
+        pdfBuffer = await this.readPDF(proposal.pdfUrl);
+        pdfUrl = proposal.pdfUrl;
       } else {
-        // Generate from saved HTML
-        pdfBuffer = await pdfService.generatePDFFromHTML(htmlForPdf);
+        let htmlForPdf = null;
+
+        if (proposalData.editedHtmlContent) {
+          // Check if saved HTML is complete
+          if (this._isCompleteHtml(proposalData.editedHtmlContent)) {
+            // Use saved HTML (preferred path - preserves all user edits)
+            htmlForPdf = proposalData.editedHtmlContent;
+            console.log(`Using editedHtmlContent for PDF generation (proposal ${proposalId})`);
+          } else {
+            console.warn(
+              `editedHtmlContent is incomplete for proposal ${proposalId}, ` +
+              `falling back to template re-rendering. This indicates a data quality issue.`
+            );
+          }
+        }
+
+        // Fallback: re-render from template if no valid HTML
+        if (!htmlForPdf) {
+          const template = await proposalTemplateService.getTemplateById(proposal.templateId);
+          pdfBuffer = await pdfService.generateProposalPDF(
+            proposalData,
+            inquiry,
+            template.htmlTemplate
+          );
+        } else {
+          // Generate from saved HTML
+          pdfBuffer = await pdfService.generatePDFFromHTML(htmlForPdf);
+        }
+
+        pdfUrl = await this.savePDF(pdfBuffer, proposalId);
+
+        // Log file to user_files (fire-and-forget)
+        fileService.logFile({
+          fileName: `${proposal.proposalNumber}.pdf`,
+          fileUrl: pdfUrl,
+          fileType: "application/pdf",
+          fileSize: pdfBuffer.length,
+          entityType: "proposal",
+          entityId: proposalId,
+          relatedEntityNumber: proposal.proposalNumber,
+          clientName: proposalData.clientName || inquiry.name || null,
+          action: "generated",
+          uploadedBy: salesUserId,
+        });
       }
-
-      pdfUrl = await this.savePDF(pdfBuffer, proposalId);
-
-      // Log file to user_files (fire-and-forget)
-      fileService.logFile({
-        fileName: `${proposal.proposalNumber}.pdf`,
-        fileUrl: pdfUrl,
-        fileType: "application/pdf",
-        fileSize: pdfBuffer.length,
-        entityType: "proposal",
-        entityId: proposalId,
-        relatedEntityNumber: proposal.proposalNumber,
-        clientName: proposalData.clientName || inquiry.name || null,
-        action: "generated",
-        uploadedBy: salesUserId,
-      });
     } catch (error) {
       throw new AppError("PDF generation failed: " + error.message, 500);
     }
@@ -826,6 +908,11 @@ class ProposalService {
       typeof proposalOrId === "string"
         ? await this.getProposalById(proposalOrId)
         : proposalOrId;
+
+    // Uploaded PDF — read directly from S3
+    if (proposal.isUploadedPdf && proposal.pdfUrl) {
+      return this.readPDF(proposal.pdfUrl);
+    }
 
     const proposalData = JSON.parse(proposal.proposalData);
 

@@ -27,6 +27,7 @@ import {
   Edit,
   Code2,
   RefreshCw,
+  Upload,
 } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
@@ -79,7 +80,9 @@ export function GenerateContractDialog({
   const [pendingData, setPendingData] = useState({});
   const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [previewPdfUrl, setPreviewPdfUrl] = useState("");
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
   const templateStructureRef = useRef({ head: "", bodyTag: "", styles: "" });
+  const uploadInputRef = useRef(null);
 
   // Initialize data when dialog opens
   useEffect(() => {
@@ -270,6 +273,48 @@ export function GenerateContractDialog({
       toast.error(error.message || "Failed to submit contract");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleUploadPdfInstead = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      toast.error("Only PDF files are allowed");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be less than 10MB");
+      return;
+    }
+
+    try {
+      setIsUploadingPdf(true);
+      await api.uploadContractPdf(
+        contract.contract.id,
+        file,
+        adminNotes || null,
+        editedData
+      );
+
+      toast.success("Contract PDF uploaded successfully");
+      setIsGenerated(true);
+
+      if (typeof onConfirm === "function") {
+        await onConfirm();
+      }
+      if (typeof onOpenChange === "function") {
+        onOpenChange(false);
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to upload contract PDF");
+    } finally {
+      setIsUploadingPdf(false);
+      // Reset file input so same file can be re-selected
+      if (uploadInputRef.current) {
+        uploadInputRef.current.value = "";
+      }
     }
   };
 
@@ -926,13 +971,32 @@ export function GenerateContractDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploadingPdf}
           >
             Cancel
           </Button>
+          <input
+            ref={uploadInputRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={handleUploadPdfInstead}
+          />
+          <Button
+            variant="outline"
+            onClick={() => uploadInputRef.current?.click()}
+            disabled={isSubmitting || isUploadingPdf || isGenerated}
+          >
+            {isUploadingPdf ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="mr-2 h-4 w-4" />
+            )}
+            {isUploadingPdf ? "Uploading..." : "Upload PDF Instead"}
+          </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || isGenerated}
+            disabled={isSubmitting || isUploadingPdf || isGenerated}
             className={isGenerated ? "bg-green-600 hover:bg-green-600" : "bg-blue-600 hover:bg-blue-700"}
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
