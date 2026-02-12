@@ -16,6 +16,7 @@ export function SendToClientDialog({ open, onOpenChange, contract, onConfirm }) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [previewPdfUrl, setPreviewPdfUrl] = useState("");
+  const [isPreviewing, setIsPreviewing] = useState(false);
 
   const handleSubmit = async () => {
     const clientEmail = contract?.inquiry?.email;
@@ -34,11 +35,14 @@ export function SendToClientDialog({ open, onOpenChange, contract, onConfirm }) 
   const handlePreview = async () => {
     if (!contract?.contract?.id) return;
     try {
+      setIsPreviewing(true);
       const dataUrl = await api.previewContractPdf(contract.contract.id);
       setPreviewPdfUrl(dataUrl);
       setShowPdfViewer(true);
     } catch (error) {
       console.error("Failed to load PDF preview:", error);
+    } finally {
+      setIsPreviewing(false);
     }
   };
 
@@ -74,20 +78,9 @@ export function SendToClientDialog({ open, onOpenChange, contract, onConfirm }) 
             </div>
           </div>
 
-          {/* Preview Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePreview}
-            className="w-full"
-          >
-            <Eye className="mr-2 h-4 w-4" />
-            Preview Contract PDF
-          </Button>
-
           {/* Warning */}
           <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-yellow-900 dark:text-yellow-100">
                 Final Delivery
@@ -99,13 +92,25 @@ export function SendToClientDialog({ open, onOpenChange, contract, onConfirm }) 
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="gap-2">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
           >
             Cancel
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handlePreview}
+            disabled={!contract?.contract?.id || isPreviewing}
+          >
+            {isPreviewing ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Eye className="mr-2 h-4 w-4" />
+            )}
+            {isPreviewing ? "Loading..." : "Preview Contract"}
           </Button>
           <Button
             onClick={handleSubmit}
