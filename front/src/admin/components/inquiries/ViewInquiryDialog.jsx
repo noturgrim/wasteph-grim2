@@ -56,17 +56,17 @@ export function ViewInquiryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[85vw]! max-w-[900px]! max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden [&>button]:hidden">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
-          <div className="flex items-center justify-between">
+      <DialogContent className="w-[95vw] sm:w-[85vw]! max-w-[900px]! max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden [&>button]:hidden">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b shrink-0">
+          <div className="flex flex-col items-center text-center sm:flex-row sm:items-center sm:justify-between sm:text-left gap-3">
             <div>
-              <DialogTitle>Inquiry Details</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-lg sm:text-xl">Inquiry Details</DialogTitle>
+              <DialogDescription className="text-sm">
                 View complete inquiry information
               </DialogDescription>
             </div>
             {inquiry.inquiryNumber && (
-              <div className="text-right">
+              <div className="text-center sm:text-right">
                 <p className="text-xs text-muted-foreground">Inquiry Number</p>
                 <p className="font-mono text-sm italic font-normal text-black dark:text-white">
                   {inquiry.inquiryNumber}
@@ -76,40 +76,40 @@ export function ViewInquiryDialog({
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6 min-h-0">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-6 min-h-0">
           {/* Contact Information */}
           <div>
             <h3 className="text-sm font-semibold mb-3 text-foreground">
               Contact Information
             </h3>
-            <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4">
               <div>
-                <p className="text-sm text-muted-foreground">Name</p>
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">Name</p>
+                <p className="text-sm font-medium text-foreground break-words">
                   {inquiry.name}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Email</p>
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">Email</p>
+                <p className="text-sm font-medium text-foreground break-all">
                   {inquiry.email}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Phone</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Phone</p>
                 <p className="text-sm font-medium text-foreground">
                   {inquiry.phone || "N/A"}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Company</p>
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">Company</p>
+                <p className="text-sm font-medium text-foreground break-words">
                   {inquiry.company || "N/A"}
                 </p>
               </div>
-              <div className="col-span-2">
-                <p className="text-sm text-muted-foreground">Location</p>
-                <p className="text-sm font-medium text-foreground">
+              <div className="sm:col-span-2">
+                <p className="text-xs sm:text-sm text-muted-foreground">Location</p>
+                <p className="text-sm font-medium text-foreground break-words">
                   {inquiry.location || "N/A"}
                 </p>
               </div>
@@ -120,10 +120,10 @@ export function ViewInquiryDialog({
             <h3 className="text-sm font-semibold mb-3 text-foreground">
               Inquiry Details
             </h3>
-            <div className="grid grid-cols-3 gap-x-6 gap-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 sm:gap-x-6 gap-y-3 sm:gap-y-4">
               {inquiry.serviceType && (
                 <div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Type of Inquiry
                   </p>
                   <p className="text-sm font-medium text-foreground">
@@ -133,13 +133,13 @@ export function ViewInquiryDialog({
                 </div>
               )}
               <div>
-                <p className="text-sm text-muted-foreground">Source</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Source</p>
                 <p className="text-sm font-medium capitalize text-foreground">
                   {inquiry.source?.replace("-", " ")}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Status</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Status</p>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   <StatusBadge status={inquiry.status} />
                   {inquiry.isInformationComplete === false && (
@@ -153,7 +153,7 @@ export function ViewInquiryDialog({
                 </div>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Proposal Status</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Proposal Status</p>
                 <div className="mt-1">
                   {!inquiry.proposalStatus ? (
                     <Badge
@@ -168,8 +168,8 @@ export function ViewInquiryDialog({
                 </div>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Assigned To</p>
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">Assigned To</p>
+                <p className="text-sm font-medium text-foreground break-words">
                   {assignedUser
                     ? `${assignedUser.firstName} ${assignedUser.lastName}`
                     : inquiry.assignedTo
@@ -178,7 +178,7 @@ export function ViewInquiryDialog({
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Created</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Created</p>
                 <p className="text-sm font-medium text-foreground">
                   {format(
                     new Date(inquiry.createdAt),
@@ -187,7 +187,7 @@ export function ViewInquiryDialog({
                 </p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Last Updated</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Last Updated</p>
                 <p className="text-sm font-medium text-foreground">
                   {format(
                     new Date(inquiry.updatedAt),
@@ -204,10 +204,10 @@ export function ViewInquiryDialog({
           </div>
         </div>
 
-        <DialogFooter className="px-6 py-4 border-t shrink-0 flex-col sm:flex-row gap-2">
+        <DialogFooter className="px-4 sm:px-6 py-3 sm:py-4 border-t shrink-0 flex-col gap-3">
           {/* Show warning if information is incomplete */}
           {inquiry.isInformationComplete === false && (
-            <div className="text-sm text-amber-700 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 px-3 py-2 rounded-md space-y-1">
+            <div className="text-xs sm:text-sm text-amber-700 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 px-3 py-2 rounded-md space-y-1 w-full">
               <p className="font-semibold">Information Incomplete</p>
               <p className="text-xs text-amber-600 dark:text-amber-300">
                 This inquiry was created from a lead pool. Please visit the
@@ -220,18 +220,18 @@ export function ViewInquiryDialog({
 
           {/* Show info for pending/approved proposals */}
           {inquiry.proposalStatus === "pending" && (
-            <div className="text-sm text-yellow-700 dark:text-yellow-200 bg-yellow-50 dark:bg-yellow-950/50 border border-yellow-200 dark:border-yellow-800 px-3 py-2 rounded-md">
+            <div className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-200 bg-yellow-50 dark:bg-yellow-950/50 border border-yellow-200 dark:border-yellow-800 px-3 py-2 rounded-md w-full">
               Proposal is pending admin review
             </div>
           )}
           {(inquiry.proposalStatus === "approved" ||
             inquiry.proposalStatus === "sent") && (
-            <div className="text-sm text-green-700 dark:text-green-200 bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800 px-3 py-2 rounded-md">
+            <div className="text-xs sm:text-sm text-green-700 dark:text-green-200 bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800 px-3 py-2 rounded-md w-full">
               Proposal has been sent to client
             </div>
           )}
           {inquiry.proposalStatus === "disapproved" && (
-            <div className="text-sm text-red-700 dark:text-red-200 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 px-3 py-2 rounded-md space-y-1">
+            <div className="text-xs sm:text-sm text-red-700 dark:text-red-200 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 px-3 py-2 rounded-md space-y-1 w-full">
               <p className="font-semibold">Proposal was disapproved</p>
               {inquiry.proposalRejectionReason && (
                 <p className="text-xs text-red-600 dark:text-red-300">
@@ -244,15 +244,16 @@ export function ViewInquiryDialog({
             </div>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:ml-auto">
             <Button
               variant="outline"
               onClick={() => setIsScheduleDialogOpen(true)}
+              className="w-full sm:w-auto"
             >
               <Calendar className="mr-2 h-4 w-4" />
               Schedule Event
             </Button>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
               Close
             </Button>
           </div>

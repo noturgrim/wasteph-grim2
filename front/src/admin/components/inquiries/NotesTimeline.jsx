@@ -334,27 +334,27 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
       return (
         <div
           key={entry.id}
-          className="flex gap-3 py-3 border-b border-gray-100 dark:border-gray-800 last:border-0"
+          className="flex gap-2 sm:gap-3 py-3 border-b border-gray-100 dark:border-gray-800 last:border-0"
         >
-          <Edit className="h-5 w-5 text-gray-400 dark:text-gray-600 mt-0.5 shrink-0" />
+          <Edit className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-600 mt-0.5 shrink-0" />
 
-          <div className="flex-1 space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground">
+          <div className="flex-1 space-y-1.5 min-w-0">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-xs sm:text-sm font-medium text-foreground break-words">
                 {entry.createdBy?.firstName} {entry.createdBy?.lastName}
               </span>
               <Badge
                 variant="outline"
-                className="text-xs bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                className="text-xs bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200 dark:border-blue-800 shrink-0"
               >
                 <MessageSquare className="h-3 w-3 mr-1" />
                 Note
               </Badge>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-gray-500 dark:text-gray-400 break-words">
                 {format(new Date(entry.createdAt), "MMM dd, yyyy 'at' h:mm a")}
               </span>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap break-words">
               {entry.content}
             </p>
           </div>
@@ -369,36 +369,36 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
       return (
         <div
           key={entry.id}
-          className="flex gap-3 py-3 border-b border-gray-100 dark:border-gray-800 last:border-0"
+          className="flex gap-2 sm:gap-3 py-3 border-b border-gray-100 dark:border-gray-800 last:border-0"
         >
-          <Edit className="h-5 w-5 text-gray-400 dark:text-gray-600 mt-0.5 shrink-0" />
+          <Edit className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 dark:text-gray-600 mt-0.5 shrink-0" />
 
-          <div className="flex-1 space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground">
+          <div className="flex-1 space-y-1.5 min-w-0">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-xs sm:text-sm font-medium text-foreground break-words">
                 {entry.createdBy?.firstName} {entry.createdBy?.lastName}
               </span>
               <Badge
                 variant="outline"
-                className={`text-xs ${activityInfo.badgeBg} ${activityInfo.badgeText} ${activityInfo.badgeBorder} dark:opacity-90`}
+                className={`text-xs ${activityInfo.badgeBg} ${activityInfo.badgeText} ${activityInfo.badgeBorder} dark:opacity-90 shrink-0`}
               >
                 {activityInfo.label}
               </Badge>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-gray-500 dark:text-gray-400 break-words">
                 {format(new Date(entry.createdAt), "MMM dd, yyyy 'at' h:mm a")}
               </span>
             </div>
 
             {/* Show description for non-update activities or when there are no field changes */}
             {activityInfo.description && changeCount === 0 && (
-              <p className="text-sm text-gray-600 dark:text-gray-300">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 break-words">
                 {activityInfo.description}
               </p>
             )}
 
             {/* Show field changes for update activities */}
             {changeCount > 0 && (
-              <div className="text-sm space-y-1">
+              <div className="text-xs sm:text-sm space-y-1">
                 {Object.entries(changes).map(([field, change]) => {
                   const { label, from, to } = formatFieldChange(field, change);
                   return (
@@ -406,18 +406,18 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
                       key={field}
                       className="flex items-start gap-1.5 text-gray-600 dark:text-gray-300"
                     >
-                      <ArrowRightLeft className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                      <span>
+                      <ArrowRightLeft className="h-3 sm:h-3.5 w-3 sm:w-3.5 mt-0.5 shrink-0" />
+                      <span className="break-words min-w-0">
                         Changed{" "}
                         <span className="font-medium text-gray-900 dark:text-gray-100">
                           {label}
                         </span>
                         {" from "}
-                        <span className="font-medium text-red-600 dark:text-red-400">
+                        <span className="font-medium text-red-600 dark:text-red-400 break-all">
                           {from}
                         </span>
                         {" to "}
-                        <span className="font-medium text-green-600 dark:text-green-400">
+                        <span className="font-medium text-green-600 dark:text-green-400 break-all">
                           {to}
                         </span>
                       </span>
@@ -429,14 +429,16 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
 
             {/* Show report for completed events */}
             {activityInfo.showReport && activityInfo.reportContent && (
-              <div className="mt-2 flex items-center gap-2 text-sm">
-                <FileText className="h-4 w-4 text-blue-500" />
-                <span className="text-gray-600 dark:text-gray-300">Event Report available</span>
+              <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-2 text-xs sm:text-sm">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-500 shrink-0" />
+                  <span className="text-gray-600 dark:text-gray-300">Event Report available</span>
+                </div>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => navigate("/admin/calendar", { state: { openEventId: activityInfo.eventId } })}
-                  className="h-7 px-3 text-xs"
+                  className="h-7 px-3 text-xs w-full sm:w-auto"
                 >
                   View Report
                   <ExternalLink className="ml-1.5 h-3 w-3" />
@@ -455,7 +457,7 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
     <div className="space-y-4">
       {/* Timeline */}
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="flex items-center gap-2 hover:opacity-70 transition-opacity"
@@ -467,18 +469,18 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
             }
           >
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              Activity Timeline
+              <Activity className="h-4 w-4 shrink-0" />
+              <span className="whitespace-nowrap">Activity Timeline</span>
               {timeline.length > 0 && (
-                <span className="text-xs text-muted-foreground font-normal">
+                <span className="text-xs text-muted-foreground font-normal whitespace-nowrap">
                   ({timeline.length})
                 </span>
               )}
             </h3>
             {isExpanded ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              <ChevronUp className="h-4 w-4 text-muted-foreground shrink-0" />
             ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
             )}
           </button>
           {isExpanded && !isAddingNote && (
@@ -486,6 +488,7 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
               onClick={() => setIsAddingNote(true)}
               size="sm"
               variant="outline"
+              className="w-full sm:w-auto"
             >
               <Send className="mr-2 h-4 w-4" />
               Add Note
@@ -499,7 +502,7 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
             {isAddingNote && (
               <form
                 onSubmit={handleAddNote}
-                className="space-y-2 mb-4 p-4 border rounded-lg bg-muted/30"
+                className="space-y-3 mb-4 p-3 sm:p-4 border rounded-lg bg-muted/30"
               >
                 <Textarea
                   value={newNote}
@@ -508,14 +511,14 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
                   placeholder="Add a note... (Ctrl+Enter to submit)"
                   rows={3}
                   disabled={isSubmitting}
-                  className="resize-none"
+                  className="resize-none text-sm"
                   autoFocus
                 />
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                   <p className="text-xs text-muted-foreground">
                     Notes are visible to all team members
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full sm:w-auto">
                     <Button
                       type="button"
                       size="sm"
@@ -525,6 +528,7 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
                         setNewNote("");
                       }}
                       disabled={isSubmitting}
+                      className="flex-1 sm:flex-none"
                     >
                       Cancel
                     </Button>
@@ -532,6 +536,7 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
                       type="submit"
                       size="sm"
                       disabled={isSubmitting || !newNote.trim()}
+                      className="flex-1 sm:flex-none"
                     >
                       {isSubmitting ? (
                         <>
@@ -550,21 +555,21 @@ export const NotesTimeline = ({ inquiryId, initialNotes = [] }) => {
               </form>
             )}
 
-            <div className="h-[300px] overflow-y-auto pr-2 scrollbar-thin">
+            <div className="h-[250px] sm:h-[300px] overflow-y-auto pr-1 sm:pr-2 scrollbar-thin">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : timeline.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Activity className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                  <p className="text-sm">No activity yet</p>
+                <div className="text-center py-6 sm:py-8 text-muted-foreground">
+                  <Activity className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 opacity-20" />
+                  <p className="text-xs sm:text-sm">No activity yet</p>
                   <p className="text-xs">
                     Add the first note to start tracking activity
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {timeline.map((entry) => renderTimelineEntry(entry))}
                 </div>
               )}
