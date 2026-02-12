@@ -3,6 +3,7 @@ import {
   getSalesDashboard,
   getSuperAdminDashboard,
   getAnalyticsDashboard,
+  getAdminAnalyticsDashboard,
 } from "../controllers/dashboardController.js";
 import { requireAuth, requireRole, requireMasterSales } from "../middleware/auth.js";
 
@@ -17,6 +18,14 @@ router.get(
   requireAuth,
   requireRole("admin", "super_admin"),
   getSuperAdminDashboard,
+);
+
+// GET /api/dashboard/admin/analytics — admin analytics dashboard
+router.get(
+  "/admin/analytics",
+  requireAuth,
+  requireRole("admin", "super_admin"),
+  getAdminAnalyticsDashboard,
 );
 
 // GET /api/dashboard/analytics — analytics dashboard for master sales

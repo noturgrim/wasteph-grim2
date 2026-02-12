@@ -17,6 +17,7 @@ import UpcomingEvents from "../components/dashboard/UpcomingEvents";
 import RecentActivity from "../components/dashboard/RecentActivity";
 import PendingActions from "../components/dashboard/PendingActions";
 import AnalyticsDashboard from "../components/dashboard/AnalyticsDashboard";
+import AdminAnalyticsDashboard from "../components/dashboard/AdminAnalyticsDashboard";
 
 // --- Stat card definitions ---
 
@@ -134,7 +135,7 @@ export default function Dashboard() {
   const gridCols = isAdmin ? "lg:grid-cols-3 xl:grid-cols-6" : "xl:grid-cols-4";
   const isMasterSales = user?.role === "sales" && user?.isMasterSales;
 
-  // Render for admin users (no tabs)
+  // Render for admin users (with tabs)
   if (isAdmin) {
     return (
       <div className="space-y-4 sm:space-y-6">
@@ -148,34 +149,47 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Stat Cards */}
-        {isLoading ? (
-          <StatsSkeleton count={statCards.length} />
-        ) : (
-          <div className={`grid gap-4 grid-cols-2 md:grid-cols-4 ${gridCols}`}>
-            {statCards.map((card) => (
-              <DashboardCard
-                key={card.key}
-                title={card.title}
-                value={data?.stats?.[card.key] ?? 0}
-                icon={card.icon}
-              />
-            ))}
-          </div>
-        )}
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
 
-        {/* Content area */}
-        {isLoading ? (
-          <ContentSkeleton />
-        ) : (
-          <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
-            <PendingActions data={data?.pendingActions} />
-            <RecentActivity
-              activities={data?.recentActivity ?? []}
-              showActor
-            />
-          </div>
-        )}
+          <TabsContent value="overview" className="space-y-4">
+            {/* Stat Cards */}
+            {isLoading ? (
+              <StatsSkeleton count={statCards.length} />
+            ) : (
+              <div className={`grid gap-4 grid-cols-2 md:grid-cols-4 ${gridCols}`}>
+                {statCards.map((card) => (
+                  <DashboardCard
+                    key={card.key}
+                    title={card.title}
+                    value={data?.stats?.[card.key] ?? 0}
+                    icon={card.icon}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Content area */}
+            {isLoading ? (
+              <ContentSkeleton />
+            ) : (
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-2">
+                <PendingActions data={data?.pendingActions} />
+                <RecentActivity
+                  activities={data?.recentActivity ?? []}
+                  showActor
+                />
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <AdminAnalyticsDashboard />
+          </TabsContent>
+        </Tabs>
       </div>
     );
   }

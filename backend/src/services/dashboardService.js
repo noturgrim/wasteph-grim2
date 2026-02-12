@@ -10,7 +10,7 @@ import {
   clientTicketsTable,
   userTable,
 } from "../db/schema.js";
-import { eq, and, or, sql, gte, isNull, inArray, notInArray, desc } from "drizzle-orm";
+import { eq, and, or, sql, gte, isNull, isNotNull, inArray, notInArray, desc, not } from "drizzle-orm";
 
 class DashboardService {
   /**
@@ -718,7 +718,7 @@ class DashboardService {
       db
         .select({ count: sql`count(*)::int` })
         .from(leadTable)
-        .where(sql`${leadTable.claimedBy} is not null`)
+        .where(not(isNull(leadTable.claimedBy)))
         .then((r) => r[0]?.count ?? 0),
 
       // Top lead generators (sales users with most claimed leads)
@@ -872,6 +872,369 @@ class DashboardService {
     return {
       proposalTrend,
       contractTrend,
+    };
+  }
+
+  // ============================================================
+  // ADMIN ANALYTICS DASHBOARD
+  // ============================================================
+
+  /**
+   * Get admin analytics dashboard data.
+   * Provides comprehensive analytics for super admin users.
+   */
+  async getAdminAnalyticsDashboard() {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const [conversionFunnel, businessGrowth, ticketAnalytics] = await Promise.all([
+      this._getConversionFunnelAnalytics(),
+      this._getBusinessGrowthAnalytics(sixMonthsAgo),
+      this._getTicketAnalytics(sixMonthsAgo),
+    ]);
+
+    return {
+      conversionFunnel,
+      businessGrowth,
+      ticketAnalytics,
+    };
+  }
+
+  /**
+   * Conversion funnel analytics: Inquiries → Leads → Proposals → Contracts
+   */
+  async _getConversionFunnelAnalytics() {
+    const [totalInquiries, totalLeads, totalProposalsSent, totalContractsSigned, inquirySources] =
+      await Promise.all([
+        // Total inquiries
+        db
+          .select({ count: sql`count(*)::int` })
+          .from(inquiryTable)
+          .then((r) => r[0]?.count ?? 0),
+
+        // Total leads
+        db
+          .select({ count: sql`count(*)::int` })
+          .from(leadTable)
+          .then((r) => r[0]?.count ?? 0),
+
+        // Total proposals sent
+        db
+          .select({ count: sql`count(*)::int` })
+          .from(proposalTable)
+          .where(inArray(proposalTable.status, ["sent", "accepted", "rejected"]))
+          .then((r) => r[0]?.count ?? 0),
+
+        // Total contracts signed
+        db
+          .select({ count: sql`count(*)::int` })
+          .from(contractsTable)
+          .where(eq(contractsTable.status, "signed"))
+          .then((r) => r[0]?.count ?? 0),
+
+        // Inquiry sources breakdown
+        db
+          .select({
+            source: inquiryTable.source,
+            count: sql`count(*)::int`,
+          })
+          .from(inquiryTable)
+          .groupBy(inquiryTable.source)
+          .orderBy(desc(sql`count(*)`)),
+      ]);
+
+    // Calculate conversion rates
+    const inquiryToLead = totalInquiries > 0 ? (totalLeads / totalInquiries) * 100 : 0;
+    const leadToProposal = totalLeads > 0 ? (totalProposalsSent / totalLeads) * 100 : 0;
+    const proposalToContract =
+      totalProposalsSent > 0 ? (totalContractsSigned / totalProposalsSent) * 100 : 0;
+    const overallConversion =
+      totalInquiries > 0 ? (totalContractsSigned / totalInquiries) * 100 : 0;
+
+    const stages = [
+      { stage: "Inquiries", count: totalInquiries, conversionToNext: inquiryToLead },
+      { stage: "Leads", count: totalLeads, conversionToNext: leadToProposal },
+      {
+        stage: "Proposals Sent",
+        count: totalProposalsSent,
+        conversionToNext: proposalToContract,
+      },
+      { stage: "Contracts Signed", count: totalContractsSigned, conversionToNext: null },
+    ];
+
+    return {
+      stages,
+      overallConversion: Math.round(overallConversion * 10) / 10,
+      inquirySources,
+    };
+  }
+
+  /**
+   * Business growth analytics: Client acquisition, contract trends
+   */
+  async _getBusinessGrowthAnalytics(sixMonthsAgo) {
+    const now = new Date();
+    const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    const [
+      clientStatusDistribution,
+      totalClients,
+      newClientsThisMonth,
+      newClientsLastMonth,
+      contractTypeDistribution,
+      totalSignedContracts,
+      monthlySignedContracts,
+      contractsEndingSoon,
+    ] = await Promise.all([
+      // Client status distribution
+      db
+        .select({
+          status: clientTable.status,
+          count: sql`count(*)::int`,
+        })
+        .from(clientTable)
+        .groupBy(clientTable.status),
+
+      // Total clients
+      db
+        .select({ count: sql`count(*)::int` })
+        .from(clientTable)
+        .then((r) => r[0]?.count ?? 0),
+
+      // New clients this month
+      db
+        .select({ count: sql`count(*)::int` })
+        .from(clientTable)
+        .where(gte(clientTable.createdAt, firstDayThisMonth))
+        .then((r) => r[0]?.count ?? 0),
+
+      // New clients last month
+      db
+        .select({ count: sql`count(*)::int` })
+        .from(clientTable)
+        .where(
+          and(
+            gte(clientTable.createdAt, firstDayLastMonth),
+            sql`${clientTable.createdAt} < ${firstDayThisMonth}`,
+          ),
+        )
+        .then((r) => r[0]?.count ?? 0),
+
+      // Contract type distribution
+      db
+        .select({
+          type: contractsTable.contractType,
+          count: sql`count(*)::int`,
+        })
+        .from(contractsTable)
+        .where(eq(contractsTable.status, "signed"))
+        .groupBy(contractsTable.contractType),
+
+      // Total signed contracts
+      db
+        .select({ count: sql`count(*)::int` })
+        .from(contractsTable)
+        .where(eq(contractsTable.status, "signed"))
+        .then((r) => r[0]?.count ?? 0),
+
+      // Monthly signed contracts (last 6 months)
+      db
+        .select({
+          month: sql`to_char(${contractsTable.createdAt}, 'YYYY-MM')`.as("month"),
+          signed: sql`count(*)::int`.as("signed"),
+        })
+        .from(contractsTable)
+        .where(
+          and(
+            eq(contractsTable.status, "signed"),
+            gte(contractsTable.createdAt, sixMonthsAgo),
+          ),
+        )
+        .groupBy(sql`to_char(${contractsTable.createdAt}, 'YYYY-MM')`)
+        .orderBy(sql`to_char(${contractsTable.createdAt}, 'YYYY-MM')`),
+
+      // Contracts ending soon (next 30 days)
+      db
+        .select({ count: sql`count(*)::int` })
+        .from(contractsTable)
+        .where(
+          and(
+            eq(contractsTable.status, "signed"),
+            sql`${contractsTable.contractEndDate} between ${now} and ${thirtyDaysFromNow}`,
+          ),
+        )
+        .then((r) => r[0]?.count ?? 0),
+    ]);
+
+    // Calculate growth rate
+    const growthRate =
+      newClientsLastMonth > 0
+        ? ((newClientsThisMonth - newClientsLastMonth) / newClientsLastMonth) * 100
+        : newClientsThisMonth > 0
+          ? 100
+          : 0;
+
+    // Transform status distribution to object
+    const statusDist = {};
+    for (const row of clientStatusDistribution) {
+      statusDist[row.status || "unknown"] = row.count;
+    }
+
+    return {
+      clients: {
+        total: totalClients,
+        active: statusDist.active ?? 0,
+        inactive: statusDist.inactive ?? 0,
+        suspended: statusDist.suspended ?? 0,
+        newThisMonth: newClientsThisMonth,
+        newLastMonth: newClientsLastMonth,
+        growthRate: Math.round(growthRate * 10) / 10,
+      },
+      contracts: {
+        totalSigned: totalSignedContracts,
+        byType: contractTypeDistribution,
+        monthlyTrend: monthlySignedContracts,
+        endingSoon: contractsEndingSoon,
+      },
+    };
+  }
+
+  /**
+   * Ticket system analytics: Status, priority, resolution metrics
+   */
+  async _getTicketAnalytics(sixMonthsAgo) {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+
+    const [
+      statusDistribution,
+      priorityDistribution,
+      categoryDistribution,
+      avgResolutionTime,
+      recentlyResolved,
+      agingTickets,
+      monthlyTrend,
+      topCategories,
+      assignedCount,
+      unassignedCount,
+    ] = await Promise.all([
+      // Status distribution
+      db
+        .select({
+          status: clientTicketsTable.status,
+          count: sql`count(*)::int`,
+        })
+        .from(clientTicketsTable)
+        .groupBy(clientTicketsTable.status),
+
+      // Priority distribution
+      db
+        .select({
+          priority: clientTicketsTable.priority,
+          count: sql`count(*)::int`,
+        })
+        .from(clientTicketsTable)
+        .groupBy(clientTicketsTable.priority),
+
+      // Category distribution
+      db
+        .select({
+          category: clientTicketsTable.category,
+          count: sql`count(*)::int`,
+        })
+        .from(clientTicketsTable)
+        .groupBy(clientTicketsTable.category),
+
+      // Average resolution time (in hours)
+      db
+        .select({
+          avgHours: sql`avg(extract(epoch from (${clientTicketsTable.resolvedAt} - ${clientTicketsTable.createdAt})) / 3600)::numeric`,
+        })
+        .from(clientTicketsTable)
+        .where(eq(clientTicketsTable.status, "resolved"))
+        .then((r) => {
+          const val = r[0]?.avgHours;
+          return val ? Math.round(Number(val) * 10) / 10 : 0;
+        }),
+
+      // Recently resolved (last 7 days)
+      db
+        .select({ count: sql`count(*)::int` })
+        .from(clientTicketsTable)
+        .where(
+          and(
+            eq(clientTicketsTable.status, "resolved"),
+            gte(clientTicketsTable.resolvedAt, sevenDaysAgo),
+          ),
+        )
+        .then((r) => r[0]?.count ?? 0),
+
+      // Aging tickets (open > 48 hours)
+      db
+        .select({ count: sql`count(*)::int` })
+        .from(clientTicketsTable)
+        .where(
+          and(
+            inArray(clientTicketsTable.status, ["open", "in_progress"]),
+            sql`${clientTicketsTable.createdAt} < ${fortyEightHoursAgo}`,
+          ),
+        )
+        .then((r) => r[0]?.count ?? 0),
+
+      // Monthly trend (created vs resolved)
+      db
+        .select({
+          month: sql`to_char(${clientTicketsTable.createdAt}, 'YYYY-MM')`.as("month"),
+          created: sql`count(*)::int`.as("created"),
+          resolved: sql`sum(case when ${clientTicketsTable.status} = 'resolved' then 1 else 0 end)::int`.as("resolved"),
+        })
+        .from(clientTicketsTable)
+        .where(gte(clientTicketsTable.createdAt, sixMonthsAgo))
+        .groupBy(sql`to_char(${clientTicketsTable.createdAt}, 'YYYY-MM')`)
+        .orderBy(sql`to_char(${clientTicketsTable.createdAt}, 'YYYY-MM')`),
+
+      // Top 5 categories
+      db
+        .select({
+          category: clientTicketsTable.category,
+          count: sql`count(*)::int`,
+        })
+        .from(clientTicketsTable)
+        .groupBy(clientTicketsTable.category)
+        .orderBy(desc(sql`count(*)`))
+        .limit(5),
+
+      // Assigned tickets count (has a resolver)
+      db
+        .select({ count: sql`count(*)::int` })
+        .from(clientTicketsTable)
+        .where(isNotNull(clientTicketsTable.resolvedBy))
+        .then((r) => r[0]?.count ?? 0),
+
+      // Unassigned tickets count (no resolver yet)
+      db
+        .select({ count: sql`count(*)::int` })
+        .from(clientTicketsTable)
+        .where(isNull(clientTicketsTable.resolvedBy))
+        .then((r) => r[0]?.count ?? 0),
+    ]);
+
+    return {
+      byStatus: statusDistribution,
+      byPriority: priorityDistribution,
+      byCategory: categoryDistribution,
+      avgResolutionHours: avgResolutionTime,
+      recentlyResolved,
+      agingTickets,
+      monthlyTrend,
+      topCategories,
+      assignedVsUnassigned: {
+        assigned: assignedCount,
+        unassigned: unassignedCount,
+      },
     };
   }
 }
