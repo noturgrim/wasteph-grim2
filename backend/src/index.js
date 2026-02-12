@@ -40,6 +40,7 @@ import dashboardRoutes from "./routes/dashboardRoutes.js";
 import emailPreviewRoutes from "./routes/emailPreviewRoutes.js";
 import fileRoutes from "./routes/fileRoutes.js";
 import reportsRoutes from "./routes/reports.js";
+import settingsRoutes from "./routes/settingsRoutes.js";
 
 dotenv.config();
 
@@ -137,6 +138,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/email-preview", emailPreviewRoutes);
 app.use("/api/files", fileRoutes);
 app.use("/api/reports", reportsRoutes);
+app.use("/api/settings", settingsRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

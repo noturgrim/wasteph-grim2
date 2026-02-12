@@ -1110,3 +1110,27 @@ export const notificationsTable = pgTable(
     userIsReadIdx: index("notifications_user_is_read_idx").on(table.userId, table.isRead),
   })
 );
+
+// System Settings Table
+export const systemSettingsTable = pgTable(
+  "system_settings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    key: text("key").notNull().unique(),
+    value: text("value"),
+    isEncrypted: boolean("is_encrypted").notNull().default(false),
+    description: text("description"),
+    updatedBy: text("updated_by").references(() => userTable.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    keyIdx: index("system_settings_key_idx").on(table.key),
+  })
+);

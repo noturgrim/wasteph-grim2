@@ -1211,6 +1211,25 @@ class ApiClient {
   async getBlogStats() {
     return this.request("/blog/admin/stats");
   }
+
+  // Settings endpoints
+  async getSMTPSettings() {
+    return this.request("/settings/smtp");
+  }
+
+  async updateSMTPSettings(data) {
+    return this.request("/settings/smtp", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async testSMTPConnection(data) {
+    return this.request("/settings/smtp/test", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 // Export singleton instance

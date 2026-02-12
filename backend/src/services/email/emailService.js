@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { getEnv } from "../../utils/envValidator.js";
+import settingsService from "../settingsService.js";
 
 // Import all email templates
 import {
@@ -29,40 +30,75 @@ class EmailService {
   }
 
   /**
+   * Get SMTP configuration from database or environment
+   * Priority: Database > Environment Variables
+   * @returns {Promise<Object>}
+   */
+  async getSMTPConfig() {
+    try {
+      // Try to get settings from database first
+      const dbSettings = await settingsService.getSMTPSettings();
+
+      if (dbSettings && dbSettings.host && dbSettings.user && dbSettings.password) {
+        console.log("📧 Using SMTP settings from database");
+        return {
+          host: dbSettings.host,
+          port: parseInt(dbSettings.port || "587"),
+          secure: dbSettings.secure === "true" || dbSettings.secure === true,
+          user: dbSettings.user,
+          password: dbSettings.password,
+          from_name: dbSettings.from_name || "WastePH",
+        };
+      }
+    } catch (error) {
+      console.warn("⚠️  Could not load SMTP settings from database, falling back to .env");
+    }
+
+    // Fallback to environment variables
+    return {
+      host: process.env.SMTP_HOST,
+      port: parseInt(getEnv("SMTP_PORT", "587")),
+      secure: process.env.SMTP_SECURE === "true",
+      user: process.env.SMTP_USER,
+      password: process.env.SMTP_PASSWORD,
+      from_name: getEnv("SMTP_FROM_NAME", "WastePH"),
+    };
+  }
+
+  /**
    * Initialize Nodemailer transporter
    */
-  initializeTransporter() {
+  async initializeTransporter() {
+    // Get SMTP configuration (DB or env)
+    const config = await this.getSMTPConfig();
+
     // Log SMTP configuration (without password)
     console.log("📧 Initializing Email Service...");
-    console.log(`   SMTP_HOST: ${getEnv("SMTP_HOST", "NOT SET")}`);
-    console.log(`   SMTP_PORT: ${getEnv("SMTP_PORT", "587 (default)")}`);
-    console.log(
-      `   SMTP_SECURE: ${getEnv("SMTP_SECURE", "false (default)")}`,
-    );
-    console.log(`   SMTP_USER: ${getEnv("SMTP_USER", "NOT SET")}`);
-    console.log(
-      `   SMTP_PASSWORD: ${process.env.SMTP_PASSWORD ? "****" : "NOT SET"}`,
-    );
+    console.log(`   SMTP_HOST: ${config.host || "NOT SET"}`);
+    console.log(`   SMTP_PORT: ${config.port || "587 (default)"}`);
+    console.log(`   SMTP_SECURE: ${config.secure}`);
+    console.log(`   SMTP_USER: ${config.user || "NOT SET"}`);
+    console.log(`   SMTP_PASSWORD: ${config.password ? "****" : "NOT SET"}`);
+    console.log(`   FROM_NAME: ${config.from_name}`);
 
-    if (
-      !process.env.SMTP_HOST ||
-      !process.env.SMTP_USER ||
-      !process.env.SMTP_PASSWORD
-    ) {
+    if (!config.host || !config.user || !config.password) {
       console.warn(
         "⚠️  Warning: SMTP credentials not fully configured. Emails will fail.",
       );
     }
 
     this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(getEnv("SMTP_PORT", "587")),
-      secure: process.env.SMTP_SECURE === "true",
+      host: config.host,
+      port: config.port,
+      secure: config.secure,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
+        user: config.user,
+        pass: config.password,
       },
     });
+
+    // Store config for use in email sending
+    this.config = config;
 
     // Verify connection on startup
     this.verifyConnection();
@@ -156,7 +192,7 @@ class EmailService {
       );
 
       const info = await this.transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `${this.config?.from_name || "WastePH"} <${this.config?.user || process.env.SMTP_USER}>`,
         to,
         subject: "Proposal from WastePH",
         html: htmlContent,
@@ -198,7 +234,7 @@ class EmailService {
       const htmlContent = this.generateNotificationEmailHTML(subject, body);
 
       const info = await this.transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `${this.config?.from_name || "WastePH"} <${this.config?.user || process.env.SMTP_USER}>`,
         to,
         subject,
         html: htmlContent,
@@ -231,7 +267,7 @@ class EmailService {
       const htmlContent = this.generateAutoScheduleSalesEmailHTML(data);
 
       const info = await this.transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `${this.config?.from_name || "WastePH"} <${this.config?.user || process.env.SMTP_USER}>`,
         to,
         subject,
         html: htmlContent,
@@ -268,7 +304,7 @@ class EmailService {
       const htmlContent = this.generateAutoScheduleClientEmailHTML(data);
 
       const info = await this.transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `${this.config?.from_name || "WastePH"} <${this.config?.user || process.env.SMTP_USER}>`,
         to,
         subject,
         html: htmlContent,
@@ -310,7 +346,7 @@ class EmailService {
       const htmlContent = this.generateEventAssignedEmailHTML(data);
 
       const info = await this.transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `${this.config?.from_name || "WastePH"} <${this.config?.user || process.env.SMTP_USER}>`,
         to,
         subject,
         html: htmlContent,
@@ -353,7 +389,7 @@ class EmailService {
       const htmlContent = this.generateEventReminderEmailHTML(data, timeType);
 
       const info = await this.transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `${this.config?.from_name || "WastePH"} <${this.config?.user || process.env.SMTP_USER}>`,
         to,
         subject,
         html: htmlContent,
@@ -390,7 +426,7 @@ class EmailService {
       const htmlContent = this.generateNewTicketEmailHTML(data);
 
       const info = await this.transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `${this.config?.from_name || "WastePH"} <${this.config?.user || process.env.SMTP_USER}>`,
         to,
         subject: emailSubject,
         html: htmlContent,
@@ -427,7 +463,7 @@ class EmailService {
       const htmlContent = this.generateTicketUpdateEmailHTML(data);
 
       const info = await this.transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `${this.config?.from_name || "WastePH"} <${this.config?.user || process.env.SMTP_USER}>`,
         to,
         subject: emailSubject,
         html: htmlContent,
@@ -501,7 +537,7 @@ class EmailService {
       );
 
       const info = await this.transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `${this.config?.from_name || "WastePH"} <${this.config?.user || process.env.SMTP_USER}>`,
         to,
         subject,
         html: htmlContent,
@@ -543,7 +579,7 @@ class EmailService {
       const htmlContent = this.generateNewLeadEmailHTML(leadData);
 
       const info = await this.transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `${this.config?.from_name || "WastePH"} <${this.config?.user || process.env.SMTP_USER}>`,
         to,
         subject,
         html: htmlContent,
@@ -583,7 +619,7 @@ class EmailService {
       const htmlContent = this.generateProposalResponseEmailHTML(data);
 
       const info = await this.transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `${this.config?.from_name || "WastePH"} <${this.config?.user || process.env.SMTP_USER}>`,
         to,
         subject,
         html: htmlContent,
@@ -619,7 +655,7 @@ class EmailService {
       const htmlContent = this.generateProposalDisapprovedEmailHTML(data);
 
       const info = await this.transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `${this.config?.from_name || "WastePH"} <${this.config?.user || process.env.SMTP_USER}>`,
         to,
         subject,
         html: htmlContent,
@@ -655,7 +691,7 @@ class EmailService {
       const htmlContent = this.generateContractSignedEmailHTML(data);
 
       const info = await this.transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: `${this.config?.from_name || "WastePH"} <${this.config?.user || process.env.SMTP_USER}>`,
         to,
         subject,
         html: htmlContent,
