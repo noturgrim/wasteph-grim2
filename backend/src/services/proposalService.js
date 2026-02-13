@@ -259,6 +259,20 @@ class ProposalService {
       conditions.push(eq(proposalTable.inquiryId, inquiryId));
     }
 
+    // Search filter - search across proposal number, inquiry number, inquiry name, email, company
+    if (search && search.trim()) {
+      const searchTerm = `%${search.trim()}%`;
+      conditions.push(
+        or(
+          sql`${proposalTable.proposalNumber} ILIKE ${searchTerm}`,
+          sql`${inquiryTable.inquiryNumber} ILIKE ${searchTerm}`,
+          sql`${inquiryTable.name} ILIKE ${searchTerm}`,
+          sql`${inquiryTable.email} ILIKE ${searchTerm}`,
+          sql`${inquiryTable.company} ILIKE ${searchTerm}`
+        )
+      );
+    }
+
     // Run data + facets in parallel
     const [rows, facetRows] = await Promise.all([
       // 1. Paginated data + total count via window function
