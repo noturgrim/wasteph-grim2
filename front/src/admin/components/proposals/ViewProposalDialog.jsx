@@ -101,7 +101,7 @@ export function ViewProposalDialog({
                 const response = await fetch(
                   `${API_BASE_URL}/proposals/${proposal.id}/preview-pdf`,
                   {
-                    method: "POST",
+                    method: "GET",
                     credentials: "include",
                   }
                 );
@@ -125,14 +125,14 @@ export function ViewProposalDialog({
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="!w-[70vw] !max-w-[70vw] h-[90vh] !max-h-[90vh] overflow-hidden flex flex-col p-6">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle>Proposal Details</DialogTitle>
-              <DialogDescription>
-                {proposal.inquiryName} • {proposal.inquiryEmail}
-              </DialogDescription>
-            </div>
+        <DialogHeader className="space-y-3">
+          <div className="pr-6">
+            <DialogTitle>Proposal Details</DialogTitle>
+            <DialogDescription>
+              {proposal.inquiryName} • {proposal.inquiryEmail}
+            </DialogDescription>
+          </div>
+          <div>
             <StatusBadge status={proposal.status} />
           </div>
         </DialogHeader>
@@ -378,4 +378,5 @@ export function ViewProposalDialog({
       />
     )}
   </>
-};
+  );
+}

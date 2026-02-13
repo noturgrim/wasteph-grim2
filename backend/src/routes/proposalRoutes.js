@@ -159,6 +159,6 @@ router.post("/:id/retry-email", requireAuth, retryProposalEmail);
 router.get("/:id/pdf", requireAuth, downloadProposalPDF);
 
 // Preview proposal PDF (Sales - for preview before submitting)
-router.post("/:id/preview-pdf", requireAuth, previewProposalPDF);
+router.get("/:id/preview-pdf", requireAuth, previewProposalPDF);
 
 export default router;

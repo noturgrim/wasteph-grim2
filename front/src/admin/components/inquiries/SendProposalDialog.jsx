@@ -108,7 +108,7 @@ export function SendProposalDialog({ open, onOpenChange, inquiry, onSuccess }) {
             const previewResponse = await fetch(
               `${API_BASE_URL}/proposals/${inquiry.proposalId}/preview-pdf`,
               {
-                method: "POST",
+                method: "GET",
                 credentials: "include",
               }
             );

@@ -80,7 +80,7 @@ export function ReviewProposalDialog({
           // Generate preview PDF (for proposals without saved PDF)
           // This endpoint returns JSON with base64 PDF, not a blob
           const response = await api.request(`/proposals/${proposal.id}/preview-pdf`, {
-            method: "POST",
+            method: "GET",
           });
           if (response.success && response.data.pdfBase64) {
             setPdfPreviewUrl(`data:application/pdf;base64,${response.data.pdfBase64}`);

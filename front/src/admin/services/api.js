@@ -507,7 +507,7 @@ class ApiClient {
 
   async previewProposalPDF(id) {
     return this.request(`/proposals/${id}/preview-pdf`, {
-      method: "POST",
+      method: "GET",
     });
   }
 

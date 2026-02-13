@@ -374,7 +374,7 @@ export const downloadProposalPDF = async (req, res, next) => {
 
 /**
  * Preview proposal PDF without saving
- * POST /api/proposals/:id/preview-pdf
+ * GET /api/proposals/:id/preview-pdf
  */
 export const previewProposalPDF = async (req, res, next) => {
   try {
