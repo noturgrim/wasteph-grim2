@@ -23,7 +23,7 @@ import {
 import { format } from "date-fns";
 import { StatusBadge } from "../StatusBadge";
 
-export const createColumns = ({ users = [], onReview, onDelete, onRevise, onSendToClient, userRole, revisingProposalId = null }) => [
+export const createColumns = ({ users = [], onReview, onDelete, onRevise, onSendToClient, userRole, revisingProposalId = null, sendingProposalId = null }) => [
   {
     accessorKey: "proposalNumber",
     header: ({ column }) => {
@@ -196,10 +196,20 @@ export const createColumns = ({ users = [], onReview, onDelete, onRevise, onSend
               variant="ghost"
               size="sm"
               onClick={() => onSendToClient(proposal)}
-              className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50"
+              disabled={sendingProposalId === proposal.id}
+              className="h-8 px-2 text-green-600 hover:text-green-700 hover:bg-green-50 disabled:opacity-50"
             >
-              <Send className="h-4 w-4 mr-1" />
-              Send to Client
+              {sendingProposalId === proposal.id ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-1" />
+                  Send to Client
+                </>
+              )}
             </Button>
           )}
 

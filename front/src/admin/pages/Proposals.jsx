@@ -81,6 +81,7 @@ export default function Proposals() {
   const [isSendProposalDialogOpen, setIsSendProposalDialogOpen] = useState(false);
   const [reviseInquiry, setReviseInquiry] = useState(null);
   const [revisingProposalId, setRevisingProposalId] = useState(null);
+  const [sendingProposalId, setSendingProposalId] = useState(null);
 
   // Fetch users on mount
   useEffect(() => {
@@ -244,7 +245,21 @@ export default function Proposals() {
       email: proposal.inquiryEmail,
       company: proposal.inquiryCompany,
     });
+    setSendingProposalId(proposal.id);
     setIsSendProposalDialogOpen(true);
+  };
+
+  const handleSendingChange = (isSending) => {
+    if (!isSending) {
+      setSendingProposalId(null);
+    }
+  };
+
+  const handleSendDialogClose = (open) => {
+    setIsSendProposalDialogOpen(open);
+    if (!open) {
+      setSendingProposalId(null);
+    }
   };
 
   const handleToggleColumn = (columnKey) => {
@@ -263,6 +278,7 @@ export default function Proposals() {
     onSendToClient: handleSendToClient,
     userRole: user?.role,
     revisingProposalId,
+    sendingProposalId,
   });
 
   // Filter columns based on visibility
@@ -497,9 +513,10 @@ export default function Proposals() {
 
       <SendProposalDialog
         open={isSendProposalDialogOpen}
-        onOpenChange={setIsSendProposalDialogOpen}
+        onOpenChange={handleSendDialogClose}
         inquiry={selectedProposal}
         onSuccess={() => fetchProposals()}
+        onSendingChange={handleSendingChange}
       />
     </div>
   );

@@ -13,7 +13,7 @@ import { api } from "../../services/api";
 import { toast } from "../../utils/toast";
 import { PDFViewer } from "../PDFViewer";
 
-export function SendProposalDialog({ open, onOpenChange, inquiry, onSuccess }) {
+export function SendProposalDialog({ open, onOpenChange, inquiry, onSuccess, onSendingChange }) {
   const [isSending, setIsSending] = useState(false);
   const [proposalData, setProposalData] = useState(null);
   const [isLoadingData, setIsLoadingData] = useState(false);
@@ -137,6 +137,7 @@ export function SendProposalDialog({ open, onOpenChange, inquiry, onSuccess }) {
     }
 
     setIsSending(true);
+    if (onSendingChange) onSendingChange(true);
     try {
       await api.sendProposal(inquiry.proposalId, true);
       toast.success(`Proposal sent successfully to ${inquiry.email}`);
@@ -146,6 +147,7 @@ export function SendProposalDialog({ open, onOpenChange, inquiry, onSuccess }) {
       toast.error(error.message || "Failed to send proposal");
     } finally {
       setIsSending(false);
+      if (onSendingChange) onSendingChange(false);
     }
   };
 
