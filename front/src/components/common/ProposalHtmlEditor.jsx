@@ -76,8 +76,8 @@ const MenuBar = ({
   const btnClass = (isActive) =>
     `p-1.5 rounded transition-colors ${
       isActive
-        ? "bg-[#106934] text-white"
-        : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
+        ? "bg-[#106934] text-white dark:bg-[#16a34a] dark:text-white"
+        : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600"
     }`;
 
   // Check if cursor is inside a table (either in a cell or header)
@@ -88,7 +88,7 @@ const MenuBar = ({
     editor.isActive("table");
 
   return (
-    <div className="flex flex-wrap gap-1 p-2 bg-gray-50 border-b border-gray-200 items-center justify-between">
+    <div className="flex flex-wrap gap-1 p-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 items-center justify-between">
       <div className="flex flex-wrap gap-1 items-center">
         {/* Text Formatting */}
         <button
@@ -116,7 +116,7 @@ const MenuBar = ({
           <UnderlineIcon className="w-4 h-4" />
         </button>
 
-        <div className="w-px h-5 bg-gray-300 mx-0.5 self-center" />
+        <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-0.5 self-center" />
 
         {/* Lists */}
         <button
@@ -136,7 +136,7 @@ const MenuBar = ({
           <ListOrdered className="w-4 h-4" />
         </button>
 
-        <div className="w-px h-5 bg-gray-300 mx-0.5 self-center" />
+        <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-0.5 self-center" />
 
         {/* Alignment */}
         <button
@@ -172,7 +172,7 @@ const MenuBar = ({
           <AlignJustify className="w-4 h-4" />
         </button>
 
-        <div className="w-px h-5 bg-gray-300 mx-0.5 self-center" />
+        <div className="w-px h-5 bg-gray-300 dark:bg-gray-600 mx-0.5 self-center" />
 
         {/* Table Controls */}
         {/* Insert table (only when cursor is NOT inside a table) */}
@@ -219,7 +219,7 @@ const MenuBar = ({
             <button
               type="button"
               onClick={() => editor.chain().focus().deleteRow().run()}
-              className="p-1.5 rounded transition-colors bg-white text-red-600 hover:bg-red-50 border border-gray-300"
+              className="p-1.5 rounded transition-colors bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 border border-gray-300 dark:border-gray-600"
               title="Delete Row"
             >
               <span className="flex items-center gap-0.5 text-xs font-medium">
@@ -229,7 +229,7 @@ const MenuBar = ({
             <button
               type="button"
               onClick={() => editor.chain().focus().deleteColumn().run()}
-              className="p-1.5 rounded transition-colors bg-white text-red-600 hover:bg-red-50 border border-gray-300"
+              className="p-1.5 rounded transition-colors bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 border border-gray-300 dark:border-gray-600"
               title="Delete Column"
             >
               <span className="flex items-center gap-0.5 text-xs font-medium">
@@ -248,7 +248,7 @@ const MenuBar = ({
             size="sm"
             variant="outline"
             onClick={onFullPreview}
-            className="gap-1"
+            className="gap-1 text-gray-700 dark:text-gray-200"
           >
             <Eye className="w-4 h-4 mr-1" />
             Full Preview
@@ -262,8 +262,8 @@ const MenuBar = ({
           disabled={!canReset}
           className={
             canReset
-              ? "text-gray-700 hover:bg-gray-100"
-              : "text-gray-400 cursor-not-allowed"
+              ? "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+              : "text-gray-400 dark:text-gray-600 cursor-not-allowed"
           }
           title="Reset to original template"
         >
@@ -471,7 +471,7 @@ const ProposalHtmlEditor = ({
 
   return (
     <div
-      className={`border border-gray-200 rounded-lg overflow-hidden flex flex-col ${className}`}
+      className={`border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden flex flex-col ${className}`}
     >
       {/* Inject scoped template styles so the template's own CSS applies inside the editor */}
       {scopedStyles && (
@@ -568,22 +568,22 @@ const ProposalHtmlEditor = ({
 
       <div className="flex-1 overflow-y-auto min-h-0 relative">
         {/* Header space indicator - shows where the PDF header will appear */}
-        <div className="sticky top-0 z-20 bg-linear-to-b from-blue-50 to-blue-100 border-b-2 border-blue-300 px-4 py-3 shadow-sm">
-          <div className="flex items-center justify-between text-xs text-blue-700">
+        <div className="sticky top-0 z-20 bg-linear-to-b from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-b-2 border-blue-300 dark:border-blue-700 px-4 py-3 shadow-sm">
+          <div className="flex items-center justify-between text-xs text-blue-700 dark:text-blue-300">
             <div className="flex items-center gap-2">
               <span className="font-semibold">Header Area</span>
-              <span className="text-blue-600">
+              <span className="text-blue-600 dark:text-blue-400">
                 (Company header will appear here in PDF - not editable)
               </span>
             </div>
-            <span className="text-blue-600 font-mono">~140px reserved</span>
+            <span className="text-blue-600 dark:text-blue-400 font-mono">~140px reserved</span>
           </div>
         </div>
 
         <EditorContent editor={editor} />
 
         {/* Page break legend */}
-        <div className="sticky top-16 left-4 inline-block bg-blue-50 border border-blue-200 rounded px-3 py-1.5 text-xs text-blue-700 shadow-sm z-10 ml-4 mt-2">
+        <div className="sticky top-16 left-4 inline-block bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-700 rounded px-3 py-1.5 text-xs text-blue-700 dark:text-blue-300 shadow-sm z-10 ml-4 mt-2">
           <span className="font-medium">Horizontal lines</span> = PDF page
           breaks (approx. A4 size)
         </div>
