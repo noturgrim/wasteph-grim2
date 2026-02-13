@@ -187,4 +187,7 @@ export const getTicketsQuerySchema = z.object({
       return val; // Return original comma-separated string for service layer
     }),
   createdBy: z.string().optional(),
+  search: z.string().optional(),
+  page: z.string().optional(),
+  limit: z.string().optional(),
 });

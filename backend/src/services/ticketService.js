@@ -6,7 +6,7 @@ import {
   activityLogTable,
   userTable,
 } from "../db/schema.js";
-import { eq, desc, and, or, inArray, like, count, sql } from "drizzle-orm";
+import { eq, desc, and, or, inArray, count, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 import counterService from "./counterService.js";
 import { getPresignedUrl } from "./s3Service.js";
@@ -112,14 +112,14 @@ class TicketService {
         : inArray(clientTicketsTable.priority, priorities));
     }
 
-    if (search) {
-      const escaped = search.replace(/[%_\\]/g, "\\$&");
+    if (search && search.trim()) {
+      const searchTerm = `%${search.trim()}%`;
       conditions.push(
         or(
-          like(clientTicketsTable.ticketNumber, `%${escaped}%`),
-          like(clientTicketsTable.subject, `%${escaped}%`),
-          like(userTable.firstName, `%${escaped}%`),
-          like(userTable.lastName, `%${escaped}%`),
+          sql`${clientTicketsTable.ticketNumber} ILIKE ${searchTerm}`,
+          sql`${clientTicketsTable.subject} ILIKE ${searchTerm}`,
+          sql`${userTable.firstName} ILIKE ${searchTerm}`,
+          sql`${userTable.lastName} ILIKE ${searchTerm}`,
         ),
       );
     }

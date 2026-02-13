@@ -8,7 +8,7 @@ import {
   contractsTable,
   clientTable,
 } from "../db/schema.js";
-import { eq, desc, and, or, inArray, like, count, sql } from "drizzle-orm";
+import { eq, desc, and, or, inArray, count, sql } from "drizzle-orm";
 import { AppError } from "../middleware/errorHandler.js";
 import counterService from "./counterService.js";
 import { getPresignedUrl } from "./s3Service.js";
@@ -209,14 +209,18 @@ class TicketService {
         : inArray(clientTicketsTable.priority, priorities));
     }
 
-    if (search) {
+    if (search && search.trim()) {
+      const searchTerm = `%${search.trim()}%`;
       conditions.push(
         or(
-          like(clientTicketsTable.ticketNumber, `%${search}%`),
-          like(clientTicketsTable.subject, `%${search}%`),
-          like(clientTicketsTable.description, `%${search}%`),
-          like(userTable.firstName, `%${search}%`),
-          like(userTable.lastName, `%${search}%`),
+          sql`${clientTicketsTable.ticketNumber} ILIKE ${searchTerm}`,
+          sql`${clientTicketsTable.subject} ILIKE ${searchTerm}`,
+          sql`${clientTicketsTable.description} ILIKE ${searchTerm}`,
+          sql`${contractsTable.contractNumber} ILIKE ${searchTerm}`,
+          sql`${clientTable.contactPerson} ILIKE ${searchTerm}`,
+          sql`${clientTable.companyName} ILIKE ${searchTerm}`,
+          sql`${userTable.firstName} ILIKE ${searchTerm}`,
+          sql`${userTable.lastName} ILIKE ${searchTerm}`,
         )
       );
     }
@@ -237,6 +241,8 @@ class TicketService {
         .select({ value: count() })
         .from(clientTicketsTable)
         .leftJoin(userTable, eq(clientTicketsTable.createdBy, userTable.id))
+        .leftJoin(contractsTable, eq(clientTicketsTable.contractId, contractsTable.id))
+        .leftJoin(clientTable, eq(clientTicketsTable.clientId, clientTable.id))
         .where(whereClause),
 
       // 2. Paginated data
@@ -245,6 +251,8 @@ class TicketService {
           id: clientTicketsTable.id,
           ticketNumber: clientTicketsTable.ticketNumber,
           clientId: clientTicketsTable.clientId,
+          clientName: clientTable.contactPerson,
+          clientCompany: clientTable.companyName,
           contractId: clientTicketsTable.contractId,
           contractNumber: contractsTable.contractNumber,
           category: clientTicketsTable.category,
@@ -265,6 +273,7 @@ class TicketService {
         .from(clientTicketsTable)
         .leftJoin(userTable, eq(clientTicketsTable.createdBy, userTable.id))
         .leftJoin(contractsTable, eq(clientTicketsTable.contractId, contractsTable.id))
+        .leftJoin(clientTable, eq(clientTicketsTable.clientId, clientTable.id))
         .where(whereClause)
         .orderBy(desc(clientTicketsTable.createdAt))
         .limit(limit)
