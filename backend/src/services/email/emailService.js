@@ -11,6 +11,7 @@ import {
   generateAutoScheduleClientEmailHTML,
   generateNewLeadEmailHTML,
   generateProposalResponseEmailHTML,
+  generateProposalApprovedEmailHTML,
   generateProposalDisapprovedEmailHTML,
   generateContractSignedEmailHTML,
   generateNewTicketEmailHTML,
@@ -643,6 +644,42 @@ class EmailService {
   }
 
   /**
+   * Send proposal approved notification to sales person (admin approval)
+   * @param {string} to - Sales person email
+   * @param {Object} data - Notification data
+   * @returns {Promise<Object>} Email result
+   */
+  async sendProposalApprovedNotification(to, data) {
+    try {
+      const { clientName, companyName, proposalNumber } = data;
+      const subject = `Proposal Approved: ${companyName || clientName}`;
+      const htmlContent = this.generateProposalApprovedEmailHTML(data);
+
+      const info = await this.transporter.sendMail({
+        from: `${this.config?.from_name || "WastePH"} <${this.config?.user || process.env.SMTP_USER}>`,
+        to,
+        subject,
+        html: htmlContent,
+      });
+
+      console.log(`✅ Proposal approved notification sent to: ${to}`);
+      return {
+        success: true,
+        messageId: info.messageId,
+      };
+    } catch (error) {
+      console.error(
+        `❌ Failed to send proposal approved notification to ${to}:`,
+        error.message,
+      );
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
    * Send proposal disapproved notification to sales person (admin rejection)
    * @param {string} to - Sales person email
    * @param {Object} data - Notification data
@@ -745,6 +782,10 @@ class EmailService {
 
   generateProposalResponseEmailHTML(...args) {
     return generateProposalResponseEmailHTML(...args);
+  }
+
+  generateProposalApprovedEmailHTML(...args) {
+    return generateProposalApprovedEmailHTML(...args);
   }
 
   generateProposalDisapprovedEmailHTML(...args) {

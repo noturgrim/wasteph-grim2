@@ -472,29 +472,65 @@ class ProposalService {
   /**
    * Fire-and-forget: notify sales person that proposal was approved
    */
-  _notifySalesApproval(proposal, metadata) {
-    Promise.all([
-      db
-        .select({ email: userTable.email })
+  async _notifySalesApproval(proposal, metadata) {
+    try {
+      const { userTable, inquiryTable } = await import("../db/schema.js");
+
+      const [salesUser] = await db
+        .select({
+          id: userTable.id,
+          email: userTable.email,
+          firstName: userTable.firstName,
+          lastName: userTable.lastName,
+        })
         .from(userTable)
         .where(eq(userTable.id, proposal.requestedBy))
-        .limit(1),
-      db
-        .select({ name: inquiryTable.name })
+        .limit(1);
+
+      const [adminUser] = await db
+        .select({
+          id: userTable.id,
+          firstName: userTable.firstName,
+          lastName: userTable.lastName,
+          role: userTable.role,
+        })
+        .from(userTable)
+        .where(eq(userTable.id, proposal.reviewedBy))
+        .limit(1);
+
+      const [inquiry] = await db
+        .select({
+          name: inquiryTable.name,
+          company: inquiryTable.company,
+          email: inquiryTable.email,
+          inquiryNumber: inquiryTable.inquiryNumber,
+        })
         .from(inquiryTable)
         .where(eq(inquiryTable.id, proposal.inquiryId))
-        .limit(1),
-    ])
-      .then(([[salesUser], [inquiry]]) => {
-        if (salesUser) {
-          return emailService.sendNotificationEmail(
-            salesUser.email,
-            "Proposal Approved - Ready to Send",
-            `Your proposal for ${inquiry?.name || "a client"} has been approved. You can now send it to the client.`,
-          );
-        }
-      })
-      .catch((err) => console.error("Failed to notify sales:", err));
+        .limit(1);
+
+      if (salesUser) {
+        const adminName = adminUser
+          ? `${adminUser.firstName} ${adminUser.lastName}`.trim()
+          : "Administrator";
+        const adminRole = adminUser?.role || "admin";
+        const approvedBy = `${adminName} (${adminRole})`;
+
+        await emailService.sendProposalApprovedNotification(
+          salesUser.email,
+          {
+            proposalNumber: proposal.proposalNumber,
+            clientName: inquiry?.name || "—",
+            companyName: inquiry?.company || undefined,
+            clientEmail: inquiry?.email || undefined,
+            approvedBy,
+            reviewedAt: proposal.reviewedAt,
+          },
+        );
+      }
+    } catch (error) {
+      console.error("Failed to notify sales:", error);
+    }
   }
 
   /**

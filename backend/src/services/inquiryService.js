@@ -15,6 +15,17 @@ import counterService from "./counterService.js";
  * Follows: Route → Controller → Service → DB architecture
  */
 class InquiryService {
+  /**
+   * Sanitize string value - convert empty strings to null
+   * Prevents PostgreSQL UUID errors when empty strings are passed
+   * @param {string|null|undefined} value - Value to sanitize
+   * @returns {string|null} Trimmed string or null
+   * @private
+   */
+  _sanitizeString(value) {
+    return value && value.trim() !== "" ? value.trim() : null;
+  }
+
   // Map service names from database to frontend format (snake_case)
   serviceNameToFrontend(serviceName) {
     const reverseMapping = {
@@ -46,9 +57,9 @@ class InquiryService {
         inquiryNumber,
         name,
         email,
-        phone,
-        company,
-        message,
+        phone: this._sanitizeString(phone),
+        company: this._sanitizeString(company),
+        message: message || "", // message is NOT NULL in schema, use empty string
         serviceType,
         source,
       })
@@ -365,16 +376,27 @@ class InquiryService {
       isInformationComplete,
     } = updateData;
 
-    // Prevent edits once a proposal has been created for this inquiry
+    // Prevent edits once a proposal has been created and reviewed
+    // Allow edits when:
+    // 1. Proposal is "disapproved" (sales can revise), OR
+    // 2. Proposal is "pending" but not yet reviewed (fresh submission/revision)
     const [existingProposal] = await db
-      .select({ id: proposalTable.id })
+      .select({ 
+        id: proposalTable.id, 
+        status: proposalTable.status,
+        reviewedBy: proposalTable.reviewedBy 
+      })
       .from(proposalTable)
       .where(eq(proposalTable.inquiryId, inquiryId))
       .limit(1);
 
-    if (existingProposal) {
+    const isDisapproved = existingProposal?.status === "disapproved";
+    const isPendingUnreviewed = existingProposal?.status === "pending" && !existingProposal.reviewedBy;
+    const canEdit = !existingProposal || isDisapproved || isPendingUnreviewed;
+
+    if (!canEdit) {
       throw new AppError(
-        "This inquiry is locked because a proposal has already been created.",
+        `This inquiry is locked because a proposal (status: ${existingProposal.status}) has already been reviewed. Cannot edit after admin review.`,
         400,
       );
     }
@@ -401,29 +423,29 @@ class InquiryService {
       throw new AppError("Inquiry not found", 404);
     }
 
-    // Convert empty strings to null for UUID fields
-    const normalizedAssignedTo = assignedTo === "" ? null : assignedTo;
-    const normalizedServiceId = serviceId === "" ? null : serviceId;
+    // Sanitize nullable fields (convert empty strings to null)
+    const normalizedPhone = phone !== undefined ? this._sanitizeString(phone) : undefined;
+    const normalizedCompany = company !== undefined ? this._sanitizeString(company) : undefined;
+    const normalizedLocation = location !== undefined ? this._sanitizeString(location) : undefined;
+    const normalizedNotes = notes !== undefined ? this._sanitizeString(notes) : undefined;
+    const normalizedAssignedTo = assignedTo !== undefined ? this._sanitizeString(assignedTo) : undefined;
+    const normalizedServiceId = serviceId !== undefined ? this._sanitizeString(serviceId) : undefined;
 
     const [inquiry] = await db
       .update(inquiryTable)
       .set({
         ...(name && { name }),
         ...(email && { email }),
-        ...(phone !== undefined && { phone }),
-        ...(company !== undefined && { company }),
-        ...(location !== undefined && { location }),
-        ...(message && { message }),
+        ...(normalizedPhone !== undefined && { phone: normalizedPhone }),
+        ...(normalizedCompany !== undefined && { company: normalizedCompany }),
+        ...(normalizedLocation !== undefined && { location: normalizedLocation }),
+        ...(message && { message }), // message is NOT NULL, keep existing if empty
         ...(source && { source }),
         ...(status && { status }),
-        ...(normalizedAssignedTo !== undefined && {
-          assignedTo: normalizedAssignedTo,
-        }),
-        ...(notes !== undefined && { notes }),
+        ...(normalizedAssignedTo !== undefined && { assignedTo: normalizedAssignedTo }),
+        ...(normalizedNotes !== undefined && { notes: normalizedNotes }),
         ...(serviceType !== undefined && { serviceType }),
-        ...(normalizedServiceId !== undefined && {
-          serviceId: normalizedServiceId,
-        }),
+        ...(normalizedServiceId !== undefined && { serviceId: normalizedServiceId }),
         ...(isInformationComplete !== undefined && { isInformationComplete }),
         updatedAt: new Date(),
       })
@@ -443,14 +465,14 @@ class InquiryService {
     if (email && email !== oldInquiry.email) {
       changes.email = { from: oldInquiry.email, to: email };
     }
-    if (phone !== undefined && phone !== oldInquiry.phone) {
-      changes.phone = { from: oldInquiry.phone, to: phone };
+    if (normalizedPhone !== undefined && normalizedPhone !== oldInquiry.phone) {
+      changes.phone = { from: oldInquiry.phone, to: normalizedPhone };
     }
-    if (company !== undefined && company !== oldInquiry.company) {
-      changes.company = { from: oldInquiry.company, to: company };
+    if (normalizedCompany !== undefined && normalizedCompany !== oldInquiry.company) {
+      changes.company = { from: oldInquiry.company, to: normalizedCompany };
     }
-    if (location !== undefined && location !== oldInquiry.location) {
-      changes.location = { from: oldInquiry.location, to: location };
+    if (normalizedLocation !== undefined && normalizedLocation !== oldInquiry.location) {
+      changes.location = { from: oldInquiry.location, to: normalizedLocation };
     }
     if (source && source !== oldInquiry.source) {
       changes.source = { from: oldInquiry.source, to: source };
@@ -559,12 +581,12 @@ class InquiryService {
         inquiryNumber,
         name,
         email,
-        phone,
-        company,
-        location,
-        message,
+        phone: this._sanitizeString(phone),
+        company: this._sanitizeString(company),
+        location: this._sanitizeString(location),
+        message: message || "", // message is NOT NULL in schema, use empty string
         source,
-        serviceId,
+        serviceId: this._sanitizeString(serviceId),
         assignedTo: userId,
         isInformationComplete: false,
       })
@@ -592,6 +614,11 @@ class InquiryService {
    * @throws {AppError} If inquiry not found
    */
   async assignInquiry(inquiryId, assignToUserId, userId, metadata = {}) {
+    // Validate assignToUserId (required field)
+    if (!assignToUserId || assignToUserId.trim() === "") {
+      throw new AppError("Assigned user ID is required", 400);
+    }
+
     const [updatedInquiry] = await db
       .update(inquiryTable)
       .set({
@@ -718,7 +745,10 @@ class InquiryService {
         },
       ])
       .catch((err) =>
-        console.error("[InquiryService] Background convert log failed:", err.message)
+        console.error(
+          "[InquiryService] Background convert log failed:",
+          err.message,
+        ),
       );
 
     return lead;
@@ -730,7 +760,10 @@ class InquiryService {
    */
   _logInBackground(activityData) {
     this.logActivity(activityData).catch((err) =>
-      console.error("[InquiryService] Background activity log failed:", err.message)
+      console.error(
+        "[InquiryService] Background activity log failed:",
+        err.message,
+      ),
     );
   }
 
