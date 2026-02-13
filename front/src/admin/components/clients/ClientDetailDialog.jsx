@@ -141,7 +141,14 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users, onAutoSc
       toast.success("Note saved successfully");
       fetchNotes();
     } catch (error) {
-      toast.error("Failed to save note");
+      // Show validation errors if available
+      if (error.validationErrors && error.validationErrors.length > 0) {
+        error.validationErrors.forEach(err => {
+          toast.error(err.message);
+        });
+      } else {
+        toast.error(error.message || "Failed to save note");
+      }
       throw error;
     }
   };
@@ -152,7 +159,14 @@ export const ClientDetailDialog = ({ open, onOpenChange, client, users, onAutoSc
       toast.success("Note updated successfully");
       fetchNotes();
     } catch (error) {
-      toast.error("Failed to update note");
+      // Show validation errors if available
+      if (error.validationErrors && error.validationErrors.length > 0) {
+        error.validationErrors.forEach(err => {
+          toast.error(err.message);
+        });
+      } else {
+        toast.error(error.message || "Failed to update note");
+      }
       throw error;
     }
   };
