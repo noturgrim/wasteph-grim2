@@ -168,7 +168,15 @@ export function RequestProposalDialog({
           // Load template from inquiry's service
           if (inquiry.serviceId) {
             setSelectedServiceId(inquiry.serviceId);
-            await loadTemplateFromService(inquiry.serviceId);
+            setIsLoadingSubTypes(true);
+            await Promise.all([
+              loadTemplateFromService(inquiry.serviceId),
+              api
+                .getServiceSubTypes(inquiry.serviceId)
+                .then((res) => setSubTypes(res.data || []))
+                .catch(() => setSubTypes([])),
+            ]);
+            setIsLoadingSubTypes(false);
           }
 
           // If we have edited content, check if we should use current template or saved HTML
@@ -341,7 +349,15 @@ export function RequestProposalDialog({
           // Pre-select service if available from inquiry
           if (inquiry.serviceId) {
             setSelectedServiceId(inquiry.serviceId);
-            await loadTemplateFromService(inquiry.serviceId);
+            setIsLoadingSubTypes(true);
+            await Promise.all([
+              loadTemplateFromService(inquiry.serviceId),
+              api
+                .getServiceSubTypes(inquiry.serviceId)
+                .then((res) => setSubTypes(res.data || []))
+                .catch(() => setSubTypes([])),
+            ]);
+            setIsLoadingSubTypes(false);
           }
         }
       }
