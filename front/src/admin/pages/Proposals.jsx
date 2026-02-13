@@ -80,6 +80,7 @@ export default function Proposals() {
   const [isRequestProposalDialogOpen, setIsRequestProposalDialogOpen] = useState(false);
   const [isSendProposalDialogOpen, setIsSendProposalDialogOpen] = useState(false);
   const [reviseInquiry, setReviseInquiry] = useState(null);
+  const [revisingProposalId, setRevisingProposalId] = useState(null);
 
   // Fetch users on mount
   useEffect(() => {
@@ -221,6 +222,7 @@ export default function Proposals() {
   };
 
   const handleRevise = async (proposal) => {
+    setRevisingProposalId(proposal.id);
     try {
       const response = await api.getInquiryById(proposal.inquiryId);
       const inquiry = response.data || response;
@@ -229,6 +231,8 @@ export default function Proposals() {
       setIsRequestProposalDialogOpen(true);
     } catch (error) {
       toast.error("Failed to load inquiry details for revision");
+    } finally {
+      setRevisingProposalId(null);
     }
   };
 
@@ -258,6 +262,7 @@ export default function Proposals() {
     onRevise: handleRevise,
     onSendToClient: handleSendToClient,
     userRole: user?.role,
+    revisingProposalId,
   });
 
   // Filter columns based on visibility

@@ -17,12 +17,13 @@ import {
   Pencil,
   FileSearch,
   FileText,
-  Send
+  Send,
+  Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { StatusBadge } from "../StatusBadge";
 
-export const createColumns = ({ users = [], onReview, onDelete, onRevise, onSendToClient, userRole }) => [
+export const createColumns = ({ users = [], onReview, onDelete, onRevise, onSendToClient, userRole, revisingProposalId = null }) => [
   {
     accessorKey: "proposalNumber",
     header: ({ column }) => {
@@ -172,10 +173,20 @@ export const createColumns = ({ users = [], onReview, onDelete, onRevise, onSend
               variant="ghost"
               size="sm"
               onClick={() => onRevise(proposal)}
-              className="h-8 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+              disabled={revisingProposalId === proposal.id}
+              className="h-8 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50 disabled:opacity-50"
             >
-              <FileText className="h-4 w-4 mr-1" />
-              Revise
+              {revisingProposalId === proposal.id ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <FileText className="h-4 w-4 mr-1" />
+                  Revise
+                </>
+              )}
             </Button>
           )}
 
