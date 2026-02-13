@@ -106,29 +106,27 @@ export function ReviewProposalDialog({
     <>
     <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent className="w-[95vw] sm:w-[600px]! max-w-[90vw]! max-h-[90vh]! overflow-hidden flex flex-col p-4 sm:p-6">
-        <DialogHeader>
-          <div className="flex flex-col items-center text-center sm:flex-row sm:items-center sm:justify-between sm:text-left gap-3">
-            <div className="flex-1 min-w-0">
-              <DialogTitle className="text-lg sm:text-xl">{userRole === "sales" ? "View Proposal" : "Review Proposal"}</DialogTitle>
-              <DialogDescription className="text-xs sm:text-sm">
-                Requested by: {requestedByUser
-                  ? `${requestedByUser.firstName} ${requestedByUser.lastName}`
-                  : "Unknown User"}
-              </DialogDescription>
-            </div>
-            <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-              <StatusBadge status={proposal.status} className="shrink-0" />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleViewPdf}
-                disabled={isLoadingPdf}
-                className="w-full sm:w-auto h-9"
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                View PDF
-              </Button>
-            </div>
+        <DialogHeader className="space-y-3">
+          <div className="pr-6">
+            <DialogTitle className="text-lg sm:text-xl">{userRole === "sales" ? "View Proposal" : "Review Proposal"}</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
+              Requested by: {requestedByUser
+                ? `${requestedByUser.firstName} ${requestedByUser.lastName}`
+                : "Unknown User"}
+            </DialogDescription>
+          </div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+            <StatusBadge status={proposal.status} className="shrink-0" />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleViewPdf}
+              disabled={isLoadingPdf}
+              className="w-full sm:w-auto h-9"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              View PDF
+            </Button>
           </div>
         </DialogHeader>
 
