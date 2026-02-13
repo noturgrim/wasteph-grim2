@@ -180,13 +180,13 @@ export const ViewTicketDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-4xl max-h-[90vh] w-[95vw] sm:w-full [&>button]:top-4 [&>button]:right-4"
+        className="max-w-4xl max-h-[90vh] w-[95vw] sm:w-[90vw] md:w-full overflow-hidden [&>button]:top-4 [&>button]:right-4"
         onInteractOutside={(e) => {
           if (viewerOpen) e.preventDefault();
         }}
       >
-        <DialogHeader className="pr-8">
-          <div className="flex items-start justify-between gap-4">
+        <DialogHeader className="pr-8 overflow-hidden">
+          <div className="flex items-start justify-between gap-4 min-w-0">
             <div className="flex-1">
               <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
                 <Ticket className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
@@ -219,13 +219,13 @@ export const ViewTicketDialog = ({
             <p className="text-sm text-muted-foreground">Loading ticket details...</p>
           </div>
         ) : (
-        <ScrollArea className="h-[calc(90vh-120px)]">
+        <ScrollArea className="h-[calc(90vh-120px)] [&>[data-slot=scroll-area-viewport]>div]:!block">
           <div className="space-y-5 pr-4">
             {/* Ticket Header */}
             <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-3 sm:p-4 space-y-3">
               <div className="flex items-start justify-between">
-                <div className="space-y-1 flex-1">
-                  <h3 className="text-base sm:text-lg font-semibold">
+                <div className="space-y-1 flex-1 min-w-0">
+                  <h3 className="text-base sm:text-lg font-semibold break-words">
                     {ticket.subject}
                   </h3>
                   <div className="flex gap-2 flex-wrap">
@@ -266,7 +266,7 @@ export const ViewTicketDialog = ({
               <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
                 Description
               </h4>
-              <p className="text-sm whitespace-pre-wrap">
+              <p className="text-sm whitespace-pre-wrap break-words">
                 {ticket.description}
               </p>
             </div>
@@ -282,10 +282,13 @@ export const ViewTicketDialog = ({
                   {ticket.attachments.map((attachment) => (
                     <div
                       key={attachment.id}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
+                      className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
                     >
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium truncate">
+                      <div className="w-0 flex-1">
+                        <p 
+                          className="text-sm font-medium truncate"
+                          title={attachment.fileName}
+                        >
                           {attachment.fileName}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -299,7 +302,7 @@ export const ViewTicketDialog = ({
                         variant="outline"
                         onClick={() => handleViewAttachment(attachment)}
                         disabled={isLoadingViewUrl === attachment.id}
-                        className="shrink-0 ml-2"
+                        className="shrink-0 ml-auto"
                       >
                         {isLoadingViewUrl === attachment.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -370,7 +373,7 @@ export const ViewTicketDialog = ({
                     <p className="text-sm font-semibold mb-1">
                       Resolution Notes:
                     </p>
-                    <p className="text-sm whitespace-pre-wrap">
+                    <p className="text-sm whitespace-pre-wrap break-words">
                       {ticket.resolutionNotes}
                     </p>
                   </div>
@@ -394,9 +397,9 @@ export const ViewTicketDialog = ({
                       key={comment.id}
                       className="p-3 border rounded-lg space-y-2"
                     >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-sm font-medium">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium break-words">
                             {comment.firstName} {comment.lastName}
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -406,11 +409,11 @@ export const ViewTicketDialog = ({
                             )}
                           </p>
                         </div>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs shrink-0">
                           {comment.role}
                         </Badge>
                       </div>
-                      <p className="text-sm whitespace-pre-wrap">
+                      <p className="text-sm whitespace-pre-wrap break-words">
                         {comment.content}
                       </p>
                     </div>
