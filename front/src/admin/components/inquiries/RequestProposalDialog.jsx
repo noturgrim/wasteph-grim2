@@ -91,6 +91,7 @@ export function RequestProposalDialog({
 
   // Store template structure (head + styles) separately
   const templateStructureRef = useRef({ head: "", bodyTag: "", styles: "" });
+  const fileInputRef = useRef(null);
 
   // Client info form state
   const [formData, setFormData] = useState({
@@ -1697,8 +1698,11 @@ ${bodyTag}
                           <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-50 dark:bg-red-900/30 rounded-lg flex items-center justify-center shrink-0">
                             <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 dark:text-red-400" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white truncate">
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <p 
+                              className="text-sm sm:text-base font-medium text-gray-900 dark:text-white truncate"
+                              title={uploadedPdf?.name}
+                            >
                               {uploadedPdf?.name}
                             </p>
                             <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
@@ -1921,7 +1925,7 @@ ${bodyTag}
               It will still go through admin approval.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-4 overflow-hidden min-w-0">
             {!uploadedPdf ? (
               <label
                 htmlFor="proposal-pdf-upload"
@@ -1935,6 +1939,7 @@ ${bodyTag}
                   PDF only, max 10MB
                 </p>
                 <input
+                  ref={fileInputRef}
                   id="proposal-pdf-upload"
                   type="file"
                   accept="application/pdf"
@@ -1951,8 +1956,7 @@ ${bodyTag}
                       return;
                     }
                     setUploadedPdf(file);
-                    setCreationMode("upload");
-                    setShowUploadModal(false);
+                    // Keep modal open to show preview with "Use This PDF" button
                   }}
                 />
               </label>
@@ -1962,8 +1966,11 @@ ${bodyTag}
                   <div className="w-10 h-10 bg-red-50 dark:bg-red-900/30 rounded-lg flex items-center justify-center shrink-0">
                     <FileText className="h-5 w-5 text-red-600 dark:text-red-400" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 dark:text-white truncate text-sm">
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    <p 
+                      className="font-medium text-gray-900 dark:text-white truncate text-sm"
+                      title={uploadedPdf.name}
+                    >
                       {uploadedPdf.name}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -1973,8 +1980,13 @@ ${bodyTag}
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => setUploadedPdf(null)}
-                    className="text-gray-400 hover:text-red-600"
+                    onClick={() => {
+                      setUploadedPdf(null);
+                      if (fileInputRef.current) {
+                        fileInputRef.current.value = "";
+                      }
+                    }}
+                    className="text-gray-400 hover:text-red-600 shrink-0"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -1985,7 +1997,13 @@ ${bodyTag}
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setShowUploadModal(false)}
+              onClick={() => {
+                setUploadedPdf(null);
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
+                setShowUploadModal(false);
+              }}
             >
               Cancel
             </Button>
