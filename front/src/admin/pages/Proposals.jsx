@@ -103,6 +103,7 @@ export default function Proposals() {
     proposalSocketService.on("proposalRequested", handleProposalEvent);
     proposalSocketService.on("proposalApproved", handleProposalEvent);
     proposalSocketService.on("proposalRejected", handleProposalEvent);
+    proposalSocketService.on("proposalRevised", handleProposalEvent);
     proposalSocketService.on("proposalSent", handleProposalEvent);
     proposalSocketService.on("proposalAccepted", handleProposalEvent);
     proposalSocketService.on("proposalDeclined", handleProposalEvent);
@@ -112,6 +113,7 @@ export default function Proposals() {
       proposalSocketService.off("proposalRequested", handleProposalEvent);
       proposalSocketService.off("proposalApproved", handleProposalEvent);
       proposalSocketService.off("proposalRejected", handleProposalEvent);
+      proposalSocketService.off("proposalRevised", handleProposalEvent);
       proposalSocketService.off("proposalSent", handleProposalEvent);
       proposalSocketService.off("proposalAccepted", handleProposalEvent);
       proposalSocketService.off("proposalDeclined", handleProposalEvent);

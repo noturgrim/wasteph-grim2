@@ -51,6 +51,11 @@ class ProposalSocketService {
       this._handleProposalRejected(data),
     );
 
+    // Proposal revised (Sales → Admin)
+    socketService.on("proposal:revised", (data) =>
+      this._handleProposalRevised(data),
+    );
+
     // Proposal sent to client (Sales → Admin)
     socketService.on("proposal:sent", (data) => this._handleProposalSent(data));
 
@@ -120,6 +125,26 @@ class ProposalSocketService {
 
     // Trigger component update
     this._triggerEvent("proposalRejected", data);
+  }
+
+  /**
+   * Handle proposal revised event (Sales resubmitted after rejection)
+   * @private
+   */
+  _handleProposalRevised(data) {
+    const { proposal, user } = data;
+    const userName = `${user.firstName} ${user.lastName}`;
+
+    // console.log("🔄 Proposal revised:", proposal.proposalNumber);
+
+    // Show toast notification
+    toast.info(`Proposal Revision Submitted`, {
+      description: `${userName} submitted revision for proposal ${proposal.proposalNumber}`,
+    });
+
+    // Trigger component update (treat as new request for table refresh)
+    this._triggerEvent("proposalRevised", data);
+    this._triggerEvent("proposalRequested", data); // Also trigger this for backward compatibility
   }
 
   /**
@@ -254,6 +279,7 @@ class ProposalSocketService {
     socketService.off("proposal:requested");
     socketService.off("proposal:approved");
     socketService.off("proposal:rejected");
+    socketService.off("proposal:revised");
     socketService.off("proposal:sent");
     socketService.off("proposal:accepted");
     socketService.off("proposal:declined");

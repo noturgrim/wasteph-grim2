@@ -369,6 +369,84 @@ class ProposalEventEmitter {
   }
 
   /**
+   * Emit proposal revised event (Sales → Admin)
+   * When sales person submits a revision after admin disapproval
+   * @param {Object} proposal - Proposal data
+   * @param {Object} user - User who revised the proposal
+   */
+  async emitProposalRevised(proposal, user) {
+    try {
+      const eventData = {
+        proposal: {
+          id: proposal.id,
+          proposalNumber: proposal.proposalNumber,
+          inquiryId: proposal.inquiryId,
+          inquiryNumber: proposal.inquiryNumber,
+          inquiryName: proposal.inquiryName,
+          inquiryEmail: proposal.inquiryEmail,
+          inquiryCompany: proposal.inquiryCompany,
+          status: proposal.status,
+          requestedBy: proposal.requestedBy,
+          updatedAt: proposal.updatedAt,
+        },
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          profilePictureUrl: user.profilePictureUrl,
+        },
+      };
+
+      // Notify admin and super_admin roles
+      const adminRoles = ["admin", "super_admin"];
+
+      // Emit socket event to admins
+      this.socketServer.emitToRoles(
+        adminRoles,
+        PROPOSAL_EVENTS.PROPOSAL_REVISED,
+        eventData
+      );
+
+      // Create database notifications for admins
+      if (this.notificationService) {
+        const reviserName = `${user.firstName} ${user.lastName}`;
+        const message = `${reviserName} submitted revision for proposal ${proposal.proposalNumber}`;
+
+        // Get all admin/super_admin users
+        const adminIds = await this._getAdminUserIds();
+
+        // Create bulk notifications (using "proposal_requested" type for revision)
+        await this.notificationService.createBulkNotifications(adminIds, {
+          type: "proposal_requested",
+          title: "Proposal Revision Submitted",
+          message,
+          entityType: "proposal",
+          entityId: proposal.id,
+          metadata: {
+            proposalNumber: proposal.proposalNumber,
+            inquiryNumber: proposal.inquiryNumber,
+            inquiryName: proposal.inquiryName,
+            revisedBy: {
+              id: user.id,
+              name: reviserName,
+            },
+            creatorName: reviserName,
+            isRevision: true,
+          },
+        });
+      }
+
+      console.log(
+        `✅ Proposal revised event emitted: ${proposal.proposalNumber}`
+      );
+    } catch (error) {
+      console.error("Error emitting proposal revised event:", error);
+    }
+  }
+
+  /**
    * Emit proposal declined by client event (Client → Sales + Admin)
    * @param {Object} proposal - Proposal data
    */

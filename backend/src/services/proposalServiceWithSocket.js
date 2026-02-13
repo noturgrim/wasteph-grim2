@@ -340,12 +340,80 @@ class ProposalServiceWithSocket {
   }
 
   async updateProposal(proposalId, updateData, userId, metadata = {}) {
-    return this.proposalService.updateProposal(
+    // Get existing proposal status before update to detect revision
+    const existingProposal = await this.proposalService.getProposalById(proposalId);
+    const isRevision = existingProposal.status === "disapproved";
+
+    // Update proposal
+    const proposal = await this.proposalService.updateProposal(
       proposalId,
       updateData,
       userId,
       metadata
     );
+
+    // If this was a revision (disapproved → pending), emit socket event
+    if (this.proposalEvents && proposal && isRevision) {
+      this._emitRevisionEvent(proposal, userId);
+    }
+
+    return proposal;
+  }
+
+  /** @private */
+  _emitRevisionEvent(proposal, userId) {
+    Promise.resolve()
+      .then(async () => {
+        const { db } = await import("../db/index.js");
+        const { userTable, inquiryTable, proposalTable } = await import("../db/schema.js");
+        const { eq } = await import("drizzle-orm");
+
+        // Get user details
+        const [user] = await db
+          .select({
+            id: userTable.id,
+            firstName: userTable.firstName,
+            lastName: userTable.lastName,
+            email: userTable.email,
+            role: userTable.role,
+            profilePictureUrl: userTable.profilePictureUrl,
+          })
+          .from(userTable)
+          .where(eq(userTable.id, userId))
+          .limit(1);
+
+        if (!user) {
+          console.warn(`User not found for proposal revision emission: ${userId}`);
+          return;
+        }
+
+        // Get full proposal with inquiry data
+        const [fullProposal] = await db
+          .select({
+            id: proposalTable.id,
+            proposalNumber: proposalTable.proposalNumber,
+            inquiryId: proposalTable.inquiryId,
+            status: proposalTable.status,
+            requestedBy: proposalTable.requestedBy,
+            updatedAt: proposalTable.updatedAt,
+            // Inquiry details
+            inquiryName: inquiryTable.name,
+            inquiryEmail: inquiryTable.email,
+            inquiryCompany: inquiryTable.company,
+            inquiryNumber: inquiryTable.inquiryNumber,
+          })
+          .from(proposalTable)
+          .leftJoin(inquiryTable, eq(proposalTable.inquiryId, inquiryTable.id))
+          .where(eq(proposalTable.id, proposal.id))
+          .limit(1);
+
+        if (fullProposal) {
+          await this.proposalEvents.emitProposalRevised(fullProposal, user);
+        }
+      })
+      .catch((error) => {
+        console.error("Error emitting proposal revision event:", error);
+      });
   }
 
   async cancelProposal(proposalId, userId, metadata = {}) {
