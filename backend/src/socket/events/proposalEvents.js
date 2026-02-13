@@ -4,6 +4,7 @@
  */
 
 import proposalService from "../../services/proposalService.js";
+import emailService from "../../services/email/emailService.js";
 
 export const PROPOSAL_EVENTS = {
   // Proposal lifecycle events
@@ -107,6 +108,27 @@ class ProposalEventEmitter {
             creatorName: requesterName,
           },
         });
+
+        // Send email notifications to admins (fire-and-forget)
+        const adminEmails = await this._getAdminEmails();
+        if (adminEmails.length > 0) {
+          emailService
+            .sendProposalRequestedNotification(adminEmails, {
+              proposalNumber: proposal.proposalNumber,
+              inquiryNumber: proposal.inquiryNumber,
+              inquiryName: proposal.inquiryName,
+              inquiryCompany: proposal.inquiryCompany,
+              inquiryEmail: proposal.inquiryEmail,
+              requestedBy: requesterName,
+              createdAt: proposal.createdAt,
+            })
+            .catch((err) =>
+              console.error(
+                `Failed to send proposal requested email to admins:`,
+                err.message
+              )
+            );
+        }
       }
 
       console.log(
@@ -436,6 +458,27 @@ class ProposalEventEmitter {
             isRevision: true,
           },
         });
+
+        // Send email notifications to admins (fire-and-forget)
+        const adminEmails = await this._getAdminEmails();
+        if (adminEmails.length > 0) {
+          emailService
+            .sendProposalRequestedNotification(adminEmails, {
+              proposalNumber: proposal.proposalNumber,
+              inquiryNumber: proposal.inquiryNumber,
+              inquiryName: proposal.inquiryName,
+              inquiryCompany: proposal.inquiryCompany,
+              inquiryEmail: proposal.inquiryEmail,
+              requestedBy: reviserName,
+              createdAt: proposal.updatedAt,
+            })
+            .catch((err) =>
+              console.error(
+                `Failed to send proposal revision email to admins:`,
+                err.message
+              )
+            );
+        }
       }
 
       console.log(
@@ -543,6 +586,29 @@ class ProposalEventEmitter {
       return admins.map((admin) => admin.id);
     } catch (error) {
       console.error("Error getting admin user IDs:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get all admin user emails
+   * @returns {Promise<Array<string>>} Array of admin email addresses
+   */
+  async _getAdminEmails() {
+    try {
+      // Import here to avoid circular dependency
+      const { db } = await import("../../db/index.js");
+      const { userTable } = await import("../../db/schema.js");
+      const { inArray } = await import("drizzle-orm");
+
+      const admins = await db
+        .select({ email: userTable.email })
+        .from(userTable)
+        .where(inArray(userTable.role, ["admin", "super_admin"]));
+
+      return admins.map((admin) => admin.email).filter(Boolean);
+    } catch (error) {
+      console.error("Error getting admin emails:", error);
       return [];
     }
   }

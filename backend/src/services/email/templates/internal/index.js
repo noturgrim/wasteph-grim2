@@ -1,5 +1,6 @@
 export { generateNewLeadEmailHTML } from "./newLead.js";
 export { generateProposalResponseEmailHTML } from "./proposalResponse.js";
+export { generateProposalRequestedEmailHTML } from "./proposalRequested.js";
 export { generateProposalApprovedEmailHTML } from "./proposalApproved.js";
 export { generateProposalDisapprovedEmailHTML } from "./proposalDisapproved.js";
 export { generateContractSignedEmailHTML } from "./contractSigned.js";

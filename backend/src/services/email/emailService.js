@@ -11,6 +11,7 @@ import {
   generateAutoScheduleClientEmailHTML,
   generateNewLeadEmailHTML,
   generateProposalResponseEmailHTML,
+  generateProposalRequestedEmailHTML,
   generateProposalApprovedEmailHTML,
   generateProposalDisapprovedEmailHTML,
   generateContractSignedEmailHTML,
@@ -644,6 +645,61 @@ class EmailService {
   }
 
   /**
+   * Send proposal requested notification to admins (sales → admin)
+   * @param {Array<string>} toList - Array of admin emails
+   * @param {Object} data - Notification data
+   * @returns {Promise<Object>} Email result
+   */
+  async sendProposalRequestedNotification(toList, data) {
+    try {
+      const { inquiryName, inquiryCompany, proposalNumber } = data;
+      const subject = `New Proposal Request: ${inquiryCompany || inquiryName}`;
+      const htmlContent = generateProposalRequestedEmailHTML(data);
+
+      // Send to all admins in parallel
+      const emailPromises = toList.map((to) =>
+        this.transporter.sendMail({
+          from: `${this.config?.from_name || "WastePH"} <${this.config?.user || process.env.SMTP_USER}>`,
+          to,
+          subject,
+          html: htmlContent,
+        }).catch((error) => {
+          console.error(`❌ Failed to send to ${to}:`, error.message);
+          return { error: error.message, to };
+        })
+      );
+
+      const results = await Promise.all(emailPromises);
+      const successful = results.filter((r) => !r.error);
+      const failed = results.filter((r) => r.error);
+
+      console.log(
+        `✅ Proposal requested notification sent to ${successful.length}/${toList.length} admins`
+      );
+
+      if (failed.length > 0) {
+        console.warn(`⚠️ Failed to send to: ${failed.map((f) => f.to).join(", ")}`);
+      }
+
+      return {
+        success: true,
+        sentCount: successful.length,
+        failedCount: failed.length,
+        failed: failed.map((f) => f.to),
+      };
+    } catch (error) {
+      console.error(
+        "❌ Failed to send proposal requested notifications:",
+        error.message
+      );
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
    * Send proposal approved notification to sales person (admin approval)
    * @param {string} to - Sales person email
    * @param {Object} data - Notification data
@@ -782,6 +838,10 @@ class EmailService {
 
   generateProposalResponseEmailHTML(...args) {
     return generateProposalResponseEmailHTML(...args);
+  }
+
+  generateProposalRequestedEmailHTML(...args) {
+    return generateProposalRequestedEmailHTML(...args);
   }
 
   generateProposalApprovedEmailHTML(...args) {
