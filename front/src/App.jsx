@@ -7,6 +7,7 @@ import HeroSection from "./components/sections/HeroSection";
 import LoadingScreen from "./components/common/LoadingScreen";
 import TopographicCanvas from "./components/common/TopographicCanvas";
 import ScrollToTop from "./components/common/ScrollToTop";
+import ScrollToTopButton from "./components/common/ScrollToTopButton";
 
 // Import assets for proper bundling
 import wasteNoBG from "./assets/logo/wasteNoBG.png";
@@ -282,6 +283,9 @@ const PublicApp = () => {
             </main>
             <Footer />
           </ScrollableLayout>
+
+          {/* Scroll to Top Button */}
+          <ScrollToTopButton />
         </div>
       </div>
     </>

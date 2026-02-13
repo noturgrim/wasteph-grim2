@@ -1,4 +1,5 @@
 import React from "react";
+import { Facebook, Instagram } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -15,21 +16,41 @@ const Footer = () => {
             Philippines.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-6">
+        <div className="flex flex-col gap-4 sm:items-end">
           <a
             href="mailto:sales@waste.ph"
             className="text-xs font-bold uppercase tracking-[0.2em] text-white transition-colors hover:text-[#15803d] focus-visible:text-[#15803d] focus-visible:outline-none"
           >
             sales@waste.ph
           </a>
-          <div className="flex items-center gap-4 text-xs text-white/60">
+          <div className="flex items-center gap-4">
             <a
-              href="/admin"
-              className="font-semibold uppercase tracking-widest text-white/40 transition-colors hover:text-white/70 focus-visible:text-white/70 focus-visible:outline-none"
-              aria-label="Admin Portal"
+              href="https://www.facebook.com/wasteph0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/60 transition-colors hover:text-[#15803d] focus-visible:text-[#15803d] focus-visible:outline-none"
+              aria-label="Follow us on Facebook"
             >
-              Sales
+              <Facebook className="h-5 w-5" />
             </a>
+            <a
+              href="https://www.instagram.com/waste_ph/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/60 transition-colors hover:text-[#15803d] focus-visible:text-[#15803d] focus-visible:outline-none"
+              aria-label="Follow us on Instagram"
+            >
+              <Instagram className="h-5 w-5" />
+            </a>
+            <div className="ml-2 border-l border-white/20 pl-4">
+              <a
+                href="/admin"
+                className="text-xs font-semibold uppercase tracking-widest text-white/40 transition-colors hover:text-white/70 focus-visible:text-white/70 focus-visible:outline-none"
+                aria-label="Admin Portal"
+              >
+                Sales
+              </a>
+            </div>
           </div>
         </div>
       </div>
