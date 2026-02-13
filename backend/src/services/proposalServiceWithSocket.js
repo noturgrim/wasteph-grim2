@@ -342,7 +342,7 @@ class ProposalServiceWithSocket {
   async updateProposal(proposalId, updateData, userId, metadata = {}) {
     // Get existing proposal status before update to detect revision
     const existingProposal = await this.proposalService.getProposalById(proposalId);
-    const isRevision = existingProposal.status === "disapproved";
+    const isRevision = existingProposal.status === "disapproved" || existingProposal.status === "rejected";
 
     // Update proposal
     const proposal = await this.proposalService.updateProposal(
@@ -352,7 +352,7 @@ class ProposalServiceWithSocket {
       metadata
     );
 
-    // If this was a revision (disapproved → pending), emit socket event
+    // If this was a revision (disapproved/rejected → pending), emit socket event
     if (this.proposalEvents && proposal && isRevision) {
       this._emitRevisionEvent(proposal, userId);
     }

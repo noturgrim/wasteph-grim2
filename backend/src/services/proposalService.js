@@ -384,13 +384,13 @@ class ProposalService {
     // Get existing proposal
     const existing = await this.getProposalById(proposalId);
 
-    // Allow updates to pending or disapproved proposals
-    if (existing.status !== "pending" && existing.status !== "disapproved") {
-      throw new AppError("Can only update pending or disapproved proposals", 400);
+    // Allow updates to pending, disapproved, or rejected proposals
+    if (existing.status !== "pending" && existing.status !== "disapproved" && existing.status !== "rejected") {
+      throw new AppError("Can only update pending, disapproved, or client rejected proposals", 400);
     }
 
-    // If updating a disapproved proposal, reset it to pending and clear rejection fields
-    const isDisapprovedProposal = existing.status === "disapproved";
+    // If updating a disapproved or rejected proposal, reset it to pending and clear rejection fields
+    const isRejectedProposal = existing.status === "disapproved" || existing.status === "rejected";
 
     const [proposal] = await db
       .update(proposalTable)
@@ -402,8 +402,8 @@ class ProposalService {
               : JSON.stringify(proposalData),
         }),
         ...(templateId && { templateId }),
-        // If it was disapproved, reset to pending and clear rejection data
-        ...(isDisapprovedProposal && {
+        // If it was disapproved or client rejected, reset to pending and clear rejection data
+        ...(isRejectedProposal && {
           status: "pending",
           rejectionReason: null,
           reviewedBy: null,
@@ -417,7 +417,7 @@ class ProposalService {
     // Log activity
     await this.logActivity({
       userId,
-      action: isDisapprovedProposal ? "proposal_revised" : "proposal_updated",
+      action: isRejectedProposal ? "proposal_revised" : "proposal_updated",
       entityType: "proposal",
       entityId: proposal.id,
       ipAddress: metadata.ipAddress,

@@ -167,8 +167,8 @@ export const createColumns = ({ users = [], onReview, onDelete, onRevise, onSend
             </Button>
           )}
 
-          {/* Revise — sales only, disapproved proposals */}
-          {userRole === "sales" && proposal.status === "disapproved" && (
+          {/* Revise — sales only, disapproved or rejected proposals */}
+          {userRole === "sales" && (proposal.status === "disapproved" || proposal.status === "rejected") && (
             <Button
               variant="ghost"
               size="sm"

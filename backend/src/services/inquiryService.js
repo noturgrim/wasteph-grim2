@@ -379,7 +379,8 @@ class InquiryService {
     // Prevent edits once a proposal has been created and reviewed
     // Allow edits when:
     // 1. Proposal is "disapproved" (sales can revise), OR
-    // 2. Proposal is "pending" but not yet reviewed (fresh submission/revision)
+    // 2. Proposal is "rejected" (sales can revise after client rejection), OR
+    // 3. Proposal is "pending" but not yet reviewed (fresh submission/revision)
     const [existingProposal] = await db
       .select({ 
         id: proposalTable.id, 
@@ -391,8 +392,9 @@ class InquiryService {
       .limit(1);
 
     const isDisapproved = existingProposal?.status === "disapproved";
+    const isClientRejected = existingProposal?.status === "rejected";
     const isPendingUnreviewed = existingProposal?.status === "pending" && !existingProposal.reviewedBy;
-    const canEdit = !existingProposal || isDisapproved || isPendingUnreviewed;
+    const canEdit = !existingProposal || isDisapproved || isClientRejected || isPendingUnreviewed;
 
     if (!canEdit) {
       throw new AppError(
