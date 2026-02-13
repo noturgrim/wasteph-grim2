@@ -2060,18 +2060,18 @@ ${bodyTag}
 
       {/* Full Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-[98vw] w-[2200px] h-[95vh] flex flex-col p-0">
-          <DialogHeader className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <DialogTitle>Full Proposal Preview</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="!max-w-none w-[95vw] sm:w-[98vw] h-[90vh] sm:h-[95vh] flex flex-col p-0">
+          <DialogHeader className="px-3 py-3 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-gray-700">
+            <DialogTitle className="text-base sm:text-lg">Full Proposal Preview</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
               This is how your proposal will look when generated as PDF
             </DialogDescription>
           </DialogHeader>
-          <div className="flex-1 overflow-hidden p-6">
+          <div className="flex-1 overflow-hidden p-2 sm:p-4 md:p-6">
             {isLoadingPreview ? (
-              <div className="flex items-center justify-center h-full">
-                <Loader2 className="h-8 w-8 animate-spin text-[#15803d]" />
-                <span className="ml-3 text-gray-600 dark:text-gray-400">
+              <div className="flex flex-col sm:flex-row items-center justify-center h-full gap-2 sm:gap-3">
+                <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 animate-spin text-[#15803d]" />
+                <span className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                   Generating PDF preview...
                 </span>
               </div>
@@ -2080,11 +2080,11 @@ ${bodyTag}
                 src={pdfPreviewUrl}
                 title="PDF Preview"
                 className="w-full h-full border border-gray-200 dark:border-gray-700 rounded-lg"
-                style={{ minHeight: "600px" }}
+                style={{ minHeight: "400px" }}
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                <p>No preview available</p>
+                <p className="text-sm sm:text-base">No preview available</p>
                 <Button
                   onClick={generatePdfPreview}
                   className="mt-4"
