@@ -308,7 +308,7 @@ export const EditTicketDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="w-[95vw] sm:w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6"
+        className="w-[95vw] sm:w-full sm:max-w-lg max-h-[90vh] overflow-y-auto overflow-x-hidden p-4 sm:p-6"
         onInteractOutside={(e) => {
           if (viewerOpen) e.preventDefault();
         }}
@@ -340,8 +340,8 @@ export const EditTicketDialog = ({
               onValueChange={(value) => handleChange("clientId", value)}
               required
             >
-              <SelectTrigger className="w-full text-sm min-w-0">
-                <SelectValue placeholder="Select client" className="truncate" />
+              <SelectTrigger className="w-full text-sm min-w-0 justify-center [&>span]:flex [&>span]:flex-col [&>span]:items-center [&>span]:w-full">
+                <SelectValue placeholder="Select client" />
               </SelectTrigger>
               <SelectContent className="max-w-[calc(100vw-3rem)]">
                 {clients.map((client) => (
@@ -350,7 +350,7 @@ export const EditTicketDialog = ({
                     value={client.id}
                     className="cursor-pointer max-w-full"
                   >
-                    <div className="flex flex-col min-w-0 max-w-full">
+                    <div className="flex flex-col min-w-0 max-w-full items-center text-center">
                       <span className="truncate font-medium">{client.companyName}</span>
                       {(client.contactPerson || client.email) && (
                         <span className="text-xs text-muted-foreground truncate">
