@@ -135,16 +135,16 @@ export function ViewEventDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl w-[95vw] sm:w-full">
-          <DialogHeader>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1">
-                <DialogTitle className="text-xl sm:text-2xl">{event.title}</DialogTitle>
-                {event.eventType && (
-                  <DialogDescription className="text-sm">
-                    {formatEventType(event.eventType)}
-                  </DialogDescription>
-                )}
-              </div>
+          <DialogHeader className="space-y-3">
+            <div className="pr-8">
+              <DialogTitle className="text-xl sm:text-2xl">{event.title}</DialogTitle>
+              {event.eventType && (
+                <DialogDescription className="text-sm">
+                  {formatEventType(event.eventType)}
+                </DialogDescription>
+              )}
+            </div>
+            <div>
               {getStatusBadge(event.status)}
             </div>
           </DialogHeader>
