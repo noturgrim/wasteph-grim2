@@ -73,6 +73,7 @@ class LeadEventEmitter {
           phone: lead.phone,
           location: lead.location,
           isPublic: true,
+          leadCreatedAt: lead.createdAt, // Store lead creation timestamp for accurate notification display
         },
       });
     }

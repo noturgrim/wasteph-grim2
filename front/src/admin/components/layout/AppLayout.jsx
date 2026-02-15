@@ -279,7 +279,7 @@ export default function AppLayout() {
                               </p>
                             )}
                             <p className="text-xs mt-1 text-slate-500">
-                              {getTimeAgo(notif.createdAt)}
+                              {getTimeAgo(notif.metadata?.leadCreatedAt || notif.createdAt)}
                             </p>
                           </div>
                         </div>
